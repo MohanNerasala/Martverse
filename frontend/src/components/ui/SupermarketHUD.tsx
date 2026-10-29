@@ -13,7 +13,6 @@ import {
   HelpCircle,
   Eye,
   Camera,
-  MapPin,
   ArrowUpRight,
   CheckCircle2,
   AlertTriangle,
@@ -33,10 +32,6 @@ import { api } from '@/lib/api';
 export const SupermarketHUD: React.FC = () => {
   const activeFloor = useMartStore((state) => state.activeFloor);
   const setActiveFloor = useMartStore((state) => state.setActiveFloor);
-  const playerPos = useMartStore((state) => state.playerPos);
-  const playerYaw = useMartStore((state) => state.playerYaw);
-  const isMinimapOpen = useMartStore((state) => state.isMinimapOpen);
-  const toggleMinimap = useMartStore((state) => state.toggleMinimap);
   const isSoundMuted = useMartStore((state) => state.isSoundMuted);
   const toggleSound = useMartStore((state) => state.toggleSound);
   const cameraMode = useMartStore((state) => state.cameraMode);
@@ -73,10 +68,6 @@ export const SupermarketHUD: React.FC = () => {
       setIsLoadingHistory(false);
     }
   };
-
-  // Convert player 3D coordinates (x: -16..16, z: -24..24) to minimap percentage (0..100%)
-  const mapLeft = ((playerPos[0] + 18) / 36) * 100;
-  const mapTop = ((playerPos[2] + 26) / 52) * 100;
 
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-5 z-20">
@@ -166,19 +157,6 @@ export const SupermarketHUD: React.FC = () => {
               ) : (
                 <Volume2 className="w-4 h-4 text-emerald-400" />
               )}
-            </button>
-
-            {/* Minimap Toggle */}
-            <button
-              onClick={() => toggleMinimap()}
-              className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
-                isMinimapOpen
-                  ? 'bg-blue-500/15 border-blue-500/40 text-blue-400'
-                  : 'bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06] text-slate-300 hover:text-white'
-              }`}
-              title="Toggle Minimap"
-            >
-              <Compass className="w-4 h-4" />
             </button>
 
             {/* Controls Guide */}
@@ -275,108 +253,6 @@ export const SupermarketHUD: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Live Top-Down Store Minimap */}
-        {isMinimapOpen && (
-          <div className="pointer-events-auto glass-panel p-3.5 rounded-2xl shadow-2xl w-56 sm:w-64 flex flex-col gap-2 border border-white/[0.08]">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-white flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-blue-400" />
-                <span>Store Floor {activeFloor}</span>
-              </span>
-              <span className="text-[10px] text-slate-400 bg-white/[0.05] px-2 py-0.5 rounded-full border border-white/[0.05]">
-                {activeFloor === 1 ? 'Groceries' : 'Fashion'}
-              </span>
-            </div>
-
-            {/* Top-down Minimap Canvas */}
-            <div className="relative w-full h-44 bg-[#090D14] rounded-xl overflow-hidden border border-white/[0.06]">
-              {/* Entrance at top (z = -23) */}
-              <div className="absolute top-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-emerald-400 bg-emerald-950/70 px-1.5 py-0.5 rounded border border-emerald-500/30">
-                ENTRANCE / EXIT
-              </div>
-
-              {/* Aisles Layout Display */}
-              {activeFloor === 1 ? (
-                <>
-                  {[-10, -5, 0, 5, 10].map((ax, idx) => {
-                    const leftPct = ((ax + 18) / 36) * 100;
-                    return (
-                      <div
-                        key={`map-aisle-1-${idx}`}
-                        className="absolute w-2.5 bg-blue-500/20 border border-blue-400/30 rounded"
-                        style={{
-                          left: `${leftPct}%`,
-                          top: '25%',
-                          height: '46%',
-                          transform: 'translateX(-50%)',
-                        }}
-                      >
-                        <span className="text-[7px] text-blue-300 font-bold block text-center mt-1">
-                          A{idx + 1}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </>
-              ) : (
-                <>
-                  {/* 6 Dedicated Clothing Aisles: 3 Women (R6-R8), 3 Men (R9-R11) */}
-                  {[-11.0, -6.5, -2.0, 2.5, 7.0, 11.5].map((ax, idx) => {
-                    const leftPct = ((ax + 18) / 36) * 100;
-                    const isWomen = idx < 3;
-                    return (
-                      <div
-                        key={`map-aisle-2-${idx}`}
-                        className={`absolute w-2.5 rounded border ${
-                          isWomen
-                            ? 'bg-purple-500/25 border-purple-400/40'
-                            : 'bg-blue-500/25 border-blue-400/40'
-                        }`}
-                        style={{
-                          left: `${leftPct}%`,
-                          top: '25%',
-                          height: '46%',
-                          transform: 'translateX(-50%)',
-                        }}
-                      >
-                        <span className="text-[6.5px] text-white font-black block text-center mt-1">
-                          {idx + 6}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-
-              {/* Escalator indicator at x = 14.7 */}
-              <div
-                className="absolute bg-indigo-500/40 border border-indigo-400/60 rounded text-[7px] text-indigo-200 px-1 py-0.5"
-                style={{ left: '91%', top: '48%', transform: 'translate(-50%, -50%)' }}
-              >
-                ESCALATOR
-              </div>
-
-              {/* Billing Counters Zone at bottom (z = 18) */}
-              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-amber-400 bg-amber-950/70 px-1.5 py-0.5 rounded border border-amber-500/30">
-                POS BILLING
-              </div>
-
-              {/* Dynamic Player Cursor Pointer */}
-              <div
-                className="absolute w-3.5 h-3.5 -translate-x-1/2 -translate-y-1/2 transition-all duration-75"
-                style={{
-                  left: `${mapLeft}%`,
-                  top: `${mapTop}%`,
-                  transform: `translate(-50%, -50%) rotate(${playerYaw}rad)`,
-                }}
-              >
-                <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[9px] border-b-blue-400 mx-auto filter drop-shadow(0 0 5px #3b82f6)" />
-                <div className="w-2 h-2 rounded-full bg-blue-400 mx-auto -mt-1 shadow" />
-              </div>
-            </div>
-          </div>
-        )}
       </footer>
 
       {/* ============================================================== */}
