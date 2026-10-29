@@ -15,6 +15,8 @@ import {
   Tag,
   AlertCircle,
   Lock,
+  ZoomIn,
+  Maximize2,
 } from 'lucide-react';
 
 export const ProductModal: React.FC = () => {
@@ -30,6 +32,7 @@ export const ProductModal: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isBigZoomOpen, setIsBigZoomOpen] = useState<boolean>(false);
 
   if (!isProductModalOpen || !selectedProduct) return null;
 
@@ -100,18 +103,27 @@ export const ProductModal: React.FC = () => {
         {/* Product Image Section (Clean White Studio Framing) */}
         <div className="md:w-5/12 bg-gradient-to-b from-slate-50 via-slate-50 to-blue-50/30 p-6 sm:p-7 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-slate-100">
           {selectedProduct.discountPercentage > 0 && (
-            <div className="absolute top-4 left-4 bg-amber-400 text-slate-950 font-black text-xs px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+            <div className="absolute top-4 left-4 bg-amber-400 text-slate-950 font-black text-xs px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 z-10">
               <Tag className="w-3.5 h-3.5 fill-slate-950" />
               <span>{selectedProduct.discountPercentage}% OFF</span>
             </div>
           )}
 
-          <div className="relative group p-2 bg-white rounded-2xl shadow-sm border border-slate-100 my-2">
+          {/* Big Product Image with Zoom on Click */}
+          <div
+            onClick={() => setIsBigZoomOpen(true)}
+            className="relative group p-3 bg-white rounded-2xl shadow-sm border border-slate-100 my-2 cursor-zoom-in transition-all hover:shadow-md hover:border-blue-200"
+            title="Click to view large image"
+          >
             <img
               src={selectedProduct.imageUrl}
               alt={selectedProduct.name}
-              className="w-48 h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+              className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-xl group-hover:scale-105 transition-transform duration-300"
             />
+            <div className="absolute bottom-2 right-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+              <ZoomIn className="w-3 h-3" />
+              <span>Enlarge</span>
+            </div>
           </div>
 
           <div className="mt-3 flex items-center gap-1.5 text-xs font-bold bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm text-slate-900">
@@ -250,6 +262,43 @@ export const ProductModal: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Full-Screen Big Zoom Image Lightbox Overlay */}
+      {isBigZoomOpen && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsBigZoomOpen(false)}
+        >
+          <button
+            onClick={() => setIsBigZoomOpen(false)}
+            className="absolute top-6 right-6 w-11 h-11 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all cursor-pointer"
+            aria-label="Close Preview"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div
+            className="bg-white p-6 rounded-3xl max-w-xl w-full shadow-2xl flex flex-col items-center text-center space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedProduct.imageUrl}
+              alt={selectedProduct.name}
+              className="max-h-[60vh] w-auto object-contain rounded-2xl"
+            />
+            <div>
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                {selectedProduct.brand}
+              </span>
+              <h3 className="text-xl font-black text-slate-900 mt-1">
+                {selectedProduct.name}
+              </h3>
+              <p className="text-sm font-bold text-emerald-600 mt-1">
+                ₹{activePrice} {selectedProduct.unit ? `• ${selectedProduct.unit}` : ''}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

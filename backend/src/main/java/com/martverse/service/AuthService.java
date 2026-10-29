@@ -112,11 +112,19 @@ public class AuthService {
         otpCache.put(rawPhone, otp);
 
         // Prominently print in backend terminal for testing as requested by user
-        System.out.println("\n==================================================================");
-        System.out.println(">>> [MARTVERSE AUTH OTP TEST] Mobile: +91 " + rawPhone);
-        System.out.println(">>> [MARTVERSE AUTH OTP TEST] OTP Code: " + otp);
-        System.out.println("==================================================================\n");
-        log.info("[AUTH TEST OTP] Phone: +91 {} | OTP: {}", rawPhone, otp);
+        System.out.flush();
+        System.err.flush();
+        String banner = "\n" +
+            "==================================================================\n" +
+            "  >>> [MARTVERSE AUTH OTP TEST] <<<\n" +
+            "  Mobile Number : +91 " + rawPhone + "\n" +
+            "  RANDOM OTP    : >>> " + otp + " <<<\n" +
+            "==================================================================\n";
+        System.out.println(banner);
+        System.err.println(banner);
+        System.out.flush();
+        System.err.flush();
+        log.info(">>> [MARTVERSE AUTH OTP TEST] Mobile: +91 {} | RANDOM OTP: {} <<<", rawPhone, otp);
 
         return AuthDto.SendOtpResponse.builder()
                 .phone(rawPhone)

@@ -260,36 +260,47 @@ export const api = {
   // Indian Mobile OTP Send
   async sendOtp(phone: string): Promise<{ success: boolean; message: string; testOtp?: string }> {
     const cleanPhone = phone.replace(/[^0-9]/g, '').slice(-10);
-    try {
-      const res = await fetch(`${API_BASE}/auth/send-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const data = json.data || {};
-        return {
-          success: true,
-          message: data.message || `OTP sent successfully to +91 ${cleanPhone}`,
-          testOtp: data.testOtp || '123456',
-        };
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        return {
-          success: false,
-          message: errJson.message || 'Failed to send OTP. Please check mobile number.',
-          testOtp: '123456',
-        };
+    const endpoints = [
+      'http://localhost:8080/api/auth/send-otp',
+      'http://127.0.0.1:8080/api/auth/send-otp',
+      '/api/auth/send-otp',
+    ];
+
+    let lastErrorMessage = '';
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: cleanPhone }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const data = json.data || {};
+          console.log(
+            `%c[MARTVERSE AUTH] Random OTP sent by backend: ${data.testOtp} (Check your terminal!)`,
+            'color: #3b82f6; font-weight: bold; font-size: 13px;'
+          );
+          return {
+            success: true,
+            message: data.message || `OTP sent successfully to +91 ${cleanPhone}`,
+            testOtp: data.testOtp,
+          };
+        } else {
+          const errJson = await res.json().catch(() => ({}));
+          lastErrorMessage = errJson.message || 'Server rejected OTP request.';
+        }
+      } catch (err: any) {
+        lastErrorMessage = err?.message || 'Connection failed';
       }
-    } catch {
-      // Offline fallback: provide test OTP so demo continues smoothly
-      return {
-        success: true,
-        message: `OTP sent to +91 ${cleanPhone} (Demo Mode: 123456)`,
-        testOtp: '123456',
-      };
     }
+
+    // If backend couldn't be reached on any endpoint
+    return {
+      success: false,
+      message: `Could not connect to backend on port 8080. Please ensure backend is running in your terminal. (${lastErrorMessage})`,
+    };
   },
 
   // Indian Mobile OTP Verify
@@ -298,66 +309,51 @@ export const api = {
     otp: string
   ): Promise<{ success: boolean; token?: string; user?: any; message?: string }> {
     const cleanPhone = phone.replace(/[^0-9]/g, '').slice(-10);
-    try {
-      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, otp: otp.trim() }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const data = json.data || {};
-        const token = data.accessToken;
-        const user = data.user || {
-          id: 'user-' + cleanPhone,
-          phone: cleanPhone,
-          fullName: 'Customer +91 ' + cleanPhone,
-          email: 'phone' + cleanPhone + '@martverse.com',
-          role: 'CUSTOMER',
-        };
-        if (token) {
-          localStorage.setItem('martverse_token', token);
-          localStorage.setItem('martverse_user', JSON.stringify(user));
-          localStorage.setItem('martverse_phone', cleanPhone);
-        }
-        return { success: true, token, user, message: 'Welcome to Martverse!' };
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        // If test OTP was "123456" fallback
-        if (otp.trim() === '123456') {
-          const fallbackToken = 'demo-jwt-' + Date.now();
-          const fallbackUser = {
-            id: 'demo-user-' + cleanPhone,
+    const endpoints = [
+      'http://localhost:8080/api/auth/verify-otp',
+      'http://127.0.0.1:8080/api/auth/verify-otp',
+      '/api/auth/verify-otp',
+    ];
+
+    let lastErrorMessage = '';
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: cleanPhone, otp: otp.trim() }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const data = json.data || {};
+          const token = data.accessToken;
+          const user = data.user || {
+            id: 'user-' + cleanPhone,
             phone: cleanPhone,
             fullName: 'Customer +91 ' + cleanPhone,
-            email: 'customer@martverse.com',
+            email: 'phone' + cleanPhone + '@martverse.com',
             role: 'CUSTOMER',
           };
-          localStorage.setItem('martverse_token', fallbackToken);
-          localStorage.setItem('martverse_user', JSON.stringify(fallbackUser));
-          localStorage.setItem('martverse_phone', cleanPhone);
-          return { success: true, token: fallbackToken, user: fallbackUser };
+          if (token) {
+            localStorage.setItem('martverse_token', token);
+            localStorage.setItem('martverse_user', JSON.stringify(user));
+            localStorage.setItem('martverse_phone', cleanPhone);
+          }
+          return { success: true, token, user, message: 'Welcome to Martverse!' };
+        } else {
+          const errJson = await res.json().catch(() => ({}));
+          lastErrorMessage = errJson.message || 'Invalid verification code.';
         }
-        return { success: false, message: errJson.message || 'Invalid or expired OTP.' };
+      } catch (err: any) {
+        lastErrorMessage = err?.message || 'Connection error';
       }
-    } catch {
-      // Offline fallback
-      if (otp.trim() === '123456' || otp.trim().length === 6) {
-        const fallbackToken = 'demo-jwt-' + Date.now();
-        const fallbackUser = {
-          id: 'demo-user-' + cleanPhone,
-          phone: cleanPhone,
-          fullName: 'Customer +91 ' + cleanPhone,
-          email: 'customer@martverse.com',
-          role: 'CUSTOMER',
-        };
-        localStorage.setItem('martverse_token', fallbackToken);
-        localStorage.setItem('martverse_user', JSON.stringify(fallbackUser));
-        localStorage.setItem('martverse_phone', cleanPhone);
-        return { success: true, token: fallbackToken, user: fallbackUser };
-      }
-      return { success: false, message: 'Invalid OTP. Please enter 123456.' };
     }
+
+    return {
+      success: false,
+      message: lastErrorMessage || 'Verification failed. Please check the OTP from your terminal.',
+    };
   },
 
   // Customer Order History

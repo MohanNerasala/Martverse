@@ -1,9 +1,60 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { SupermarketAisle, Product } from '@/types';
 import { useMartStore } from '@/store/useMartStore';
-import { Text } from '@react-three/drei';
+import { Text, Image } from '@react-three/drei';
+
+class ImageErrorBoundary extends React.Component<
+  { fallback: React.ReactNode; children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { fallback: React.ReactNode; children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch() {
+    // Silently capture texture load error so 3D scene never crashes
+  }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
+const ProductSmallImage: React.FC<{
+  url: string;
+  position: [number, number, number];
+  scale: [number, number];
+  rotation?: [number, number, number];
+}> = ({ url, position, scale, rotation }) => {
+  const fallbackMesh = (
+    <mesh position={position} rotation={rotation}>
+      <planeGeometry args={scale} />
+      <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
+    </mesh>
+  );
+
+  return (
+    <ImageErrorBoundary fallback={fallbackMesh}>
+      <Suspense fallback={fallbackMesh}>
+        <Image
+          url={url}
+          position={position}
+          scale={scale}
+          rotation={rotation}
+          transparent
+          toneMapped={false}
+        />
+      </Suspense>
+    </ImageErrorBoundary>
+  );
+};
 
 interface ShelfUnitProps {
   aisle: SupermarketAisle;
@@ -133,11 +184,13 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
 
         const isHovered = hoveredProductId === prod.id;
         const color = plc.color || '#3b82f6';
+        const isFirstFloor = floorYOffset === 0;
 
         return (
           <group
             key={prod.id}
-            position={[relX, relY, relZ]}
+            position={[relX, relY + (isHovered ? 0.06 : 0), relZ]}
+            scale={isHovered ? [1.05, 1.05, 1.05] : [1, 1, 1]}
             rotation={[0, plc.rotationY || 0, 0]}
             onPointerOver={(e) => {
               e.stopPropagation();
@@ -154,6 +207,25 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
               openProductModal(prod);
             }}
           >
+            {/* Hover Floating Instruction Tag */}
+            {isHovered && (
+              <group position={[0, 0.52, 0]}>
+                <mesh position={[0, 0, 0]}>
+                  <boxGeometry args={[0.38, 0.09, 0.02]} />
+                  <meshBasicMaterial color="#2563eb" />
+                </mesh>
+                <Text
+                  position={[0, 0, 0.015]}
+                  fontSize={0.04}
+                  color="#ffffff"
+                  anchorX="center"
+                  anchorY="middle"
+                >
+                  Click to View Big
+                </Text>
+              </group>
+            )}
+
             {/* 3D Product Mesh based on modelType */}
             {plc.modelType === 'bottle' ? (
               <group position={[0, 0, 0]}>
@@ -188,6 +260,14 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                   <cylinderGeometry args={[0.082, 0.082, 0.14, 18]} />
                   <meshStandardMaterial color="#ffffff" roughness={0.3} />
                 </mesh>
+                {/* Real Small Product Image Label (First Floor Only) */}
+                {isFirstFloor && prod.imageUrl && (
+                  <ProductSmallImage
+                    url={prod.imageUrl}
+                    position={[0, 0.12, 0.086]}
+                    scale={[0.13, 0.13]}
+                  />
+                )}
               </group>
             ) : plc.modelType === 'bag' ? (
               <group position={[0, 0, 0]}>
@@ -206,11 +286,19 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                   <cylinderGeometry args={[0.016, 0.016, 0.28, 12]} />
                   <meshStandardMaterial color="#e2e8f0" roughness={0.9} />
                 </mesh>
-                {/* Front Artisan Craft Sticker */}
-                <mesh position={[0, 0.2, 0.084]}>
+                {/* Front White Backer Plate */}
+                <mesh position={[0, 0.2, 0.082]}>
                   <boxGeometry args={[0.22, 0.26, 0.005]} />
                   <meshBasicMaterial color="#fafaf9" />
                 </mesh>
+                {/* Real Small Product Image on Bag (First Floor Only) */}
+                {isFirstFloor && prod.imageUrl && (
+                  <ProductSmallImage
+                    url={prod.imageUrl}
+                    position={[0, 0.2, 0.086]}
+                    scale={[0.2, 0.24]}
+                  />
+                )}
               </group>
             ) : plc.modelType === 'shirt' || plc.modelType === 'hanger' ? (
               <group position={[0, 0, 0]}>
@@ -241,7 +329,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                 </mesh>
               </group>
             ) : (
-              // Standard Premium Box (Cereal, Biscuits, Tea, Butter, etc.)
+              // Standard Premium Box (Biscuits, Tea, Atta, Chocolate, etc.)
               <group position={[0, 0, 0]}>
                 {/* Premium Carton Box */}
                 <mesh castShadow position={[0, 0.18, 0]}>
@@ -254,11 +342,19 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                     emissiveIntensity={isHovered ? 0.35 : 0}
                   />
                 </mesh>
-                {/* Front High-Gloss Printed Label Faceplate */}
+                {/* Front White Backer Faceplate */}
                 <mesh position={[0, 0.18, 0.093]}>
                   <boxGeometry args={[0.23, 0.31, 0.005]} />
                   <meshStandardMaterial color="#ffffff" roughness={0.2} />
                 </mesh>
+                {/* Real Small Product Image on Carton (First Floor Only) */}
+                {isFirstFloor && prod.imageUrl && (
+                  <ProductSmallImage
+                    url={prod.imageUrl}
+                    position={[0, 0.18, 0.096]}
+                    scale={[0.21, 0.28]}
+                  />
+                )}
                 {/* Top Fold Seal Flap */}
                 <mesh position={[0, 0.363, 0]}>
                   <boxGeometry args={[0.23, 0.008, 0.14]} />
@@ -309,15 +405,23 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
               >
                 {prod.brand}
               </Text>
-              {/* Miniature Digital Barcode Lines */}
-              <group position={[0.1, 0, 0.016]}>
-                {[-0.025, -0.015, -0.005, 0.005, 0.015, 0.025].map((bx, bi) => (
-                  <mesh key={`barcode-${bi}`} position={[bx, 0, 0]}>
-                    <planeGeometry args={[bi % 2 === 0 ? 0.004 : 0.002, 0.05]} />
-                    <meshBasicMaterial color="#94a3b8" />
-                  </mesh>
-                ))}
-              </group>
+              {/* Real Small Product Thumbnail or Barcode on Tag */}
+              {isFirstFloor && prod.imageUrl ? (
+                <ProductSmallImage
+                  url={prod.imageUrl}
+                  position={[0.1, 0, 0.016]}
+                  scale={[0.08, 0.08]}
+                />
+              ) : (
+                <group position={[0.1, 0, 0.016]}>
+                  {[-0.025, -0.015, -0.005, 0.005, 0.015, 0.025].map((bx, bi) => (
+                    <mesh key={`barcode-${bi}`} position={[bx, 0, 0]}>
+                      <planeGeometry args={[bi % 2 === 0 ? 0.004 : 0.002, 0.05]} />
+                      <meshBasicMaterial color="#94a3b8" />
+                    </mesh>
+                  ))}
+                </group>
+              )}
             </group>
           </group>
         );
