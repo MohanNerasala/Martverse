@@ -29,6 +29,20 @@ public class AuthController {
                 .body(ApiResponse.success("Registration successful", response));
     }
 
+    @PostMapping("/send-otp")
+    @Operation(summary = "Send OTP to 10-digit phone number")
+    public ResponseEntity<ApiResponse<AuthDto.SendOtpResponse>> sendOtp(
+            @Valid @RequestBody AuthDto.SendOtpRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.sendOtp(request)));
+    }
+
+    @PostMapping("/verify-otp")
+    @Operation(summary = "Verify OTP and login or auto-register customer")
+    public ResponseEntity<ApiResponse<AuthDto.AuthResponse>> verifyOtp(
+            @Valid @RequestBody AuthDto.VerifyOtpRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Login successful", authService.verifyOtp(request)));
+    }
+
     @PostMapping("/login")
     @Operation(summary = "Login with email and password")
     public ResponseEntity<ApiResponse<AuthDto.AuthResponse>> login(

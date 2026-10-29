@@ -4,10 +4,14 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { SupermarketHUD } from '@/components/ui/SupermarketHUD';
 import { useMartStore } from '@/store/useMartStore';
+import { useCartStore } from '@/store/useCartStore';
 import { ProductModal } from '@/components/ui/ProductModal';
 import { CartDrawer } from '@/components/ui/CartDrawer';
 import { BillingModal } from '@/components/ui/BillingModal';
 import { ExitModal } from '@/components/ui/ExitModal';
+import { LoginModal } from '@/components/ui/LoginModal';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useBillingStore } from '@/store/useBillingStore';
 import { ShoppingBag, Sparkles, Store, ArrowRight, Layers, Barcode, ShieldCheck } from 'lucide-react';
 
 // Dynamic import with SSR disabled for WebGL canvas
@@ -42,6 +46,17 @@ export default function Home() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      useAuthStore.getState().hydrateAuth();
+
+      // Check if user is already authenticated; if not, open LoginModal so user can sign in or skip
+      const isAuth = useAuthStore.getState().isAuthenticated;
+      const hasSkipped = sessionStorage.getItem('martverse_login_skipped');
+      if (!isAuth && !hasSkipped) {
+        setTimeout(() => {
+          useAuthStore.getState().openLoginModal();
+        }, 500);
+      }
+
       (window as any).__openProductModal = (prod?: any) => {
         const store = (window as any).__martStore || useMartStore.getState();
         const p = prod || store.products.find((item: any) => item.slug === 'surf-excel-easy-wash-4kg') || store.products[0];
@@ -50,6 +65,15 @@ export default function Home() {
       (window as any).__martStore = useMartStore;
 
       const params = new URLSearchParams(window.location.search);
+      if (params.get('checkout')) {
+        setHasEnteredStore(true);
+        setTimeout(() => {
+          useMartStore.getState().setPlayerPos([0, 1.5, 15], 0);
+          useMartStore.getState().setCameraMode('billing');
+          useBillingStore.getState().startCheckout(useCartStore.getState().items);
+        }, 600);
+      }
+
       if (params.get('modal')) {
         const modalQuery = params.get('modal');
         const store = useMartStore.getState();
@@ -79,6 +103,7 @@ export default function Home() {
       <CartDrawer />
       <BillingModal />
       <ExitModal />
+      <LoginModal />
 
       {/* Welcome Walk-in Overlay for first-time entrance */}
       {!hasEnteredStore && (

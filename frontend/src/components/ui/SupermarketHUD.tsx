@@ -1,9 +1,9 @@
-'use client';
-
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useMartStore } from '@/store/useMartStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useBillingStore } from '@/store/useBillingStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import {
   ShoppingCart,
   Volume2,
@@ -27,10 +27,13 @@ import {
   ChevronRight,
   Sparkles,
   ArrowRight,
+  User,
+  LogIn,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
 export const SupermarketHUD: React.FC = () => {
+  const router = useRouter();
   const activeFloor = useMartStore((state) => state.activeFloor);
   const setActiveFloor = useMartStore((state) => state.setActiveFloor);
   const isSoundMuted = useMartStore((state) => state.isSoundMuted);
@@ -52,6 +55,11 @@ export const SupermarketHUD: React.FC = () => {
   const totalAmount = useCartStore((state) => state.totalAmount);
   const toggleCart = useCartStore((state) => state.toggleCart);
 
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const authPhone = useAuthStore((state) => state.phone);
+  const openLoginModal = useAuthStore((state) => state.openLoginModal);
+  const logout = useAuthStore((state) => state.logout);
+
   const startCheckout = useBillingStore((state) => state.startCheckout);
 
   const [showHelp, setShowHelp] = useState(false);
@@ -59,17 +67,8 @@ export const SupermarketHUD: React.FC = () => {
   const [orderHistoryList, setOrderHistoryList] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  const handleOpenHistory = async () => {
-    setShowOrderHistory(true);
-    setIsLoadingHistory(true);
-    try {
-      const orders = await api.getOrderHistory('9876543210');
-      setOrderHistoryList(orders || []);
-    } catch {
-      setOrderHistoryList([]);
-    } finally {
-      setIsLoadingHistory(false);
-    }
+  const handleOpenHistory = () => {
+    router.push('/orders');
   };
 
   return (
@@ -171,15 +170,39 @@ export const SupermarketHUD: React.FC = () => {
               <HelpCircle className="w-4 h-4" />
             </button>
 
-            {/* Customer Orders History Button */}
+            {/* Customer Orders History Link */}
             <button
               onClick={handleOpenHistory}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all text-xs font-semibold"
-              title="Customer Order History (Supabase DB)"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all text-xs font-semibold cursor-pointer"
+              title="Customer Orders Page (/orders)"
             >
               <History className="w-3.5 h-3.5 text-blue-400" />
               <span>Orders</span>
             </button>
+
+            {/* Mobile Auth / Profile in Navbar */}
+            {!isAuthenticated ? (
+              <button
+                onClick={() => openLoginModal()}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 hover:text-white border border-blue-500/40 transition-all text-xs font-bold cursor-pointer"
+                title="Sign in with Indian Mobile Number (+91)"
+              >
+                <LogIn className="w-3.5 h-3.5 text-blue-400" />
+                <span className="hidden xs:inline">Login</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/[0.1] text-xs font-bold text-white shadow-inner">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="hidden sm:inline font-mono text-[11px]">+91 {authPhone}</span>
+                <button
+                  onClick={() => logout()}
+                  className="text-[10px] text-slate-400 hover:text-rose-400 hover:underline cursor-pointer pl-1 border-l border-white/20"
+                  title="Sign Out"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
 
             {/* Hero Shopping Trolley Button */}
             <button

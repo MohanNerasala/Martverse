@@ -54,4 +54,26 @@ public class AuthDto {
         @NotBlank(message = "Refresh token is required")
         private String refreshToken;
     }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class SendOtpRequest {
+        @NotBlank(message = "Phone number is required")
+        private String phone;
+    }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class SendOtpResponse {
+        private String phone;
+        private String message;
+        private String testOtp;
+    }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class VerifyOtpRequest {
+        @NotBlank(message = "Phone number is required")
+        private String phone;
+
+        @NotBlank(message = "OTP is required")
+        private String otp;
+    }
 }

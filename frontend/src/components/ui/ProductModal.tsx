@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useMartStore } from '@/store/useMartStore';
 import { useCartStore } from '@/store/useCartStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { ProductVariant } from '@/types';
 import {
   X,
@@ -13,6 +14,7 @@ import {
   CheckCircle2,
   Tag,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
 
 export const ProductModal: React.FC = () => {
@@ -22,6 +24,8 @@ export const ProductModal: React.FC = () => {
   const showToast = useMartStore((state) => state.showToast);
 
   const addItem = useCartStore((state) => state.addItem);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const openLoginModal = useAuthStore((state) => state.openLoginModal);
 
   const [quantity, setQuantity] = useState<number>(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -35,6 +39,17 @@ export const ProductModal: React.FC = () => {
   const savings = activeMrp - activePrice;
 
   const handleAddToCart = () => {
+    // Auth Gate: Only logged in users can add items to cart
+    if (!isAuthenticated) {
+      showToast(
+        'Login Required',
+        'Please sign in with your mobile number to add items to your shopping trolley.',
+        'warning'
+      );
+      openLoginModal('Please sign in to add items to your shopping trolley.');
+      return;
+    }
+
     if (quantity <= 0) {
       setValidationError('Please select at least 1 item.');
       return;
@@ -218,12 +233,18 @@ export const ProductModal: React.FC = () => {
                 />
               </div>
 
-              {/* Shopping Cart Icon with subtle tilt & scale on hover */}
-              <ShoppingCart className="w-4 h-4 text-white drop-shadow group-hover:scale-115 group-hover:-rotate-6 transition-transform duration-300 flex-shrink-0" />
+              {/* Shopping Cart or Lock Icon */}
+              {!isAuthenticated ? (
+                <Lock className="w-4 h-4 text-white drop-shadow group-hover:scale-115 transition-transform duration-300 flex-shrink-0" />
+              ) : (
+                <ShoppingCart className="w-4 h-4 text-white drop-shadow group-hover:scale-115 group-hover:-rotate-6 transition-transform duration-300 flex-shrink-0" />
+              )}
               
               {/* Button text showing Item action and Total Amount */}
               <span className="relative z-10 tracking-wide font-black text-white text-sm drop-shadow whitespace-nowrap">
-                Add to Trolley • ₹{(activePrice * quantity).toLocaleString('en-IN')}
+                {!isAuthenticated
+                  ? `Sign In & Add • ₹${(activePrice * quantity).toLocaleString('en-IN')}`
+                  : `Add to Trolley • ₹${(activePrice * quantity).toLocaleString('en-IN')}`}
               </span>
             </button>
           </div>
