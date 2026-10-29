@@ -1,0 +1,69 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: martverse-backend
+
+  datasource:
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://${SUPABASE_DB_HOST:aws-0-eu-west-1.pooler.supabase.com}:${SUPABASE_DB_PORT:5432}/${SUPABASE_DB_NAME:postgres}?sslmode=${SUPABASE_DB_SSL:require}}
+    username: ${SUPABASE_DB_USER:postgres.aovbdgvdetqfjddyzagd}
+    password: ${SUPABASE_DB_PASSWORD:martverse**0987}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/seed.sql
+      continue-on-error: true
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:defaultDevSecretKeyThatIsAtLeast256BitsLongForHS256Algorithm}
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRY:3600000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRY:604800000}
+
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+  payment:
+    mode: RAZORPAY_TEST
+    simulated: false
+    test-mode-enabled: true
+
+  razorpay:
+    key-id: ${RAZORPAY_KEY_ID:rzp_test_martverse2026}
+    key-secret: ${RAZORPAY_KEY_SECRET:martverseRazorpayTestSecretKey9988}
+    webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:martverseWebhookSecretKey2026}
+    test-mode: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+logging:
+  level:
+    com.martverse: DEBUG
+    org.springframework.security: INFO

@@ -1,0 +1,131 @@
+import { create } from 'zustand';
+import { SupermarketFloor, Product } from '@/types';
+import { MOCK_FLOORS, MOCK_PRODUCTS } from '@/lib/mockData';
+import { sounds } from '@/lib/sound';
+
+interface MartStore {
+  floors: SupermarketFloor[];
+  products: Product[];
+  activeFloor: number;
+  playerPos: [number, number, number];
+  playerYaw: number;
+  selectedProduct: Product | null;
+  isProductModalOpen: boolean;
+  isMinimapOpen: boolean;
+  isSoundMuted: boolean;
+  cameraMode: 'first_person' | 'third_person' | 'billing' | 'exit';
+  nearBillingCounter: boolean;
+  nearExitGate: boolean;
+  promptText: string | null;
+  targetProductPos: [number, number, number] | null;
+
+  // Exit Animation & Completion
+  isAutoNavigatingToExit: boolean;
+  finalCompletedPopupOpen: boolean;
+  completedOrderNumber: string | null;
+  unpaidExitAlertOpen: boolean;
+
+  // Toast Notification
+  toast: { id: string; title: string; subtitle?: string; type: 'success' | 'warning' | 'info' } | null;
+
+  setFloors: (floors: SupermarketFloor[]) => void;
+  setProducts: (products: Product[]) => void;
+  setActiveFloor: (floorNumber: number) => void;
+  setPlayerPos: (pos: [number, number, number], yaw?: number) => void;
+  setSelectedProduct: (product: Product | null) => void;
+  openProductModal: (product: Product) => void;
+  closeProductModal: () => void;
+  toggleMinimap: (open?: boolean) => void;
+  toggleSound: () => void;
+  setCameraMode: (mode: 'first_person' | 'third_person' | 'billing' | 'exit') => void;
+  setProximity: (nearBilling: boolean, nearExit: boolean, prompt: string | null, targetPos?: [number, number, number] | null) => void;
+  startExitAnimation: (orderNumber: string) => void;
+  finishExitAnimation: () => void;
+  closeFinalCompletedPopup: () => void;
+  showToast: (title: string, subtitle?: string, type?: 'success' | 'warning' | 'info') => void;
+  hideToast: () => void;
+  openUnpaidExitAlert: () => void;
+  closeUnpaidExitAlert: () => void;
+}
+
+export const useMartStore = create<MartStore>((set) => ({
+  floors: MOCK_FLOORS,
+  products: MOCK_PRODUCTS,
+  activeFloor: 1,
+  playerPos: [0, 1.5, -20], // Spawn at Entrance
+  playerYaw: 0,
+  selectedProduct: null,
+  isProductModalOpen: false,
+  isMinimapOpen: true,
+  isSoundMuted: false,
+  cameraMode: 'third_person',
+  nearBillingCounter: false,
+  nearExitGate: false,
+  promptText: null,
+  targetProductPos: null,
+
+  isAutoNavigatingToExit: false,
+  finalCompletedPopupOpen: false,
+  completedOrderNumber: null,
+  unpaidExitAlertOpen: false,
+  toast: null,
+
+  setFloors: (floors) => set({ floors }),
+  setProducts: (products) => set({ products }),
+  setActiveFloor: (floorNumber) => set({ activeFloor: floorNumber }),
+  setPlayerPos: (playerPos, yaw) => set((state) => ({ playerPos, playerYaw: yaw !== undefined ? yaw : state.playerYaw })),
+  setSelectedProduct: (selectedProduct) => set({ selectedProduct }),
+  
+  openProductModal: (product) => set({ selectedProduct: product, isProductModalOpen: true }),
+  closeProductModal: () => set({ isProductModalOpen: false, selectedProduct: null }),
+
+  toggleMinimap: (open) => set((state) => ({ isMinimapOpen: open !== undefined ? open : !state.isMinimapOpen })),
+  
+  toggleSound: () => {
+    sounds.enabled = !sounds.enabled;
+    set((state) => ({ isSoundMuted: !state.isSoundMuted }));
+  },
+
+  setCameraMode: (cameraMode) => set({ cameraMode }),
+
+  setProximity: (nearBillingCounter, nearExitGate, promptText, targetProductPos = null) =>
+    set({ nearBillingCounter, nearExitGate, promptText, targetProductPos }),
+
+  startExitAnimation: (orderNumber) => {
+    set({
+      isAutoNavigatingToExit: true,
+      cameraMode: 'third_person',
+      completedOrderNumber: orderNumber,
+    });
+  },
+
+  finishExitAnimation: () => {
+    sounds.playGateOpen();
+    set({
+      isAutoNavigatingToExit: false,
+      cameraMode: 'exit',
+      finalCompletedPopupOpen: true,
+    });
+  },
+
+  closeFinalCompletedPopup: () => {
+    set({
+      finalCompletedPopupOpen: false,
+      cameraMode: 'third_person',
+    });
+  },
+
+  showToast: (title, subtitle, type = 'success') => {
+    const id = 'toast-' + Math.random().toString(36).substring(2, 9);
+    set({ toast: { id, title, subtitle, type } });
+    setTimeout(() => {
+      // Auto-hide after 3.5 seconds if current toast is the same
+      set((state) => (state.toast?.id === id ? { toast: null } : {}));
+    }, 3500);
+  },
+
+  hideToast: () => set({ toast: null }),
+
+  openUnpaidExitAlert: () => set({ unpaidExitAlertOpen: true }),
+  closeUnpaidExitAlert: () => set({ unpaidExitAlertOpen: false }),
+}));

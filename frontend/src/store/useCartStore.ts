@@ -1,0 +1,176 @@
+import { create } from 'zustand';
+import { Product, ProductVariant, CartItem } from '@/types';
+import { sounds } from '@/lib/sound';
+
+export interface FlyAnimation {
+  id: string;
+  startPos: [number, number, number];
+  color: string;
+  createdAt: number;
+}
+
+interface CartStore {
+  items: CartItem[];
+  totalItems: number;
+  subtotal: number;
+  discountTotal: number;
+  totalAmount: number;
+  isCartOpen: boolean;
+  isPaid: boolean;
+  flyAnimations: FlyAnimation[];
+  
+  toggleCart: (open?: boolean) => void;
+  addItem: (product: Product, quantity?: number, variant?: ProductVariant, startPos?: [number, number, number]) => void;
+  updateQuantity: (itemId: string, quantity: number) => void;
+  removeItem: (itemId: string) => void;
+  clearCart: () => void;
+  setIsPaid: (paid: boolean) => void;
+  removeFlyAnimation: (id: string) => void;
+}
+
+export const useCartStore = create<CartStore>((set, get) => ({
+  items: [],
+  totalItems: 0,
+  subtotal: 0,
+  discountTotal: 0,
+  totalAmount: 0,
+  isCartOpen: false,
+  isPaid: false,
+  flyAnimations: [],
+
+  toggleCart: (open) => {
+    set((state) => ({ isCartOpen: open !== undefined ? open : !state.isCartOpen }));
+  },
+
+  addItem: (product, quantity = 1, variant, startPos) => {
+    sounds.playPickSound();
+    
+    // Trigger 3D flying particle/box into trolley
+    if (startPos) {
+      const animId = 'fly-' + Math.random().toString(36).substring(2, 9);
+      const color = product.placement?.color || '#10b981';
+      set((state) => ({
+        flyAnimations: [...state.flyAnimations, { id: animId, startPos, color, createdAt: Date.now() }],
+      }));
+      // Auto-remove animation after 800ms
+      setTimeout(() => {
+        get().removeFlyAnimation(animId);
+      }, 800);
+    }
+
+    set((state) => {
+      const existingIndex = state.items.findIndex(
+        (it) => it.productId === product.id && it.variantId === variant?.id
+      );
+
+      const unitPrice = variant ? variant.price : product.price;
+      const unitMrp = variant ? variant.mrp : product.mrp;
+
+      let newItems = [...state.items];
+      if (existingIndex > -1) {
+        const item = newItems[existingIndex];
+        const newQty = item.quantity + quantity;
+        newItems[existingIndex] = {
+          ...item,
+          quantity: newQty,
+          subtotal: newQty * unitPrice,
+        };
+      } else {
+        const newItem: CartItem = {
+          id: 'item-' + Math.random().toString(36).substring(2, 9),
+          productId: product.id,
+          productName: product.name,
+          productSlug: product.slug,
+          productImage: product.imageUrl,
+          brand: product.brand,
+          unit: product.unit,
+          variantId: variant?.id,
+          variantName: variant?.name,
+          size: variant?.size,
+          color: variant?.color,
+          price: unitPrice,
+          mrp: unitMrp,
+          quantity,
+          subtotal: quantity * unitPrice,
+        };
+        newItems.push(newItem);
+      }
+
+      const totalItems = newItems.reduce((acc, it) => acc + it.quantity, 0);
+      const subtotal = newItems.reduce((acc, it) => acc + it.subtotal, 0);
+      const mrpTotal = newItems.reduce((acc, it) => acc + it.mrp * it.quantity, 0);
+      const discountTotal = Math.max(0, mrpTotal - subtotal);
+      const deliveryCharge = subtotal >= 499 || subtotal === 0 ? 0 : 40;
+      const totalAmount = subtotal + deliveryCharge;
+
+      return {
+        items: newItems,
+        totalItems,
+        subtotal,
+        discountTotal,
+        totalAmount,
+        isPaid: false, // Adding new items resets paid status
+      };
+    });
+  },
+
+  updateQuantity: (itemId, quantity) => {
+    set((state) => {
+      let newItems: CartItem[];
+      if (quantity <= 0) {
+        newItems = state.items.filter((it) => it.id !== itemId);
+      } else {
+        newItems = state.items.map((it) => {
+          if (it.id === itemId) {
+            return {
+              ...it,
+              quantity,
+              subtotal: quantity * it.price,
+            };
+          }
+          return it;
+        });
+      }
+
+      const totalItems = newItems.reduce((acc, it) => acc + it.quantity, 0);
+      const subtotal = newItems.reduce((acc, it) => acc + it.subtotal, 0);
+      const mrpTotal = newItems.reduce((acc, it) => acc + it.mrp * it.quantity, 0);
+      const discountTotal = Math.max(0, mrpTotal - subtotal);
+      const deliveryCharge = subtotal >= 499 || subtotal === 0 ? 0 : 40;
+      const totalAmount = subtotal + deliveryCharge;
+
+      return {
+        items: newItems,
+        totalItems,
+        subtotal,
+        discountTotal,
+        totalAmount,
+      };
+    });
+  },
+
+  removeItem: (itemId) => {
+    get().updateQuantity(itemId, 0);
+  },
+
+  clearCart: () => {
+    set({
+      items: [],
+      totalItems: 0,
+      subtotal: 0,
+      discountTotal: 0,
+      totalAmount: 0,
+      isPaid: false,
+    });
+  },
+
+  setIsPaid: (paid) => {
+    set({ isPaid: paid });
+  },
+
+  removeFlyAnimation: (id) => {
+    set((state) => ({
+      flyAnimations: state.flyAnimations.filter((a) => a.id !== id),
+    }));
+  },
+}));
