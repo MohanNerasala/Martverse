@@ -10,7 +10,7 @@ import {
   Plus,
   Minus,
   Star,
-  CheckCircle,
+  CheckCircle2,
   Tag,
   AlertCircle,
 } from 'lucide-react';
@@ -69,62 +69,62 @@ export const ProductModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      {/* Luxury White Modal Container with Soft Shadow */}
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-[0_25px_80px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col md:flex-row relative animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      {/* Luxury White Modal Box with Black Text */}
+      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-[0_25px_80px_rgba(0,0,0,0.28)] overflow-hidden flex flex-col md:flex-row relative animate-in fade-in zoom-in-95 duration-200 border border-slate-200/90">
         
-        {/* Close Button */}
+        {/* Crisp Circular Close Button */}
         <button
           onClick={closeProductModal}
-          className="absolute top-4 right-4 z-10 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 p-2 rounded-full transition-all duration-200 border border-slate-200 cursor-pointer shadow-sm"
+          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-black flex items-center justify-center transition-all duration-200 border border-slate-200 cursor-pointer shadow-sm hover:rotate-90 active:scale-90"
           aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        {/* Product Image Section (Clean Studio Backdrop) */}
-        <div className="md:w-1/2 bg-gradient-to-b from-slate-50 to-blue-50/40 p-6 sm:p-8 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-slate-100">
+        {/* Product Image Section (Clean White Studio Framing) */}
+        <div className="md:w-5/12 bg-gradient-to-b from-slate-50 via-slate-50 to-blue-50/30 p-6 sm:p-7 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-slate-100">
           {selectedProduct.discountPercentage > 0 && (
-            <div className="absolute top-4 left-4 bg-emerald-600 text-white font-black text-xs px-2.5 py-1 rounded-full shadow-md shadow-emerald-500/20 flex items-center gap-1">
-              <Tag className="w-3.5 h-3.5" />
-              {selectedProduct.discountPercentage}% OFF
+            <div className="absolute top-4 left-4 bg-amber-400 text-slate-950 font-black text-xs px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+              <Tag className="w-3.5 h-3.5 fill-slate-950" />
+              <span>{selectedProduct.discountPercentage}% OFF</span>
             </div>
           )}
 
-          <div className="relative group">
+          <div className="relative group p-2 bg-white rounded-2xl shadow-sm border border-slate-100 my-2">
             <img
               src={selectedProduct.imageUrl}
               alt={selectedProduct.name}
-              className="w-52 h-52 object-cover rounded-2xl shadow-lg border border-white group-hover:scale-105 transition-transform duration-300"
+              className="w-48 h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
             />
           </div>
 
-          <div className="mt-4 flex items-center gap-1.5 text-amber-500 text-xs font-bold bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">
-            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-            <span className="text-slate-900 font-extrabold">4.8</span>
+          <div className="mt-3 flex items-center gap-1.5 text-xs font-bold bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm text-slate-900">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span className="font-black text-black">4.8</span>
             <span className="text-slate-500 font-medium">(1,240 verified reviews)</span>
           </div>
         </div>
 
-        {/* Product Details Section (Pristine White with High-Contrast Black Typography) */}
-        <div className="md:w-1/2 p-6 sm:p-7 flex flex-col justify-between bg-white text-slate-900">
+        {/* Product Details Section (Pristine White Box with Crisp Black Typography) */}
+        <div className="md:w-7/12 p-6 sm:p-7 flex flex-col justify-between bg-white text-black">
           <div className="space-y-4">
             <div>
-              <span className="text-[11px] font-black tracking-wider uppercase text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200/60 inline-block mb-1.5">
-                {selectedProduct.brand} • {selectedProduct.category?.name || 'Aisle Item'}
+              <span className="text-[11px] font-black tracking-wider uppercase text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200/70 inline-block mb-1.5">
+                {selectedProduct.brand} • {selectedProduct.category?.name || 'Supermarket Item'}
               </span>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug tracking-tight">
                 {selectedProduct.name}
               </h2>
               {selectedProduct.unit && (
-                <p className="text-xs font-semibold text-slate-500 mt-1">{selectedProduct.unit}</p>
+                <p className="text-xs font-bold text-slate-500 mt-1">{selectedProduct.unit}</p>
               )}
             </div>
 
-            {/* Price & Savings Display */}
-            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 flex items-baseline justify-between">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900">
+            {/* Price & Savings Display Box */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-baseline justify-between">
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
                   ₹{activePrice.toLocaleString('en-IN')}
                 </span>
                 {activeMrp > activePrice && (
@@ -134,25 +134,25 @@ export const ProductModal: React.FC = () => {
                 )}
               </div>
               {savings > 0 && (
-                <span className="text-xs font-black text-emerald-700 bg-emerald-100/80 px-2.5 py-1 rounded-lg border border-emerald-300/60">
+                <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-300/80 shadow-sm">
                   Save ₹{savings}
                 </span>
               )}
             </div>
 
-            {/* Clothing Variants (Size / Color) if applicable */}
+            {/* Product Variants (if available) */}
             {selectedProduct.variants && selectedProduct.variants.length > 0 && (
               <div className="space-y-1.5">
-                <span className="text-xs font-bold text-slate-700">Select Variant:</span>
+                <span className="text-xs font-black text-slate-900">Select Variant:</span>
                 <div className="flex flex-wrap gap-2">
                   {selectedProduct.variants.map((v) => (
                     <button
                       key={v.id}
                       onClick={() => setSelectedVariant(v)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         currentVariant?.id === v.id
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                          : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200'
                       }`}
                     >
                       {v.size || v.name}
@@ -162,10 +162,10 @@ export const ProductModal: React.FC = () => {
               </div>
             )}
 
-            {/* In Stock Assurance */}
-            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
-              <CheckCircle className="w-4 h-4" />
-              <span>In Stock • Instant Trolley Delivery</span>
+            {/* In Stock Badge */}
+            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>In Stock • Shelf Placement Active</span>
             </div>
 
             {validationError && (
@@ -176,48 +176,53 @@ export const ProductModal: React.FC = () => {
             )}
           </div>
 
-          {/* Bottom Bar: Quantity Stepper & Perfectly Aligned Add to Trolley CTA Button */}
-          <div className="pt-5 mt-4 border-t border-slate-100 flex items-center gap-3">
-            {/* Quantity Stepper */}
-            <div className="flex items-center bg-slate-100 border border-slate-200 rounded-2xl p-1 shadow-inner">
+          {/* Perfectly Aligned Bottom Bar: Quantity Stepper & Add to Trolley CTA Button */}
+          <div className="pt-5 mt-4 border-t border-slate-100 flex items-center gap-3 w-full">
+            {/* Quantity Stepper (Pixel-perfect h-12 alignment with CTA button) */}
+            <div className="h-12 flex items-center bg-slate-100 border border-slate-200 rounded-2xl px-1.5 py-1 gap-1 shadow-inner flex-shrink-0">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer"
+                className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-900 font-extrabold flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer border border-slate-200"
                 aria-label="Decrease quantity"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-3.5 h-3.5 text-slate-800" />
               </button>
-              <span className="w-9 text-center font-black text-sm text-slate-900">{quantity}</span>
+              <span className="w-8 text-center font-black text-sm text-slate-900 select-none">
+                {quantity}
+              </span>
               <button
                 onClick={() => setQuantity(quantity + 1)}
-                className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer"
+                className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-900 font-extrabold flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer border border-slate-200"
                 aria-label="Increase quantity"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 text-slate-800" />
               </button>
             </div>
 
-            {/* Add to Trolley CTA Button with Smooth Hover & Animated Gradient */}
+            {/* Add to Trolley CTA Button: Smooth Hover, Shimmer Beam, Perfectly Aligned */}
             <button
               onClick={handleAddToCart}
-              className="flex-1 relative overflow-hidden py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2.5 text-white font-extrabold text-sm shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group cursor-pointer"
+              className="h-12 flex-1 relative overflow-hidden rounded-2xl flex items-center justify-center gap-2.5 px-5 text-white font-extrabold text-sm shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl hover:shadow-blue-600/35 group cursor-pointer select-none"
               style={{
-                background: 'linear-gradient(135deg, #1d4ed8 0%, #0284c7 35%, #059669 70%, #2563eb 100%)',
-                backgroundSize: '240% 240%',
-                animation: 'gradient-flow 4s ease infinite',
-                boxShadow: '0 8px 24px -4px rgba(2, 132, 199, 0.45)',
+                background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0284c7 100%)',
               }}
             >
-              {/* Sweeping Light Beam Overlay */}
-              <div
-                className="absolute inset-0 pointer-events-none opacity-30 group-hover:opacity-70 transition-opacity"
-                style={{
-                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.7) 50%, transparent 100%)',
-                  animation: 'light-sweep 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite',
-                }}
-              />
-              <ShoppingCart className="w-4 h-4 text-white drop-shadow group-hover:scale-110 transition-transform" />
-              <span className="relative z-10 tracking-wide font-black drop-shadow">
+              {/* Smooth Gliding White Sheen on Hover */}
+              <div className="absolute inset-0 w-full h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+                <div
+                  className="w-full h-full"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                    animation: 'light-sweep 2s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+                  }}
+                />
+              </div>
+
+              {/* Shopping Cart Icon with subtle tilt & scale on hover */}
+              <ShoppingCart className="w-4 h-4 text-white drop-shadow group-hover:scale-115 group-hover:-rotate-6 transition-transform duration-300 flex-shrink-0" />
+              
+              {/* Button text showing Item action and Total Amount */}
+              <span className="relative z-10 tracking-wide font-black text-white text-sm drop-shadow whitespace-nowrap">
                 Add to Trolley • ₹{(activePrice * quantity).toLocaleString('en-IN')}
               </span>
             </button>

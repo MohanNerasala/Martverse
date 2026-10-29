@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { SupermarketHUD } from '@/components/ui/SupermarketHUD';
+import { useMartStore } from '@/store/useMartStore';
 import { ProductModal } from '@/components/ui/ProductModal';
 import { CartDrawer } from '@/components/ui/CartDrawer';
 import { BillingModal } from '@/components/ui/BillingModal';
@@ -38,6 +39,32 @@ const SupermarketScene = dynamic(
 
 export default function Home() {
   const [hasEnteredStore, setHasEnteredStore] = useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__openProductModal = (prod?: any) => {
+        const store = (window as any).__martStore || useMartStore.getState();
+        const p = prod || store.products.find((item: any) => item.slug === 'surf-excel-easy-wash-4kg') || store.products[0];
+        store.openProductModal(p);
+      };
+      (window as any).__martStore = useMartStore;
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('modal')) {
+        const modalQuery = params.get('modal');
+        const store = useMartStore.getState();
+        const target = store.products.find(
+          (p) => p.slug === modalQuery || p.id === modalQuery || p.slug.includes(modalQuery || '')
+        ) || store.products.find((p) => p.slug.includes('surf-excel')) || store.products[0];
+        if (target) {
+          setHasEnteredStore(true);
+          setTimeout(() => {
+            store.openProductModal(target);
+          }, 300);
+        }
+      }
+    }
+  }, []);
 
   return (
     <main className="w-full h-screen overflow-hidden bg-[#080B11] relative">
