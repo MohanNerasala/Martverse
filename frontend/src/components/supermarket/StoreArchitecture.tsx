@@ -34,57 +34,48 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
         <boxGeometry args={[14, 5, 0.4]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
-      {/* Transom lintel over entrance door (Electric Sapphire & Glass) */}
-      <mesh position={[0, 4.2, -26]}>
+      {/* Wall opening lintel over entrance door (Pristine Architectural White) */}
+      <mesh position={[0, 4.2, -26]} receiveShadow>
         <boxGeometry args={[8, 1.6, 0.4]} />
-        <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.4} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
-      <Text
-        position={[0, 4.2, -25.75]}
-        fontSize={0.4}
-        color="#ffffff"
-        anchorX="center"
-        anchorY="middle"
-      >
-        MARTVERSE 3D HYPERMARKET
-      </Text>
 
-      {/* Entrance Portal Welcome Arch (z = -18.5, directly in front on first look) */}
-      <group position={[0, 0, -18.5]}>
-        <mesh position={[-4.2, 2.2, 0]} castShadow>
-          <boxGeometry args={[0.3, 4.4, 0.3]} />
-          <meshStandardMaterial color="#ffffff" metalness={0.9} roughness={0.15} />
+      {/* --- Single Luxury White Signboard: 'Welcome to Martverse' --- */}
+      <group position={[0, 4.25, -25.75]}>
+        {/* Sleek Chrome Framing Rim */}
+        <mesh position={[0, 0, -0.01]}>
+          <boxGeometry args={[5.28, 0.93, 0.04]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
         </mesh>
-        <mesh position={[4.2, 2.2, 0]} castShadow>
-          <boxGeometry args={[0.3, 4.4, 0.3]} />
-          <meshStandardMaterial color="#ffffff" metalness={0.9} roughness={0.15} />
+        {/* Pure White Acrylic/Porcelain Board */}
+        <mesh castShadow>
+          <boxGeometry args={[5.2, 0.85, 0.05]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.12} metalness={0.08} />
         </mesh>
-        <mesh position={[0, 4.3, 0]}>
-          <boxGeometry args={[8.7, 0.65, 0.35]} />
-          <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.5} roughness={0.2} />
+        {/* Subtle Sapphire Accent Base Strip */}
+        <mesh position={[0, -0.38, 0.028]}>
+          <boxGeometry args={[4.8, 0.02, 0.01]} />
+          <meshBasicMaterial color="#38bdf8" />
         </mesh>
-        <mesh position={[0, 3.95, 0]}>
-          <boxGeometry args={[8.8, 0.05, 0.38]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={0.9} />
-        </mesh>
+        {/* Main Brand Title in Sapphire Blue */}
         <Text
-          position={[0, 4.3, 0.2]}
-          fontSize={0.38}
-          color="#ffffff"
+          position={[0, 0.08, 0.03]}
+          fontSize={0.34}
+          color="#0284c7"
           anchorX="center"
           anchorY="middle"
         >
-          MARTVERSE 3D HYPERMARKET
+          Welcome to Martverse
         </Text>
+        {/* Elegant Blue-to-White Tagline */}
         <Text
-          position={[0, 4.3, -0.2]}
-          rotation={[0, Math.PI, 0]}
-          fontSize={0.38}
-          color="#ffffff"
+          position={[0, -0.22, 0.03]}
+          fontSize={0.14}
+          color="#38bdf8"
           anchorX="center"
           anchorY="middle"
         >
-          THANK YOU FOR VISITING
+          3D VIRTUAL HYPERMARKET
         </Text>
       </group>
 

@@ -3,7 +3,6 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Text } from '@react-three/drei';
 import { useCartStore } from '@/store/useCartStore';
 
 interface ExitGateProps {
@@ -41,23 +40,6 @@ export const ExitGate3D: React.FC<ExitGateProps> = ({ position }) => {
 
   return (
     <group position={position}>
-      {/* Overhead Exit Archway Banner */}
-      <group position={[0, 3.2, 0]}>
-        <mesh castShadow>
-          <boxGeometry args={[4.2, 0.7, 0.2]} />
-          <meshStandardMaterial color={canExit ? '#16a34a' : '#b91c1c'} roughness={0.3} />
-        </mesh>
-        <Text
-          position={[0, 0, 0.12]}
-          fontSize={0.2}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-        >
-          {canExit ? '✓ THANK YOU FOR SHOPPING • EXIT' : '⛔ UNPAID CART • PAY AT BILLING'}
-        </Text>
-      </group>
-
       {/* Security Pedestals (Left and Right RFID scanners) */}
       {[-1.8, 1.8].map((xOffset, idx) => (
         <group key={`rfid-${idx}`} position={[xOffset, 0, 0]}>
