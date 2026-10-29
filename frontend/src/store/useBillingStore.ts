@@ -228,8 +228,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
       set({ backendQuote: quote, isValidatingBackend: false });
       return quote;
-    } catch (err) {
-      console.warn('Backend cart revalidation error:', err);
+    } catch {
       set({ isValidatingBackend: false });
       return null;
     }

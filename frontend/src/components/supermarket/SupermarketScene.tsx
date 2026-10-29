@@ -31,8 +31,8 @@ export const SupermarketScene: React.FC = () => {
         ]);
         if (floorsData && floorsData.length > 0) setFloors(floorsData);
         if (productsData && productsData.length > 0) setProducts(productsData);
-      } catch (err) {
-        console.warn('Using default mock layout data:', err);
+      } catch {
+        // Fallback silently
       }
     }
     loadData();
@@ -44,7 +44,7 @@ export const SupermarketScene: React.FC = () => {
   return (
     <div className="w-full h-full relative select-none">
       <Canvas
-        shadows
+        shadows="percentage"
         camera={{ position: [0, 4, -24], fov: 65, near: 0.1, far: 120 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       >

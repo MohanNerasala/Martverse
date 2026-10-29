@@ -31,7 +31,7 @@ async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fall
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500); // quick timeout for fallback
+    const timeoutId = setTimeout(() => controller.abort(), 1200); // 1.2s timeout
     const res = await fetch(`${API_BASE}${url}`, {
       ...options,
       headers,
@@ -40,13 +40,12 @@ async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fall
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      console.warn(`API [${url}] returned status ${res.status}. Using fallback data.`);
       return fallback;
     }
     const data = await res.json();
     return data.data !== undefined ? data.data : data;
-  } catch (err) {
-    console.warn(`API [${url}] fetch failed:`, err);
+  } catch {
+    // Backend offline: silently return mock data fallback without console noise
     return fallback;
   }
 }
@@ -66,9 +65,7 @@ export const api = {
       const paged = await fetchWithFallback<any>('/products?size=100', { method: 'GET' }, null);
       if (Array.isArray(paged) && paged.length > 0) return paged;
       if (paged && Array.isArray(paged.content) && paged.content.length > 0) return paged.content;
-    } catch (e) {
-      console.warn('Failed to load products from API, using mock fallback:', e);
-    }
+    } catch {}
     return MOCK_PRODUCTS;
   },
 
@@ -232,8 +229,8 @@ export const api = {
         const json = await res.json();
         return json.data || fallbackResponse;
       }
-    } catch (err) {
-      console.warn('Backend call /payments/simulate failed, using simulated response:', err);
+    } catch {
+      // Offline fallback
     }
     return fallbackResponse;
   },
@@ -276,8 +273,8 @@ export const api = {
         const json = await res.json();
         return json.data || [];
       }
-    } catch (e) {
-      console.warn('Failed to fetch order history:', e);
+    } catch {
+      // Offline fallback
     }
     return [];
   },

@@ -67,8 +67,8 @@ export const SupermarketHUD: React.FC = () => {
     try {
       const orders = await api.getOrderHistory('9876543210');
       setOrderHistoryList(orders || []);
-    } catch (e) {
-      console.warn('Failed to fetch order history:', e);
+    } catch {
+      setOrderHistoryList([]);
     } finally {
       setIsLoadingHistory(false);
     }
