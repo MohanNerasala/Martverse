@@ -226,7 +226,14 @@ public class OrderService {
         if (phone == null || phone.isBlank()) {
             return List.of();
         }
-        List<Order> orders = orderRepository.findByAddressPhoneOrderByCreatedAtDesc(phone.trim());
+        String clean = phone.replaceAll("[^0-9]", "");
+        if (clean.length() >= 10) {
+            clean = clean.substring(clean.length() - 10);
+        }
+        List<Order> orders = orderRepository.findByPhoneFlexible(clean);
+        if (orders.isEmpty()) {
+            orders = orderRepository.findByAddressPhoneOrderByCreatedAtDesc(phone.trim());
+        }
         return orders.stream()
                 .map(this::mapToOrderResponse)
                 .collect(Collectors.toList());

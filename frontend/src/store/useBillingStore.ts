@@ -56,9 +56,13 @@ export type BillingPhase =
   | 'processing'
   | 'success_popup';
 
+export type ScanStage = 'drop' | 'laser' | 'bagged' | 'idle';
+
 interface BillingStore {
   phase: BillingPhase;
   scannedItems: BillingScannedItem[];
+  currentScanningItem: CartItem | null;
+  scanStage: ScanStage;
   currentIndex: number;
   totalToScan: number;
   isPaused: boolean;
@@ -71,6 +75,7 @@ interface BillingStore {
   startCheckout: (items: CartItem[]) => void;
   pauseScanning: () => void;
   resumeScanning: () => void;
+  skipToReview: () => void;
   updateScannedItemQuantity: (itemId: string, quantity: number) => void;
   removeScannedItem: (itemId: string) => void;
   revalidateCartWithBackend: (fulfilmentType?: string) => Promise<BackendQuote | null>;
@@ -82,12 +87,14 @@ interface BillingStore {
   resetBilling: () => void;
 }
 
-let scanTimer: NodeJS.Timeout | null = null;
+let scanStepTimeout: NodeJS.Timeout | null = null;
 let currentItemsToScan: CartItem[] = [];
 
 export const useBillingStore = create<BillingStore>((set, get) => ({
   phase: 'idle',
   scannedItems: [],
+  currentScanningItem: null,
+  scanStage: 'idle',
   currentIndex: 0,
   totalToScan: 0,
   isPaused: false,
@@ -99,9 +106,9 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
   startCheckout: (items) => {
     if (items.length === 0) return;
-    if (scanTimer) {
-      clearInterval(scanTimer);
-      scanTimer = null;
+    if (scanStepTimeout) {
+      clearTimeout(scanStepTimeout);
+      scanStepTimeout = null;
     }
 
     currentItemsToScan = [...items];
@@ -109,6 +116,8 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     set({
       phase: 'scanning',
       scannedItems: [],
+      currentScanningItem: items[0] || null,
+      scanStage: 'drop',
       currentIndex: 0,
       totalToScan: items.length,
       isPaused: false,
@@ -118,47 +127,76 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       backendQuote: null,
     });
 
-    scanTimer = setInterval(() => {
+    const processNextItem = (index: number) => {
       const state = get();
-      if (state.phase !== 'scanning') {
-        if (scanTimer) clearInterval(scanTimer);
-        return;
-      }
+      if (state.phase !== 'scanning') return;
 
       if (state.isPaused) {
-        // Paused by user, wait until resumed
+        // Retry shortly when paused
+        scanStepTimeout = setTimeout(() => processNextItem(index), 250);
         return;
       }
 
-      const idx = state.currentIndex;
-      if (idx < currentItemsToScan.length) {
-        const item = currentItemsToScan[idx];
+      if (index >= currentItemsToScan.length) {
+        // All items scanned!
+        set({
+          phase: 'review',
+          isConveyorMoving: false,
+          currentScanningItem: null,
+          scanStage: 'idle',
+        });
+        get().revalidateCartWithBackend();
+        return;
+      }
+
+      const item = currentItemsToScan[index];
+
+      // Stage 1: Item drops onto conveyor belt
+      set({
+        currentScanningItem: item,
+        scanStage: 'drop',
+        currentIndex: index,
+        isConveyorMoving: true,
+      });
+
+      // Stage 2: Glides forward under barcode scanner laser
+      scanStepTimeout = setTimeout(() => {
+        const curr = get();
+        if (curr.phase !== 'scanning') return;
+
+        set({ scanStage: 'laser' });
         sounds.playScanBeep();
 
-        const scannedItem: BillingScannedItem = {
-          ...item,
-          scannedAt: Date.now(),
-          scanSoundPlayed: true,
-        };
+        // Stage 3: Scanned successfully and registered
+        scanStepTimeout = setTimeout(() => {
+          const cState = get();
+          if (cState.phase !== 'scanning') return;
 
-        const newRunningTotal = state.runningTotal + item.subtotal;
+          const scannedItem: BillingScannedItem = {
+            ...item,
+            scannedAt: Date.now(),
+            scanSoundPlayed: true,
+          };
 
-        set((prev) => ({
-          scannedItems: [...prev.scannedItems, scannedItem],
-          currentIndex: idx + 1,
-          runningTotal: newRunningTotal,
-        }));
-      } else {
-        // All items scanned, transition to review
-        if (scanTimer) {
-          clearInterval(scanTimer);
-          scanTimer = null;
-        }
-        set({ phase: 'review', isConveyorMoving: false });
-        // Automatically fetch authoritative backend quote
-        get().revalidateCartWithBackend();
-      }
-    }, 700);
+          const newTotal = cState.runningTotal + item.subtotal;
+
+          set((prev) => ({
+            scannedItems: [...prev.scannedItems, scannedItem],
+            runningTotal: newTotal,
+            scanStage: 'bagged',
+            currentIndex: index + 1,
+          }));
+
+          // Pause briefly between items for graceful conveyor flow
+          scanStepTimeout = setTimeout(() => {
+            processNextItem(index + 1);
+          }, 280);
+        }, 450);
+      }, 420);
+    };
+
+    // Start with the first item
+    processNextItem(0);
   },
 
   pauseScanning: () => {
@@ -167,6 +205,30 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
   resumeScanning: () => {
     set({ isPaused: false, isConveyorMoving: true });
+  },
+
+  skipToReview: () => {
+    if (scanStepTimeout) {
+      clearTimeout(scanStepTimeout);
+      scanStepTimeout = null;
+    }
+    const allScanned: BillingScannedItem[] = currentItemsToScan.map((it) => ({
+      ...it,
+      scannedAt: Date.now(),
+      scanSoundPlayed: true,
+    }));
+    const total = allScanned.reduce((acc, it) => acc + it.subtotal, 0);
+
+    set({
+      phase: 'review',
+      scannedItems: allScanned,
+      currentIndex: allScanned.length,
+      runningTotal: total,
+      isConveyorMoving: false,
+      currentScanningItem: null,
+      scanStage: 'idle',
+    });
+    get().revalidateCartWithBackend();
   },
 
   updateScannedItemQuantity: (itemId, quantity) => {
@@ -263,9 +325,9 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
   },
 
   cancelBilling: () => {
-    if (scanTimer) {
-      clearInterval(scanTimer);
-      scanTimer = null;
+    if (scanStepTimeout) {
+      clearTimeout(scanStepTimeout);
+      scanStepTimeout = null;
     }
     // Cancel billing without emptying trolley/cart!
     set({
@@ -274,13 +336,15 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       isConveyorMoving: false,
       currentIndex: 0,
       scannedItems: [],
+      currentScanningItem: null,
+      scanStage: 'idle',
     });
   },
 
   resetBilling: () => {
-    if (scanTimer) {
-      clearInterval(scanTimer);
-      scanTimer = null;
+    if (scanStepTimeout) {
+      clearTimeout(scanStepTimeout);
+      scanStepTimeout = null;
     }
     set({
       phase: 'idle',
@@ -291,6 +355,8 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       isConveyorMoving: false,
       runningTotal: 0,
       backendQuote: null,
+      currentScanningItem: null,
+      scanStage: 'idle',
     });
   },
 }));

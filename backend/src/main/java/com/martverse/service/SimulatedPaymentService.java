@@ -42,6 +42,7 @@ public class SimulatedPaymentService {
     private final AddressRepository addressRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final CustomerProfileRepository customerProfileRepository;
 
     // Idempotency cache to prevent duplicate rapid clicks (keys: sessionId or phone+time window)
     private final Set<String> inFlightRequests = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -96,9 +97,22 @@ public class SimulatedPaymentService {
             BigDecimal finalAmount = subtotal.add(deliveryCharge);
 
             // 3. Persist Customer Delivery Address
+            String cleanPhone = request.getCustomerPhone() != null ? request.getCustomerPhone().replaceAll("[^0-9]", "") : "";
+            if (cleanPhone.length() >= 10) {
+                cleanPhone = cleanPhone.substring(cleanPhone.length() - 10);
+            }
+
+            // If userId not provided via JWT, try resolving through registered profile phone number
+            if (userId == null && !cleanPhone.isEmpty()) {
+                Optional<CustomerProfile> profileOpt = customerProfileRepository.findByPhone(cleanPhone);
+                if (profileOpt.isPresent() && profileOpt.get().getUser() != null) {
+                    userId = profileOpt.get().getUser().getId();
+                }
+            }
+
             Address address = Address.builder()
                     .fullName(request.getCustomerName())
-                    .phone(request.getCustomerPhone())
+                    .phone(!cleanPhone.isEmpty() ? cleanPhone : request.getCustomerPhone())
                     .email(request.getCustomerEmail() != null ? request.getCustomerEmail() : "")
                     .addressLine1(request.getAddressLine1())
                     .addressLine2(request.getAddressLine2())

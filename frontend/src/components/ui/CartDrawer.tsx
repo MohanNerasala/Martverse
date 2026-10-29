@@ -138,9 +138,12 @@ export const CartDrawer: React.FC = () => {
                 className="bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl p-3.5 flex gap-3.5 items-center transition-all shadow-sm"
               >
                 <img
-                  src={it.productImage}
+                  src={it.productImage || '/products/fallback.svg'}
                   alt={it.productName}
-                  className="w-16 h-16 rounded-xl object-cover bg-white border border-slate-200 shadow-sm flex-shrink-0"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/products/fallback.svg';
+                  }}
+                  className="w-16 h-16 rounded-xl object-contain p-1 bg-white border border-slate-200 shadow-sm flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <span className="text-[10px] font-black text-blue-700 uppercase tracking-wide block">

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#fde047"/>
+            <stop offset="100%" stop-color="#facc15"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+        
+    <g transform="translate(348, 28)">
+      <rect width="22" height="22" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <circle cx="11" cy="11" r="5" fill="#15803d"/>
+    </g>
+  
+
+        <!-- Parle-G Banner -->
+        <rect x="30" y="60" width="340" height="70" rx="14" fill="#dc2626" stroke="#ffffff" stroke-width="4"/>
+        <text x="200" y="112" font-family="'Arial Black', sans-serif" font-size="44" font-weight="900" fill="#ffffff" text-anchor="middle">Parle-G</text>
+
+        <text x="200" y="165" font-family="'Arial Black', sans-serif" font-size="18" fill="#1e3a8a" font-weight="900" text-anchor="middle">ORIGINAL GLUCOSE BISCUITS</text>
+        <text x="200" y="190" font-family="system-ui, sans-serif" font-size="14" fill="#b45309" font-weight="800" text-anchor="middle">G MEANS GENIUS • WITH MILK & WHEAT</text>
+
+        <!-- Nostalgic Biscuit Graphic -->
+        <g transform="translate(200, 280)">
+          <rect x="-80" y="-45" width="160" height="90" rx="8" fill="#d97706" stroke="#92400e" stroke-width="4"/>
+          <text x="0" y="10" font-family="'Arial Black', sans-serif" font-size="24" fill="#fef08a" text-anchor="middle">Parle-G</text>
+        </g>
+
+        <rect x="40" y="375" width="100" height="30" rx="6" fill="#1e3a8a"/>
+        <text x="90" y="395" font-family="system-ui, sans-serif" font-size="13" font-weight="800" fill="#ffffff" text-anchor="middle">800 g Family</text>
+        
+        <rect x="260" y="375" width="100" height="30" rx="6" fill="#dc2626"/>
+        <text x="310" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#ffffff" text-anchor="middle">₹75</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

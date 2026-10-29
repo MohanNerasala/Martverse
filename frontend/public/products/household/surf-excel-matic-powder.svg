@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#0284c7"/>
+            <stop offset="50%" stop-color="#0369a1"/>
+            <stop offset="100%" stop-color="#075985"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+
+        <!-- Multi-Color Stain Lifter Splash -->
+        <g transform="translate(200, 95)">
+          <path d="M-80 0 L-20 -40 L40 -10 L90 -40 L60 30 L-20 40 Z" fill="#ec4899" opacity="0.8"/>
+          <text y="14" font-family="'Arial Black', sans-serif" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">Surf excel</text>
+        </g>
+
+        <rect x="50" y="160" width="300" height="42" rx="10" fill="#ec4899"/>
+        <text x="200" y="189" font-family="'Arial Black', sans-serif" font-size="22" fill="#ffffff" font-weight="900" text-anchor="middle">MATIC FRONT LOAD</text>
+        <text x="200" y="235" font-family="system-ui, sans-serif" font-size="15" fill="#fbcfe8" font-weight="800" text-anchor="middle">TOUGH STAIN REMOVAL IN MACHINE</text>
+
+        <circle cx="200" cy="305" r="48" fill="#ffffff" stroke="#ec4899" stroke-width="4"/>
+        <text x="200" y="313" font-family="'Arial Black', sans-serif" font-size="22" fill="#0369a1" text-anchor="middle">MATIC</text>
+
+        <rect x="40" y="375" width="80" height="30" rx="6" fill="#075985"/>
+        <text x="80" y="395" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">4 kg Box</text>
+        
+        <rect x="280" y="375" width="80" height="30" rx="6" fill="#ec4899"/>
+        <text x="320" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#ffffff" text-anchor="middle">₹495</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

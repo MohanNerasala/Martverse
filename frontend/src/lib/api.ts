@@ -214,6 +214,8 @@ export const api = {
       items: [],
     };
 
+    let finalOrder = fallbackResponse;
+
     try {
       const res = await fetch(`${API_BASE}/payments/simulate`, {
         method: 'POST',
@@ -227,12 +229,35 @@ export const api = {
 
       if (res.ok) {
         const json = await res.json();
-        return json.data || fallbackResponse;
+        if (json.data) {
+          finalOrder = json.data;
+        }
       }
     } catch {
       // Offline fallback
     }
-    return fallbackResponse;
+
+    // Persist to local browser storage so orders appear immediately without delay
+    try {
+      if (typeof window !== 'undefined') {
+        const existing = JSON.parse(localStorage.getItem('martverse_customer_orders') || '[]');
+        const cleanPhone = (payload.customerPhone || '').replace(/[^0-9]/g, '').slice(-10);
+        const orderRecord = {
+          ...finalOrder,
+          id: finalOrder.orderId || finalOrder.orderNumber,
+          customerPhone: cleanPhone || payload.customerPhone,
+          customerName: payload.customerName,
+          status: 'CONFIRMED',
+          paymentStatus: 'PAID',
+          createdAt: new Date().toISOString(),
+          totalAmount: finalOrder.finalAmount || finalOrder.subtotal || 0,
+        };
+        const updated = [orderRecord, ...existing.filter((o: any) => o.orderNumber !== finalOrder.orderNumber)].slice(0, 50);
+        localStorage.setItem('martverse_customer_orders', JSON.stringify(updated));
+      }
+    } catch {}
+
+    return finalOrder;
   },
 
   // Auth helper
@@ -358,9 +383,12 @@ export const api = {
 
   // Customer Order History
   async getOrderHistory(phone?: string): Promise<any[]> {
+    const cleanPhone = phone ? phone.replace(/[^0-9]/g, '').slice(-10) : '';
+    let backendOrders: any[] = [];
+
     try {
-      const url = phone
-        ? `${API_BASE}/orders/history?phone=${encodeURIComponent(phone)}`
+      const url = cleanPhone
+        ? `${API_BASE}/orders/history?phone=${encodeURIComponent(cleanPhone)}`
         : `${API_BASE}/orders/history`;
       const res = await fetch(url, {
         headers: {
@@ -370,11 +398,125 @@ export const api = {
       });
       if (res.ok) {
         const json = await res.json();
-        return json.data || [];
+        if (Array.isArray(json.data)) {
+          backendOrders = json.data;
+        }
       }
     } catch {
       // Offline fallback
     }
-    return [];
+
+    // Merge with locally persisted orders for instant reactivity
+    let localOrders: any[] = [];
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = JSON.parse(localStorage.getItem('martverse_customer_orders') || '[]');
+        if (cleanPhone) {
+          localOrders = saved.filter((o: any) => {
+            const op = (o.customerPhone || '').replace(/[^0-9]/g, '').slice(-10);
+            return !op || op === cleanPhone;
+          });
+        } else {
+          localOrders = saved;
+        }
+      }
+    } catch {}
+
+    const orderMap = new Map<string, any>();
+    // Add backend orders first
+    for (const ord of backendOrders) {
+      const key = ord.orderNumber || ord.id;
+      if (key) orderMap.set(key, ord);
+    }
+    // Add local orders (filling any missing items)
+    for (const ord of localOrders) {
+      const key = ord.orderNumber || ord.id;
+      if (key && !orderMap.has(key)) {
+        orderMap.set(key, ord);
+      }
+    }
+
+    return Array.from(orderMap.values()).sort((a, b) => {
+      const timeA = new Date(a.createdAt || 0).getTime();
+      const timeB = new Date(b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+  },
+
+  // Customer Wishlist API
+  async getWishlist(): Promise<any> {
+    return fetchWithFallback<any>('/wishlist', { method: 'GET' }, { items: [] });
+  },
+
+  async toggleWishlist(productId: string): Promise<any> {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_BASE}/wishlist/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Id': getSessionId(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ productId }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json.data;
+      }
+    } catch {}
+    return null;
+  },
+
+  async addToWishlist(productId: string): Promise<any> {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_BASE}/wishlist/items/${productId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Id': getSessionId(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json.data;
+      }
+    } catch {}
+    return null;
+  },
+
+  async removeFromWishlist(productId: string): Promise<any> {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_BASE}/wishlist/items/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Id': getSessionId(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json.data;
+      }
+    } catch {}
+    return null;
+  },
+
+  async clearWishlist(): Promise<void> {
+    try {
+      const token = getAuthToken();
+      await fetch(`${API_BASE}/wishlist`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Id': getSessionId(),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+    } catch {}
   },
 };

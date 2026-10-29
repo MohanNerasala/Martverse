@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useCartStore } from '@/store/useCartStore';
-import { martRuntime } from '@/store/useMartStore';
+import { useBillingStore } from '@/store/useBillingStore';
+import { martRuntime, useMartStore } from '@/store/useMartStore';
 import { CartItem } from '@/types';
 
 interface TrolleyProps {
@@ -96,6 +97,8 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const trolleyRef = useRef<THREE.Group>(null);
   const items = useCartStore((state) => state.items);
   const flyAnimations = useCartStore((state) => state.flyAnimations);
+  const resetTrigger = useMartStore((state) => state.resetTrigger);
+  const teleportTrigger = useMartStore((state) => state.teleportTrigger);
 
   const initialPos = targetPos || martRuntime.playerPos;
   const initialYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
@@ -110,18 +113,149 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const currentYaw = useRef(initialYaw);
   const basketBump = useRef(0);
 
+  // Instant snap on reset to original entrance position
+  useEffect(() => {
+    if (resetTrigger === 0) return;
+    currentPos.current.set(0, 0, -19.05);
+    currentYaw.current = 0;
+    if (trolleyRef.current) {
+      trolleyRef.current.position.set(0, 0, -19.05);
+      trolleyRef.current.rotation.y = Math.PI;
+    }
+  }, [resetTrigger]);
+
+  // Instant snap on teleport / auto-navigation to product shelf
+  useEffect(() => {
+    if (teleportTrigger === 0) return;
+    const actualPos = martRuntime.playerPos;
+    const actualYaw = martRuntime.playerYaw ?? 0;
+    const offsetX = Math.sin(actualYaw) * 0.95;
+    const offsetZ = Math.cos(actualYaw) * 0.95;
+    currentPos.current.set(actualPos[0] + offsetX, actualPos[1] - 1.5, actualPos[2] + offsetZ);
+    currentYaw.current = actualYaw;
+    if (trolleyRef.current) {
+      trolleyRef.current.position.copy(currentPos.current);
+      trolleyRef.current.rotation.y = actualYaw + Math.PI;
+    }
+  }, [teleportTrigger]);
+
   useFrame((_, delta) => {
     if (!trolleyRef.current) return;
 
     const actualPos = targetPos || martRuntime.playerPos;
-    const actualYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
+    let actualYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
 
     // Follow smoothly in front of the player at the exact same position with larger realistic 1.18x scale
     const offsetX = Math.sin(actualYaw) * 0.95;
     const offsetZ = Math.cos(actualYaw) * 0.95;
-    const desiredX = actualPos[0] + offsetX;
+    let desiredX = actualPos[0] + offsetX;
     const desiredY = actualPos[1] - 1.5;
-    const desiredZ = actualPos[2] + offsetZ;
+    let desiredZ = actualPos[2] + offsetZ;
+
+    // Strict Shelf & Obstacle Clamping: Trolley mesh NEVER enters inside shelf racks, edges, or balustrades
+    const currentFloor = actualPos[1] > 4.5 ? 2 : 1;
+    const cartHalfW = 0.46;
+    const cartHalfD = 0.58;
+
+    // 1. Store Outer Perimeter Walls Clamping
+    desiredX = THREE.MathUtils.clamp(desiredX, -17.0 + cartHalfW, 17.0 - cartHalfW);
+    desiredZ = THREE.MathUtils.clamp(desiredZ, -24.4 + cartHalfD, 24.4 - cartHalfD);
+
+    // 2. Strict Escalator lateral & side containment:
+    // Escalator centerline is at x = 14.70. Left yellow line at x = 13.78, Left glass balustrade at x = 13.65.
+    // Right yellow line at x = 15.62, Right glass balustrade at x = 15.75.
+    const isNearEscalatorCorridor =
+      desiredZ >= -9.2 &&
+      desiredZ <= 7.2 &&
+      Math.abs(desiredX - 14.7) < 1.6;
+
+    const isOnEscalatorRamp =
+      (actualPos[2] >= -9.0 && actualPos[2] <= 7.0 && Math.abs(actualPos[0] - 14.7) < 1.3) ||
+      isNearEscalatorCorridor;
+
+    if (isOnEscalatorRamp) {
+      // Trolley is locked strictly to escalator center line x = 14.70.
+      // With trolley half-width 0.42m, the trolley stays at [14.28, 15.12],
+      // giving 0.50m of safety margin from the yellow lines (13.78 and 15.62) and never clipping!
+      desiredX = 14.70;
+      const isAscending = Math.cos(actualYaw) >= -0.2;
+      actualYaw = isAscending ? 0 : Math.PI;
+    } else {
+      // Escalator side structure on Floor 1: impenetrable barrier from the sides
+      if (currentFloor === 1 && desiredZ >= -9.2 && desiredZ <= 7.2) {
+        if (actualPos[0] < 14.7) {
+          desiredX = Math.min(desiredX, 13.2 - cartHalfW);
+        } else {
+          desiredX = Math.max(desiredX, 16.2 + cartHalfW);
+        }
+      }
+
+      // Floor 2 Atrium Opening Guardrails
+      if (currentFloor === 2) {
+        if (desiredZ >= -7.5 - cartHalfD && desiredZ <= 6.5 + cartHalfD && actualPos[0] < 13.2) {
+          desiredX = Math.min(desiredX, 13.2 - cartHalfW);
+        }
+        if (desiredX >= 13.2 - cartHalfW && desiredX <= 16.2 + cartHalfW && actualPos[2] > 6.5) {
+          desiredZ = Math.max(desiredZ, 6.5 + cartHalfD);
+        }
+      }
+
+      // 3. Physical Shelf Rows Obstacle Clamping
+      const aisleXs =
+        currentFloor === 1
+          ? [-10, -5, 0, 5, 10]
+          : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
+
+      for (const ax of aisleXs) {
+        const boxMinX = ax - 0.95 - cartHalfW;
+        const boxMaxX = ax + 0.95 + cartHalfW;
+        const boxMinZ = -12.4 - cartHalfD;
+        const boxMaxZ = 12.4 + cartHalfD;
+
+        if (desiredX > boxMinX && desiredX < boxMaxX && desiredZ > boxMinZ && desiredZ < boxMaxZ) {
+          const dLeft = desiredX - boxMinX;
+          const dRight = boxMaxX - desiredX;
+          const dBack = desiredZ - boxMinZ;
+          const dFront = boxMaxZ - desiredZ;
+          const minD = Math.min(dLeft, dRight, dBack, dFront);
+
+          if (minD === dBack) desiredZ = boxMinZ;
+          else if (minD === dFront) desiredZ = boxMaxZ;
+          else if (minD === dLeft) desiredX = boxMinX;
+          else desiredX = boxMaxX;
+        }
+      }
+
+      // 4. Floor 1 Billing Counters Zone (Spacious 3.8m spacing between desks)
+      if (currentFloor === 1) {
+        for (const cx of [-3.8, 0, 3.8]) {
+          const deskMinX = cx - 0.68 - cartHalfW;
+          const deskMaxX = cx + 0.68 + cartHalfW;
+          const deskMinZ = 16.4 - cartHalfD;
+          const deskMaxZ = 19.6 + cartHalfD;
+
+          if (desiredX > deskMinX && desiredX < deskMaxX && desiredZ > deskMinZ && desiredZ < deskMaxZ) {
+            const dLeft = desiredX - deskMinX;
+            const dRight = deskMaxX - desiredX;
+            const dBack = desiredZ - deskMinZ;
+            const dFront = deskMaxZ - desiredZ;
+            const minD = Math.min(dLeft, dRight, dBack, dFront);
+
+            if (minD === dBack) desiredZ = deskMinZ;
+            else if (minD === dFront) desiredZ = deskMaxZ;
+            else if (minD === dLeft) desiredX = deskMinX;
+            else desiredX = deskMaxX;
+          }
+        }
+      }
+    }
+
+    // Fast teleport recovery (e.g. floor change or reset)
+    const distToTarget = currentPos.current.distanceTo(new THREE.Vector3(desiredX, desiredY, desiredZ));
+    if (distToTarget > 3.5) {
+      currentPos.current.set(desiredX, desiredY, desiredZ);
+      currentYaw.current = actualYaw;
+    }
 
     // Check if an incoming 3D item is landing to trigger physical suspension compression bump!
     const isLanding = flyAnimations.some((a) => {
@@ -143,12 +277,36 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     // Smooth yaw rotation towards player direction
     currentYaw.current = THREE.MathUtils.damp(currentYaw.current, actualYaw, 14, delta);
 
+    // Strict final containment pass on currentPos so the cart NEVER clips even mid-lerp
+    if (isOnEscalatorRamp) {
+      currentPos.current.x = 14.70;
+    } else {
+      currentPos.current.x = THREE.MathUtils.clamp(currentPos.current.x, -16.8 + cartHalfW, 16.8 - cartHalfW);
+      currentPos.current.z = THREE.MathUtils.clamp(currentPos.current.z, -24.2 + cartHalfD, 24.2 - cartHalfD);
+      if (currentFloor === 1 && currentPos.current.z >= -9.2 && currentPos.current.z <= 7.2) {
+        if (currentPos.current.x < 14.7) {
+          currentPos.current.x = Math.min(currentPos.current.x, 13.2 - cartHalfW);
+        } else {
+          currentPos.current.x = Math.max(currentPos.current.x, 16.2 + cartHalfW);
+        }
+      }
+    }
+
     trolleyRef.current.position.copy(currentPos.current);
     trolleyRef.current.rotation.y = currentYaw.current + Math.PI;
   });
 
   // Calculate items to display inside the basket (capped at 16 for performance)
+  // During 3D billing scanning, items smoothly leave the basket as they float to the conveyor bench
+  const billingPhase = useBillingStore((state) => state.phase);
+  const billingCurrentIndex = useBillingStore((state) => state.currentIndex);
+
   const displayItems = items.flatMap((it) => Array(Math.min(it.quantity, 3)).fill(it)).slice(0, 16);
+  const itemsInBasket = billingPhase === 'scanning'
+    ? displayItems.slice(Math.min(displayItems.length, billingCurrentIndex))
+    : (['review', 'checkout_details', 'processing', 'success_popup'].includes(billingPhase)
+      ? []
+      : displayItems);
 
   return (
     <group ref={trolleyRef} scale={[1.18, 1.18, 1.18]}>
@@ -297,7 +455,7 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
 
       {/* --- Live Products inside Trolley Basket --- */}
       <group position={[0, 0.55, 0.05]}>
-        {displayItems.map((item, idx) => (
+        {itemsInBasket.map((item, idx) => (
           <TrolleyProductItem key={`trolley-item-${item.id}-${idx}`} item={item} index={idx} />
         ))}
       </group>

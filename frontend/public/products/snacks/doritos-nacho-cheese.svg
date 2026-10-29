@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#b91c1c"/>
+            <stop offset="60%" stop-color="#991b1b"/>
+            <stop offset="100%" stop-color="#180404"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+        
+    <g transform="translate(348, 28)">
+      <rect width="22" height="22" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <circle cx="11" cy="11" r="5" fill="#15803d"/>
+    </g>
+  
+
+        <!-- Doritos Logo -->
+        <g transform="translate(200, 100)">
+          <polygon points="-80,20 -20,-30 80,-10 60,30" fill="#f97316"/>
+          <text y="14" font-family="'Arial Black', Impact, sans-serif" font-size="48" font-weight="900" fill="#ffffff" text-anchor="middle" font-style="italic" stroke="#000" stroke-width="2">Doritos</text>
+        </g>
+
+        <rect x="60" y="160" width="280" height="38" rx="8" fill="#f59e0b"/>
+        <text x="200" y="186" font-family="'Arial Black', sans-serif" font-size="20" font-weight="900" fill="#000000" text-anchor="middle" letter-spacing="1">NACHO CHEESE</text>
+        
+        <!-- Tortilla chip -->
+        <g transform="translate(200, 290)">
+          <polygon points="0,-75 75,55 -75,55" fill="#f59e0b" stroke="#b45309" stroke-width="4" transform="rotate(10)"/>
+          <path d="M-30 20 Q 0 45 30 20 Q 40 50 -20 40" fill="#fef08a" opacity="0.9"/>
+        </g>
+
+        <rect x="40" y="375" width="90" height="30" rx="6" fill="#1e293b"/>
+        <text x="85" y="395" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">82.5 g</text>
+        
+        <rect x="270" y="375" width="90" height="30" rx="6" fill="#f59e0b"/>
+        <text x="315" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#000000" text-anchor="middle">₹30</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

@@ -134,8 +134,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
       const subtotal = newItems.reduce((acc, it) => acc + it.subtotal, 0);
       const mrpTotal = newItems.reduce((acc, it) => acc + it.mrp * it.quantity, 0);
       const discountTotal = Math.max(0, mrpTotal - subtotal);
-      const deliveryCharge = subtotal >= 499 || subtotal === 0 ? 0 : 40;
-      const totalAmount = subtotal + deliveryCharge;
+      // In-store 3D supermarket trolley total matches exact item costs (no delivery surcharge while browsing)
+      const totalAmount = subtotal;
 
       return {
         items: newItems,
@@ -170,8 +170,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       const subtotal = newItems.reduce((acc, it) => acc + it.subtotal, 0);
       const mrpTotal = newItems.reduce((acc, it) => acc + it.mrp * it.quantity, 0);
       const discountTotal = Math.max(0, mrpTotal - subtotal);
-      const deliveryCharge = subtotal >= 499 || subtotal === 0 ? 0 : 40;
-      const totalAmount = subtotal + deliveryCharge;
+      const totalAmount = subtotal;
 
       return {
         items: newItems,

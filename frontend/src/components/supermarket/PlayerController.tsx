@@ -37,6 +37,8 @@ export const PlayerController: React.FC = () => {
   const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
   const setHasMovedTrolley = useMartStore((state) => state.setHasMovedTrolley);
   const showToast = useMartStore((state) => state.showToast);
+  const resetTrigger = useMartStore((state) => state.resetTrigger);
+  const teleportTrigger = useMartStore((state) => state.teleportTrigger);
 
   const startCheckout = useBillingStore((state) => state.startCheckout);
   const cartItems = useCartStore((state) => state.items);
@@ -50,11 +52,36 @@ export const PlayerController: React.FC = () => {
   const isDragging = useRef(false);
   const prevMouse = useRef({ x: 0, y: 0 });
   const lastSyncTime = useRef(0);
+  const resetPending = useRef(false);
   const proximityCache = useRef<{
     nearBilling: boolean;
     nearExit: boolean;
     prompt: string | null;
   }>({ nearBilling: false, nearExit: false, prompt: null });
+
+  // Handle Reset to Original State & Starting Position (Entrance)
+  useEffect(() => {
+    if (resetTrigger === 0) return;
+    posRef.current.set(0, 1.5, -20);
+    velocityRef.current = { x: 0, z: 0 };
+    yawRef.current = 0;
+    pitchRef.current = 0;
+    martRuntime.playerPos[0] = 0;
+    martRuntime.playerPos[1] = 1.5;
+    martRuntime.playerPos[2] = -20;
+    martRuntime.playerYaw = 0;
+    resetPending.current = true;
+  }, [resetTrigger]);
+
+  // Handle Teleport & Auto-Navigation to Product Shelf
+  useEffect(() => {
+    if (teleportTrigger === 0) return;
+    posRef.current.set(martRuntime.playerPos[0], martRuntime.playerPos[1], martRuntime.playerPos[2]);
+    velocityRef.current = { x: 0, z: 0 };
+    yawRef.current = martRuntime.playerYaw ?? 0;
+    pitchRef.current = 0;
+    resetPending.current = true;
+  }, [teleportTrigger]);
 
   // Synchronize position if floor switched via HUD
   useEffect(() => {
@@ -88,6 +115,12 @@ export const PlayerController: React.FC = () => {
         case 'KeyE':
           keys.current.interact = true;
           handleInteract();
+          break;
+        case 'Space':
+          if (useBillingStore.getState().phase === 'scanning') {
+            e.preventDefault();
+            useBillingStore.getState().skipToReview();
+          }
           break;
       }
     };
@@ -131,6 +164,21 @@ export const PlayerController: React.FC = () => {
 
       yawRef.current -= dx * 0.0035;
       pitchRef.current = Math.max(-0.6, Math.min(0.6, pitchRef.current - dy * 0.003));
+
+      // Escalator yaw containment: prevent turning sideways and shoving trolley into glass balustrade
+      const onRamp =
+        Math.abs(posRef.current.x - 14.7) < 1.4 &&
+        posRef.current.z >= -9.0 &&
+        posRef.current.z <= 7.0;
+
+      if (onRamp) {
+        const isAscending = Math.cos(yawRef.current) >= -0.2;
+        if (isAscending) {
+          yawRef.current = THREE.MathUtils.clamp(yawRef.current, -0.4, 0.4);
+        } else {
+          yawRef.current = THREE.MathUtils.clamp(yawRef.current, Math.PI - 0.4, Math.PI + 0.4);
+        }
+      }
     };
 
     const handleMouseUp = () => {
@@ -157,10 +205,9 @@ export const PlayerController: React.FC = () => {
     const px = posRef.current.x;
     const pz = posRef.current.z;
 
-    // Check Billing Counter (around z = 17, x between -4 and 4)
-    if (Math.abs(pz - 17) < 3.2 && Math.abs(px) < 4.5) {
-      if (cartItems.length > 0) {
-        setCameraMode('billing');
+    // Check Billing Counter (around z = 15.0 to 19.5, across lanes 1-3 from x = -6.8 to 3.5)
+    if (pz >= 15.0 && pz <= 19.5 && px >= -6.8 && px <= 3.5) {
+      if (cartItems.length > 0 && useBillingStore.getState().phase === 'idle') {
         startCheckout(cartItems);
       }
       return;
@@ -260,40 +307,129 @@ export const PlayerController: React.FC = () => {
 
       const currentFloor = posRef.current.y > 4.5 ? 2 : 1;
 
-      // Obstacle & Shelf Collision Checker (clean player cylinder clearance)
-      const checkObstacle = (testPx: number, testPz: number, floor: number): boolean => {
-        // Outer store walls (width 36, length 52)
-        if (testPx < -17.2 || testPx > 17.2 || testPz < -24.2 || testPz > 24.2) return true;
+      // Circle vs Axis-Aligned Bounding Box intersection test
+      const circleIntersectsAABB = (
+        cx: number,
+        cz: number,
+        r: number,
+        minX: number,
+        maxX: number,
+        minZ: number,
+        maxZ: number
+      ): boolean => {
+        const closestX = Math.max(minX, Math.min(cx, maxX));
+        const closestZ = Math.max(minZ, Math.min(cz, maxZ));
+        const dx = cx - closestX;
+        const dz = cz - closestZ;
+        return dx * dx + dz * dz < r * r;
+      };
 
-        // Escalator shaft walkway (allow passing freely through escalator entrance and ramp)
-        if (Math.abs(testPx - 14.7) < 1.6 && testPz > -8.0 && testPz < 6.5) {
-          return false;
+      // Comprehensive Obstacle & Shelf Collision Checker (checks Player + full Trolley footprint)
+      const checkObstacle = (testPx: number, testPz: number, floor: number, yaw: number): boolean => {
+        const sin = Math.sin(yaw);
+        const cos = Math.cos(yaw);
+        const rightX = Math.cos(yaw);
+        const rightZ = -Math.sin(yaw);
+
+        // Escalator Ramp Walkway Containment
+        const onRampZ = testPz >= -7.8 && testPz <= 6.2;
+        if (onRampZ) {
+          // If in the escalator shaft zone (between x = 13.2 and x = 16.3)
+          if (testPx >= 13.2 && testPx <= 16.3) {
+            // Must stay strictly within the central walkway [14.22, 15.18]
+            if (testPx < 14.22 || testPx > 15.18) {
+              return true; // Hit glass balustrade!
+            }
+            const trolleyFrontX = testPx + sin * 1.45;
+            if (trolleyFrontX < 14.20 || trolleyFrontX > 15.20) {
+              return true; // Trolley turned into balustrade!
+            }
+            return false; // Safely within walkway
+          }
         }
 
-        // Shelf Rows AABB Collision
+        // Compound assembly test circles (Player + Trolley)
+        const testCircles = [
+          // 1. Player body cylinder
+          { x: testPx, z: testPz, r: 0.38 },
+          // 2. Trolley front bumper
+          { x: testPx + sin * 1.45, z: testPz + cos * 1.45, r: 0.44 },
+          // 3. Trolley center chassis
+          { x: testPx + sin * 0.95, z: testPz + cos * 0.95, r: 0.44 },
+          // 4. Trolley front-left corner
+          { x: testPx + sin * 1.40 - rightX * 0.36, z: testPz + cos * 1.40 - rightZ * 0.36, r: 0.22 },
+          // 5. Trolley front-right corner
+          { x: testPx + sin * 1.40 + rightX * 0.36, z: testPz + cos * 1.40 + rightZ * 0.36, r: 0.22 },
+        ];
+
+        // 1. Outer store perimeter walls (width 36, length 52)
+        for (const c of testCircles) {
+          if (c.x - c.r < -17.1 || c.x + c.r > 17.1) return true;
+          if (c.z - c.r < -24.6) {
+            // Front doorway opening allowed
+            if (Math.abs(c.x) > 3.8 || c.z - c.r < -25.8) return true;
+          }
+          if (c.z + c.r > 24.6) return true;
+        }
+
+        // 2. Escalator outer structure barrier on Floor 1
+        if (floor === 1) {
+          for (const c of testCircles) {
+            if (circleIntersectsAABB(c.x, c.z, c.r, 13.35, 16.05, -7.8, 6.2)) {
+              if (testPz > -7.8) return true;
+            }
+          }
+        }
+
+        // 3. Floor 2 Escalator void opening guardrails
+        if (floor === 2) {
+          for (const c of testCircles) {
+            if (circleIntersectsAABB(c.x, c.z, c.r, 13.0, 13.4, -7.6, 6.6)) return true;
+            if (circleIntersectsAABB(c.x, c.z, c.r, 13.0, 16.3, 6.3, 6.7)) return true;
+          }
+        }
+
+        // 4. Shelf Rows Physical Collision Boxes (stops player and cart from entering shelves or edges)
         const aisleXs =
           floor === 1
             ? [-10, -5, 0, 5, 10]
             : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
 
         for (const ax of aisleXs) {
-          // Half-width rack (0.88m) + player radius (0.17m) = 1.05m clearance
-          if (Math.abs(testPx - ax) < 1.05 && testPz >= -12.3 && testPz <= 12.3) {
-            return true;
-          }
-        }
+          // Rack width: 1.9m (±0.95m from center ax), length: 24.8m (-12.4m to +12.4m)
+          const minX = ax - 0.95;
+          const maxX = ax + 0.95;
+          const minZ = -12.4;
+          const maxZ = 12.4;
 
-        // Floor 1 Billing Counter obstacles (avoid walking into the POS tables)
-        if (floor === 1) {
-          for (const cx of [-3, 0, 3]) {
-            if (Math.abs(testPx - cx) < 0.65 && Math.abs(testPz - 17.0) < 1.25) {
+          for (const c of testCircles) {
+            if (circleIntersectsAABB(c.x, c.z, c.r, minX, maxX, minZ, maxZ)) {
               return true;
             }
           }
+        }
 
-          // Exit Turnstile barrier (locked shut if cart is unpaid)
-          if (cartItems.length > 0 && !isPaid && testPz < -21.8 && Math.abs(testPx) < 2.2) {
-            return true;
+        // 5. Floor 1 Billing Counters Zone (spacious 3.8m spacing between desks)
+        if (floor === 1) {
+          for (const cx of [-3.8, 0, 3.8]) {
+            const minX = cx - 0.68;
+            const maxX = cx + 0.68;
+            const minZ = 16.4;
+            const maxZ = 19.6;
+            for (const c of testCircles) {
+              if (circleIntersectsAABB(c.x, c.z, c.r, minX, maxX, minZ, maxZ)) {
+                return true;
+              }
+            }
+          }
+
+          // Exit Turnstile barrier (locked shut if cart has unpaid items)
+          if (cartItems.length > 0 && !isPaid) {
+            for (const c of testCircles) {
+              if (circleIntersectsAABB(c.x, c.z, c.r, -2.4, 2.4, -22.5, -21.5)) {
+                return true;
+              }
+            }
           }
         }
 
@@ -301,54 +437,152 @@ export const PlayerController: React.FC = () => {
       };
 
       if (Math.abs(worldDX) > 0.0001 || Math.abs(worldDZ) > 0.0001) {
+        const canMoveX = !checkObstacle(posRef.current.x + worldDX, posRef.current.z, currentFloor, yawRef.current);
+        const canMoveZ = !checkObstacle(posRef.current.x, posRef.current.z + worldDZ, currentFloor, yawRef.current);
+
+        if (canMoveX && canMoveZ) {
+          // Both axes free: verify combined step doesn't hit a corner
+          if (!checkObstacle(posRef.current.x + worldDX, posRef.current.z + worldDZ, currentFloor, yawRef.current)) {
+            posRef.current.x += worldDX;
+            posRef.current.z += worldDZ;
+          } else {
+            // Slide along dominant motion axis
+            if (Math.abs(worldDX) > Math.abs(worldDZ)) {
+              posRef.current.x += worldDX;
+            } else {
+              posRef.current.z += worldDZ;
+            }
+          }
+        } else if (canMoveX) {
+          posRef.current.x += worldDX;
+        } else if (canMoveZ) {
+          posRef.current.z += worldDZ;
+        }
+      }
+
+      // Safety Separation: prevent trolley or player from ever getting stuck inside shelves or edges
+      const isEscalatorWalkway =
+        Math.abs(posRef.current.x - 14.7) < 0.6 &&
+        posRef.current.z >= -7.6 &&
+        posRef.current.z <= 6.0;
+
+      if (!isEscalatorWalkway) {
         const aisleXs =
           currentFloor === 1
             ? [-10, -5, 0, 5, 10]
             : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
-        const nearestAx = aisleXs.reduce((prev, curr) =>
-          Math.abs(curr - posRef.current.x) < Math.abs(prev - posRef.current.x) ? curr : prev
-        );
 
-        // Axis-independent collision sliding with anti-stuck resolution
-        const newX = posRef.current.x + worldDX;
-        if (!checkObstacle(newX, posRef.current.z, currentFloor)) {
-          posRef.current.x = newX;
-        } else {
-          // If stuck or touching shelf, allow sliding away from rack center
-          const curDist = Math.abs(posRef.current.x - nearestAx);
-          const nextDist = Math.abs(newX - nearestAx);
-          if (nextDist > curDist) {
-            posRef.current.x = newX;
+        const sin = Math.sin(yawRef.current);
+        const cos = Math.cos(yawRef.current);
+        const tfX = posRef.current.x + sin * 1.45;
+        const tfZ = posRef.current.z + cos * 1.45;
+
+        for (const ax of aisleXs) {
+          const minX = ax - 0.95;
+          const maxX = ax + 0.95;
+          const minZ = -12.4;
+          const maxZ = 12.4;
+
+          // Trolley front clearance push-out
+          const rCart = 0.46;
+          const expMinX = minX - rCart;
+          const expMaxX = maxX + rCart;
+          const expMinZ = minZ - rCart;
+          const expMaxZ = maxZ + rCart;
+
+          if (tfX > expMinX && tfX < expMaxX && tfZ > expMinZ && tfZ < expMaxZ) {
+            const dLeft = tfX - expMinX;
+            const dRight = expMaxX - tfX;
+            const dBack = tfZ - expMinZ;
+            const dFront = expMaxZ - tfZ;
+            const minD = Math.min(dLeft, dRight, dBack, dFront);
+
+            if (minD === dBack) posRef.current.z -= (tfZ - expMinZ);
+            else if (minD === dFront) posRef.current.z += (expMaxZ - tfZ);
+            else if (minD === dLeft) posRef.current.x -= (tfX - expMinX);
+            else posRef.current.x += (expMaxX - tfX);
+          }
+
+          // Player cylinder clearance push-out
+          const rP = 0.38;
+          const pMinX = minX - rP;
+          const pMaxX = maxX + rP;
+          const pMinZ = minZ - rP;
+          const pMaxZ = maxZ + rP;
+          if (
+            posRef.current.x > pMinX &&
+            posRef.current.x < pMaxX &&
+            posRef.current.z > pMinZ &&
+            posRef.current.z < pMaxZ
+          ) {
+            const dLeft = posRef.current.x - pMinX;
+            const dRight = pMaxX - posRef.current.x;
+            const dBack = posRef.current.z - pMinZ;
+            const dFront = pMaxZ - posRef.current.z;
+            const minD = Math.min(dLeft, dRight, dBack, dFront);
+
+            if (minD === dBack) posRef.current.z = pMinZ;
+            else if (minD === dFront) posRef.current.z = pMaxZ;
+            else if (minD === dLeft) posRef.current.x = pMinX;
+            else posRef.current.x = pMaxX;
           }
         }
 
-        const newZ = posRef.current.z + worldDZ;
-        if (!checkObstacle(posRef.current.x, newZ, currentFloor)) {
-          posRef.current.z = newZ;
+        // Escalator outer side wall push-out on Floor 1 (stops walking into escalator from sides)
+        if (currentFloor === 1 && posRef.current.z >= -9.2 && posRef.current.z <= 7.2) {
+          if (posRef.current.x > 12.8 && posRef.current.x < 14.7) {
+            posRef.current.x = 12.8;
+          }
+          if (posRef.current.x < 16.6 && posRef.current.x >= 14.7) {
+            posRef.current.x = 16.6;
+          }
+          if (tfX > 12.8 && tfX < 14.7) {
+            posRef.current.x -= (tfX - 12.8);
+          }
+          if (tfX < 16.6 && tfX >= 14.7) {
+            posRef.current.x += (16.6 - tfX);
+          }
         }
       }
 
       // Store outer boundaries safety clamp
-      posRef.current.x = Math.max(-17.0, Math.min(17.0, posRef.current.x));
-      posRef.current.z = Math.max(-23.8, Math.min(23.8, posRef.current.z));
+      posRef.current.x = Math.max(-16.8, Math.min(16.8, posRef.current.x));
+      posRef.current.z = Math.max(-24.2, Math.min(24.2, posRef.current.z));
+
+      // Auto-trigger scanning when walking trolley into the checkout box or crossing the stop line
+      const billingPhase = useBillingStore.getState().phase;
+      const inCheckoutQueueBox =
+        currentFloor === 1 &&
+        posRef.current.z >= 15.2 &&
+        posRef.current.z <= 18.5 &&
+        (
+          (posRef.current.x >= -6.5 && posRef.current.x <= -4.9) || // Box 1 (Left of Bench 1)
+          (posRef.current.x >= -2.7 && posRef.current.x <= -1.1) || // Box 2 (Left of Bench 2)
+          (posRef.current.x >= 1.1 && posRef.current.x <= 2.7)      // Box 3 (Left of Bench 3)
+        );
+
+      if (inCheckoutQueueBox && cartItems.length > 0 && !isPaid && billingPhase === 'idle') {
+        startCheckout(cartItems);
+      }
     }
 
-    // Escalator Transition & Automatic Moving Walkway logic (at x = 14.7, z between -7.6 and 6.0)
+    // Escalator Transition & Automatic Moving Walkway logic (at x = 14.7, z between -8.8 and 6.8)
     const onEscalatorRamp =
-      Math.abs(posRef.current.x - 14.7) < 1.4 &&
-      posRef.current.z >= -7.6 &&
-      posRef.current.z <= 6.0;
+      Math.abs(posRef.current.x - 14.7) < 1.3 &&
+      posRef.current.z >= -8.8 &&
+      posRef.current.z <= 6.8;
 
     if (onEscalatorRamp) {
       // 1. Strict lateral guardrail containment: player CANNOT move outside the escalator balustrade!
-      posRef.current.x = THREE.MathUtils.clamp(posRef.current.x, 14.15, 15.25);
+      posRef.current.x = THREE.MathUtils.clamp(posRef.current.x, 14.60, 14.80);
 
       // 2. Automatic moving walkway propulsion:
       // If moving toward Floor 2 (facing +z)
       const isAscending = Math.cos(yawRef.current) >= -0.2;
       if (isAscending) {
         posRef.current.z += 2.2 * delta;
-        yawRef.current = THREE.MathUtils.damp(yawRef.current, 0, 5, delta);
+        yawRef.current = THREE.MathUtils.clamp(yawRef.current, -0.35, 0.35);
+        yawRef.current = THREE.MathUtils.damp(yawRef.current, 0, 6, delta);
         if (posRef.current.z > 5.8) {
           posRef.current.z = 6.4;
           posRef.current.y = 6.5;
@@ -356,7 +590,8 @@ export const PlayerController: React.FC = () => {
         }
       } else {
         posRef.current.z -= 2.2 * delta;
-        yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 5, delta);
+        yawRef.current = THREE.MathUtils.clamp(yawRef.current, Math.PI - 0.35, Math.PI + 0.35);
+        yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 6, delta);
         if (posRef.current.z < -7.4) {
           posRef.current.z = -8.0;
           posRef.current.y = 1.5;
@@ -401,7 +636,7 @@ export const PlayerController: React.FC = () => {
     const px = posRef.current.x;
     const pz = posRef.current.z;
 
-    const nearBilling = Math.abs(pz - 17) < 3.2 && Math.abs(px) < 4.5;
+    const nearBilling = Math.abs(pz - 17.5) < 4.0 && Math.abs(px) < 7.8;
     const nearExit = Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5;
     const nearEscalatorGround = Math.abs(px - 14.7) < 2.2 && pz > -9.5 && pz < -6.5;
     const nearEscalatorFloor2 = Math.abs(px - 14.7) < 2.2 && pz > 4.5 && pz < 7.5;
@@ -418,7 +653,7 @@ export const PlayerController: React.FC = () => {
       prompt = 'Press [E] or Step On: ↓ Ride to Ground Floor (Groceries & POS)';
       targetPos = [14.7, 6.5, 6.0];
     } else if (nearBilling) {
-      prompt = cartItems.length > 0 ? 'Press [E] to Scan Items at POS Counter' : 'Trolley is empty. Add items to checkout!';
+      prompt = null; // Do NOT show prompt banner per user request
     } else if (nearExit) {
       prompt = isPaid || cartItems.length === 0 ? 'Press [E] to Exit Supermarket' : 'Exit Locked: Please pay at the billing counter!';
     } else {
@@ -445,11 +680,17 @@ export const PlayerController: React.FC = () => {
       setProximity(nearBilling, nearExit, prompt, targetPos);
     }
 
-    // Camera positioning based on cameraMode
+    // Camera positioning based on cameraMode (No auto zoom during billing per user request)
     if (cameraMode === 'billing') {
-      // Fixed POS counter cinematic view
-      camera.position.set(0, 2.4, 15.2);
-      camera.lookAt(0, 1.2, 18.0);
+      const camDist = 3.2;
+      const camHeight = 2.0;
+      const targetCamX = posRef.current.x - Math.sin(yawRef.current) * camDist;
+      const targetCamZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
+      const targetCamY = posRef.current.y + camHeight;
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 10, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 10, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 10, delta);
+      camera.lookAt(posRef.current.x, posRef.current.y + 0.4, posRef.current.z + 2.0);
     } else if (cameraMode === 'exit') {
       // Exit gate cinematic view
       camera.position.set(0, 2.2, -18.5);
@@ -474,10 +715,15 @@ export const PlayerController: React.FC = () => {
       targetCamZ = Math.max(-25.2, Math.min(25.2, targetCamZ));
       targetCamY = Math.max(0.4, targetCamY);
 
-      // Smooth camera dampening for butter-smooth gliding motion without viewport stutter
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 22, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 22, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 22, delta);
+      if (resetPending.current) {
+        resetPending.current = false;
+        camera.position.set(targetCamX, targetCamY, targetCamZ);
+      } else {
+        // Smooth camera dampening for butter-smooth gliding motion without viewport stutter
+        camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 22, delta);
+        camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 22, delta);
+        camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 22, delta);
+      }
 
       const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.3;
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;

@@ -17,7 +17,9 @@ import {
   Lock,
   ZoomIn,
   Maximize2,
+  Heart,
 } from 'lucide-react';
+import { useWishlistStore } from '@/store/useWishlistStore';
 
 export const ProductModal: React.FC = () => {
   const isProductModalOpen = useMartStore((state) => state.isProductModalOpen);
@@ -28,6 +30,8 @@ export const ProductModal: React.FC = () => {
   const addItem = useCartStore((state) => state.addItem);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const openLoginModal = useAuthStore((state) => state.openLoginModal);
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
+  const isWishlistProduct = useWishlistStore((state) => state.isInWishlist);
 
   const [quantity, setQuantity] = useState<number>(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -35,6 +39,8 @@ export const ProductModal: React.FC = () => {
   const [isBigZoomOpen, setIsBigZoomOpen] = useState<boolean>(false);
 
   if (!isProductModalOpen || !selectedProduct) return null;
+
+  const isFav = isWishlistProduct(selectedProduct.id);
 
   const currentVariant = selectedVariant || (selectedProduct.variants && selectedProduct.variants[0]);
   const activePrice = currentVariant?.price || selectedProduct.price;
@@ -116,8 +122,11 @@ export const ProductModal: React.FC = () => {
             title="Click to view large image"
           >
             <img
-              src={selectedProduct.imageUrl}
+              src={selectedProduct.imageUrl || '/products/fallback.svg'}
               alt={selectedProduct.name}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/products/fallback.svg';
+              }}
               className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-xl group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute bottom-2 right-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
@@ -226,6 +235,27 @@ export const ProductModal: React.FC = () => {
               </button>
             </div>
 
+            {/* Wishlist Heart Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const added = toggleWishlist(selectedProduct);
+                showToast(
+                  added ? 'Added to Wishlist' : 'Removed from Wishlist',
+                  `${selectedProduct.name} ${added ? 'saved to your wishlist' : 'removed'}`,
+                  added ? 'success' : 'info'
+                );
+              }}
+              className={`h-12 w-12 rounded-2xl flex items-center justify-center border transition-all cursor-pointer flex-shrink-0 ${
+                isFav
+                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-500 shadow-md shadow-rose-500/20 scale-105'
+                  : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-500 hover:text-rose-500'
+              }`}
+              title={isFav ? 'Remove from Wishlist' : 'Save to Wishlist'}
+            >
+              <Heart className={`w-5 h-5 ${isFav ? 'fill-rose-500' : ''}`} />
+            </button>
+
             {/* Add to Trolley CTA Button: Smooth Hover, Shimmer Beam, Perfectly Aligned */}
             <button
               onClick={handleAddToCart}
@@ -281,8 +311,11 @@ export const ProductModal: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={selectedProduct.imageUrl}
+              src={selectedProduct.imageUrl || '/products/fallback.svg'}
               alt={selectedProduct.name}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/products/fallback.svg';
+              }}
               className="max-h-[60vh] w-auto object-contain rounded-2xl"
             />
             <div>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1e40af"/>
+            <stop offset="50%" stop-color="#1e3a8a"/>
+            <stop offset="100%" stop-color="#172554"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+
+        <!-- Harpic Red Oval -->
+        <g transform="translate(200, 100)">
+          <ellipse rx="110" ry="45" fill="#dc2626" stroke="#ffffff" stroke-width="4"/>
+          <text y="16" font-family="'Arial Black', Impact, sans-serif" font-size="46" font-weight="900" fill="#ffffff" text-anchor="middle" font-style="italic">HARPIC</text>
+        </g>
+
+        <rect x="50" y="165" width="300" height="40" rx="10" fill="#dc2626"/>
+        <text x="200" y="193" font-family="'Arial Black', sans-serif" font-size="20" fill="#fef08a" font-weight="900" text-anchor="middle">POWER PLUS ORIGINAL</text>
+        <text x="200" y="235" font-family="system-ui, sans-serif" font-size="15" fill="#93c5fd" font-weight="800" text-anchor="middle">10X MAX CLEAN • 100% LIMESCALE REMOVAL</text>
+
+        <!-- Power germ kill symbol -->
+        <circle cx="200" cy="305" r="45" fill="#dc2626" stroke="#facc15" stroke-width="4"/>
+        <text x="200" y="313" font-family="'Arial Black', sans-serif" font-size="20" fill="#ffffff" text-anchor="middle">KILL 99.9%</text>
+
+        <rect x="40" y="375" width="80" height="30" rx="6" fill="#172554"/>
+        <text x="80" y="395" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">1 Litre</text>
+        
+        <rect x="280" y="375" width="80" height="30" rx="6" fill="#dc2626"/>
+        <text x="320" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#ffffff" text-anchor="middle">₹185</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

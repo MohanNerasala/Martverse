@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#dc2626"/>
+            <stop offset="60%" stop-color="#b91c1c"/>
+            <stop offset="100%" stop-color="#7f1d1d"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+        
+    <g transform="translate(348, 28)">
+      <rect width="22" height="22" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <circle cx="11" cy="11" r="5" fill="#15803d"/>
+    </g>
+  
+
+        <!-- KitKat Oval -->
+        <g transform="translate(200, 140)">
+          <ellipse rx="130" ry="60" fill="#ffffff"/>
+          <ellipse rx="122" ry="54" fill="#dc2626"/>
+          <text y="20" font-family="'Arial Black', Impact, sans-serif" font-size="56" font-weight="900" fill="#ffffff" text-anchor="middle" font-style="italic">KitKat</text>
+        </g>
+
+        <text x="200" y="235" font-family="'Arial Black', sans-serif" font-size="18" fill="#ffffff" font-weight="900" text-anchor="middle">HAVE A BREAK, HAVE A KITKAT</text>
+        <text x="200" y="260" font-family="system-ui, sans-serif" font-size="14" fill="#fecaca" font-weight="800" text-anchor="middle">CRISP WAFER FINGERS IN MILK CHOCOLATE</text>
+
+        <!-- 4 Wafer Fingers -->
+        <g transform="translate(200, 315)">
+          <rect x="-55" y="-30" width="20" height="60" rx="4" fill="#451a03" stroke="#78350f" stroke-width="2"/>
+          <rect x="-25" y="-30" width="20" height="60" rx="4" fill="#451a03" stroke="#78350f" stroke-width="2"/>
+          <rect x="5" y="-30" width="20" height="60" rx="4" fill="#451a03" stroke="#78350f" stroke-width="2"/>
+          <rect x="35" y="-30" width="20" height="60" rx="4" fill="#451a03" stroke="#78350f" stroke-width="2"/>
+        </g>
+
+        <rect x="40" y="375" width="90" height="30" rx="6" fill="#1e293b"/>
+        <text x="85" y="395" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">75 g (2-Pack)</text>
+        
+        <rect x="270" y="375" width="90" height="30" rx="6" fill="#ffffff"/>
+        <text x="315" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#dc2626" text-anchor="middle">₹70</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

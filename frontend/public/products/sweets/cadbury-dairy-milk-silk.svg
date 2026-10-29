@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#3b1373"/>
+            <stop offset="40%" stop-color="#2c0e5a"/>
+            <stop offset="100%" stop-color="#180435"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+        
+    <g transform="translate(348, 28)">
+      <rect width="22" height="22" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <circle cx="11" cy="11" r="5" fill="#15803d"/>
+    </g>
+  
+
+        <text x="200" y="90" font-family="'Brush Script MT', cursive, sans-serif" font-size="44" fill="#fbbf24" text-anchor="middle">Cadbury</text>
+        <text x="200" y="140" font-family="'Arial Black', sans-serif" font-size="30" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="1">Dairy Milk</text>
+        
+        <!-- Golden Silk ribbon -->
+        <g transform="translate(200, 210)">
+          <ellipse rx="130" ry="28" fill="#d97706"/>
+          <ellipse rx="120" ry="24" fill="#f59e0b"/>
+          <text y="9" font-family="'Brush Script MT', cursive, sans-serif" font-size="38" font-weight="bold" fill="#451a03" text-anchor="middle">Silk</text>
+        </g>
+
+        <!-- Chocolate Block Graphic -->
+        <g transform="translate(200, 310)">
+          <rect x="-80" y="-35" width="160" height="70" rx="8" fill="#451a03" stroke="#78350f" stroke-width="4"/>
+          <text x="0" y="10" font-family="'Brush Script MT', cursive, sans-serif" font-size="24" fill="#fde68a" text-anchor="middle">Cadbury</text>
+        </g>
+
+        <rect x="40" y="375" width="90" height="30" rx="6" fill="#1e1035"/>
+        <text x="85" y="395" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">150 g</text>
+        
+        <rect x="270" y="375" width="90" height="30" rx="6" fill="#f59e0b"/>
+        <text x="315" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#451a03" text-anchor="middle">₹165</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

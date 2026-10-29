@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#facc15"/>
+            <stop offset="50%" stop-color="#eab308"/>
+            <stop offset="100%" stop-color="#ca8a04"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+        
+    <g transform="translate(348, 28)">
+      <rect width="22" height="22" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <circle cx="11" cy="11" r="5" fill="#15803d"/>
+    </g>
+  
+
+        <!-- Maggi Red Tag -->
+        <g transform="translate(200, 95)">
+          <path d="M-90 -35 L90 -35 L110 25 L-110 25 Z" fill="#dc2626"/>
+          <text y="14" font-family="'Arial Black', Impact, sans-serif" font-size="52" font-weight="900" fill="#fde047" text-anchor="middle" font-style="italic">Maggi</text>
+        </g>
+
+        <rect x="40" y="165" width="320" height="42" rx="10" fill="#dc2626"/>
+        <text x="200" y="195" font-family="'Arial Black', sans-serif" font-size="22" font-weight="900" fill="#ffffff" text-anchor="middle">2-MINUTE NOODLES</text>
+        <text x="200" y="235" font-family="'Arial Black', sans-serif" font-size="24" fill="#713f12" font-weight="900" text-anchor="middle">MASALA</text>
+
+        <!-- Steaming Noodle Bowl -->
+        <g transform="translate(200, 310)">
+          <ellipse cx="0" cy="20" rx="75" ry="30" fill="#dc2626" stroke="#b91c1c" stroke-width="4"/>
+          <path d="M-60 20 Q 0 -20 60 20" fill="#fde047" stroke="#ca8a04" stroke-width="6"/>
+          <circle cx="-15" cy="10" r="5" fill="#15803d"/>
+          <circle cx="20" cy="5" r="5" fill="#ea580c"/>
+        </g>
+
+        <rect x="40" y="375" width="110" height="30" rx="6" fill="#dc2626"/>
+        <text x="95" y="395" font-family="system-ui, sans-serif" font-size="13" font-weight="800" fill="#ffffff" text-anchor="middle">12-Pack (840g)</text>
+        
+        <rect x="270" y="375" width="90" height="30" rx="6" fill="#1e293b"/>
+        <text x="315" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#facc15" text-anchor="middle">₹144</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

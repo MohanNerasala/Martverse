@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#059669"/>
+            <stop offset="50%" stop-color="#047857"/>
+            <stop offset="100%" stop-color="#064e3b"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+
+        <!-- Ariel Atom Rings -->
+        <g transform="translate(200, 85)">
+          <ellipse rx="45" ry="18" fill="none" stroke="#6ee7b7" stroke-width="3" transform="rotate(30)"/>
+          <ellipse rx="45" ry="18" fill="none" stroke="#6ee7b7" stroke-width="3" transform="rotate(-30)"/>
+          <circle r="8" fill="#facc15"/>
+        </g>
+
+        <text x="200" y="160" font-family="'Arial Black', sans-serif" font-size="44" font-weight="900" fill="#ffffff" text-anchor="middle">ARIEL</text>
+        <rect x="50" y="180" width="300" height="40" rx="10" fill="#064e3b"/>
+        <text x="200" y="208" font-family="'Arial Black', sans-serif" font-size="18" fill="#6ee7b7" font-weight="900" text-anchor="middle">MATIC COMPLETE LIQUID</text>
+        <text x="200" y="245" font-family="system-ui, sans-serif" font-size="14" fill="#a7f3d0" font-weight="700" text-anchor="middle">BRIGHT COLORS &amp; DEEP STAIN REMOVAL</text>
+
+        <circle cx="200" cy="305" r="45" fill="#ffffff" stroke="#059669" stroke-width="4"/>
+        <text x="200" y="313" font-family="'Arial Black', sans-serif" font-size="20" fill="#047857" text-anchor="middle">1 WASH</text>
+
+        <rect x="40" y="375" width="80" height="30" rx="6" fill="#064e3b"/>
+        <text x="80" y="395" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">2 Litre</text>
+        
+        <rect x="280" y="375" width="80" height="30" rx="6" fill="#6ee7b7"/>
+        <text x="320" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#064e3b" text-anchor="middle">₹410</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

@@ -10,6 +10,7 @@ import { CartDrawer } from '@/components/ui/CartDrawer';
 import { BillingModal } from '@/components/ui/BillingModal';
 import { ExitModal } from '@/components/ui/ExitModal';
 import { LoginModal } from '@/components/ui/LoginModal';
+import { WishlistModal } from '@/components/ui/WishlistModal';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBillingStore } from '@/store/useBillingStore';
 import { ShoppingBag, Sparkles, Store, ArrowRight, Layers, Barcode, ShieldCheck } from 'lucide-react';
@@ -104,6 +105,7 @@ export default function Home() {
       <BillingModal />
       <ExitModal />
       <LoginModal />
+      <WishlistModal />
 
       {/* Welcome Walk-in Overlay for first-time entrance */}
       {!hasEnteredStore && (

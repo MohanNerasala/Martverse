@@ -1,36 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMartStore } from '@/store/useMartStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useBillingStore } from '@/store/useBillingStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useWishlistStore } from '@/store/useWishlistStore';
+import { Product } from '@/types';
 import {
   ShoppingCart,
   Volume2,
   VolumeX,
   Compass,
   Layers,
-  HelpCircle,
+  RotateCcw,
   Eye,
   Camera,
-  ArrowUpRight,
   CheckCircle2,
   AlertTriangle,
   Info,
   X,
   CreditCard,
   ShieldAlert,
-  History,
-  PackageCheck,
-  Receipt,
   Store,
-  ChevronRight,
-  Sparkles,
   ArrowRight,
   User,
   LogIn,
+  Heart,
+  Search,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { ProductHoverCard } from '@/components/ui/ProductHoverCard';
 
 export const SupermarketHUD: React.FC = () => {
   const router = useRouter();
@@ -44,6 +43,11 @@ export const SupermarketHUD: React.FC = () => {
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
   const showToast = useMartStore((state) => state.showToast);
+  const resetToOriginalState = useMartStore((state) => state.resetToOriginalState);
+  const products = useMartStore((state) => state.products);
+  const navigateToProduct = useMartStore((state) => state.navigateToProduct);
+  const isMinimapOpen = useMartStore((state) => state.isMinimapOpen);
+  const toggleMinimap = useMartStore((state) => state.toggleMinimap);
 
   const toast = useMartStore((state) => state.toast);
   const hideToast = useMartStore((state) => state.hideToast);
@@ -55,21 +59,60 @@ export const SupermarketHUD: React.FC = () => {
   const totalAmount = useCartStore((state) => state.totalAmount);
   const toggleCart = useCartStore((state) => state.toggleCart);
 
+  const wishlistItems = useWishlistStore((state) => state.items);
+  const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
+
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const authPhone = useAuthStore((state) => state.phone);
   const openLoginModal = useAuthStore((state) => state.openLoginModal);
-  const logout = useAuthStore((state) => state.logout);
 
   const startCheckout = useBillingStore((state) => state.startCheckout);
 
-  const [showHelp, setShowHelp] = useState(false);
-  const [showOrderHistory, setShowOrderHistory] = useState(false);
-  const [orderHistoryList, setOrderHistoryList] = useState<any[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleOpenHistory = () => {
-    router.push('/orders');
-  };
+  // Filter products sorted Alphabetically (A to Z)
+  const filteredProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const sorted = [...products].sort((a, b) => a.name.localeCompare(b.name));
+    if (!q) return sorted;
+    return sorted.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.brand?.toLowerCase().includes(q) ||
+        p.category?.name?.toLowerCase().includes(q) ||
+        p.placement?.aisleName?.toLowerCase().includes(q)
+    );
+  }, [products, searchQuery]);
+
+  // Handle click outside to close search dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setIsSearchOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-5 z-20">
@@ -77,38 +120,39 @@ export const SupermarketHUD: React.FC = () => {
       {/* --- Top Unified Floating Executive Command Navbar --- */}
       {/* ============================================================== */}
       <header className="w-full max-w-7xl mx-auto pointer-events-auto">
-        <div className="glass-panel rounded-2xl px-3 sm:px-5 py-2.5 flex items-center justify-between gap-2 sm:gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.65)] border border-white/[0.08]">
+        <div className="glass-panel rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.65)] border border-white/[0.08]">
           
-          {/* Brand Identity */}
-          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25 ring-1 ring-white/20">
-              <Store className="w-5 h-5 text-white" />
+          {/* Brand Identity: Gradient text blue to white */}
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25 ring-1 ring-white/20">
+              <Store className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-white font-extrabold tracking-tight text-sm sm:text-base leading-none">
-                  MART<span className="text-blue-400">VERSE</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-black tracking-wider text-sm sm:text-base leading-none bg-gradient-to-r from-blue-400 via-sky-200 to-white bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(56,189,248,0.35)]">
+                  MART<span className="text-white">VERSE</span>
                 </span>
-                <span className="hidden md:inline-flex items-center gap-1 text-[10px] bg-emerald-500/15 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                <span className="hidden md:inline-flex items-center gap-1 text-[9px] bg-emerald-500/15 text-emerald-400 font-bold px-1.5 py-0.5 rounded-full border border-emerald-500/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   3D LIVE
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium hidden xs:block leading-tight mt-0.5">
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-medium hidden xs:block leading-tight mt-0.5">
                 Virtual Hypermarket
               </p>
             </div>
           </div>
 
-          {/* Floor Navigation Segmented Switcher */}
-          <nav className="flex items-center p-1 rounded-xl bg-black/40 border border-white/[0.06] backdrop-blur-md">
+          {/* Floor Navigation Segmented Switcher (Floor 1 & Floor 2) */}
+          <nav className="flex items-center p-1 rounded-xl bg-black/40 border border-white/[0.06] backdrop-blur-md flex-shrink-0">
             <button
               onClick={() => setActiveFloor(1)}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeFloor === 1
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold'
                   : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
               }`}
+              title="Ground Floor: Groceries & Staples"
             >
               <Layers className="w-3.5 h-3.5 text-blue-300" />
               <span className="hidden sm:inline">Floor 1:</span>
@@ -116,11 +160,12 @@ export const SupermarketHUD: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveFloor(2)}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeFloor === 2
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 font-bold'
                   : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
               }`}
+              title="First Floor: Fashion Studio & Apparel"
             >
               <Layers className="w-3.5 h-3.5 text-purple-300" />
               <span className="hidden sm:inline">Floor 2:</span>
@@ -128,14 +173,116 @@ export const SupermarketHUD: React.FC = () => {
             </button>
           </nav>
 
-          {/* Action Utilities & Trolley Hero Button */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Camera Perspective Mode */}
+          {/* Search Bar with A-Z Auto-Navigation */}
+          <div ref={searchContainerRef} className="relative flex-1 max-w-[160px] xs:max-w-[190px] md:max-w-xs lg:max-w-sm">
+            <div className="relative flex items-center">
+              <Search className="w-3.5 h-3.5 text-blue-400 absolute left-2.5 sm:left-3 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchOpen(true);
+                }}
+                onFocus={() => setIsSearchOpen(true)}
+                placeholder="Search items A–Z (e.g. Maggi)..."
+                className="w-full bg-black/40 hover:bg-black/60 focus:bg-[#070b12] text-white placeholder-slate-400 text-xs rounded-xl pl-7 sm:pl-8 pr-7 py-2 border border-white/[0.08] focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/40 transition-all outline-none"
+              />
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              ) : (
+                <kbd className="hidden lg:inline-block absolute right-2 text-[9px] font-mono text-slate-400 bg-white/[0.06] px-1.5 py-0.5 rounded border border-white/[0.08]">
+                  /
+                </kbd>
+              )}
+            </div>
+
+            {/* A-Z Search Dropdown */}
+            {isSearchOpen && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#090D14]/95 backdrop-blur-2xl rounded-2xl border border-white/[0.12] shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 overflow-hidden max-h-96 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 w-72 sm:w-88 md:w-96">
+                <div className="p-3 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.02]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-slate-300">Catalog (Alphabetical A–Z)</span>
+                    <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-1.5 py-0.2 rounded-full border border-blue-500/30">
+                      {filteredProducts.length}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 hidden xs:inline">Click item to go to shelf</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04]">
+                  {filteredProducts.length === 0 ? (
+                    <div className="p-6 text-center text-slate-400 text-xs">
+                      No items found matching &quot;{searchQuery}&quot;
+                    </div>
+                  ) : (
+                    filteredProducts.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery('');
+                          navigateToProduct(p);
+                        }}
+                        className="w-full p-2.5 flex items-center justify-between gap-2.5 hover:bg-white/[0.06] transition-all text-left group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-white border border-white/[0.08] overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5">
+                            {p.imageUrl ? (
+                              <img
+                                src={p.imageUrl}
+                                alt={p.name}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/products/fallback.svg';
+                                }}
+                                className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                              />
+                            ) : (
+                              <span className="text-sm">🛍️</span>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-white text-xs truncate group-hover:text-blue-300 transition-colors">
+                              {p.name}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
+                              <span className="text-emerald-400 font-extrabold">₹{p.price}</span>
+                              {p.placement && (
+                                <span className="bg-white/[0.06] px-1.5 py-0.5 rounded text-[9px] text-slate-300 font-medium">
+                                  F{p.placement.floorNumber} • {p.placement.aisleName || `Aisle ${p.placement.aisleNumber}`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-[11px] text-blue-400 font-bold group-hover:translate-x-1 transition-transform flex-shrink-0">
+                          <span>Go</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Utilities & User Area */}
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+            {/* Camera Perspective Mode (1st / 3rd Person) */}
             <button
               onClick={() =>
                 setCameraMode(cameraMode === 'third_person' ? 'first_person' : 'third_person')
               }
-              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all flex items-center gap-1.5 text-xs"
+              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all flex items-center gap-1.5 text-xs cursor-pointer"
               title="Toggle Camera View (1st / 3rd Person)"
             >
               {cameraMode === 'first_person' ? (
@@ -143,7 +290,7 @@ export const SupermarketHUD: React.FC = () => {
               ) : (
                 <Camera className="w-4 h-4 text-slate-300" />
               )}
-              <span className="hidden lg:inline font-medium">
+              <span className="hidden xl:inline font-medium">
                 {cameraMode === 'first_person' ? '1st Person' : '3rd Person'}
               </span>
             </button>
@@ -151,7 +298,7 @@ export const SupermarketHUD: React.FC = () => {
             {/* Sound Toggle */}
             <button
               onClick={toggleSound}
-              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all"
+              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all cursor-pointer"
               title={isSoundMuted ? 'Unmute Ambient Sound' : 'Mute Ambient Sound'}
             >
               {isSoundMuted ? (
@@ -161,53 +308,37 @@ export const SupermarketHUD: React.FC = () => {
               )}
             </button>
 
-            {/* Controls Guide */}
+            {/* Reset to Original State & Starting Position (No question mark!) */}
             <button
-              onClick={() => setShowHelp(!showHelp)}
-              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all"
-              title="Supermarket Guide & Keybindings"
+              onClick={() => {
+                resetToOriginalState();
+                showToast('Position Reset', 'Returned to store entrance & original view orientation', 'info');
+              }}
+              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-blue-600/20 text-slate-300 hover:text-blue-300 border border-white/[0.06] hover:border-blue-500/40 transition-all flex items-center gap-1.5 text-xs group cursor-pointer"
+              title="Reset to Original State & Starting Position (Entrance)"
             >
-              <HelpCircle className="w-4 h-4" />
+              <RotateCcw className="w-4 h-4 text-blue-400 group-hover:-rotate-90 transition-transform duration-300" />
+              <span className="hidden xl:inline font-semibold text-slate-200 group-hover:text-white">Reset</span>
             </button>
 
-            {/* Customer Orders History Link */}
+            {/* Wishlist Icon Only (no text label) */}
             <button
-              onClick={handleOpenHistory}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all text-xs font-semibold cursor-pointer"
-              title="Customer Orders Page (/orders)"
+              onClick={() => toggleWishlist(true)}
+              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.06] hover:border-rose-500/30 transition-all relative cursor-pointer"
+              title="View Saved Wishlist"
             >
-              <History className="w-3.5 h-3.5 text-blue-400" />
-              <span>Orders</span>
+              <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-rose-400 fill-rose-400' : 'text-slate-300'}`} />
+              {wishlistItems.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#090D14] shadow-sm animate-pulse">
+                  {wishlistItems.length}
+                </span>
+              )}
             </button>
 
-            {/* Mobile Auth / Profile in Navbar */}
-            {!isAuthenticated ? (
-              <button
-                onClick={() => openLoginModal()}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 hover:text-white border border-blue-500/40 transition-all text-xs font-bold cursor-pointer"
-                title="Sign in with Indian Mobile Number (+91)"
-              >
-                <LogIn className="w-3.5 h-3.5 text-blue-400" />
-                <span className="hidden xs:inline">Login</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/[0.1] text-xs font-bold text-white shadow-inner">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="hidden sm:inline font-mono text-[11px]">+91 {authPhone}</span>
-                <button
-                  onClick={() => logout()}
-                  className="text-[10px] text-slate-400 hover:text-rose-400 hover:underline cursor-pointer pl-1 border-l border-white/20"
-                  title="Sign Out"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-
-            {/* Hero Shopping Trolley Button */}
+            {/* Hero Shopping Trolley Button (Cart comes BEFORE profile) */}
             <button
               onClick={() => toggleCart(true)}
-              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/30 border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98] transition-all btn-shine"
+              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/30 border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98] transition-all btn-shine cursor-pointer flex-shrink-0"
               title="Open Shopping Trolley"
             >
               <div className="relative flex items-center">
@@ -223,6 +354,25 @@ export const SupermarketHUD: React.FC = () => {
                 ₹{totalAmount.toLocaleString('en-IN')}
               </span>
             </button>
+
+            {/* Profile Icon — tapping opens /profile page (no dropdown, no phone number shown) */}
+            {!isAuthenticated ? (
+              <button
+                onClick={() => openLoginModal()}
+                className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-tr from-blue-600/30 to-indigo-600/30 hover:from-blue-600/50 hover:to-indigo-600/50 text-blue-300 hover:text-white border border-blue-500/40 transition-all cursor-pointer shadow-sm"
+                title="Sign in with Indian Mobile Number (+91)"
+              >
+                <LogIn className="w-4 h-4 text-blue-400" />
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push('/profile')}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 ring-2 ring-white/10 hover:ring-white/20 transition-all cursor-pointer flex-shrink-0"
+                title="My Profile"
+              >
+                <User className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -379,55 +529,6 @@ export const SupermarketHUD: React.FC = () => {
       </footer>
 
       {/* ============================================================== */}
-      {/* --- Help / Guide Modal --- */}
-      {/* ============================================================== */}
-      {showHelp && (
-        <div className="pointer-events-auto fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-3xl max-w-md w-full p-6 text-left space-y-4 border border-white/[0.08] shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
-                  <HelpCircle className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-bold text-white">Martverse Shopping Guide</h3>
-              </div>
-              <button
-                onClick={() => setShowHelp(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs sm:text-sm text-slate-300">
-              <p>
-                <strong className="text-white">1. Navigating the Store:</strong> Use <code>W, A, S, D</code> or arrow keys to move. Drag mouse to look around in 360°.
-              </p>
-              <p>
-                <strong className="text-white">2. Escalator to Fashion:</strong> Step onto the moving escalator on the right to travel up to Floor 2 (Apparel & Fashion).
-              </p>
-              <p>
-                <strong className="text-white">3. Inspecting & Picking Items:</strong> Walk near any shelf and press <code>E</code> or click on products to choose size/quantity and add to your trolley!
-              </p>
-              <p>
-                <strong className="text-white">4. Express POS Billing:</strong> Follow yellow floor markers to the Billing Counters at the back. Press <code>E</code> to trigger laser barcode scanning and instant simulated payment.
-              </p>
-              <p>
-                <strong className="text-white">5. Exit Turnstiles:</strong> Turnstiles unlock automatically once payment is verified.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowHelp(false)}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/25"
-            >
-              Got it, let's shop!
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================== */}
       {/* --- Floating Confirmation Toast --- */}
       {/* ============================================================== */}
       {toast && (
@@ -534,93 +635,9 @@ export const SupermarketHUD: React.FC = () => {
         </div>
       )}
 
-      {/* ============================================================== */}
-      {/* --- Customer Order History Modal (Supabase PostgreSQL) --- */}
-      {/* ============================================================== */}
-      {showOrderHistory && (
-        <div className="pointer-events-auto fixed inset-0 z-50 bg-black/65 backdrop-blur-xl flex items-center justify-center p-4">
-          <div className="glass-card rounded-3xl max-w-xl w-full shadow-2xl p-6 text-left space-y-4 max-h-[85vh] flex flex-col border border-white/[0.08] animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center border border-blue-500/30">
-                  <History className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-white text-sm">Customer Order History</h3>
-                  <p className="text-[11px] text-slate-400">Persisted in Supabase PostgreSQL database</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowOrderHistory(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.08] transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* Real-time Product Hover Information Card */}
+      <ProductHoverCard />
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
-              {isLoadingHistory ? (
-                <div className="p-8 text-center text-slate-400 flex flex-col items-center gap-2">
-                  <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Loading orders from Supabase...</span>
-                </div>
-              ) : orderHistoryList.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 bg-white/[0.02] rounded-2xl border border-white/[0.06] space-y-2">
-                  <PackageCheck className="w-8 h-8 text-slate-600 mx-auto" />
-                  <p className="font-semibold text-slate-300">No Past Orders Found</p>
-                  <p className="text-[11px] text-slate-500">Complete checkout to see your orders here.</p>
-                </div>
-              ) : (
-                orderHistoryList.map((order: any, idx: number) => (
-                  <div key={order.id || idx} className="bg-[#090D14] p-4 rounded-2xl border border-white/[0.06] space-y-2.5">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-mono font-black text-blue-400 text-sm">
-                          #{order.orderNumber}
-                        </div>
-                        <div className="text-[11px] text-slate-400">
-                          {order.createdAt ? new Date(order.createdAt).toLocaleString('en-IN') : 'Recent Order'}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[10px] bg-emerald-500/15 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
-                          {order.payment?.status || order.status || 'SIMULATED_SUCCESS'}
-                        </span>
-                        <div className="text-sm font-black text-white mt-1">
-                          ₹{order.totalAmount}
-                        </div>
-                      </div>
-                    </div>
-
-                    {order.items && order.items.length > 0 && (
-                      <div className="border-t border-white/[0.06] pt-2 space-y-1">
-                        {order.items.map((it: any, iIdx: number) => (
-                          <div key={iIdx} className="flex justify-between text-[11px] text-slate-300">
-                            <span>
-                              {it.quantity}x {it.productName} {it.variantInfo ? `(${it.variantInfo})` : ''}
-                            </span>
-                            <span className="font-medium text-slate-400">₹{it.lineTotal}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="pt-2 border-t border-white/[0.08] flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowOrderHistory(false)}
-                className="px-5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 text-xs font-bold border border-white/[0.08]"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

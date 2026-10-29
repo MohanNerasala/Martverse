@@ -25,6 +25,8 @@ import {
   Truck,
   ExternalLink,
   Sparkles,
+  Printer,
+  ShoppingBag,
 } from 'lucide-react';
 
 export default function OrdersPage() {
@@ -48,7 +50,7 @@ export default function OrdersPage() {
     hydrateAuth();
   }, [hydrateAuth]);
 
-  const fetchOrders = useCallback(async (phoneToFetch: string) => {
+  const fetchOrders = useCallback(async (phoneToFetch?: string) => {
     setIsLoading(true);
     try {
       const data = await api.getOrderHistory(phoneToFetch);
@@ -66,7 +68,7 @@ export default function OrdersPage() {
       setPhoneQuery(authPhone);
       fetchOrders(authPhone);
     } else {
-      // Default initial fetch for demo phone
+      // Fetch both default phone and any recently placed local orders
       fetchOrders('9876543210');
     }
   }, [authPhone, fetchOrders]);
@@ -77,7 +79,7 @@ export default function OrdersPage() {
     if (clean.length === 10) {
       fetchOrders(clean);
     } else {
-      showToast('Validation Error', 'Please enter a valid 10-digit mobile number.', 'warning');
+      fetchOrders();
     }
   };
 
@@ -93,13 +95,11 @@ export default function OrdersPage() {
         slug: item.productSku || 'product',
         price: item.unitPrice || 99,
         mrp: (item.unitPrice || 99) * 1.2,
-        imageUrl: '/images/products/surf-excel.png',
-        brand: 'Supermarket Brand',
-        unit: '1 pc',
+        imageUrl: '/products/fallback.svg',
+        brand: item.brand || 'Supermarket Product',
+        unit: '1 pack',
         discountPercentage: 15,
-        rating: 4.8,
         inStock: true,
-        category: { id: 'c1', name: 'Groceries' },
       };
       addItem(matched as any, item.quantity || 1);
       addedCount += item.quantity || 1;
@@ -112,22 +112,36 @@ export default function OrdersPage() {
     router.push('/cart');
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
       <LoginModal />
 
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      {/* --- Pure White Navigation Bar --- */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           
-          {/* Brand & Back Button */}
-          <div className="flex items-center gap-4">
+          {/* Brand & Navigation Links */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link
+              href="/profile"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-bold text-xs transition-all border border-slate-200"
+              title="Return to My Profile"
+            >
+              <User className="w-4 h-4 text-blue-600" />
+              <span>My Profile</span>
+            </Link>
+
             <Link
               href="/"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-black font-extrabold text-xs transition-all border border-slate-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-bold text-xs transition-all border border-slate-200"
+              title="Return to 3D Supermarket"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to 3D Mart</span>
+              <span>Back to Mart</span>
             </Link>
 
             <div className="h-5 w-px bg-slate-200 hidden sm:block" />
@@ -146,7 +160,7 @@ export default function OrdersPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/cart"
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 transition-all shadow-sm relative"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 transition-all shadow-sm relative"
             >
               <ShoppingCart className="w-4 h-4 text-blue-600" />
               <span>Trolley</span>
@@ -158,10 +172,13 @@ export default function OrdersPage() {
             </Link>
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 shadow-inner">
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 border border-slate-200 text-xs font-bold text-slate-800 shadow-inner transition-colors"
+              >
                 <User className="w-3.5 h-3.5 text-blue-600" />
                 <span>+91 {authPhone}</span>
-              </div>
+              </Link>
             ) : (
               <button
                 onClick={() => openLoginModal()}
@@ -175,21 +192,21 @@ export default function OrdersPage() {
         </div>
       </header>
 
-      {/* Main Container */}
+      {/* --- Main Orders Content Area --- */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-8">
         
-        {/* Title & Phone Lookup Filter */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-slate-200">
+        {/* Title & Phone Lookup Filter Strip */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-slate-200 print:hidden">
           <div>
             <div className="flex items-center gap-2 text-xs font-black text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200/70 inline-flex mb-2">
               <Receipt className="w-3.5 h-3.5" />
-              <span>LIVE DATABASE ORDERS</span>
+              <span>VERIFIED TAX INVOICES & ORDER HISTORY</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               My Orders & Receipts
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1">
-              Real-time synchronization with Spring Boot database (`/api/orders/history`).
+              Synchronized live with PostgreSQL database & instant checkout receipts.
             </p>
           </div>
 
@@ -200,7 +217,7 @@ export default function OrdersPage() {
                 type="tel"
                 value={phoneQuery}
                 onChange={(e) => setPhoneQuery(e.target.value)}
-                placeholder="Search phone: 9876543210"
+                placeholder="Lookup phone: 9876543210"
                 className="h-11 px-4 pl-9 rounded-2xl bg-white border border-slate-300 focus:border-blue-600 text-slate-900 font-bold text-xs outline-none w-56 sm:w-64 transition-all shadow-sm"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
@@ -208,9 +225,9 @@ export default function OrdersPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="h-11 px-4 rounded-2xl bg-slate-900 hover:bg-black text-white font-black text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              className="h-11 px-5 rounded-2xl bg-slate-900 hover:bg-black text-white font-black text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50"
             >
-              {isLoading ? 'Loading...' : 'Lookup'}
+              {isLoading ? 'Searching...' : 'Search'}
             </button>
           </form>
         </div>
@@ -219,134 +236,174 @@ export default function OrdersPage() {
         {isLoading && (
           <div className="py-20 text-center space-y-3">
             <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-xs text-slate-500 font-bold">Fetching verified orders from database...</p>
+            <p className="text-xs text-slate-500 font-bold">Loading verified orders from database...</p>
           </div>
         )}
 
         {/* Orders List */}
         {!isLoading && orders.length > 0 && (
           <div className="space-y-6">
-            {orders.map((order) => (
-              <div
-                key={order.id || order.orderNumber}
-                className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md"
-              >
-                {/* Order Header Strip */}
-                <div className="p-5 sm:p-6 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200 shadow-sm">
-                      <PackageCheck className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-black text-slate-900">
-                          {order.orderNumber}
-                        </span>
-                        <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                          {order.status || 'CONFIRMED'}
-                        </span>
+            {orders.map((order) => {
+              const orderDate = order.createdAt
+                ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : 'Recent Checkout';
+
+              return (
+                <div
+                  key={order.id || order.orderNumber}
+                  className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden transition-all hover:shadow-md"
+                >
+                  {/* Order Header Bar */}
+                  <div className="p-5 sm:p-6 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200 shadow-sm shrink-0">
+                        <PackageCheck className="w-6 h-6" />
                       </div>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        Placed on {order.createdAt || 'Recent Session'} •{' '}
-                        {order.fulfilmentType === 'PICKUP' ? 'Store Pickup' : 'Express Delivery'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <span className="text-xs text-slate-500 font-medium block">Total Paid</span>
-                      <span className="text-lg font-black text-slate-900">
-                        ₹{(order.totalAmount || 0).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={() => handleReorder(order)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-xs font-black text-slate-800 transition-all shadow-sm cursor-pointer active:scale-95"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Re-order</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Items & Address Grid */}
-                <div className="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
-                  
-                  {/* Items List (Left 8 cols) */}
-                  <div className="md:col-span-8 space-y-3">
-                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                      Ordered Products ({(order.items || []).length})
-                    </h4>
-                    
-                    <div className="divide-y divide-slate-100">
-                      {(order.items || []).map((it: any, idx: number) => (
-                        <div key={idx} className="py-3 flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-slate-500 text-xs flex-shrink-0">
-                              {idx + 1}
-                            </div>
-                            <div className="min-w-0">
-                              <h5 className="text-xs font-black text-slate-900 truncate">
-                                {it.productName}
-                              </h5>
-                              <p className="text-[11px] text-slate-500 font-medium">
-                                Qty: {it.quantity} × ₹{it.unitPrice}
-                                {it.variantInfo && ` • ${it.variantInfo}`}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-xs font-black text-slate-900">
-                            ₹{(it.lineTotal || (it.unitPrice * it.quantity)).toLocaleString('en-IN')}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-base font-black text-slate-900">
+                            {order.orderNumber}
+                          </span>
+                          <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                            {order.status || 'CONFIRMED'}
                           </span>
                         </div>
-                      ))}
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                          Placed on {orderDate} •{' '}
+                          {order.fulfilmentType === 'PICKUP' ? 'Store Pickup' : 'Express Delivery'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className="text-xs text-slate-500 font-medium block">Total Paid</span>
+                        <span className="text-lg font-black text-slate-900">
+                          ₹{(order.totalAmount || order.finalAmount || 0).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleReorder(order)}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-xs font-black text-slate-800 transition-all shadow-sm cursor-pointer active:scale-95 print:hidden"
+                        title="Add these items back into trolley"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Re-order</span>
+                      </button>
+
+                      <button
+                        onClick={handlePrint}
+                        className="p-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold transition-all shadow-sm cursor-pointer print:hidden"
+                        title="Print Invoice"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
 
-                  {/* Delivery Info & Payment (Right 4 cols) */}
-                  <div className="md:col-span-4 bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-4">
-                    {order.address && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs font-black text-slate-900">
-                          <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Delivery Address</span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-800">
-                          {order.address.fullName || 'Valued Customer'}
-                        </p>
-                        <p className="text-[11px] text-slate-600 leading-relaxed">
-                          {order.address.addressLine1}
-                          {order.address.city && `, ${order.address.city}`}
-                          {order.address.pinCode && ` - ${order.address.pinCode}`}
-                        </p>
-                        <p className="text-[11px] text-slate-500 font-mono">
-                          📞 +91 {order.address.phone}
-                        </p>
-                      </div>
-                    )}
+                  {/* Items Breakdown & Delivery Info */}
+                  <div className="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+                    
+                    {/* Items List (Left 8 cols) */}
+                    <div className="md:col-span-8 space-y-3">
+                      <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Purchased Items ({(order.items || []).length})</span>
+                      </h4>
+                      
+                      <div className="divide-y divide-slate-100">
+                        {(order.items || []).map((it: any, idx: number) => {
+                          const matched = products.find(
+                            (p) => p.name === it.productName || p.id === it.productId
+                          );
+                          const imgUrl = it.imageUrl || matched?.imageUrl || '/products/fallback.svg';
 
-                    <div className="space-y-1 pt-3 border-t border-slate-200 text-xs">
-                      <div className="flex items-center gap-1.5 font-black text-slate-900">
-                        <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Payment Details</span>
+                          return (
+                            <div key={idx} className="py-3 flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-1 overflow-hidden shrink-0 shadow-inner">
+                                  <img
+                                    src={imgUrl}
+                                    alt={it.productName}
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = '/products/fallback.svg';
+                                    }}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                                <div className="min-w-0">
+                                  <h5 className="text-xs font-black text-slate-900 truncate">
+                                    {it.productName}
+                                  </h5>
+                                  <p className="text-[11px] text-slate-500 font-medium">
+                                    Qty: <strong className="text-slate-800">{it.quantity}</strong> × ₹{it.unitPrice}
+                                    {it.variantInfo && ` • ${it.variantInfo}`}
+                                  </p>
+                                </div>
+                              </div>
+                              <span className="text-xs font-black text-slate-900 shrink-0">
+                                ₹{(it.lineTotal || (it.unitPrice * it.quantity)).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="flex justify-between text-slate-600 text-[11px]">
-                        <span>Payment Status:</span>
-                        <span className="text-emerald-700 font-bold">
-                          {order.payment?.status || 'SIMULATED_SUCCESS'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-slate-600 text-[11px]">
-                        <span>Gateway:</span>
-                        <span className="text-slate-800 font-medium">Demo Payment Direct</span>
+                    </div>
+
+                    {/* Delivery & Billing Summary (Right 4 cols) */}
+                    <div className="md:col-span-4 bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-4">
+                      {order.address && (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs font-black text-slate-900">
+                            <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Customer & Address</span>
+                          </div>
+                          <p className="text-xs font-bold text-slate-800">
+                            {order.address.fullName || order.customerName || 'Valued Customer'}
+                          </p>
+                          <p className="text-[11px] text-slate-600 leading-relaxed">
+                            {order.address.addressLine1}
+                            {order.address.city && `, ${order.address.city}`}
+                            {order.address.pinCode && ` - ${order.address.pinCode}`}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-mono">
+                            📞 +91 {order.address.phone || order.customerPhone}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5 pt-3 border-t border-slate-200 text-xs">
+                        <div className="flex items-center gap-1.5 font-black text-slate-900">
+                          <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Payment Settlement</span>
+                        </div>
+                        <div className="flex justify-between text-slate-600 text-[11px]">
+                          <span>Status:</span>
+                          <span className="text-emerald-700 font-bold">
+                            {order.payment?.status || order.paymentStatus || 'SIMULATED_SUCCESS'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-slate-600 text-[11px]">
+                          <span>Method:</span>
+                          <span className="text-slate-800 font-medium">Demo POS Immediate Settlement</span>
+                        </div>
+                        <div className="flex justify-between text-slate-900 text-xs font-black pt-1 border-t border-slate-200">
+                          <span>Total Amount:</span>
+                          <span className="text-blue-700">₹{(order.totalAmount || order.finalAmount || 0).toLocaleString('en-IN')}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -359,7 +416,7 @@ export default function OrdersPage() {
             <div className="space-y-1">
               <h2 className="text-xl font-black text-slate-900">No Orders Found</h2>
               <p className="text-xs text-slate-600 font-medium max-w-sm mx-auto leading-relaxed">
-                No orders found under mobile number <strong className="text-black">+91 {phoneQuery}</strong>.
+                No past orders found under mobile number <strong className="text-black">+91 {phoneQuery || 'current session'}</strong>.
                 Step into the 3D supermarket and place your first demo order!
               </p>
             </div>

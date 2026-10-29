@@ -10,6 +10,7 @@ interface MartStore {
   playerPos: [number, number, number];
   playerYaw: number;
   selectedProduct: Product | null;
+  hoveredProduct: Product | null;
   isProductModalOpen: boolean;
   isMinimapOpen: boolean;
   isSoundMuted: boolean;
@@ -36,6 +37,7 @@ interface MartStore {
   setActiveFloor: (floorNumber: number) => void;
   setPlayerPos: (pos: [number, number, number], yaw?: number) => void;
   setSelectedProduct: (product: Product | null) => void;
+  setHoveredProduct: (product: Product | null) => void;
   openProductModal: (product: Product) => void;
   closeProductModal: () => void;
   toggleMinimap: (open?: boolean) => void;
@@ -49,6 +51,11 @@ interface MartStore {
   hideToast: () => void;
   openUnpaidExitAlert: () => void;
   closeUnpaidExitAlert: () => void;
+  resetTrigger: number;
+  resetToOriginalState: () => void;
+  teleportTrigger: number;
+  teleportTo: (pos: [number, number, number], yaw?: number) => void;
+  navigateToProduct: (product: Product) => void;
 }
 
 export const martRuntime = {
@@ -63,6 +70,7 @@ export const useMartStore = create<MartStore>((set) => ({
   playerPos: [0, 1.5, -20], // Spawn at Entrance
   playerYaw: 0,
   selectedProduct: null,
+  hoveredProduct: null,
   isProductModalOpen: false,
   isMinimapOpen: false,
   isSoundMuted: false,
@@ -92,6 +100,7 @@ export const useMartStore = create<MartStore>((set) => ({
     set((state) => ({ playerPos, playerYaw: yaw !== undefined ? yaw : state.playerYaw }));
   },
   setSelectedProduct: (selectedProduct) => set({ selectedProduct }),
+  setHoveredProduct: (hoveredProduct) => set({ hoveredProduct }),
   
   openProductModal: (product) => set({ selectedProduct: product, isProductModalOpen: true }),
   closeProductModal: () => set({ isProductModalOpen: false, selectedProduct: null }),
@@ -145,4 +154,85 @@ export const useMartStore = create<MartStore>((set) => ({
 
   openUnpaidExitAlert: () => set({ unpaidExitAlertOpen: true }),
   closeUnpaidExitAlert: () => set({ unpaidExitAlertOpen: false }),
+
+  resetTrigger: 0,
+  resetToOriginalState: () => {
+    martRuntime.playerPos[0] = 0;
+    martRuntime.playerPos[1] = 1.5;
+    martRuntime.playerPos[2] = -20;
+    martRuntime.playerYaw = 0;
+    sounds.playClick();
+    set((state) => ({
+      activeFloor: 1,
+      cameraMode: 'third_person',
+      playerPos: [0, 1.5, -20],
+      playerYaw: 0,
+      resetTrigger: state.resetTrigger + 1,
+      promptText: null,
+      nearBillingCounter: false,
+      nearExitGate: false,
+      isAutoNavigatingToExit: false,
+      finalCompletedPopupOpen: false,
+      unpaidExitAlertOpen: false,
+    }));
+  },
+
+  teleportTrigger: 0,
+  teleportTo: (pos, yaw) => {
+    martRuntime.playerPos[0] = pos[0];
+    martRuntime.playerPos[1] = pos[1];
+    martRuntime.playerPos[2] = pos[2];
+    if (yaw !== undefined) martRuntime.playerYaw = yaw;
+    set((state) => ({
+      playerPos: pos,
+      playerYaw: yaw !== undefined ? yaw : state.playerYaw,
+      teleportTrigger: state.teleportTrigger + 1,
+    }));
+  },
+
+  navigateToProduct: (product) => {
+    sounds.playPickSound();
+    const plc = product.placement;
+    if (!plc) {
+      set({ selectedProduct: product, isProductModalOpen: true });
+      return;
+    }
+
+    const floorNum = plc.floorNumber || 1;
+    const aisleCentersF1: Record<number, number> = { 1: -10, 2: -5, 3: 0, 4: 5, 5: 10 };
+    const aisleCentersF2: Record<number, number> = { 6: -11.0, 7: -6.5, 8: -2.0, 9: 2.5, 10: 7.0, 11: 11.5 };
+    const aisleCenter =
+      floorNum === 2
+        ? (aisleCentersF2[plc.aisleNumber] ?? plc.worldX)
+        : (aisleCentersF1[plc.aisleNumber] ?? plc.worldX);
+
+    const isLeft = plc.shelfSide === 'LEFT' || plc.worldX < aisleCenter;
+    const targetX = isLeft ? plc.worldX - 1.35 : plc.worldX + 1.35;
+    const targetYaw = isLeft ? Math.PI / 2 : -Math.PI / 2;
+    const targetY = floorNum === 2 ? 6.5 : 1.5;
+    const targetZ = plc.worldZ;
+
+    martRuntime.playerPos[0] = targetX;
+    martRuntime.playerPos[1] = targetY;
+    martRuntime.playerPos[2] = targetZ;
+    martRuntime.playerYaw = targetYaw;
+
+    const toastId = 'nav-' + Date.now();
+
+    set((state) => ({
+      activeFloor: floorNum,
+      playerPos: [targetX, targetY, targetZ],
+      playerYaw: targetYaw,
+      cameraMode: 'third_person',
+      selectedProduct: product,
+      isProductModalOpen: true,
+      teleportTrigger: state.teleportTrigger + 1,
+      toast: {
+        id: toastId,
+        title: `Arrived at ${product.name}`,
+        subtitle: `Floor ${floorNum} • ${plc.aisleName || `Aisle ${plc.aisleNumber}`}`,
+        type: 'success',
+      },
+    }));
+  },
 }));

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ea580c"/>
+            <stop offset="50%" stop-color="#c2410c"/>
+            <stop offset="100%" stop-color="#7c2d12"/>
+          </linearGradient>
+          <radialGradient id="sun" cx="50%" cy="30%" r="50%">
+            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+        <circle cx="200" cy="180" r="160" fill="url(#sun)"/>
+        
+    <g transform="translate(348, 28)">
+      <rect width="22" height="22" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <circle cx="11" cy="11" r="5" fill="#15803d"/>
+    </g>
+  
+        <rect x="30" y="30" width="100" height="28" rx="6" fill="#15803d"/>
+        <text x="80" y="49" font-family="system-ui, sans-serif" font-weight="900" font-size="12" fill="#ffffff" text-anchor="middle">TEDHE MEDHE</text>
+        
+        <!-- Logo -->
+        <g transform="translate(200, 110)">
+          <path d="M-130 -10 C-60 -35 60 -35 130 -10 C140 30 -140 30 -130 -10 Z" fill="#15803d" stroke="#facc15" stroke-width="3"/>
+          <text y="14" font-family="'Arial Black', Impact, sans-serif" font-size="44" fill="#ffffff" font-weight="900" text-anchor="middle" letter-spacing="2">Kurkure</text>
+        </g>
+        
+        <text x="200" y="165" font-family="'Arial Black', Impact, sans-serif" font-size="28" fill="#facc15" font-weight="900" text-anchor="middle" letter-spacing="1">MASALA MUNCH</text>
+        <text x="200" y="190" font-family="system-ui, sans-serif" font-size="14" fill="#fed7aa" font-weight="700" text-anchor="middle">CHATPATI MASTI • CRUNCHY CORN PUFFS</text>
+        
+        <!-- Snack illustration -->
+        <g transform="translate(200, 280)">
+          <ellipse cx="0" cy="50" rx="90" ry="16" fill="#000000" opacity="0.3"/>
+          <path d="M-60 10 Q -30 -40 0 10 Q 30 60 60 10 Q 20 20 -10 -10 Z" fill="#f97316" stroke="#ca8a04" stroke-width="4"/>
+          <path d="M-40 40 Q -10 -10 20 40 Q 50 80 80 30" fill="none" stroke="#facc15" stroke-width="8" stroke-linecap="round"/>
+          <path d="M-80 0 Q -50 -50 -20 0 Q 10 50 40 0" fill="none" stroke="#ea580c" stroke-width="10" stroke-linecap="round"/>
+          <circle cx="-15" cy="5" r="3" fill="#dc2626"/>
+          <circle cx="25" cy="-8" r="4" fill="#dc2626"/>
+          <circle cx="5" cy="28" r="3" fill="#15803d"/>
+        </g>
+
+        <!-- Price Badge -->
+        <g transform="translate(60, 360)">
+          <circle r="34" fill="#facc15" stroke="#ca8a04" stroke-width="3"/>
+          <text y="-4" font-family="system-ui, sans-serif" font-size="12" font-weight="900" fill="#78350f" text-anchor="middle">ONLY</text>
+          <text y="18" font-family="'Arial Black', sans-serif" font-size="22" font-weight="900" fill="#b45309" text-anchor="middle">₹20</text>
+        </g>
+
+        <!-- Net Weight -->
+        <rect x="270" y="345" width="90" height="32" rx="8" fill="#15803d"/>
+        <text x="315" y="366" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">90 g</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>

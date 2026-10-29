@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ca8a04"/>
+            <stop offset="50%" stop-color="#a16207"/>
+            <stop offset="100%" stop-color="#713f12"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" rx="20" fill="url(#bg)"/>
+        
+    <g transform="translate(348, 28)">
+      <rect width="22" height="22" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <circle cx="11" cy="11" r="5" fill="#15803d"/>
+    </g>
+  
+
+        <polygon points="200,40 280,80 200,120 120,80" fill="#dc2626" stroke="#ffffff" stroke-width="3"/>
+        <text x="200" y="86" font-family="'Arial Black', sans-serif" font-size="18" fill="#ffffff" font-weight="900" text-anchor="middle">Haldiram's</text>
+
+        <text x="200" y="165" font-family="'Arial Black', sans-serif" font-size="28" fill="#fde047" font-weight="900" text-anchor="middle">ALOO BHUJIA</text>
+        <text x="200" y="195" font-family="system-ui, sans-serif" font-size="14" fill="#fed7aa" font-weight="800" text-anchor="middle">CRISPY POTATO-MINT NAMKEEN SEV</text>
+
+        <circle cx="200" cy="285" r="65" fill="#fde047" stroke="#eab308" stroke-width="4"/>
+        <text x="200" y="295" font-family="'Arial Black', sans-serif" font-size="36" fill="#854d0e" text-anchor="middle">100%</text>
+
+        <rect x="40" y="375" width="90" height="30" rx="6" fill="#1e293b"/>
+        <text x="85" y="395" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">400 g</text>
+        
+        <rect x="270" y="375" width="90" height="30" rx="6" fill="#facc15"/>
+        <text x="315" y="395" font-family="'Arial Black', sans-serif" font-size="16" font-weight="900" fill="#713f12" text-anchor="middle">₹115</text>
+
+        
+    <rect x="70" y="420" width="260" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="88" y="428" width="4" height="32"/>
+      <rect x="96" y="428" width="8" height="32"/>
+      <rect x="108" y="428" width="3" height="32"/>
+      <rect x="116" y="428" width="6" height="32"/>
+      <rect x="128" y="428" width="4" height="32"/>
+      <rect x="138" y="428" width="9" height="32"/>
+      <rect x="154" y="428" width="4" height="32"/>
+      <rect x="164" y="428" width="7" height="32"/>
+      <rect x="176" y="428" width="8" height="32"/>
+      <rect x="189" y="428" width="4" height="32"/>
+      <rect x="198" y="428" width="6" height="32"/>
+      <rect x="210" y="428" width="4" height="32"/>
+      <rect x="218" y="428" width="8" height="32"/>
+      <rect x="232" y="428" width="5" height="32"/>
+      <rect x="243" y="428" width="10" height="32"/>
+      <rect x="260" y="428" width="4" height="32"/>
+      <rect x="270" y="428" width="6" height="32"/>
+      <rect x="282" y="428" width="4" height="32"/>
+      <rect x="292" y="428" width="8" height="32"/>
+    </g>
+  
+      </svg>
