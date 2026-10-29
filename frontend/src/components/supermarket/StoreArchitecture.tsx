@@ -96,9 +96,9 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
         <boxGeometry args={[31.2, 0.3, 52]} />
         <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
       </mesh>
-      {/* 2. Front Slab (z = 6.5 to 26) */}
-      <mesh position={[15.6, 5.0, 16.25]} receiveShadow>
-        <boxGeometry args={[4.8, 0.3, 19.5]} />
+      {/* 2. Front Slab (z = 5.4 to 26 - escalator top landing platform) */}
+      <mesh position={[15.6, 5.0, 15.7]} receiveShadow>
+        <boxGeometry args={[4.8, 0.3, 20.6]} />
         <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
       </mesh>
       {/* 3. Back Slab (z = -26 to -6.5) */}
@@ -113,11 +113,13 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
       </mesh>
 
       {/* Escalator Shaft Glass Guardrails on Floor 2 */}
-      <mesh position={[13.2, 5.5, 0]}>
-        <boxGeometry args={[0.08, 1.0, 13]} />
+      {/* Left side safety guardrail protecting the atrium void (x = 13.2, z from -6.5 to 5.4) */}
+      <mesh position={[13.2, 5.5, -0.55]}>
+        <boxGeometry args={[0.08, 1.0, 11.9]} />
         <meshStandardMaterial color="#38bdf8" transparent opacity={0.4} roughness={0.1} />
       </mesh>
-      <mesh position={[14.7, 5.5, 6.5]}>
+      {/* Back end safety guardrail protecting against drop behind escalator shaft (z = -6.5, x from 13.2 to 16.2) */}
+      <mesh position={[14.7, 5.5, -6.5]}>
         <boxGeometry args={[3.0, 1.0, 0.08]} />
         <meshStandardMaterial color="#38bdf8" transparent opacity={0.4} roughness={0.1} />
       </mesh>

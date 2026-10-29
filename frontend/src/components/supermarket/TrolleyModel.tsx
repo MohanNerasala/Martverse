@@ -162,41 +162,34 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     desiredZ = THREE.MathUtils.clamp(desiredZ, -24.4 + cartHalfD, 24.4 - cartHalfD);
 
     // 2. Strict Escalator lateral & side containment:
-    // Escalator centerline is at x = 14.70. Left yellow line at x = 13.78, Left glass balustrade at x = 13.65.
-    // Right yellow line at x = 15.62, Right glass balustrade at x = 15.75.
-    const isNearEscalatorCorridor =
-      desiredZ >= -9.2 &&
-      desiredZ <= 7.2 &&
-      Math.abs(desiredX - 14.7) < 1.6;
-
+    // Escalator centerline is at x = 14.70.
     const isOnEscalatorRamp =
-      (actualPos[2] >= -9.0 && actualPos[2] <= 7.0 && Math.abs(actualPos[0] - 14.7) < 1.3) ||
-      isNearEscalatorCorridor;
+      actualPos[2] >= -7.4 &&
+      actualPos[2] <= 5.4 &&
+      Math.abs(actualPos[0] - 14.7) < 1.2;
 
     if (isOnEscalatorRamp) {
-      // Trolley is locked strictly to escalator center line x = 14.70.
-      // With trolley half-width 0.42m, the trolley stays at [14.28, 15.12],
-      // giving 0.50m of safety margin from the yellow lines (13.78 and 15.62) and never clipping!
+      // Trolley is locked strictly to escalator center line x = 14.70 while on the moving ramp
       desiredX = 14.70;
       const isAscending = Math.cos(actualYaw) >= -0.2;
       actualYaw = isAscending ? 0 : Math.PI;
     } else {
-      // Escalator side structure on Floor 1: impenetrable barrier from the sides
-      if (currentFloor === 1 && desiredZ >= -9.2 && desiredZ <= 7.2) {
-        if (actualPos[0] < 14.7) {
+      // Escalator side structure on Floor 1: impenetrable barrier from aisle 5 side (x < 13.5)
+      if (currentFloor === 1 && desiredZ >= -7.4 && desiredZ <= 5.4) {
+        if (actualPos[0] < 13.8) {
           desiredX = Math.min(desiredX, 13.2 - cartHalfW);
-        } else {
-          desiredX = Math.max(desiredX, 16.2 + cartHalfW);
         }
       }
 
       // Floor 2 Atrium Opening Guardrails
       if (currentFloor === 2) {
-        if (desiredZ >= -7.5 - cartHalfD && desiredZ <= 6.5 + cartHalfD && actualPos[0] < 13.2) {
+        // Left side glass guardrail (x = 13.2, z between -6.6 and 5.4)
+        if (desiredZ >= -6.6 - cartHalfD && desiredZ <= 5.4 + cartHalfD && actualPos[0] < 13.5) {
           desiredX = Math.min(desiredX, 13.2 - cartHalfW);
         }
-        if (desiredX >= 13.2 - cartHalfW && desiredX <= 16.2 + cartHalfW && actualPos[2] > 6.5) {
-          desiredZ = Math.max(desiredZ, 6.5 + cartHalfD);
+        // South back glass guardrail (z = -6.5, x between 13.2 and 16.5)
+        if (desiredX >= 13.2 - cartHalfW && desiredX <= 16.5 + cartHalfW && actualPos[2] < -6.3) {
+          desiredZ = Math.min(desiredZ, -6.6 - cartHalfD);
         }
       }
 
@@ -283,11 +276,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     } else {
       currentPos.current.x = THREE.MathUtils.clamp(currentPos.current.x, -16.8 + cartHalfW, 16.8 - cartHalfW);
       currentPos.current.z = THREE.MathUtils.clamp(currentPos.current.z, -24.2 + cartHalfD, 24.2 - cartHalfD);
-      if (currentFloor === 1 && currentPos.current.z >= -9.2 && currentPos.current.z <= 7.2) {
-        if (currentPos.current.x < 14.7) {
+      if (currentFloor === 1 && currentPos.current.z >= -7.4 && currentPos.current.z <= 5.4) {
+        if (currentPos.current.x < 13.8) {
           currentPos.current.x = Math.min(currentPos.current.x, 13.2 - cartHalfW);
-        } else {
-          currentPos.current.x = Math.max(currentPos.current.x, 16.2 + cartHalfW);
         }
       }
     }

@@ -227,8 +227,9 @@ export const PlayerController: React.FC = () => {
     }
 
     // Check Escalator Entrance (Floor 1 entrance at z ~ -8, Floor 2 entrance at z ~ 6)
-    const nearEscalatorGround = Math.abs(px - 14.7) < 2.2 && pz > -9.5 && pz < -6.5;
-    const nearEscalatorFloor2 = Math.abs(px - 14.7) < 2.2 && pz > 4.5 && pz < 7.5;
+    const isFloor2 = posRef.current.y > 4.5 || activeFloor === 2;
+    const nearEscalatorGround = !isFloor2 && Math.abs(px - 14.7) < 2.0 && pz >= -9.5 && pz <= -6.8;
+    const nearEscalatorFloor2 = isFloor2 && Math.abs(px - 14.7) < 2.0 && pz >= 5.0 && pz <= 7.8;
 
     if (nearEscalatorGround) {
       posRef.current.x = 14.7;
@@ -241,7 +242,7 @@ export const PlayerController: React.FC = () => {
 
     if (nearEscalatorFloor2) {
       posRef.current.x = 14.7;
-      posRef.current.z = 5.2;
+      posRef.current.z = 5.0;
       yawRef.current = Math.PI; // face down the ramp
       showToast('Escalator Moving Walkway', 'Gliding to Ground Floor (Groceries)...', 'info');
       sounds.playPickSound();
@@ -331,21 +332,19 @@ export const PlayerController: React.FC = () => {
         const rightX = Math.cos(yaw);
         const rightZ = -Math.sin(yaw);
 
-        // Escalator Ramp Walkway Containment
-        const onRampZ = testPz >= -7.8 && testPz <= 6.2;
-        if (onRampZ) {
-          // If in the escalator shaft zone (between x = 13.2 and x = 16.3)
-          if (testPx >= 13.2 && testPx <= 16.3) {
-            // Must stay strictly within the central walkway [14.22, 15.18]
-            if (testPx < 14.22 || testPx > 15.18) {
-              return true; // Hit glass balustrade!
-            }
-            const trolleyFrontX = testPx + sin * 1.45;
-            if (trolleyFrontX < 14.20 || trolleyFrontX > 15.20) {
-              return true; // Trolley turned into balustrade!
-            }
-            return false; // Safely within walkway
-          }
+        // Escalator Ramp Walkway: Allow completely free movement on the moving ramp
+        const onRampCorridor = testPx >= 14.0 && testPx <= 15.4 && testPz >= -7.5 && testPz <= 5.5;
+        if (onRampCorridor) {
+          return false; // Escalator moving walkway is completely clear
+        }
+
+        // Escalator Landing Zones: Ground Floor landing and Floor 2 landing are completely open
+        const onEscalatorLanding =
+          testPx >= 13.8 && testPx <= 15.6 &&
+          ((floor === 1 && testPz >= -9.2 && testPz <= -7.2) ||
+           (floor === 2 && testPz >= 5.3 && testPz <= 7.8));
+        if (onEscalatorLanding) {
+          return false; // Landing zones are wide open walkways
         }
 
         // Compound assembly test circles (Player + Trolley)
@@ -372,20 +371,20 @@ export const PlayerController: React.FC = () => {
           if (c.z + c.r > 24.6) return true;
         }
 
-        // 2. Escalator outer structure barrier on Floor 1
+        // 2. Escalator outer structure barrier on Floor 1 (stops walking into side balustrade from aisle 5)
         if (floor === 1) {
           for (const c of testCircles) {
-            if (circleIntersectsAABB(c.x, c.z, c.r, 13.35, 16.05, -7.8, 6.2)) {
-              if (testPz > -7.8) return true;
+            if (circleIntersectsAABB(c.x, c.z, c.r, 12.8, 13.6, -7.4, 5.4)) {
+              return true;
             }
           }
         }
 
-        // 3. Floor 2 Escalator void opening guardrails
+        // 3. Floor 2 Escalator void opening guardrails (left side and south back wall protecting atrium void)
         if (floor === 2) {
           for (const c of testCircles) {
-            if (circleIntersectsAABB(c.x, c.z, c.r, 13.0, 13.4, -7.6, 6.6)) return true;
-            if (circleIntersectsAABB(c.x, c.z, c.r, 13.0, 16.3, 6.3, 6.7)) return true;
+            if (circleIntersectsAABB(c.x, c.z, c.r, 13.0, 13.4, -6.6, 5.4)) return true; // Left side glass rail
+            if (circleIntersectsAABB(c.x, c.z, c.r, 13.0, 16.5, -6.8, -6.3)) return true; // South back glass rail
           }
         }
 
@@ -528,19 +527,13 @@ export const PlayerController: React.FC = () => {
           }
         }
 
-        // Escalator outer side wall push-out on Floor 1 (stops walking into escalator from sides)
-        if (currentFloor === 1 && posRef.current.z >= -9.2 && posRef.current.z <= 7.2) {
-          if (posRef.current.x > 12.8 && posRef.current.x < 14.7) {
+        // Escalator outer side wall push-out on Floor 1: only push someone trying to walk into side from aisle 5
+        if (currentFloor === 1 && posRef.current.z >= -7.4 && posRef.current.z <= 5.4) {
+          if (posRef.current.x > 12.8 && posRef.current.x < 13.6) {
             posRef.current.x = 12.8;
           }
-          if (posRef.current.x < 16.6 && posRef.current.x >= 14.7) {
-            posRef.current.x = 16.6;
-          }
-          if (tfX > 12.8 && tfX < 14.7) {
+          if (tfX > 12.8 && tfX < 13.6) {
             posRef.current.x -= (tfX - 12.8);
-          }
-          if (tfX < 16.6 && tfX >= 14.7) {
-            posRef.current.x += (16.6 - tfX);
           }
         }
       }
@@ -566,43 +559,52 @@ export const PlayerController: React.FC = () => {
       }
     }
 
-    // Escalator Transition & Automatic Moving Walkway logic (at x = 14.7, z between -8.8 and 6.8)
+    // Escalator Transition & Automatic Moving Walkway logic (at x = 14.7, z between -7.4 and 5.4)
     const onEscalatorRamp =
-      Math.abs(posRef.current.x - 14.7) < 1.3 &&
-      posRef.current.z >= -8.8 &&
-      posRef.current.z <= 6.8;
+      Math.abs(posRef.current.x - 14.7) < 1.2 &&
+      posRef.current.z >= -7.4 &&
+      posRef.current.z <= 5.4;
 
     if (onEscalatorRamp) {
-      // 1. Strict lateral guardrail containment: player CANNOT move outside the escalator balustrade!
-      posRef.current.x = THREE.MathUtils.clamp(posRef.current.x, 14.60, 14.80);
+      // 1. Center lateral position gently on the walkway
+      posRef.current.x = THREE.MathUtils.damp(posRef.current.x, 14.70, 10, delta);
 
       // 2. Automatic moving walkway propulsion:
-      // If moving toward Floor 2 (facing +z)
+      const forwardInput = keys.current.forward ? 2.5 : 0;
       const isAscending = Math.cos(yawRef.current) >= -0.2;
+
       if (isAscending) {
-        posRef.current.z += 2.2 * delta;
-        yawRef.current = THREE.MathUtils.clamp(yawRef.current, -0.35, 0.35);
-        yawRef.current = THREE.MathUtils.damp(yawRef.current, 0, 6, delta);
-        if (posRef.current.z > 5.8) {
-          posRef.current.z = 6.4;
+        posRef.current.z += (2.4 + forwardInput) * delta;
+        yawRef.current = THREE.MathUtils.clamp(yawRef.current, -0.4, 0.4);
+        yawRef.current = THREE.MathUtils.damp(yawRef.current, 0, 8, delta);
+
+        // When reaching Floor 2 landing
+        if (posRef.current.z >= 5.4) {
+          posRef.current.z = 5.9;
           posRef.current.y = 6.5;
           setActiveFloor(2);
+          sounds.playPickSound();
+          showToast('2nd Floor Reached', 'Welcome to Fashion Studio & Apparel!', 'success');
         }
       } else {
-        posRef.current.z -= 2.2 * delta;
-        yawRef.current = THREE.MathUtils.clamp(yawRef.current, Math.PI - 0.35, Math.PI + 0.35);
-        yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 6, delta);
-        if (posRef.current.z < -7.4) {
-          posRef.current.z = -8.0;
+        posRef.current.z -= (2.4 + forwardInput) * delta;
+        yawRef.current = THREE.MathUtils.clamp(yawRef.current, Math.PI - 0.4, Math.PI + 0.4);
+        yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 8, delta);
+
+        // When reaching Ground Floor landing
+        if (posRef.current.z <= -7.4) {
+          posRef.current.z = -8.2;
           posRef.current.y = 1.5;
           setActiveFloor(1);
+          sounds.playPickSound();
+          showToast('Ground Floor Reached', 'Welcome back to Groceries & Billing!', 'success');
         }
       }
 
       // 3. Ramp y smoothly between 1.5 (Floor 1) and 6.5 (Floor 2)
-      const t = Math.max(0, Math.min(1, (posRef.current.z - (-7.5)) / 13.3));
+      const t = Math.max(0, Math.min(1, (posRef.current.z - (-7.4)) / (5.4 - (-7.4))));
       const desiredY = 1.5 + t * 5.0;
-      posRef.current.y = THREE.MathUtils.damp(posRef.current.y, desiredY, 8, delta);
+      posRef.current.y = THREE.MathUtils.damp(posRef.current.y, desiredY, 12, delta);
 
       if (posRef.current.y > 4.5 && activeFloor !== 2) {
         setActiveFloor(2);
@@ -612,7 +614,7 @@ export const PlayerController: React.FC = () => {
     } else {
       // Fixed floor height
       const targetFloorY = activeFloor === 2 ? 6.5 : 1.5;
-      posRef.current.y = THREE.MathUtils.damp(posRef.current.y, targetFloorY, 6, delta);
+      posRef.current.y = THREE.MathUtils.damp(posRef.current.y, targetFloorY, 8, delta);
     }
 
     // High-frequency zero-rerender runtime update
@@ -638,8 +640,8 @@ export const PlayerController: React.FC = () => {
 
     const nearBilling = Math.abs(pz - 17.5) < 4.0 && Math.abs(px) < 7.8;
     const nearExit = Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5;
-    const nearEscalatorGround = Math.abs(px - 14.7) < 2.2 && pz > -9.5 && pz < -6.5;
-    const nearEscalatorFloor2 = Math.abs(px - 14.7) < 2.2 && pz > 4.5 && pz < 7.5;
+    const nearEscalatorGround = activeFloor === 1 && Math.abs(px - 14.7) < 2.0 && pz >= -9.5 && pz <= -6.8;
+    const nearEscalatorFloor2 = activeFloor === 2 && Math.abs(px - 14.7) < 2.0 && pz >= 5.0 && pz <= 7.8;
 
     let prompt: string | null = null;
     let targetPos: [number, number, number] | null = null;
@@ -648,10 +650,10 @@ export const PlayerController: React.FC = () => {
       prompt = 'Escalator Moving Walkway • Gliding automatically between floors...';
     } else if (nearEscalatorGround) {
       prompt = 'Press [E] or Step On: ↑ Ride to 2nd Floor (Fashion Studio)';
-      targetPos = [14.7, 1.5, -7.5];
+      targetPos = [14.7, 1.5, -7.0];
     } else if (nearEscalatorFloor2) {
       prompt = 'Press [E] or Step On: ↓ Ride to Ground Floor (Groceries & POS)';
-      targetPos = [14.7, 6.5, 6.0];
+      targetPos = [14.7, 6.5, 5.0];
     } else if (nearBilling) {
       prompt = null; // Do NOT show prompt banner per user request
     } else if (nearExit) {
