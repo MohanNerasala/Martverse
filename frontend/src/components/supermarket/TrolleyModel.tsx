@@ -97,9 +97,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const flyAnimations = useCartStore((state) => state.flyAnimations);
   const currentPos = useRef(
     new THREE.Vector3(
-      targetPos[0] + Math.sin(targetYaw) * 0.95,
+      targetPos[0] + Math.sin(targetYaw) * 0.75,
       targetPos[1] - 1.5,
-      targetPos[2] + Math.cos(targetYaw) * 0.95
+      targetPos[2] + Math.cos(targetYaw) * 0.75
     )
   );
   const currentYaw = useRef(targetYaw);
@@ -108,9 +108,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   useFrame((_, delta) => {
     if (!trolleyRef.current) return;
 
-    // Follow smoothly in front of the player as a pushed shopping cart
-    const offsetX = Math.sin(targetYaw) * 0.95;
-    const offsetZ = Math.cos(targetYaw) * 0.95;
+    // Follow smoothly in front of the player as a compact sleek shopping cart
+    const offsetX = Math.sin(targetYaw) * 0.75;
+    const offsetZ = Math.cos(targetYaw) * 0.75;
     const desiredX = targetPos[0] + offsetX;
     const desiredY = targetPos[1] - 1.5;
     const desiredZ = targetPos[2] + offsetZ;
@@ -123,7 +123,7 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     });
 
     if (isLanding) {
-      basketBump.current = 0.05;
+      basketBump.current = 0.04;
     }
     basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 8, delta);
 
@@ -143,9 +143,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const displayItems = items.flatMap((it) => Array(Math.min(it.quantity, 3)).fill(it)).slice(0, 16);
 
   return (
-    <group ref={trolleyRef}>
+    <group ref={trolleyRef} scale={[0.6, 0.6, 0.6]}>
       {/* Soft Under-Cart Icy Blue Ambient Light */}
-      <pointLight position={[0, 0.3, 0]} color="#38bdf8" intensity={0.4} distance={1.8} decay={2} />
+      <pointLight position={[0, 0.3, 0]} color="#38bdf8" intensity={0.35} distance={1.4} decay={2} />
 
       {/* --- Trolley Base Chassis (Polished Mirror Chrome) --- */}
       <mesh position={[0, 0.15, 0]} castShadow>

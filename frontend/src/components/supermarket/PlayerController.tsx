@@ -228,8 +228,8 @@ export const PlayerController: React.FC = () => {
             ? [-10, -5, 0, 5, 10]
             : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
 
-        const trolleyX = testPx + Math.sin(yawRef.current) * 0.95;
-        const trolleyZ = testPz + Math.cos(yawRef.current) * 0.95;
+        const trolleyX = testPx + Math.sin(yawRef.current) * 0.75;
+        const trolleyZ = testPz + Math.cos(yawRef.current) * 0.75;
 
         for (const ax of aisleXs) {
           // Half-width rack (0.85m) + player radius (0.35m)

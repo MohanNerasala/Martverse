@@ -115,9 +115,9 @@ export const SupermarketScene: React.FC = () => {
           {/* 3D Flying Item Parabolic Arc targeting the trolley basket */}
           <FlyingProductArc
             trolleyPos={[
-              playerPos[0] + Math.sin(playerYaw) * 0.95,
+              playerPos[0] + Math.sin(playerYaw) * 0.75,
               playerPos[1] - 1.5,
-              playerPos[2] + Math.cos(playerYaw) * 0.95,
+              playerPos[2] + Math.cos(playerYaw) * 0.75,
             ]}
             playerYaw={playerYaw}
           />

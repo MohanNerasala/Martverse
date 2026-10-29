@@ -31,12 +31,11 @@ const SingleFlyArc: React.FC<{
 
     const [sx, sy, sz] = anim.startPos;
 
-    // Target basket center inside the shopping trolley (precisely adjusted for yaw orientation)
-    // Trolley rotation is playerYaw + Math.PI, local basket center is [0, 0.55, 0.05]
-    const basketOffsetX = -Math.sin(playerYaw) * 0.05;
-    const basketOffsetZ = -Math.cos(playerYaw) * 0.05;
+    // Target basket center inside the compact 0.6x shopping trolley
+    const basketOffsetX = -Math.sin(playerYaw) * 0.03;
+    const basketOffsetZ = -Math.cos(playerYaw) * 0.03;
     const tx = trolleyPos[0] + basketOffsetX;
-    const ty = trolleyPos[1] + 0.62;
+    const ty = trolleyPos[1] + 0.38;
     const tz = trolleyPos[2] + basketOffsetZ;
 
     // Smooth horizontal position with cubic easing
@@ -71,14 +70,15 @@ const SingleFlyArc: React.FC<{
     } else {
       // Gentle elastic settle upon resting in basket
       const bounceT = (t - 0.92) / 0.08;
-      const bounceHeight = Math.sin(bounceT * Math.PI) * 0.06;
+      const bounceHeight = Math.sin(bounceT * Math.PI) * 0.05;
       y = ty + bounceHeight;
       scaleY = 1.0 - Math.sin(bounceT * Math.PI) * 0.08;
       scaleXZ = 1.0 + Math.sin(bounceT * Math.PI) * 0.05;
     }
 
     groupRef.current.position.set(x, y, z);
-    groupRef.current.scale.set(scaleXZ, scaleY, scaleXZ);
+    // Scale item proportionally to match the 0.6x trolley basket dimensions
+    groupRef.current.scale.set(scaleXZ * 0.65, scaleY * 0.65, scaleXZ * 0.65);
 
     // Natural item tumbling in flight that aligns as it drops into the basket
     if (t < 0.70) {
