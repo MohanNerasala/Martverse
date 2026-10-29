@@ -170,21 +170,84 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           </mesh>
         </group>
 
-        {/* Escalator Signboard */}
-        <group position={[0, 2.2, -8.5]}>
-          <mesh>
-            <boxGeometry args={[2.4, 0.6, 0.1]} />
-            <meshStandardMaterial color="#2563eb" />
+        {/* Overhead Escalator Navigation Signboard (White Board with Black Text - Double Sided) */}
+        <group position={[0, 3.85, -8.5]}>
+          {/* Chrome Vertical Suspension Rods to Ceiling */}
+          <mesh position={[-1.15, 0.6, 0]}>
+            <cylinderGeometry args={[0.015, 0.015, 1.2, 8]} />
+            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
           </mesh>
+          <mesh position={[1.15, 0.6, 0]}>
+            <cylinderGeometry args={[0.015, 0.015, 1.2, 8]} />
+            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+          </mesh>
+
+          {/* Chrome Outer Rim Frame */}
+          <mesh>
+            <boxGeometry args={[2.88, 0.88, 0.08]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.15} />
+          </mesh>
+          {/* Pure White Acrylic/Porcelain Board */}
+          <mesh>
+            <boxGeometry args={[2.8, 0.8, 0.09]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.1} metalness={0.05} />
+          </mesh>
+
+          {/* FRONT FACE (Approaching from Ground Floor) */}
+          {/* Option 1: 2nd Floor (Top in Black Text) */}
           <Text
-            position={[0, 0, 0.06]}
-            fontSize={0.14}
-            color="#ffffff"
+            position={[0, 0.18, 0.05]}
+            fontSize={0.16}
+            color="#0f172a"
             anchorX="center"
             anchorY="middle"
           >
-            {'↑ 1ST FLOOR: FASHION & APPAREL'}
+            {'↑ 2ND FLOOR • FASHION & APPAREL'}
           </Text>
+          {/* Divider Line */}
+          <mesh position={[0, 0.02, 0.05]}>
+            <boxGeometry args={[2.4, 0.015, 0.005]} />
+            <meshBasicMaterial color="#cbd5e1" />
+          </mesh>
+          {/* Option 2: Ground Floor (Bottom in Black Text) */}
+          <Text
+            position={[0, -0.18, 0.05]}
+            fontSize={0.13}
+            color="#334155"
+            anchorX="center"
+            anchorY="middle"
+          >
+            {'↓ GROUND FLOOR • GROCERIES & BILLING'}
+          </Text>
+
+          {/* BACK FACE (Approaching from 2nd Floor / Escalator Top) */}
+          <group rotation={[0, Math.PI, 0]}>
+            {/* Option 1: 2nd Floor */}
+            <Text
+              position={[0, 0.18, 0.05]}
+              fontSize={0.16}
+              color="#0f172a"
+              anchorX="center"
+              anchorY="middle"
+            >
+              {'↑ 2ND FLOOR • FASHION & APPAREL'}
+            </Text>
+            {/* Divider Line */}
+            <mesh position={[0, 0.02, 0.05]}>
+              <boxGeometry args={[2.4, 0.015, 0.005]} />
+              <meshBasicMaterial color="#cbd5e1" />
+            </mesh>
+            {/* Option 2: Ground Floor */}
+            <Text
+              position={[0, -0.18, 0.05]}
+              fontSize={0.13}
+              color="#334155"
+              anchorX="center"
+              anchorY="middle"
+            >
+              {'↓ GROUND FLOOR • GROCERIES & BILLING'}
+            </Text>
+          </group>
         </group>
       </group>
 

@@ -174,6 +174,28 @@ export const PlayerController: React.FC = () => {
       return;
     }
 
+    // Check Escalator Entrance (Floor 1 entrance at z ~ -8, Floor 2 entrance at z ~ 6)
+    const nearEscalatorGround = Math.abs(px - 14.7) < 2.2 && pz > -9.5 && pz < -6.5;
+    const nearEscalatorFloor2 = Math.abs(px - 14.7) < 2.2 && pz > 4.5 && pz < 7.5;
+
+    if (nearEscalatorGround) {
+      posRef.current.x = 14.7;
+      posRef.current.z = -7.0;
+      yawRef.current = 0; // face forward up the ramp
+      showToast('Escalator Moving Walkway', 'Gliding to 2nd Floor (Fashion Studio)...', 'info');
+      sounds.playPickSound();
+      return;
+    }
+
+    if (nearEscalatorFloor2) {
+      posRef.current.x = 14.7;
+      posRef.current.z = 5.2;
+      yawRef.current = Math.PI; // face down the ramp
+      showToast('Escalator Moving Walkway', 'Gliding to Ground Floor (Groceries)...', 'info');
+      sounds.playPickSound();
+      return;
+    }
+
     // Check nearest product
     const nearbyProd = products.find((p) => {
       if (!p.placement) return false;
@@ -289,17 +311,41 @@ export const PlayerController: React.FC = () => {
       posRef.current.z = Math.max(-23.8, Math.min(23.8, posRef.current.z));
     }
 
-    // Escalator Transition logic (at x = 14.7, z between -7.5 and 6.0)
-    const nearEscalator =
-      Math.abs(posRef.current.x - 14.7) < 1.6 &&
-      posRef.current.z > -7.5 &&
-      posRef.current.z < 6.0;
+    // Escalator Transition & Automatic Moving Walkway logic (at x = 14.7, z between -7.6 and 6.0)
+    const onEscalatorRamp =
+      Math.abs(posRef.current.x - 14.7) < 1.4 &&
+      posRef.current.z >= -7.6 &&
+      posRef.current.z <= 6.0;
 
-    if (nearEscalator) {
-      // Ramp y smoothly between 1.5 (Floor 1) and 6.5 (Floor 2)
-      const t = Math.max(0, Math.min(1, (posRef.current.z - (-7.5)) / 13.5)); // 0 at bottom, 1 at top
+    if (onEscalatorRamp) {
+      // 1. Strict lateral guardrail containment: player CANNOT move outside the escalator balustrade!
+      posRef.current.x = THREE.MathUtils.clamp(posRef.current.x, 14.15, 15.25);
+
+      // 2. Automatic moving walkway propulsion:
+      // If moving toward Floor 2 (facing +z)
+      const isAscending = Math.cos(yawRef.current) >= -0.2;
+      if (isAscending) {
+        posRef.current.z += 2.2 * delta;
+        yawRef.current = THREE.MathUtils.damp(yawRef.current, 0, 5, delta);
+        if (posRef.current.z > 5.8) {
+          posRef.current.z = 6.4;
+          posRef.current.y = 6.5;
+          setActiveFloor(2);
+        }
+      } else {
+        posRef.current.z -= 2.2 * delta;
+        yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 5, delta);
+        if (posRef.current.z < -7.4) {
+          posRef.current.z = -8.0;
+          posRef.current.y = 1.5;
+          setActiveFloor(1);
+        }
+      }
+
+      // 3. Ramp y smoothly between 1.5 (Floor 1) and 6.5 (Floor 2)
+      const t = Math.max(0, Math.min(1, (posRef.current.z - (-7.5)) / 13.3));
       const desiredY = 1.5 + t * 5.0;
-      posRef.current.y = THREE.MathUtils.damp(posRef.current.y, desiredY, 5, delta);
+      posRef.current.y = THREE.MathUtils.damp(posRef.current.y, desiredY, 8, delta);
 
       if (posRef.current.y > 4.5 && activeFloor !== 2) {
         setActiveFloor(2);
@@ -321,11 +367,21 @@ export const PlayerController: React.FC = () => {
 
     const nearBilling = Math.abs(pz - 17) < 3.2 && Math.abs(px) < 4.5;
     const nearExit = Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5;
+    const nearEscalatorGround = Math.abs(px - 14.7) < 2.2 && pz > -9.5 && pz < -6.5;
+    const nearEscalatorFloor2 = Math.abs(px - 14.7) < 2.2 && pz > 4.5 && pz < 7.5;
 
     let prompt: string | null = null;
     let targetPos: [number, number, number] | null = null;
 
-    if (nearBilling) {
+    if (onEscalatorRamp) {
+      prompt = 'Escalator Moving Walkway • Gliding automatically between floors...';
+    } else if (nearEscalatorGround) {
+      prompt = 'Press [E] or Step On: ↑ Ride to 2nd Floor (Fashion Studio)';
+      targetPos = [14.7, 1.5, -7.5];
+    } else if (nearEscalatorFloor2) {
+      prompt = 'Press [E] or Step On: ↓ Ride to Ground Floor (Groceries & POS)';
+      targetPos = [14.7, 6.5, 6.0];
+    } else if (nearBilling) {
       prompt = cartItems.length > 0 ? 'Press [E] to Scan Items at POS Counter' : 'Trolley is empty. Add items to checkout!';
     } else if (nearExit) {
       prompt = isPaid || cartItems.length === 0 ? 'Press [E] to Exit Supermarket' : 'Exit Locked: Please pay at the billing counter!';

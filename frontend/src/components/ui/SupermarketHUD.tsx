@@ -26,6 +26,7 @@ import {
   Store,
   ChevronRight,
   Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -37,8 +38,10 @@ export const SupermarketHUD: React.FC = () => {
   const cameraMode = useMartStore((state) => state.cameraMode);
   const setCameraMode = useMartStore((state) => state.setCameraMode);
   const promptText = useMartStore((state) => state.promptText);
+  const playerPos = useMartStore((state) => state.playerPos);
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
+  const showToast = useMartStore((state) => state.showToast);
 
   const toast = useMartStore((state) => state.toast);
   const hideToast = useMartStore((state) => state.hideToast);
@@ -218,6 +221,73 @@ export const SupermarketHUD: React.FC = () => {
       </div>
 
       {/* ============================================================== */}
+      {/* --- Escalator Options: White Board with Black Text --- */}
+      {/* ============================================================== */}
+      {Math.abs(playerPos[0] - 14.7) < 2.5 && playerPos[2] > -9.5 && playerPos[2] < 7.8 && (
+        <div className="fixed top-24 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-xl rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.25)] border border-slate-200 text-slate-900 max-w-xs w-full animate-in slide-in-from-right-4 duration-300">
+          <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs border border-blue-200">
+                ↕
+              </div>
+              <span className="font-extrabold text-xs text-slate-900 tracking-tight">
+                ESCALATOR NAVIGATION
+              </span>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              Auto-Glide
+            </span>
+          </div>
+
+          <div className="space-y-2 text-left">
+            {/* Option 1: 2nd Floor (Fashion Studio & Apparel) */}
+            <button
+              onClick={() => {
+                setPlayerPos([14.7, 6.5, 6.2], 0);
+                setActiveFloor(2);
+                showToast('2nd Floor Reached', 'Exploring Fashion Studio & Apparel', 'success');
+              }}
+              className="w-full text-left p-2.5 rounded-xl border border-slate-200 hover:border-purple-500 bg-slate-50/60 hover:bg-purple-50/70 transition-all duration-200 group flex items-center justify-between cursor-pointer"
+            >
+              <div className="space-y-0.5">
+                <div className="text-xs font-black text-slate-900 group-hover:text-purple-700 flex items-center gap-1.5">
+                  <span>↑ Option 1: 2nd Floor</span>
+                  <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.2 rounded">L2</span>
+                </div>
+                <div className="text-[11px] text-slate-600 font-medium">
+                  Fashion Studio, Kurtas & Denim
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-transform" />
+            </button>
+
+            {/* Option 2: Ground Floor (Groceries, Staples & POS) */}
+            <button
+              onClick={() => {
+                setPlayerPos([14.7, 1.5, -8.0], Math.PI);
+                setActiveFloor(1);
+                showToast('Ground Floor Reached', 'Exploring Daily Groceries & POS Billing', 'success');
+              }}
+              className="w-full text-left p-2.5 rounded-xl border border-slate-200 hover:border-blue-500 bg-slate-50/60 hover:bg-blue-50/70 transition-all duration-200 group flex items-center justify-between cursor-pointer"
+            >
+              <div className="space-y-0.5">
+                <div className="text-xs font-black text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
+                  <span>↓ Option 2: Ground Floor</span>
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.2 rounded">L1</span>
+                </div>
+                <div className="text-[11px] text-slate-600 font-medium">
+                  Groceries, Staples & POS Billing
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+          
+          <div className="text-[10px] text-slate-500 text-center mt-2 pt-2 border-t border-slate-100">
+            Step onto the ramp to glide automatically
+          </div>
+        </div>
+      )}
       {/* --- First-Look Prominent Mart Name (Hides when moving trolley) --- */}
       {/* ============================================================== */}
       <div
