@@ -49,7 +49,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
         </mesh>
         {/* 3D Signboard Text */}
         <Text
-          position={[0, -0.05, 0.06]}
+          position={[0, -0.05, 0.065]}
           fontSize={0.22}
           color="#ffffff"
           anchorX="center"
@@ -60,7 +60,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
         </Text>
         {/* Backside Text */}
         <Text
-          position={[0, -0.05, -0.06]}
+          position={[0, -0.05, -0.065]}
           rotation={[0, Math.PI, 0]}
           fontSize={0.22}
           color="#ffffff"
@@ -156,80 +156,168 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
           >
             {/* 3D Product Mesh based on modelType */}
             {plc.modelType === 'bottle' ? (
-              <mesh castShadow position={[0, 0.22, 0]}>
-                <cylinderGeometry args={[0.1, 0.12, 0.44, 16]} />
-                <meshStandardMaterial
-                  color={color}
-                  roughness={0.2}
-                  metalness={0.1}
-                  emissive={isHovered ? color : '#000000'}
-                  emissiveIntensity={isHovered ? 0.35 : 0}
-                />
-              </mesh>
-            ) : plc.modelType === 'bag' ? (
-              <mesh castShadow position={[0, 0.25, 0]}>
-                <boxGeometry args={[0.32, 0.48, 0.18]} />
-                <meshStandardMaterial
-                  color={color}
-                  roughness={0.6}
-                  emissive={isHovered ? color : '#000000'}
-                  emissiveIntensity={isHovered ? 0.35 : 0}
-                />
-              </mesh>
-            ) : plc.modelType === 'shirt' || plc.modelType === 'hanger' ? (
-              <group position={[0, 0.3, 0]}>
-                <mesh castShadow>
-                  <boxGeometry args={[0.34, 0.52, 0.12]} />
+              <group position={[0, 0, 0]}>
+                {/* Cylindrical Main Bottle Body */}
+                <mesh castShadow position={[0, 0.12, 0]}>
+                  <cylinderGeometry args={[0.08, 0.085, 0.24, 18]} />
                   <meshStandardMaterial
                     color={color}
-                    roughness={0.8}
+                    roughness={0.15}
+                    metalness={0.1}
                     emissive={isHovered ? color : '#000000'}
                     emissiveIntensity={isHovered ? 0.35 : 0}
                   />
                 </mesh>
-                {/* Hanger Hook */}
+                {/* Tapered Bottle Shoulder */}
+                <mesh position={[0, 0.27, 0]}>
+                  <cylinderGeometry args={[0.038, 0.08, 0.06, 18]} />
+                  <meshStandardMaterial color={color} roughness={0.15} metalness={0.1} />
+                </mesh>
+                {/* Bottle Neck */}
                 <mesh position={[0, 0.32, 0]}>
-                  <torusGeometry args={[0.06, 0.015, 8, 16, Math.PI]} />
-                  <meshStandardMaterial color="#94a3b8" metalness={0.9} />
+                  <cylinderGeometry args={[0.032, 0.032, 0.04, 16]} />
+                  <meshStandardMaterial color={color} roughness={0.15} metalness={0.1} />
+                </mesh>
+                {/* White / Gold Screw Cap */}
+                <mesh position={[0, 0.355, 0]}>
+                  <cylinderGeometry args={[0.036, 0.036, 0.03, 16]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
+                </mesh>
+                {/* Printed Wrap-around Brand Label Band */}
+                <mesh position={[0, 0.12, 0]}>
+                  <cylinderGeometry args={[0.082, 0.082, 0.14, 18]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                </mesh>
+              </group>
+            ) : plc.modelType === 'bag' ? (
+              <group position={[0, 0, 0]}>
+                {/* Artisan Paper / Fabric Bag Body */}
+                <mesh castShadow position={[0, 0.2, 0]}>
+                  <boxGeometry args={[0.28, 0.4, 0.16]} />
+                  <meshStandardMaterial
+                    color={color}
+                    roughness={0.85}
+                    emissive={isHovered ? color : '#000000'}
+                    emissiveIntensity={isHovered ? 0.3 : 0}
+                  />
+                </mesh>
+                {/* Stitched / Rolled Top Seal */}
+                <mesh position={[0, 0.41, 0]} rotation={[0, 0, Math.PI / 2]}>
+                  <cylinderGeometry args={[0.016, 0.016, 0.28, 12]} />
+                  <meshStandardMaterial color="#e2e8f0" roughness={0.9} />
+                </mesh>
+                {/* Front Artisan Craft Sticker */}
+                <mesh position={[0, 0.2, 0.084]}>
+                  <boxGeometry args={[0.22, 0.26, 0.005]} />
+                  <meshBasicMaterial color="#fafaf9" />
+                </mesh>
+              </group>
+            ) : plc.modelType === 'shirt' || plc.modelType === 'hanger' ? (
+              <group position={[0, 0, 0]}>
+                {/* Polished Chrome Hanger Hook */}
+                <mesh position={[0, 0.42, 0]}>
+                  <torusGeometry args={[0.045, 0.01, 8, 16, Math.PI]} />
+                  <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+                </mesh>
+                {/* Dark Hanger Bar */}
+                <mesh position={[0, 0.36, 0]}>
+                  <boxGeometry args={[0.34, 0.018, 0.024]} />
+                  <meshStandardMaterial color="#334155" metalness={0.6} roughness={0.3} />
+                </mesh>
+                {/* Draped Garment Body */}
+                <mesh castShadow position={[0, 0.16, 0]}>
+                  <boxGeometry args={[0.32, 0.4, 0.1]} />
+                  <meshStandardMaterial
+                    color={color}
+                    roughness={0.88}
+                    emissive={isHovered ? color : '#000000'}
+                    emissiveIntensity={isHovered ? 0.3 : 0}
+                  />
+                </mesh>
+                {/* Clean Inner Collar Trim */}
+                <mesh position={[0, 0.34, 0]}>
+                  <boxGeometry args={[0.14, 0.03, 0.11]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.5} />
                 </mesh>
               </group>
             ) : (
-              // Standard Box (Cereal, Biscuits, Tea, Butter, etc.)
-              <mesh castShadow position={[0, 0.2, 0]}>
-                <boxGeometry args={[0.3, 0.38, 0.22]} />
-                <meshStandardMaterial
-                  color={color}
-                  roughness={0.4}
-                  emissive={isHovered ? color : '#000000'}
-                  emissiveIntensity={isHovered ? 0.35 : 0}
-                />
-              </mesh>
+              // Standard Premium Box (Cereal, Biscuits, Tea, Butter, etc.)
+              <group position={[0, 0, 0]}>
+                {/* Premium Carton Box */}
+                <mesh castShadow position={[0, 0.18, 0]}>
+                  <boxGeometry args={[0.26, 0.36, 0.18]} />
+                  <meshStandardMaterial
+                    color={color}
+                    roughness={0.3}
+                    metalness={0.05}
+                    emissive={isHovered ? color : '#000000'}
+                    emissiveIntensity={isHovered ? 0.35 : 0}
+                  />
+                </mesh>
+                {/* Front High-Gloss Printed Label Faceplate */}
+                <mesh position={[0, 0.18, 0.093]}>
+                  <boxGeometry args={[0.23, 0.31, 0.005]} />
+                  <meshStandardMaterial color="#ffffff" roughness={0.2} />
+                </mesh>
+                {/* Top Fold Seal Flap */}
+                <mesh position={[0, 0.363, 0]}>
+                  <boxGeometry args={[0.23, 0.008, 0.14]} />
+                  <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
+                </mesh>
+                {/* Gold Quality Seal Ribbon */}
+                <mesh position={[-0.07, 0.28, 0.098]}>
+                  <cylinderGeometry args={[0.024, 0.024, 0.006, 12]} />
+                  <meshBasicMaterial color="#f59e0b" />
+                </mesh>
+              </group>
             )}
 
-            {/* Small Floating 3D Price/Discount Badge */}
-            <group position={[0, 0.56, 0]}>
+            {/* Shelf Edge ESL (Electronic Shelf Label) Tag */}
+            <group position={[0, -0.01, 0.44]}>
+              {/* Sleek Digital ESL Casing */}
               <mesh>
-                <planeGeometry args={[0.6, 0.2]} />
-                <meshBasicMaterial color={isHovered ? '#15803d' : '#0f172a'} transparent opacity={0.88} />
+                <boxGeometry args={[0.32, 0.12, 0.018]} />
+                <meshStandardMaterial
+                  color={isHovered ? '#047857' : '#0f172a'}
+                  roughness={0.4}
+                  metalness={0.2}
+                />
               </mesh>
+              {/* High-Contrast E-Ink Digital Display Face */}
+              <mesh position={[0, 0, 0.011]}>
+                <boxGeometry args={[0.3, 0.1, 0.004]} />
+                <meshBasicMaterial color={isHovered ? '#064e3b' : '#020617'} />
+              </mesh>
+              {/* Product Price Tag */}
               <Text
-                position={[0, 0.02, 0.01]}
-                fontSize={0.075}
+                position={[-0.04, 0.018, 0.016]}
+                fontSize={0.052}
                 color="#facc15"
                 anchorX="center"
                 anchorY="middle"
               >
                 {`₹${prod.price}`}
               </Text>
+              {/* Product Brand */}
               <Text
-                position={[0, -0.05, 0.01]}
-                fontSize={0.055}
-                color="#ffffff"
+                position={[-0.04, -0.022, 0.016]}
+                fontSize={0.038}
+                color="#e2e8f0"
                 anchorX="center"
                 anchorY="middle"
+                maxWidth={0.18}
               >
                 {prod.brand}
               </Text>
+              {/* Miniature Digital Barcode Lines */}
+              <group position={[0.1, 0, 0.016]}>
+                {[-0.025, -0.015, -0.005, 0.005, 0.015, 0.025].map((bx, bi) => (
+                  <mesh key={`barcode-${bi}`} position={[bx, 0, 0]}>
+                    <planeGeometry args={[bi % 2 === 0 ? 0.004 : 0.002, 0.05]} />
+                    <meshBasicMaterial color="#94a3b8" />
+                  </mesh>
+                ))}
+              </group>
             </group>
           </group>
         );

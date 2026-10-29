@@ -36,13 +36,23 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
       <group position={[px, py + 0.04, pz]} rotation={[0.08, index * 0.5, 0.04]}>
         {/* Solid Realistic Product Bottle */}
         <mesh castShadow>
-          <cylinderGeometry args={[0.045, 0.05, 0.16, 12]} />
+          <cylinderGeometry args={[0.042, 0.048, 0.14, 14]} />
+          <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
+        </mesh>
+        {/* Tapered Shoulder */}
+        <mesh position={[0, 0.085, 0]}>
+          <cylinderGeometry args={[0.02, 0.042, 0.03, 14]} />
           <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
         </mesh>
         {/* White Bottle Cap */}
-        <mesh position={[0, 0.09, 0]}>
-          <cylinderGeometry args={[0.02, 0.02, 0.03, 10]} />
+        <mesh position={[0, 0.11, 0]}>
+          <cylinderGeometry args={[0.018, 0.018, 0.02, 12]} />
           <meshStandardMaterial color="#ffffff" roughness={0.3} />
+        </mesh>
+        {/* Printed Label */}
+        <mesh position={[0, 0.01, 0]}>
+          <cylinderGeometry args={[0.043, 0.043, 0.08, 14]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.4} />
         </mesh>
       </group>
     );
@@ -56,9 +66,9 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
           <boxGeometry args={[0.16, 0.05, 0.16]} />
           <meshStandardMaterial color={color} roughness={0.8} />
         </mesh>
-        {/* White Stripe */}
-        <mesh position={[0, 0.026, 0]}>
-          <boxGeometry args={[0.13, 0.005, 0.04]} />
+        {/* Crisp Collar Seam */}
+        <mesh position={[0, 0.028, 0]}>
+          <boxGeometry args={[0.12, 0.006, 0.05]} />
           <meshStandardMaterial color="#ffffff" roughness={0.4} />
         </mesh>
       </group>
@@ -70,10 +80,11 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
     <group position={[px, py + 0.02, pz]} rotation={[0, index * 0.4, index % 2 === 0 ? 0.05 : -0.05]}>
       <mesh castShadow>
         <boxGeometry args={[0.13, 0.12, 0.09]} />
-        <meshStandardMaterial color={color} roughness={0.3} metalness={0.1} />
+        <meshStandardMaterial color={color} roughness={0.3} metalness={0.08} />
       </mesh>
-      <mesh position={[0, 0, 0.046]}>
-        <planeGeometry args={[0.11, 0.05]} />
+      {/* Front Faceplate */}
+      <mesh position={[0, 0, 0.048]}>
+        <boxGeometry args={[0.11, 0.09, 0.004]} />
         <meshBasicMaterial color="#ffffff" />
       </mesh>
     </group>
@@ -86,9 +97,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const flyAnimations = useCartStore((state) => state.flyAnimations);
   const currentPos = useRef(
     new THREE.Vector3(
-      targetPos[0] + Math.sin(targetYaw) * 1.4,
+      targetPos[0] + Math.sin(targetYaw) * 0.95,
       targetPos[1] - 1.5,
-      targetPos[2] + Math.cos(targetYaw) * 1.4
+      targetPos[2] + Math.cos(targetYaw) * 0.95
     )
   );
   const currentYaw = useRef(targetYaw);
@@ -98,8 +109,8 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     if (!trolleyRef.current) return;
 
     // Follow smoothly in front of the player as a pushed shopping cart
-    const offsetX = Math.sin(targetYaw) * 1.4;
-    const offsetZ = Math.cos(targetYaw) * 1.4;
+    const offsetX = Math.sin(targetYaw) * 0.95;
+    const offsetZ = Math.cos(targetYaw) * 0.95;
     const desiredX = targetPos[0] + offsetX;
     const desiredY = targetPos[1] - 1.5;
     const desiredZ = targetPos[2] + offsetZ;

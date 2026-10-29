@@ -222,15 +222,22 @@ export const PlayerController: React.FC = () => {
           return false;
         }
 
-        // Shelf Rows AABB Collision
+        // Shelf Rows AABB Collision (both player and trolley clearance)
         const aisleXs =
           floor === 1
             ? [-10, -5, 0, 5, 10]
             : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
 
+        const trolleyX = testPx + Math.sin(yawRef.current) * 0.95;
+        const trolleyZ = testPz + Math.cos(yawRef.current) * 0.95;
+
         for (const ax of aisleXs) {
-          // Half-width rack (0.85m) + player radius (0.35m) = 1.2m
+          // Half-width rack (0.85m) + player radius (0.35m)
           if (Math.abs(testPx - ax) < 1.15 && testPz >= -12.3 && testPz <= 12.3) {
+            return true;
+          }
+          // Trolley basket nose clearance (keeps cart safely in the open aisle)
+          if (Math.abs(trolleyX - ax) < 1.15 && trolleyZ >= -12.3 && trolleyZ <= 12.3) {
             return true;
           }
         }
@@ -355,17 +362,22 @@ export const PlayerController: React.FC = () => {
       const targetLookZ = posRef.current.z + Math.cos(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
       camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {
-      // Third Person (Over the shoulder with full trolley in clear view)
-      const camDist = 3.6;
-      const camHeight = 2.2;
-      const camX = posRef.current.x - Math.sin(yawRef.current) * camDist;
-      const camY = posRef.current.y + camHeight;
-      const camZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
+      // Third Person (Over the shoulder with full trolley in crystal-clear unobstructed view)
+      const camDist = 2.85;
+      const camHeight = 1.85;
+      let camX = posRef.current.x - Math.sin(yawRef.current) * camDist;
+      let camY = posRef.current.y + camHeight;
+      let camZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
+
+      // Prevent camera from clipping through store perimeter walls
+      camX = Math.max(-17.2, Math.min(17.2, camX));
+      camZ = Math.max(-25.2, Math.min(25.2, camZ));
+      camY = Math.max(0.4, camY);
 
       camera.position.set(camX, camY, camZ);
-      const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 3.5;
-      const lookTargetY = posRef.current.y + 0.15 + Math.sin(pitchRef.current) * 3.0;
-      const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 3.5;
+      const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.2;
+      const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
+      const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.2;
       camera.lookAt(lookTargetX, lookTargetY, lookTargetZ);
     }
   });

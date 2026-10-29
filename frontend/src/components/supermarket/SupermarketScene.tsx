@@ -45,8 +45,8 @@ export const SupermarketScene: React.FC = () => {
     <div className="w-full h-full relative select-none">
       <Canvas
         shadows="percentage"
-        camera={{ position: [0, 4, -24], fov: 65, near: 0.1, far: 120 }}
-        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+        camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
+        gl={{ antialias: true, alpha: false, logarithmicDepthBuffer: true, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#0f172a']} />
         <fog attach="fog" args={['#0f172a', 35, 65]} />
@@ -115,10 +115,11 @@ export const SupermarketScene: React.FC = () => {
           {/* 3D Flying Item Parabolic Arc targeting the trolley basket */}
           <FlyingProductArc
             trolleyPos={[
-              playerPos[0] + Math.sin(playerYaw) * 1.4,
+              playerPos[0] + Math.sin(playerYaw) * 0.95,
               playerPos[1] - 1.5,
-              playerPos[2] + Math.cos(playerYaw) * 1.4,
+              playerPos[2] + Math.cos(playerYaw) * 0.95,
             ]}
+            playerYaw={playerYaw}
           />
 
           {/* Player Navigation & Camera Controller */}

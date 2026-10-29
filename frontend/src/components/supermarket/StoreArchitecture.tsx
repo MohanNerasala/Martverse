@@ -43,23 +43,23 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
       {/* --- Single Luxury White Signboard: 'Welcome to Martverse' --- */}
       <group position={[0, 4.25, -25.75]}>
         {/* Sleek Chrome Framing Rim */}
-        <mesh position={[0, 0, -0.01]}>
+        <mesh position={[0, 0, -0.015]}>
           <boxGeometry args={[5.28, 0.93, 0.04]} />
           <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
         </mesh>
         {/* Pure White Acrylic/Porcelain Board */}
-        <mesh castShadow>
-          <boxGeometry args={[5.2, 0.85, 0.05]} />
+        <mesh position={[0, 0, 0.015]} castShadow>
+          <boxGeometry args={[5.2, 0.85, 0.03]} />
           <meshStandardMaterial color="#ffffff" roughness={0.12} metalness={0.08} />
         </mesh>
         {/* Subtle Sapphire Accent Base Strip */}
-        <mesh position={[0, -0.38, 0.028]}>
+        <mesh position={[0, -0.38, 0.038]}>
           <boxGeometry args={[4.8, 0.02, 0.01]} />
           <meshBasicMaterial color="#38bdf8" />
         </mesh>
         {/* Main Brand Title in Sapphire Blue */}
         <Text
-          position={[0, 0.08, 0.03]}
+          position={[0, 0.08, 0.045]}
           fontSize={0.34}
           color="#0284c7"
           anchorX="center"
@@ -69,7 +69,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
         </Text>
         {/* Elegant Blue-to-White Tagline */}
         <Text
-          position={[0, -0.22, 0.03]}
+          position={[0, -0.22, 0.045]}
           fontSize={0.14}
           color="#38bdf8"
           anchorX="center"
@@ -244,24 +244,24 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
 
       {/* Wall Promotional Lightboxes on Left Wall (100% Martverse Branding) */}
       {/* Lightbox 1: Martverse Mega Savings */}
-      <group position={[-17.75, 2.5, -6]} rotation={[0, Math.PI / 2, 0]}>
-        {/* Chrome Frame */}
-        <mesh position={[0, 0, -0.02]}>
+      <group position={[-17.65, 2.5, -6]} rotation={[0, Math.PI / 2, 0]}>
+        {/* Backing Frame */}
+        <mesh position={[0, 0, 0]}>
           <boxGeometry args={[6.7, 2.3, 0.04]} />
           <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
         </mesh>
-        {/* Deep Sapphire Poster Panel */}
-        <mesh>
-          <planeGeometry args={[6.5, 2.1]} />
-          <meshStandardMaterial color="#0c4a6e" roughness={0.3} metalness={0.1} />
+        {/* Deep Sapphire Poster Panel (Raised in front of frame) */}
+        <mesh position={[0, 0, 0.03]}>
+          <boxGeometry args={[6.5, 2.1, 0.02]} />
+          <meshStandardMaterial color="#0c4a6e" roughness={0.25} metalness={0.1} />
         </mesh>
         {/* Top Gold Category Pill */}
-        <mesh position={[0, 0.65, 0.015]}>
-          <planeGeometry args={[3.2, 0.28]} />
+        <mesh position={[0, 0.65, 0.05]}>
+          <boxGeometry args={[3.2, 0.28, 0.01]} />
           <meshBasicMaterial color="#0284c7" />
         </mesh>
         <Text
-          position={[0, 0.65, 0.025]}
+          position={[0, 0.65, 0.065]}
           fontSize={0.14}
           color="#ffffff"
           anchorX="center"
@@ -270,7 +270,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           SUPERMARKET SPECIAL DEALS
         </Text>
         <Text
-          position={[0, 0.25, 0.02]}
+          position={[0, 0.25, 0.065]}
           fontSize={0.32}
           color="#38bdf8"
           anchorX="center"
@@ -279,7 +279,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           MARTVERSE MEGA SAVINGS
         </Text>
         <Text
-          position={[0, -0.22, 0.02]}
+          position={[0, -0.22, 0.065]}
           fontSize={0.16}
           color="#f8fafc"
           anchorX="center"
@@ -288,7 +288,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           Up to 50% Off On Daily Groceries, Staples & Spices
         </Text>
         <Text
-          position={[0, -0.58, 0.02]}
+          position={[0, -0.58, 0.065]}
           fontSize={0.12}
           color="#94a3b8"
           anchorX="center"
@@ -299,24 +299,24 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
       </group>
 
       {/* Lightbox 2: Martverse Fresh Harvest */}
-      <group position={[-17.75, 2.5, 8]} rotation={[0, Math.PI / 2, 0]}>
-        {/* Chrome Frame */}
-        <mesh position={[0, 0, -0.02]}>
+      <group position={[-17.65, 2.5, 8]} rotation={[0, Math.PI / 2, 0]}>
+        {/* Backing Frame */}
+        <mesh position={[0, 0, 0]}>
           <boxGeometry args={[6.7, 2.3, 0.04]} />
           <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
         </mesh>
-        {/* Fresh Jade/Emerald Poster Panel */}
-        <mesh>
-          <planeGeometry args={[6.5, 2.1]} />
-          <meshStandardMaterial color="#064e3b" roughness={0.3} metalness={0.1} />
+        {/* Fresh Jade/Emerald Poster Panel (Raised in front of frame) */}
+        <mesh position={[0, 0, 0.03]}>
+          <boxGeometry args={[6.5, 2.1, 0.02]} />
+          <meshStandardMaterial color="#064e3b" roughness={0.25} metalness={0.1} />
         </mesh>
         {/* Top Emerald Category Pill */}
-        <mesh position={[0, 0.65, 0.015]}>
-          <planeGeometry args={[3.2, 0.28]} />
+        <mesh position={[0, 0.65, 0.05]}>
+          <boxGeometry args={[3.2, 0.28, 0.01]} />
           <meshBasicMaterial color="#059669" />
         </mesh>
         <Text
-          position={[0, 0.65, 0.025]}
+          position={[0, 0.65, 0.065]}
           fontSize={0.14}
           color="#ffffff"
           anchorX="center"
@@ -325,7 +325,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           FARM DIRECT ORGANICS
         </Text>
         <Text
-          position={[0, 0.25, 0.02]}
+          position={[0, 0.25, 0.065]}
           fontSize={0.32}
           color="#6ee7b7"
           anchorX="center"
@@ -334,7 +334,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           MARTVERSE FRESH HARVEST
         </Text>
         <Text
-          position={[0, -0.22, 0.02]}
+          position={[0, -0.22, 0.065]}
           fontSize={0.16}
           color="#f8fafc"
           anchorX="center"
@@ -343,7 +343,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           Farm-Picked Fresh Produce, Gourmet Dairy & Pure Oils
         </Text>
         <Text
-          position={[0, -0.58, 0.02]}
+          position={[0, -0.58, 0.065]}
           fontSize={0.12}
           color="#a7f3d0"
           anchorX="center"
@@ -354,24 +354,24 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
       </group>
 
       {/* Wall Promotional Lightbox on Fashion Floor */}
-      <group position={[-17.75, 7.5, 0]} rotation={[0, Math.PI / 2, 0]}>
-        {/* Chrome Frame */}
-        <mesh position={[0, 0, -0.02]}>
+      <group position={[-17.65, 7.5, 0]} rotation={[0, Math.PI / 2, 0]}>
+        {/* Backing Frame */}
+        <mesh position={[0, 0, 0]}>
           <boxGeometry args={[8.2, 2.3, 0.04]} />
           <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
         </mesh>
-        {/* Regal Plum Poster Panel */}
-        <mesh>
-          <planeGeometry args={[8.0, 2.1]} />
-          <meshStandardMaterial color="#4a044e" roughness={0.3} metalness={0.1} />
+        {/* Regal Plum Poster Panel (Raised in front of frame) */}
+        <mesh position={[0, 0, 0.03]}>
+          <boxGeometry args={[8.0, 2.1, 0.02]} />
+          <meshStandardMaterial color="#4a044e" roughness={0.25} metalness={0.1} />
         </mesh>
         {/* Top Violet Category Pill */}
-        <mesh position={[0, 0.65, 0.015]}>
-          <planeGeometry args={[3.4, 0.28]} />
+        <mesh position={[0, 0.65, 0.05]}>
+          <boxGeometry args={[3.4, 0.28, 0.01]} />
           <meshBasicMaterial color="#9333ea" />
         </mesh>
         <Text
-          position={[0, 0.65, 0.025]}
+          position={[0, 0.65, 0.065]}
           fontSize={0.14}
           color="#ffffff"
           anchorX="center"
@@ -380,7 +380,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           PREMIUM APPAREL STUDIO
         </Text>
         <Text
-          position={[0, 0.25, 0.02]}
+          position={[0, 0.25, 0.065]}
           fontSize={0.34}
           color="#f0abfc"
           anchorX="center"
@@ -389,7 +389,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           MARTVERSE FASHION STUDIO
         </Text>
         <Text
-          position={[0, -0.22, 0.02]}
+          position={[0, -0.22, 0.065]}
           fontSize={0.16}
           color="#fdf4ff"
           anchorX="center"
@@ -398,7 +398,7 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
           Exclusive Ethnic Kurtas, Formal Shirts & Premium Denim
         </Text>
         <Text
-          position={[0, -0.58, 0.02]}
+          position={[0, -0.58, 0.065]}
           fontSize={0.12}
           color="#f5d0fe"
           anchorX="center"
