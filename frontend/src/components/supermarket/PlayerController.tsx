@@ -36,6 +36,8 @@ export const PlayerController: React.FC = () => {
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setCameraMode = useMartStore((state) => state.setCameraMode);
   const openUnpaidExitAlert = useMartStore((state) => state.openUnpaidExitAlert);
+  const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
+  const setHasMovedTrolley = useMartStore((state) => state.setHasMovedTrolley);
   const showToast = useMartStore((state) => state.showToast);
 
   const startCheckout = useBillingStore((state) => state.startCheckout);
@@ -251,6 +253,9 @@ export const PlayerController: React.FC = () => {
       };
 
       if (moveVector.lengthSq() > 0) {
+        if (!hasMovedTrolley) {
+          setHasMovedTrolley(true);
+        }
         moveVector.normalize();
         // Apply yaw rotation to move direction
         const sin = Math.sin(yawRef.current);

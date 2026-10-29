@@ -38,6 +38,7 @@ export const SupermarketHUD: React.FC = () => {
   const setCameraMode = useMartStore((state) => state.setCameraMode);
   const promptText = useMartStore((state) => state.promptText);
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
+  const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
 
   const toast = useMartStore((state) => state.toast);
   const hideToast = useMartStore((state) => state.hideToast);
@@ -214,6 +215,36 @@ export const SupermarketHUD: React.FC = () => {
             </kbd>
           </div>
         )}
+      </div>
+
+      {/* ============================================================== */}
+      {/* --- First-Look Prominent Mart Name (Hides when moving trolley) --- */}
+      {/* ============================================================== */}
+      <div
+        className={`fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-700 ease-out transform ${
+          hasMovedTrolley
+            ? 'opacity-0 -translate-y-8 scale-95 pointer-events-none'
+            : 'opacity-100 translate-y-0 scale-100'
+        }`}
+      >
+        <div className="glass-panel px-7 py-3.5 rounded-3xl border border-blue-400/30 shadow-[0_20px_60px_rgba(0,0,0,0.85)] text-center flex flex-col items-center gap-1.5 backdrop-blur-xl">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/35 ring-1 ring-white/20">
+              <Store className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
+              MART<span className="text-blue-400">VERSE</span>
+            </h1>
+          </div>
+          <p className="text-xs text-blue-200 font-semibold tracking-wide">
+            3D Virtual Hypermarket
+          </p>
+          <div className="flex items-center gap-2 text-[11px] text-slate-300 font-mono mt-1 bg-black/40 px-3 py-1 rounded-full border border-white/[0.08]">
+            <span className="text-blue-400 font-bold">W A S D</span>
+            <span className="text-slate-400">•</span>
+            <span>Push Trolley to Explore</span>
+          </div>
+        </div>
       </div>
 
       {/* ============================================================== */}

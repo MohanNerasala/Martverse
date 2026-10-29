@@ -49,6 +49,45 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
         MARTVERSE 3D HYPERMARKET
       </Text>
 
+      {/* Entrance Portal Welcome Arch (z = -18.5, directly in front on first look) */}
+      <group position={[0, 0, -18.5]}>
+        <mesh position={[-4.2, 2.2, 0]} castShadow>
+          <boxGeometry args={[0.3, 4.4, 0.3]} />
+          <meshStandardMaterial color="#ffffff" metalness={0.9} roughness={0.15} />
+        </mesh>
+        <mesh position={[4.2, 2.2, 0]} castShadow>
+          <boxGeometry args={[0.3, 4.4, 0.3]} />
+          <meshStandardMaterial color="#ffffff" metalness={0.9} roughness={0.15} />
+        </mesh>
+        <mesh position={[0, 4.3, 0]}>
+          <boxGeometry args={[8.7, 0.65, 0.35]} />
+          <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.5} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 3.95, 0]}>
+          <boxGeometry args={[8.8, 0.05, 0.38]} />
+          <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={0.9} />
+        </mesh>
+        <Text
+          position={[0, 4.3, 0.2]}
+          fontSize={0.38}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+        >
+          MARTVERSE 3D HYPERMARKET
+        </Text>
+        <Text
+          position={[0, 4.3, -0.2]}
+          rotation={[0, Math.PI, 0]}
+          fontSize={0.38}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+        >
+          THANK YOU FOR VISITING
+        </Text>
+      </group>
+
       {/* Left Wall (x = -18) */}
       <mesh position={[-18, 2.5, 0]} receiveShadow>
         <boxGeometry args={[0.4, 5, 52]} />

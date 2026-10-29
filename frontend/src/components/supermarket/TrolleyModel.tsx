@@ -19,30 +19,30 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
   const pz = (row - 1.5) * 0.18 + Math.cos(index * 1.5) * 0.02;
   const py = 0.06 + layer * 0.1;
 
-  const isBottle = /oil|shampoo|liquid|wash|dishwash/i.test(item.productName);
-  const isClothing = /shirt|polo|kurta|saree|dress|jeans|apparel/i.test(item.productName) || !!item.size;
+  const isBottle = item.modelType === 'bottle' || /oil|shampoo|liquid|wash|dishwash/i.test(item.productName);
+  const isClothing = item.modelType === 'shirt' || item.modelType === 'hanger' || /shirt|polo|kurta|saree|dress|jeans|apparel/i.test(item.productName) || !!item.size;
   const isSnackOrSweet = /biscuit|bhujia|chocolate|silk|rocher|snack/i.test(item.productName);
 
-  const color = isBottle
+  const color = item.color || (isBottle
     ? '#38bdf8'
     : isClothing
     ? '#818cf8'
     : isSnackOrSweet
     ? '#fbbf24'
-    : '#34d399';
+    : '#34d399');
 
   if (isBottle) {
     return (
       <group position={[px, py + 0.04, pz]} rotation={[0.08, index * 0.5, 0.04]}>
-        {/* Glassy Bottle Body */}
+        {/* Solid Realistic Product Bottle */}
         <mesh castShadow>
           <cylinderGeometry args={[0.045, 0.05, 0.16, 12]} />
-          <meshStandardMaterial color={color} roughness={0.15} metalness={0.2} transparent opacity={0.9} />
+          <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
         </mesh>
         {/* White Bottle Cap */}
         <mesh position={[0, 0.09, 0]}>
           <cylinderGeometry args={[0.02, 0.02, 0.03, 10]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.2} />
+          <meshStandardMaterial color="#ffffff" roughness={0.3} />
         </mesh>
       </group>
     );

@@ -28,6 +28,9 @@ interface MartStore {
   // Toast Notification
   toast: { id: string; title: string; subtitle?: string; type: 'success' | 'warning' | 'info' } | null;
 
+  hasMovedTrolley: boolean;
+  setHasMovedTrolley: (hasMoved: boolean) => void;
+
   setFloors: (floors: SupermarketFloor[]) => void;
   setProducts: (products: Product[]) => void;
   setActiveFloor: (floorNumber: number) => void;
@@ -56,19 +59,22 @@ export const useMartStore = create<MartStore>((set) => ({
   playerYaw: 0,
   selectedProduct: null,
   isProductModalOpen: false,
-  isMinimapOpen: true,
+  isMinimapOpen: false,
   isSoundMuted: false,
   cameraMode: 'third_person',
   nearBillingCounter: false,
   nearExitGate: false,
   promptText: null,
   targetProductPos: null,
+  hasMovedTrolley: false,
 
   isAutoNavigatingToExit: false,
   finalCompletedPopupOpen: false,
   completedOrderNumber: null,
   unpaidExitAlertOpen: false,
   toast: null,
+
+  setHasMovedTrolley: (hasMovedTrolley) => set({ hasMovedTrolley }),
 
   setFloors: (floors) => set({ floors }),
   setProducts: (products) => set({ products }),

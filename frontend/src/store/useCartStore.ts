@@ -66,9 +66,9 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }
 
     const animId = 'fly-' + Math.random().toString(36).substring(2, 9);
-    const color = product.placement?.color || '#38bdf8';
+    const color = variant?.colorCode || variant?.color || product.placement?.color || '#3b82f6';
     const modelType = product.placement?.modelType || 'box';
-    const duration = 1100; // ms for graceful 3D lift, glide, and basket drop
+    const duration = 950; // ms for graceful 3D lift, glide, and basket drop
 
     set((state) => ({
       flyAnimations: [
@@ -89,7 +89,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     setTimeout(() => {
       get().removeFlyAnimation(animId);
       sounds.playScanBeep();
-    }, duration + 50);
+    }, duration + 30);
 
     set((state) => {
       const existingIndex = state.items.findIndex(
@@ -120,7 +120,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
           variantId: variant?.id,
           variantName: variant?.name,
           size: variant?.size,
-          color: variant?.color,
+          color: color,
+          modelType: modelType,
           price: unitPrice,
           mrp: unitMrp,
           quantity,

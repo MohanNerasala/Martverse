@@ -108,6 +108,7 @@ export interface CartItem {
   variantName?: string;
   size?: string;
   color?: string;
+  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger';
   price: number;
   mrp: number;
   quantity: number;
