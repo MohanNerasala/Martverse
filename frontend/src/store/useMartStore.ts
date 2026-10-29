@@ -51,6 +51,11 @@ interface MartStore {
   closeUnpaidExitAlert: () => void;
 }
 
+export const martRuntime = {
+  playerPos: [0, 1.5, -20] as [number, number, number],
+  playerYaw: 0,
+};
+
 export const useMartStore = create<MartStore>((set) => ({
   floors: MOCK_FLOORS,
   products: MOCK_PRODUCTS,
@@ -79,7 +84,13 @@ export const useMartStore = create<MartStore>((set) => ({
   setFloors: (floors) => set({ floors }),
   setProducts: (products) => set({ products }),
   setActiveFloor: (floorNumber) => set({ activeFloor: floorNumber }),
-  setPlayerPos: (playerPos, yaw) => set((state) => ({ playerPos, playerYaw: yaw !== undefined ? yaw : state.playerYaw })),
+  setPlayerPos: (playerPos, yaw) => {
+    martRuntime.playerPos[0] = playerPos[0];
+    martRuntime.playerPos[1] = playerPos[1];
+    martRuntime.playerPos[2] = playerPos[2];
+    if (yaw !== undefined) martRuntime.playerYaw = yaw;
+    set((state) => ({ playerPos, playerYaw: yaw !== undefined ? yaw : state.playerYaw }));
+  },
   setSelectedProduct: (selectedProduct) => set({ selectedProduct }),
   
   openProductModal: (product) => set({ selectedProduct: product, isProductModalOpen: true }),

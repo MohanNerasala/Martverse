@@ -16,8 +16,6 @@ export const SupermarketScene: React.FC = () => {
   const floors = useMartStore((state) => state.floors);
   const products = useMartStore((state) => state.products);
   const activeFloor = useMartStore((state) => state.activeFloor);
-  const playerPos = useMartStore((state) => state.playerPos);
-  const playerYaw = useMartStore((state) => state.playerYaw);
   const setFloors = useMartStore((state) => state.setFloors);
   const setProducts = useMartStore((state) => state.setProducts);
 
@@ -46,7 +44,7 @@ export const SupermarketScene: React.FC = () => {
       <Canvas
         shadows="percentage"
         camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
-        gl={{ antialias: true, alpha: false, logarithmicDepthBuffer: true, powerPreference: 'high-performance' }}
+        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#0f172a']} />
         <fog attach="fog" args={['#0f172a', 35, 65]} />
@@ -60,14 +58,14 @@ export const SupermarketScene: React.FC = () => {
           position={[10, 20, 10]}
           intensity={1.2}
           castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
           shadow-camera-far={60}
           shadow-camera-left={-20}
           shadow-camera-right={20}
           shadow-camera-top={30}
           shadow-camera-bottom={-30}
-          shadow-bias={-0.0001}
+          shadow-bias={-0.0003}
         />
 
         {/* Ground Floor Fluorescent Point Lights */}
@@ -110,17 +108,10 @@ export const SupermarketScene: React.FC = () => {
           <ExitGate3D position={[0, 0, -23]} />
 
           {/* Interactive Player Trolley in front of customer */}
-          <TrolleyModel targetPos={playerPos} targetYaw={playerYaw} />
+          <TrolleyModel />
 
           {/* 3D Flying Item Parabolic Arc targeting the trolley basket */}
-          <FlyingProductArc
-            trolleyPos={[
-              playerPos[0] + Math.sin(playerYaw) * 0.75,
-              playerPos[1] - 1.5,
-              playerPos[2] + Math.cos(playerYaw) * 0.75,
-            ]}
-            playerYaw={playerYaw}
-          />
+          <FlyingProductArc />
 
           {/* Player Navigation & Camera Controller */}
           <PlayerController />

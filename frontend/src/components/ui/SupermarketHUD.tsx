@@ -38,7 +38,6 @@ export const SupermarketHUD: React.FC = () => {
   const cameraMode = useMartStore((state) => state.cameraMode);
   const setCameraMode = useMartStore((state) => state.setCameraMode);
   const promptText = useMartStore((state) => state.promptText);
-  const playerPos = useMartStore((state) => state.playerPos);
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
   const showToast = useMartStore((state) => state.showToast);
@@ -223,7 +222,7 @@ export const SupermarketHUD: React.FC = () => {
       {/* ============================================================== */}
       {/* --- Escalator Options: White Board with Black Text --- */}
       {/* ============================================================== */}
-      {Math.abs(playerPos[0] - 14.7) < 2.5 && playerPos[2] > -9.5 && playerPos[2] < 7.8 && (
+      {(promptText?.includes('Escalator') || promptText?.includes('Ride to')) && (
         <div className="fixed top-24 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-xl rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.25)] border border-slate-200 text-slate-900 max-w-xs w-full animate-in slide-in-from-right-4 duration-300">
           <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
             <div className="flex items-center gap-2">

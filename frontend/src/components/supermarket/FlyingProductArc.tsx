@@ -4,9 +4,10 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { FlyAnimation, useCartStore } from '@/store/useCartStore';
+import { martRuntime } from '@/store/useMartStore';
 
 interface FlyingArcsProps {
-  trolleyPos: [number, number, number];
+  trolleyPos?: [number, number, number];
   playerYaw?: number;
 }
 
@@ -17,9 +18,9 @@ function easeInOutCubic(x: number): number {
 
 const SingleFlyArc: React.FC<{
   anim: FlyAnimation;
-  trolleyPos: [number, number, number];
+  trolleyPos?: [number, number, number];
   playerYaw?: number;
-}> = ({ anim, trolleyPos, playerYaw = 0 }) => {
+}> = ({ anim, trolleyPos, playerYaw }) => {
   const groupRef = useRef<THREE.Group>(null);
   const duration = anim.duration || 950;
   const productColor = anim.color || '#3b82f6';
@@ -31,12 +32,20 @@ const SingleFlyArc: React.FC<{
 
     const [sx, sy, sz] = anim.startPos;
 
+    const actualYaw = playerYaw !== undefined ? playerYaw : martRuntime.playerYaw;
+    const pPos = martRuntime.playerPos;
+    const actualTrolleyPos = trolleyPos || [
+      pPos[0] + Math.sin(actualYaw) * 0.75,
+      pPos[1] - 1.5,
+      pPos[2] + Math.cos(actualYaw) * 0.75,
+    ];
+
     // Target basket center inside the compact 0.6x shopping trolley
-    const basketOffsetX = -Math.sin(playerYaw) * 0.03;
-    const basketOffsetZ = -Math.cos(playerYaw) * 0.03;
-    const tx = trolleyPos[0] + basketOffsetX;
-    const ty = trolleyPos[1] + 0.38;
-    const tz = trolleyPos[2] + basketOffsetZ;
+    const basketOffsetX = -Math.sin(actualYaw) * 0.03;
+    const basketOffsetZ = -Math.cos(actualYaw) * 0.03;
+    const tx = actualTrolleyPos[0] + basketOffsetX;
+    const ty = actualTrolleyPos[1] + 0.38;
+    const tz = actualTrolleyPos[2] + basketOffsetZ;
 
     // Smooth horizontal position with cubic easing
     const p = easeInOutCubic(t);
@@ -88,7 +97,7 @@ const SingleFlyArc: React.FC<{
     } else {
       const settleT = (t - 0.70) / 0.30;
       groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, settleT);
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, playerYaw, settleT);
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, playerYaw || 0, settleT);
       groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, 0, settleT);
     }
   });

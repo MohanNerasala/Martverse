@@ -4,11 +4,12 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useCartStore } from '@/store/useCartStore';
+import { martRuntime } from '@/store/useMartStore';
 import { CartItem } from '@/types';
 
 interface TrolleyProps {
-  targetPos: [number, number, number];
-  targetYaw: number;
+  targetPos?: [number, number, number];
+  targetYaw?: number;
 }
 
 const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item, index }) => {
@@ -95,25 +96,32 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const trolleyRef = useRef<THREE.Group>(null);
   const items = useCartStore((state) => state.items);
   const flyAnimations = useCartStore((state) => state.flyAnimations);
+
+  const initialPos = targetPos || martRuntime.playerPos;
+  const initialYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
+
   const currentPos = useRef(
     new THREE.Vector3(
-      targetPos[0] + Math.sin(targetYaw) * 0.75,
-      targetPos[1] - 1.5,
-      targetPos[2] + Math.cos(targetYaw) * 0.75
+      initialPos[0] + Math.sin(initialYaw) * 0.75,
+      initialPos[1] - 1.5,
+      initialPos[2] + Math.cos(initialYaw) * 0.75
     )
   );
-  const currentYaw = useRef(targetYaw);
+  const currentYaw = useRef(initialYaw);
   const basketBump = useRef(0);
 
   useFrame((_, delta) => {
     if (!trolleyRef.current) return;
 
+    const actualPos = targetPos || martRuntime.playerPos;
+    const actualYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
+
     // Follow smoothly in front of the player as a compact sleek shopping cart
-    const offsetX = Math.sin(targetYaw) * 0.75;
-    const offsetZ = Math.cos(targetYaw) * 0.75;
-    const desiredX = targetPos[0] + offsetX;
-    const desiredY = targetPos[1] - 1.5;
-    const desiredZ = targetPos[2] + offsetZ;
+    const offsetX = Math.sin(actualYaw) * 0.75;
+    const offsetZ = Math.cos(actualYaw) * 0.75;
+    const desiredX = actualPos[0] + offsetX;
+    const desiredY = actualPos[1] - 1.5;
+    const desiredZ = actualPos[2] + offsetZ;
 
     // Check if an incoming 3D item is landing to trigger physical suspension compression bump!
     const isLanding = flyAnimations.some((a) => {
@@ -125,15 +133,15 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     if (isLanding) {
       basketBump.current = 0.04;
     }
-    basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 8, delta);
+    basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 10, delta);
 
-    // Smooth lerp movement with responsive dampening
-    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 7, delta);
-    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 10, delta);
-    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 7, delta);
+    // Smooth lerp movement with responsive dampening (rate 12/14 for silky smooth motion)
+    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 12, delta);
+    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 14, delta);
+    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 12, delta);
 
     // Smooth yaw rotation towards player direction
-    currentYaw.current = THREE.MathUtils.damp(currentYaw.current, targetYaw, 8, delta);
+    currentYaw.current = THREE.MathUtils.damp(currentYaw.current, actualYaw, 14, delta);
 
     trolleyRef.current.position.copy(currentPos.current);
     trolleyRef.current.rotation.y = currentYaw.current + Math.PI;

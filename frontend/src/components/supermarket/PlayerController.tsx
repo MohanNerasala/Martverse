@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useMartStore } from '@/store/useMartStore';
+import { useMartStore, martRuntime } from '@/store/useMartStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useBillingStore } from '@/store/useBillingStore';
 import { sounds } from '@/lib/sound';
@@ -26,11 +26,9 @@ export const PlayerController: React.FC = () => {
     interact: false,
   });
 
-  const playerPos = useMartStore((state) => state.playerPos);
   const activeFloor = useMartStore((state) => state.activeFloor);
   const cameraMode = useMartStore((state) => state.cameraMode);
   const products = useMartStore((state) => state.products);
-  const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const setActiveFloor = useMartStore((state) => state.setActiveFloor);
   const setProximity = useMartStore((state) => state.setProximity);
   const openProductModal = useMartStore((state) => state.openProductModal);
@@ -45,11 +43,18 @@ export const PlayerController: React.FC = () => {
   const isPaid = useCartStore((state) => state.isPaid);
 
   // Motion physics refs
-  const posRef = useRef(new THREE.Vector3(...playerPos));
+  const posRef = useRef(new THREE.Vector3(...martRuntime.playerPos));
+  const velocityRef = useRef({ x: 0, z: 0 });
   const yawRef = useRef(0);
   const pitchRef = useRef(0);
   const isDragging = useRef(false);
   const prevMouse = useRef({ x: 0, y: 0 });
+  const lastSyncTime = useRef(0);
+  const proximityCache = useRef<{
+    nearBilling: boolean;
+    nearExit: boolean;
+    prompt: string | null;
+  }>({ nearBilling: false, nearExit: false, prompt: null });
 
   // Synchronize position if floor switched via HUD
   useEffect(() => {
@@ -234,32 +239,46 @@ export const PlayerController: React.FC = () => {
       if (keys.current.left) moveVector.x += 1;
       if (keys.current.right) moveVector.x -= 1;
 
-      // Obstacle & Shelf Collision Checker
+      if (moveVector.lengthSq() > 0) {
+        if (!hasMovedTrolley) {
+          setHasMovedTrolley(true);
+        }
+        moveVector.normalize();
+      }
+
+      // Smooth acceleration and deceleration (rate 16 for responsive fluid motion without snapping)
+      const sin = Math.sin(yawRef.current);
+      const cos = Math.cos(yawRef.current);
+      const targetVelX = (moveVector.x * cos + moveVector.z * sin) * speed;
+      const targetVelZ = (-moveVector.x * sin + moveVector.z * cos) * speed;
+
+      velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, 16, delta);
+      velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, 16, delta);
+
+      const worldDX = velocityRef.current.x * delta;
+      const worldDZ = velocityRef.current.z * delta;
+
+      const currentFloor = posRef.current.y > 4.5 ? 2 : 1;
+
+      // Obstacle & Shelf Collision Checker (clean player cylinder clearance)
       const checkObstacle = (testPx: number, testPz: number, floor: number): boolean => {
         // Outer store walls (width 36, length 52)
         if (testPx < -17.2 || testPx > 17.2 || testPz < -24.2 || testPz > 24.2) return true;
 
-        // Escalator shaft walkway (allow passing through escalator entrance and ramp)
+        // Escalator shaft walkway (allow passing freely through escalator entrance and ramp)
         if (Math.abs(testPx - 14.7) < 1.6 && testPz > -8.0 && testPz < 6.5) {
           return false;
         }
 
-        // Shelf Rows AABB Collision (both player and trolley clearance)
+        // Shelf Rows AABB Collision
         const aisleXs =
           floor === 1
             ? [-10, -5, 0, 5, 10]
             : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
 
-        const trolleyX = testPx + Math.sin(yawRef.current) * 0.75;
-        const trolleyZ = testPz + Math.cos(yawRef.current) * 0.75;
-
         for (const ax of aisleXs) {
-          // Half-width rack (0.85m) + player radius (0.35m)
-          if (Math.abs(testPx - ax) < 1.15 && testPz >= -12.3 && testPz <= 12.3) {
-            return true;
-          }
-          // Trolley basket nose clearance (keeps cart safely in the open aisle)
-          if (Math.abs(trolleyX - ax) < 1.15 && trolleyZ >= -12.3 && trolleyZ <= 12.3) {
+          // Half-width rack (0.88m) + player radius (0.17m) = 1.05m clearance
+          if (Math.abs(testPx - ax) < 1.05 && testPz >= -12.3 && testPz <= 12.3) {
             return true;
           }
         }
@@ -281,23 +300,26 @@ export const PlayerController: React.FC = () => {
         return false;
       };
 
-      if (moveVector.lengthSq() > 0) {
-        if (!hasMovedTrolley) {
-          setHasMovedTrolley(true);
-        }
-        moveVector.normalize();
-        // Apply yaw rotation to move direction
-        const sin = Math.sin(yawRef.current);
-        const cos = Math.cos(yawRef.current);
-        const worldDX = (moveVector.x * cos + moveVector.z * sin) * speed * delta;
-        const worldDZ = (-moveVector.x * sin + moveVector.z * cos) * speed * delta;
+      if (Math.abs(worldDX) > 0.0001 || Math.abs(worldDZ) > 0.0001) {
+        const aisleXs =
+          currentFloor === 1
+            ? [-10, -5, 0, 5, 10]
+            : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
+        const nearestAx = aisleXs.reduce((prev, curr) =>
+          Math.abs(curr - posRef.current.x) < Math.abs(prev - posRef.current.x) ? curr : prev
+        );
 
-        const currentFloor = posRef.current.y > 4.5 ? 2 : 1;
-
-        // Axis-independent collision sliding (allows sliding along shelf faces smoothly)
+        // Axis-independent collision sliding with anti-stuck resolution
         const newX = posRef.current.x + worldDX;
         if (!checkObstacle(newX, posRef.current.z, currentFloor)) {
           posRef.current.x = newX;
+        } else {
+          // If stuck or touching shelf, allow sliding away from rack center
+          const curDist = Math.abs(posRef.current.x - nearestAx);
+          const nextDist = Math.abs(newX - nearestAx);
+          if (nextDist > curDist) {
+            posRef.current.x = newX;
+          }
         }
 
         const newZ = posRef.current.z + worldDZ;
@@ -358,8 +380,22 @@ export const PlayerController: React.FC = () => {
       posRef.current.y = THREE.MathUtils.damp(posRef.current.y, targetFloorY, 6, delta);
     }
 
-    // Update global store
-    setPlayerPos([posRef.current.x, posRef.current.y, posRef.current.z], yawRef.current);
+    // High-frequency zero-rerender runtime update
+    martRuntime.playerPos[0] = posRef.current.x;
+    martRuntime.playerPos[1] = posRef.current.y;
+    martRuntime.playerPos[2] = posRef.current.z;
+    martRuntime.playerYaw = yawRef.current;
+
+    // Throttled Zustand state synchronization to eliminate 60FPS React reconciliation lag
+    const now = performance.now();
+    const isMovingFast = Math.abs(velocityRef.current.x) > 0.05 || Math.abs(velocityRef.current.z) > 0.05;
+    if (now - lastSyncTime.current > (isMovingFast ? 350 : 150)) {
+      lastSyncTime.current = now;
+      useMartStore.setState({
+        playerPos: [posRef.current.x, posRef.current.y, posRef.current.z],
+        playerYaw: yawRef.current,
+      });
+    }
 
     // Proximity checks for HUD prompt
     const px = posRef.current.x;
@@ -399,7 +435,15 @@ export const PlayerController: React.FC = () => {
       }
     }
 
-    setProximity(nearBilling, nearExit, prompt, targetPos);
+    // Cached proximity update to eliminate unnecessary Zustand dispatches
+    if (
+      proximityCache.current.prompt !== prompt ||
+      proximityCache.current.nearBilling !== nearBilling ||
+      proximityCache.current.nearExit !== nearExit
+    ) {
+      proximityCache.current = { prompt, nearBilling, nearExit };
+      setProximity(nearBilling, nearExit, prompt, targetPos);
+    }
 
     // Camera positioning based on cameraMode
     if (cameraMode === 'billing') {
@@ -418,19 +462,23 @@ export const PlayerController: React.FC = () => {
       const targetLookZ = posRef.current.z + Math.cos(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
       camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {
-      // Third Person (Over the shoulder with full trolley in crystal-clear unobstructed view)
+      // Third Person (Over the shoulder with smooth camera dampening to prevent viewport stutter)
       const camDist = 2.85;
       const camHeight = 1.85;
-      let camX = posRef.current.x - Math.sin(yawRef.current) * camDist;
-      let camY = posRef.current.y + camHeight;
-      let camZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
+      let targetCamX = posRef.current.x - Math.sin(yawRef.current) * camDist;
+      let targetCamY = posRef.current.y + camHeight;
+      let targetCamZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
 
       // Prevent camera from clipping through store perimeter walls
-      camX = Math.max(-17.2, Math.min(17.2, camX));
-      camZ = Math.max(-25.2, Math.min(25.2, camZ));
-      camY = Math.max(0.4, camY);
+      targetCamX = Math.max(-17.2, Math.min(17.2, targetCamX));
+      targetCamZ = Math.max(-25.2, Math.min(25.2, targetCamZ));
+      targetCamY = Math.max(0.4, targetCamY);
 
-      camera.position.set(camX, camY, camZ);
+      // Smooth camera dampening for butter-smooth gliding motion without viewport stutter
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 22, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 22, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 22, delta);
+
       const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.2;
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
       const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.2;
