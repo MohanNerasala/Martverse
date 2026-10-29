@@ -84,16 +84,22 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const trolleyRef = useRef<THREE.Group>(null);
   const items = useCartStore((state) => state.items);
   const flyAnimations = useCartStore((state) => state.flyAnimations);
-  const currentPos = useRef(new THREE.Vector3(targetPos[0], targetPos[1] - 1.5, targetPos[2] - 1.8));
+  const currentPos = useRef(
+    new THREE.Vector3(
+      targetPos[0] + Math.sin(targetYaw) * 1.4,
+      targetPos[1] - 1.5,
+      targetPos[2] + Math.cos(targetYaw) * 1.4
+    )
+  );
   const currentYaw = useRef(targetYaw);
   const basketBump = useRef(0);
 
   useFrame((_, delta) => {
     if (!trolleyRef.current) return;
 
-    // Follow smoothly behind the player at an offset based on player yaw
-    const offsetX = -Math.sin(targetYaw) * 1.5;
-    const offsetZ = -Math.cos(targetYaw) * 1.5;
+    // Follow smoothly in front of the player as a pushed shopping cart
+    const offsetX = Math.sin(targetYaw) * 1.4;
+    const offsetZ = Math.cos(targetYaw) * 1.4;
     const desiredX = targetPos[0] + offsetX;
     const desiredY = targetPos[1] - 1.5;
     const desiredZ = targetPos[2] + offsetZ;
@@ -119,7 +125,7 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     currentYaw.current = THREE.MathUtils.damp(currentYaw.current, targetYaw, 8, delta);
 
     trolleyRef.current.position.copy(currentPos.current);
-    trolleyRef.current.rotation.y = currentYaw.current;
+    trolleyRef.current.rotation.y = currentYaw.current + Math.PI;
   });
 
   // Calculate items to display inside the basket (capped at 16 for performance)

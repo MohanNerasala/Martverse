@@ -355,16 +355,18 @@ export const PlayerController: React.FC = () => {
       const targetLookZ = posRef.current.z + Math.cos(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
       camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {
-      // Third Person (Over the shoulder with trolley in front)
-      const camDist = 3.8;
-      const camHeight = 2.4;
+      // Third Person (Over the shoulder with full trolley in clear view)
+      const camDist = 3.6;
+      const camHeight = 2.2;
       const camX = posRef.current.x - Math.sin(yawRef.current) * camDist;
       const camY = posRef.current.y + camHeight;
       const camZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
 
       camera.position.set(camX, camY, camZ);
-      const lookTargetY = posRef.current.y + 0.4 + Math.sin(pitchRef.current) * 3;
-      camera.lookAt(posRef.current.x, lookTargetY, posRef.current.z);
+      const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 3.5;
+      const lookTargetY = posRef.current.y + 0.15 + Math.sin(pitchRef.current) * 3.0;
+      const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 3.5;
+      camera.lookAt(lookTargetX, lookTargetY, lookTargetZ);
     }
   });
 
