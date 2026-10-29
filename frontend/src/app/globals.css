@@ -80,3 +80,66 @@ body {
 .btn-shine:hover::after {
   left: 150%;
 }
+
+/* Luxury Blue-to-White Passing Light Shimmer Button & Text */
+.btn-blue-white-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #1e40af 100%);
+  border: 1px solid rgba(147, 197, 253, 0.4);
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.35);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-blue-white-shimmer:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+  box-shadow: 0 14px 35px -4px rgba(37, 99, 235, 0.5), 0 0 25px rgba(56, 189, 248, 0.4);
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+.btn-blue-white-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 25%,
+    rgba(255, 255, 255, 0.75) 50%,
+    rgba(125, 211, 252, 0.6) 75%,
+    transparent 100%
+  );
+  transform: skewX(-25deg);
+  transition: left 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.btn-blue-white-shimmer:hover::before {
+  left: 200%;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #ffffff 30%,
+    #bae6fd 45%,
+    #ffffff 55%,
+    #93c5fd 70%,
+    #ffffff 100%
+  );
+  background-size: 250% auto;
+  color: #ffffff;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background-position 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.btn-blue-white-shimmer:hover .shimmer-text {
+  background-position: -150% center;
+}

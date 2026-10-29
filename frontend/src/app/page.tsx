@@ -113,13 +113,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Enter Button */}
+            {/* Enter Button with Luxury Blue-to-White Passing Light Shimmer */}
             <button
               onClick={() => setHasEnteredStore(true)}
-              className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 text-sm transition-all active:scale-[0.98] group"
+              className="w-full btn-blue-white-shimmer py-3.5 rounded-2xl flex items-center justify-center gap-2.5 text-sm font-extrabold active:scale-[0.98] group cursor-pointer"
             >
-              <span>Enter Supermarket & Grab Trolley</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <span className="shimmer-text tracking-wide">Enter Supermarket & Grab Trolley</span>
+              <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 group-hover:scale-110 transition-all duration-300 drop-shadow" />
             </button>
           </div>
         </div>
