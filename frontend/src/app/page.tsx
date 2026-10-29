@@ -112,42 +112,42 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Store Highlights Grid - Floor 1, Floor 2, Billing with Curated Vibrant Accents */}
+            {/* Store Highlights Grid - Floor 1, Floor 2, Billing in Crisp Luxury White Cards with Black Text */}
             <div className="grid grid-cols-3 gap-3 text-left">
               {/* Floor 1 */}
-              <div className="bg-gradient-to-b from-sky-50 via-blue-50/60 to-white border border-blue-200/90 hover:border-blue-400 p-3 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:shadow-blue-500/10 group">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-sm shadow-blue-500/30 group-hover:scale-105 transition-transform">
+              <div className="bg-white border border-slate-200 hover:border-slate-300 p-3.5 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md group">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-sm shadow-blue-500/25 group-hover:scale-105 transition-transform">
                     <Layers className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-100/70 px-1.5 py-0.5 rounded-md">L1</span>
+                  <span className="text-[10px] font-black text-black bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">L1</span>
                 </div>
-                <div className="text-slate-900 font-black text-xs">Floor 1</div>
-                <div className="text-[11px] text-blue-700 font-semibold mt-0.5">Groceries & Staples</div>
+                <div className="text-black font-black text-xs sm:text-sm tracking-tight">Floor 1</div>
+                <div className="text-[11px] text-black font-bold mt-0.5">Groceries & Staples</div>
               </div>
 
               {/* Floor 2 */}
-              <div className="bg-gradient-to-b from-purple-50 via-fuchsia-50/50 to-white border border-purple-200/90 hover:border-purple-400 p-3 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:shadow-purple-500/10 group">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-fuchsia-500 text-white flex items-center justify-center shadow-sm shadow-purple-500/30 group-hover:scale-105 transition-transform">
+              <div className="bg-white border border-slate-200 hover:border-slate-300 p-3.5 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md group">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-fuchsia-500 text-white flex items-center justify-center shadow-sm shadow-purple-500/25 group-hover:scale-105 transition-transform">
                     <ShoppingBag className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] font-bold text-purple-600 bg-purple-100/70 px-1.5 py-0.5 rounded-md">L2</span>
+                  <span className="text-[10px] font-black text-black bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">L2</span>
                 </div>
-                <div className="text-slate-900 font-black text-xs">Floor 2</div>
-                <div className="text-[11px] text-purple-700 font-semibold mt-0.5">Fashion Studio</div>
+                <div className="text-black font-black text-xs sm:text-sm tracking-tight">Floor 2</div>
+                <div className="text-[11px] text-black font-bold mt-0.5">Fashion Studio</div>
               </div>
 
               {/* POS Billing */}
-              <div className="bg-gradient-to-b from-emerald-50 via-teal-50/50 to-white border border-emerald-200/90 hover:border-emerald-400 p-3 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-500/10 group">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-sm shadow-emerald-500/30 group-hover:scale-105 transition-transform">
+              <div className="bg-white border border-slate-200 hover:border-slate-300 p-3.5 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md group">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-sm shadow-emerald-500/25 group-hover:scale-105 transition-transform">
                     <Barcode className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded-md">POS</span>
+                  <span className="text-[10px] font-black text-black bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">POS</span>
                 </div>
-                <div className="text-slate-900 font-black text-xs">POS Billing</div>
-                <div className="text-[11px] text-emerald-800 font-semibold mt-0.5">Instant Checkout</div>
+                <div className="text-black font-black text-xs sm:text-sm tracking-tight">POS Billing</div>
+                <div className="text-[11px] text-black font-bold mt-0.5">Instant Checkout</div>
               </div>
             </div>
 
