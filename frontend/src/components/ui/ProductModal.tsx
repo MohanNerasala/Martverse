@@ -48,7 +48,16 @@ export const ProductModal: React.FC = () => {
 
     setValidationError(null);
 
-    addItem(selectedProduct, quantity, currentVariant || undefined);
+    let startPos: [number, number, number] | undefined = undefined;
+    if (selectedProduct.placement) {
+      startPos = [
+        selectedProduct.placement.worldX,
+        selectedProduct.placement.worldY + 0.35,
+        selectedProduct.placement.worldZ,
+      ];
+    }
+
+    addItem(selectedProduct, quantity, currentVariant || undefined, startPos);
 
     const variantDesc = currentVariant?.size ? ` (${currentVariant.size})` : '';
     showToast(

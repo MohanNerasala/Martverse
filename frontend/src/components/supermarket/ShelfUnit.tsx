@@ -28,24 +28,24 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
     <group position={[centerX, centerY, centerZ]}>
       {/* --- Overhead Aisle Hanging Signboard --- */}
       <group position={[0, aisle.shelfHeight / 2 + 1.2, 0]}>
-        {/* Signboard background */}
+        {/* Signboard background (Icy Sapphire Blue) */}
         <mesh castShadow>
           <boxGeometry args={[2.8, 0.7, 0.08]} />
-          <meshStandardMaterial color={aisle.colorCode} metalness={0.2} roughness={0.4} />
+          <meshStandardMaterial color="#0369a1" metalness={0.4} roughness={0.2} />
         </mesh>
-        {/* Yellow header strip */}
+        {/* Cyan/Blue glow header strip */}
         <mesh position={[0, 0.28, 0.05]}>
           <boxGeometry args={[2.7, 0.08, 0.02]} />
-          <meshStandardMaterial color="#facc15" />
+          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.6} />
         </mesh>
-        {/* Hanging metal chains */}
+        {/* Hanging chrome metal chains */}
         <mesh position={[-1.1, 0.8, 0]}>
           <cylinderGeometry args={[0.015, 0.015, 1.2, 6]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.9} />
+          <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
         </mesh>
         <mesh position={[1.1, 0.8, 0]}>
           <cylinderGeometry args={[0.015, 0.015, 1.2, 6]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.9} />
+          <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
         </mesh>
         {/* 3D Signboard Text */}
         <Text
@@ -73,10 +73,10 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
       </group>
 
       {/* --- Central Shelving Rack --- */}
-      {/* Central Back Divider Wall */}
+      {/* Central Back Divider Wall (Pristine White) */}
       <mesh position={[0, 0, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.08, aisle.shelfHeight, length]} />
-        <meshStandardMaterial color="#e2e8f0" metalness={0.2} roughness={0.7} />
+        <meshStandardMaterial color="#ffffff" metalness={0.1} roughness={0.3} />
       </mesh>
 
       {/* 3 Horizontal Shelves for LEFT and RIGHT sides */}
@@ -84,41 +84,41 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
         const yRel = shelfH - aisle.shelfHeight / 2;
         return (
           <group key={`shelf-tier-${sIdx}`} position={[0, yRel, 0]}>
-            {/* Left Shelf Plank */}
+            {/* Left Shelf Plank (High-gloss White) */}
             <mesh position={[-0.45, 0, 0]} castShadow receiveShadow>
               <boxGeometry args={[0.85, 0.04, length]} />
-              <meshStandardMaterial color="#f1f5f9" metalness={0.3} roughness={0.6} />
+              <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
             </mesh>
-            {/* Left Price Tag Rail (Green DMart Price Rail) */}
+            {/* Left Price Tag Rail (Electric Sapphire LED Rail) */}
             <mesh position={[-0.88, 0, 0]}>
               <boxGeometry args={[0.02, 0.06, length]} />
-              <meshStandardMaterial color="#16a34a" />
+              <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.3} />
             </mesh>
 
-            {/* Right Shelf Plank */}
+            {/* Right Shelf Plank (High-gloss White) */}
             <mesh position={[0.45, 0, 0]} castShadow receiveShadow>
               <boxGeometry args={[0.85, 0.04, length]} />
-              <meshStandardMaterial color="#f1f5f9" metalness={0.3} roughness={0.6} />
+              <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
             </mesh>
-            {/* Right Price Tag Rail */}
+            {/* Right Price Tag Rail (Electric Sapphire LED Rail) */}
             <mesh position={[0.88, 0, 0]}>
               <boxGeometry args={[0.02, 0.06, length]} />
-              <meshStandardMaterial color="#16a34a" />
+              <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.3} />
             </mesh>
           </group>
         );
       })}
 
-      {/* Upright Metal Support Posts along length */}
+      {/* Upright Metal Support Posts along length (Polished Chrome) */}
       {[-length / 2, -length / 4, 0, length / 4, length / 2].map((zPos, pIdx) => (
         <group key={`post-${pIdx}`} position={[0, 0, zPos]}>
           <mesh position={[-0.86, 0, 0]} castShadow>
             <boxGeometry args={[0.05, aisle.shelfHeight, 0.05]} />
-            <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.4} />
+            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
           </mesh>
           <mesh position={[0.86, 0, 0]} castShadow>
             <boxGeometry args={[0.05, aisle.shelfHeight, 0.05]} />
-            <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.4} />
+            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
           </mesh>
         </group>
       ))}

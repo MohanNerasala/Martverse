@@ -13,31 +13,31 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
       {/* ==============================================================
           GROUND FLOOR (y = 0)
           ============================================================== */}
-      {/* Ground Floor Polished Tile Floor */}
+      {/* Ground Floor Polished Carrara Porcelain Floor (White & Blue Specular Sheen) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[36, 52]} />
-        <meshStandardMaterial color="#f1f5f9" roughness={0.25} metalness={0.15} />
+        <meshStandardMaterial color="#ffffff" roughness={0.12} metalness={0.22} />
       </mesh>
 
-      {/* Ground Floor Outer Walls */}
+      {/* Ground Floor Architectural Pristine White Walls */}
       {/* Back Wall (z = 25) */}
       <mesh position={[0, 2.5, 26]} receiveShadow>
         <boxGeometry args={[36, 5, 0.4]} />
-        <meshStandardMaterial color="#e2e8f0" roughness={0.8} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
       {/* Front Entrance Wall (z = -26) with doorway opening */}
       <mesh position={[-11, 2.5, -26]} receiveShadow>
         <boxGeometry args={[14, 5, 0.4]} />
-        <meshStandardMaterial color="#e2e8f0" roughness={0.8} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
       <mesh position={[11, 2.5, -26]} receiveShadow>
         <boxGeometry args={[14, 5, 0.4]} />
-        <meshStandardMaterial color="#e2e8f0" roughness={0.8} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
-      {/* Transom lintel over entrance door */}
+      {/* Transom lintel over entrance door (Electric Sapphire & Glass) */}
       <mesh position={[0, 4.2, -26]}>
         <boxGeometry args={[8, 1.6, 0.4]} />
-        <meshStandardMaterial color="#0284c7" />
+        <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.4} />
       </mesh>
       <Text
         position={[0, 4.2, -25.75]}
@@ -46,18 +46,18 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
         anchorX="center"
         anchorY="middle"
       >
-        MARTVERSE SUPERMARKET
+        MARTVERSE 3D HYPERMARKET
       </Text>
 
       {/* Left Wall (x = -18) */}
       <mesh position={[-18, 2.5, 0]} receiveShadow>
         <boxGeometry args={[0.4, 5, 52]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.8} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
       {/* Right Wall (x = 18) */}
       <mesh position={[18, 2.5, 0]} receiveShadow>
         <boxGeometry args={[0.4, 5, 52]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.8} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
 
       {/* Ground Floor Ceiling / Floor 2 Floor Slab (y = 5.0) */}

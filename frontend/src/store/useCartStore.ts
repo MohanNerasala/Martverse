@@ -1,12 +1,16 @@
 import { create } from 'zustand';
 import { Product, ProductVariant, CartItem } from '@/types';
 import { sounds } from '@/lib/sound';
+import { useMartStore } from './useMartStore';
 
 export interface FlyAnimation {
   id: string;
+  productName: string;
   startPos: [number, number, number];
   color: string;
+  modelType: string;
   createdAt: number;
+  duration: number;
 }
 
 interface CartStore {
@@ -42,21 +46,50 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set((state) => ({ isCartOpen: open !== undefined ? open : !state.isCartOpen }));
   },
 
-  addItem: (product, quantity = 1, variant, startPos) => {
+  addItem: (product, quantity = 1, variant, customStartPos) => {
     sounds.playPickSound();
     
-    // Trigger 3D flying particle/box into trolley
-    if (startPos) {
-      const animId = 'fly-' + Math.random().toString(36).substring(2, 9);
-      const color = product.placement?.color || '#10b981';
-      set((state) => ({
-        flyAnimations: [...state.flyAnimations, { id: animId, startPos, color, createdAt: Date.now() }],
-      }));
-      // Auto-remove animation after 800ms
-      setTimeout(() => {
-        get().removeFlyAnimation(animId);
-      }, 800);
+    // Determine realistic 3D world start position: custom -> shelf placement -> player hand
+    let startPos: [number, number, number];
+    if (customStartPos) {
+      startPos = customStartPos;
+    } else if (product.placement) {
+      startPos = [product.placement.worldX, product.placement.worldY + 0.35, product.placement.worldZ];
+    } else {
+      const pPos = useMartStore.getState().playerPos;
+      const pYaw = useMartStore.getState().playerYaw;
+      startPos = [
+        pPos[0] + Math.sin(pYaw) * 0.7,
+        pPos[1] + 0.25,
+        pPos[2] + Math.cos(pYaw) * 0.7,
+      ];
     }
+
+    const animId = 'fly-' + Math.random().toString(36).substring(2, 9);
+    const color = product.placement?.color || '#38bdf8';
+    const modelType = product.placement?.modelType || 'box';
+    const duration = 1100; // ms for graceful 3D lift, glide, and basket drop
+
+    set((state) => ({
+      flyAnimations: [
+        ...state.flyAnimations,
+        {
+          id: animId,
+          productName: product.name,
+          startPos,
+          color,
+          modelType,
+          createdAt: Date.now(),
+          duration,
+        },
+      ],
+    }));
+
+    // Remove animation when drop finishes and play landing chime
+    setTimeout(() => {
+      get().removeFlyAnimation(animId);
+      sounds.playScanBeep();
+    }, duration + 50);
 
     set((state) => {
       const existingIndex = state.items.findIndex(
