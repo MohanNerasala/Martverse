@@ -4,7 +4,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Martverse — Immersive 3D Virtual Supermarket',
   description:
-    'Experience real supermarket shopping in 3D. Explore physical aisles inspired by DMart and BigBasket, pick products from shelves into your interactive shopping trolley, checkout with barcode scanning, and pay securely.',
+    'Experience real supermarket shopping in 3D. Explore physical aisles, pick products from shelves into your interactive shopping trolley, checkout with barcode scanning, and pay securely.',
 };
 
 export default function RootLayout({

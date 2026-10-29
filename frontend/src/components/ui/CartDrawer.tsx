@@ -174,7 +174,7 @@ export const CartDrawer: React.FC = () => {
             {discountTotal > 0 && (
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2.5 flex items-center gap-2 text-xs text-emerald-400 font-bold">
                 <Sparkles className="w-4 h-4 flex-shrink-0" />
-                <span>DMart Bachat: You are saving ₹{discountTotal.toLocaleString('en-IN')} on this order!</span>
+                <span>Martverse Savings: You are saving ₹{discountTotal.toLocaleString('en-IN')} on this order!</span>
               </div>
             )}
 

@@ -56,7 +56,7 @@ export const MOCK_FLOORS: SupermarketFloor[] = [
         shelfHeight: 2.8,
         shelfTiers: 3,
         colorCode: '#10b981',
-        bannerText: 'AISLE 3 • ATTA, RICE, OILS & SPICES • DMART BACHAT',
+        bannerText: 'AISLE 3 • ATTA, RICE, OILS & SPICES • MARTVERSE SPECIAL',
       },
       {
         id: 'aisle-4',

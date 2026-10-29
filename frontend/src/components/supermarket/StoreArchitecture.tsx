@@ -242,80 +242,169 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
         </group>
       ))}
 
-      {/* Wall Promotional Banners on Left Wall */}
+      {/* Wall Promotional Lightboxes on Left Wall (100% Martverse Branding) */}
+      {/* Lightbox 1: Martverse Mega Savings */}
       <group position={[-17.75, 2.5, -6]} rotation={[0, Math.PI / 2, 0]}>
+        {/* Chrome Frame */}
+        <mesh position={[0, 0, -0.02]}>
+          <boxGeometry args={[6.7, 2.3, 0.04]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
+        </mesh>
+        {/* Deep Sapphire Poster Panel */}
         <mesh>
-          <planeGeometry args={[6.5, 2.2]} />
-          <meshStandardMaterial color="#15803d" />
+          <planeGeometry args={[6.5, 2.1]} />
+          <meshStandardMaterial color="#0c4a6e" roughness={0.3} metalness={0.1} />
+        </mesh>
+        {/* Top Gold Category Pill */}
+        <mesh position={[0, 0.65, 0.015]}>
+          <planeGeometry args={[3.2, 0.28]} />
+          <meshBasicMaterial color="#0284c7" />
         </mesh>
         <Text
-          position={[0, 0.3, 0.02]}
-          fontSize={0.28}
-          color="#facc15"
-          anchorX="center"
-          anchorY="middle"
-        >
-          DMART BACHAT DAYS!
-        </Text>
-        <Text
-          position={[0, -0.3, 0.02]}
-          fontSize={0.16}
+          position={[0, 0.65, 0.025]}
+          fontSize={0.14}
           color="#ffffff"
           anchorX="center"
           anchorY="middle"
         >
-          Flat 20% to 50% Off On All Daily Groceries & Spices
+          SUPERMARKET SPECIAL DEALS
+        </Text>
+        <Text
+          position={[0, 0.25, 0.02]}
+          fontSize={0.32}
+          color="#38bdf8"
+          anchorX="center"
+          anchorY="middle"
+        >
+          MARTVERSE MEGA SAVINGS
+        </Text>
+        <Text
+          position={[0, -0.22, 0.02]}
+          fontSize={0.16}
+          color="#f8fafc"
+          anchorX="center"
+          anchorY="middle"
+        >
+          Up to 50% Off On Daily Groceries, Staples & Spices
+        </Text>
+        <Text
+          position={[0, -0.58, 0.02]}
+          fontSize={0.12}
+          color="#94a3b8"
+          anchorX="center"
+          anchorY="middle"
+        >
+          ★ 100% Quality Assurance • Instant Delivery
         </Text>
       </group>
 
+      {/* Lightbox 2: Martverse Fresh Harvest */}
       <group position={[-17.75, 2.5, 8]} rotation={[0, Math.PI / 2, 0]}>
+        {/* Chrome Frame */}
+        <mesh position={[0, 0, -0.02]}>
+          <boxGeometry args={[6.7, 2.3, 0.04]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
+        </mesh>
+        {/* Fresh Jade/Emerald Poster Panel */}
         <mesh>
-          <planeGeometry args={[6.5, 2.2]} />
-          <meshStandardMaterial color="#c2410c" />
+          <planeGeometry args={[6.5, 2.1]} />
+          <meshStandardMaterial color="#064e3b" roughness={0.3} metalness={0.1} />
+        </mesh>
+        {/* Top Emerald Category Pill */}
+        <mesh position={[0, 0.65, 0.015]}>
+          <planeGeometry args={[3.2, 0.28]} />
+          <meshBasicMaterial color="#059669" />
         </mesh>
         <Text
-          position={[0, 0.3, 0.02]}
-          fontSize={0.28}
-          color="#fef08a"
-          anchorX="center"
-          anchorY="middle"
-        >
-          BIGBASKET FRESH
-        </Text>
-        <Text
-          position={[0, -0.3, 0.02]}
-          fontSize={0.16}
+          position={[0, 0.65, 0.025]}
+          fontSize={0.14}
           color="#ffffff"
           anchorX="center"
           anchorY="middle"
         >
-          Farm-Picked Fresh Produce & Wholesome Farm Dairy
+          FARM DIRECT ORGANICS
+        </Text>
+        <Text
+          position={[0, 0.25, 0.02]}
+          fontSize={0.32}
+          color="#6ee7b7"
+          anchorX="center"
+          anchorY="middle"
+        >
+          MARTVERSE FRESH HARVEST
+        </Text>
+        <Text
+          position={[0, -0.22, 0.02]}
+          fontSize={0.16}
+          color="#f8fafc"
+          anchorX="center"
+          anchorY="middle"
+        >
+          Farm-Picked Fresh Produce, Gourmet Dairy & Pure Oils
+        </Text>
+        <Text
+          position={[0, -0.58, 0.02]}
+          fontSize={0.12}
+          color="#a7f3d0"
+          anchorX="center"
+          anchorY="middle"
+        >
+          ✓ 100% Organic Certified • Fresh Daily Stock
         </Text>
       </group>
 
-      {/* Wall Promotional Banner on Fashion Floor */}
+      {/* Wall Promotional Lightbox on Fashion Floor */}
       <group position={[-17.75, 7.5, 0]} rotation={[0, Math.PI / 2, 0]}>
+        {/* Chrome Frame */}
+        <mesh position={[0, 0, -0.02]}>
+          <boxGeometry args={[8.2, 2.3, 0.04]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
+        </mesh>
+        {/* Regal Plum Poster Panel */}
         <mesh>
-          <planeGeometry args={[8.0, 2.2]} />
-          <meshStandardMaterial color="#9d174d" />
+          <planeGeometry args={[8.0, 2.1]} />
+          <meshStandardMaterial color="#4a044e" roughness={0.3} metalness={0.1} />
+        </mesh>
+        {/* Top Violet Category Pill */}
+        <mesh position={[0, 0.65, 0.015]}>
+          <planeGeometry args={[3.4, 0.28]} />
+          <meshBasicMaterial color="#9333ea" />
         </mesh>
         <Text
-          position={[0, 0.3, 0.02]}
-          fontSize={0.3}
-          color="#fbcfe8"
+          position={[0, 0.65, 0.025]}
+          fontSize={0.14}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+        >
+          PREMIUM APPAREL STUDIO
+        </Text>
+        <Text
+          position={[0, 0.25, 0.02]}
+          fontSize={0.34}
+          color="#f0abfc"
           anchorX="center"
           anchorY="middle"
         >
           MARTVERSE FASHION STUDIO
         </Text>
         <Text
-          position={[0, -0.3, 0.02]}
+          position={[0, -0.22, 0.02]}
           fontSize={0.16}
-          color="#ffffff"
+          color="#fdf4ff"
           anchorX="center"
           anchorY="middle"
         >
-          Trending Kurtas, Peter England Shirts & Levi's Denims
+          Exclusive Ethnic Kurtas, Formal Shirts & Premium Denim
+        </Text>
+        <Text
+          position={[0, -0.58, 0.02]}
+          fontSize={0.12}
+          color="#f5d0fe"
+          anchorX="center"
+          anchorY="middle"
+        >
+          ✨ New Seasonal Collection Available Now
         </Text>
       </group>
     </group>

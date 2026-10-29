@@ -178,7 +178,7 @@ export const BillingModal: React.FC = () => {
                 </span>
               </h2>
               <p className="text-xs text-slate-400 flex items-center gap-2">
-                <span>DMart High-Speed Conveyor Terminal</span>
+                <span>Martverse Express Conveyor Terminal</span>
                 {isValidatingBackend && (
                   <span className="text-blue-400 text-[10px] flex items-center gap-1">
                     <RefreshCw className="w-3 h-3 animate-spin" /> Verifying DB...
@@ -419,7 +419,7 @@ export const BillingModal: React.FC = () => {
               <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-3 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 text-emerald-400 font-bold">
                   <Sparkles className="w-4 h-4" />
-                  <span>DMart Bachat Savings Applied:</span>
+                  <span>Martverse Special Savings Applied:</span>
                 </div>
                 <span className="text-emerald-400 font-black text-sm">
                   - ₹{activeDiscount.toLocaleString('en-IN')}
