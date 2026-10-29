@@ -463,8 +463,8 @@ export const PlayerController: React.FC = () => {
       camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {
       // Third Person (Over the shoulder with smooth camera dampening to prevent viewport stutter)
-      const camDist = 2.85;
-      const camHeight = 1.85;
+      const camDist = 3.0;
+      const camHeight = 1.95;
       let targetCamX = posRef.current.x - Math.sin(yawRef.current) * camDist;
       let targetCamY = posRef.current.y + camHeight;
       let targetCamZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
@@ -479,9 +479,9 @@ export const PlayerController: React.FC = () => {
       camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 22, delta);
       camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 22, delta);
 
-      const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.2;
+      const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.3;
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
-      const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.2;
+      const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.3;
       camera.lookAt(lookTargetX, lookTargetY, lookTargetZ);
     }
   });

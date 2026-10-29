@@ -102,9 +102,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
 
   const currentPos = useRef(
     new THREE.Vector3(
-      initialPos[0] + Math.sin(initialYaw) * 0.75,
+      initialPos[0] + Math.sin(initialYaw) * 0.92,
       initialPos[1] - 1.5,
-      initialPos[2] + Math.cos(initialYaw) * 0.75
+      initialPos[2] + Math.cos(initialYaw) * 0.92
     )
   );
   const currentYaw = useRef(initialYaw);
@@ -116,9 +116,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     const actualPos = targetPos || martRuntime.playerPos;
     const actualYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
 
-    // Follow smoothly in front of the player as a compact sleek shopping cart
-    const offsetX = Math.sin(actualYaw) * 0.75;
-    const offsetZ = Math.cos(actualYaw) * 0.75;
+    // Follow smoothly in front of the player with perfectly balanced 0.85x proportion
+    const offsetX = Math.sin(actualYaw) * 0.92;
+    const offsetZ = Math.cos(actualYaw) * 0.92;
     const desiredX = actualPos[0] + offsetX;
     const desiredY = actualPos[1] - 1.5;
     const desiredZ = actualPos[2] + offsetZ;
@@ -151,7 +151,7 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const displayItems = items.flatMap((it) => Array(Math.min(it.quantity, 3)).fill(it)).slice(0, 16);
 
   return (
-    <group ref={trolleyRef} scale={[0.6, 0.6, 0.6]}>
+    <group ref={trolleyRef} scale={[0.85, 0.85, 0.85]}>
       {/* Soft Under-Cart Icy Blue Ambient Light */}
       <pointLight position={[0, 0.3, 0]} color="#38bdf8" intensity={0.35} distance={1.4} decay={2} />
 

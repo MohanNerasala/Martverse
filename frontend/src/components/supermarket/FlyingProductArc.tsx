@@ -35,16 +35,16 @@ const SingleFlyArc: React.FC<{
     const actualYaw = playerYaw !== undefined ? playerYaw : martRuntime.playerYaw;
     const pPos = martRuntime.playerPos;
     const actualTrolleyPos = trolleyPos || [
-      pPos[0] + Math.sin(actualYaw) * 0.75,
+      pPos[0] + Math.sin(actualYaw) * 0.92,
       pPos[1] - 1.5,
-      pPos[2] + Math.cos(actualYaw) * 0.75,
+      pPos[2] + Math.cos(actualYaw) * 0.92,
     ];
 
-    // Target basket center inside the compact 0.6x shopping trolley
-    const basketOffsetX = -Math.sin(actualYaw) * 0.03;
-    const basketOffsetZ = -Math.cos(actualYaw) * 0.03;
+    // Target basket center inside the 0.85x shopping trolley
+    const basketOffsetX = -Math.sin(actualYaw) * 0.04;
+    const basketOffsetZ = -Math.cos(actualYaw) * 0.04;
     const tx = actualTrolleyPos[0] + basketOffsetX;
-    const ty = actualTrolleyPos[1] + 0.38;
+    const ty = actualTrolleyPos[1] + 0.52;
     const tz = actualTrolleyPos[2] + basketOffsetZ;
 
     // Smooth horizontal position with cubic easing
