@@ -722,6 +722,9 @@ export const PlayerController: React.FC = () => {
     } else {
       const nearbyProd = products.find((p) => {
         if (!p.placement) return false;
+        // Floor filter: aisles 1-5 = Floor 1, aisles 6-10 = Floor 2
+        const prodFloor = p.placement.aisleNumber <= 5 ? 1 : 2;
+        if (prodFloor !== activeFloor) return false;
         const dx = p.placement.worldX - px;
         const dz = p.placement.worldZ - pz;
         return Math.sqrt(dx * dx + dz * dz) < 2.5;

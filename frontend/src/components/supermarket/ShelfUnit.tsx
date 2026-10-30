@@ -427,7 +427,8 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
             scale={isHovered ? [1.04, 1.04, 1.04] : [1, 1, 1]}
             rotation={[0, finalRotationY, 0]}
           >
-            {/* Lightweight Invisible Interaction Hitbox for ultra-smooth pointer raycasting */}
+            {/* Lightweight Invisible Interaction Hitbox — unmounted on inactive floors to prevent cross-floor raycasting */}
+            {isFloorActive && (
             <mesh
               visible={false}
               position={[0, 0.16, 0.05]}
@@ -450,6 +451,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
             >
               <boxGeometry args={[isDairyMilk ? 0.68 : 0.55, 0.40, 0.35]} />
             </mesh>
+            )}
 
             {/* Hover Floating Instruction Tag (Rendered only on active hovered item) */}
             {isHovered && (

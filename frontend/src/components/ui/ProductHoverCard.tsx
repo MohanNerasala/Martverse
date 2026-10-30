@@ -8,13 +8,19 @@ import { ShoppingCart, Eye } from 'lucide-react';
 
 export const ProductHoverCard: React.FC = () => {
   const hoveredProduct = useMartStore((state) => state.hoveredProduct);
+  const activeFloor = useMartStore((state) => state.activeFloor);
   const openProductModal = useMartStore((state) => state.openProductModal);
   const showToast = useMartStore((state) => state.showToast);
   const addItem = useCartStore((state) => state.addItem);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const openLoginModal = useAuthStore((state) => state.openLoginModal);
 
+  // Floor guard: don't show hover card for products on inactive floors
   if (!hoveredProduct) return null;
+  if (hoveredProduct.placement) {
+    const prodFloor = hoveredProduct.placement.aisleNumber <= 5 ? 1 : 2;
+    if (prodFloor !== activeFloor) return null;
+  }
 
   const activePrice = hoveredProduct.price;
   const activeMrp = hoveredProduct.mrp || hoveredProduct.price;
