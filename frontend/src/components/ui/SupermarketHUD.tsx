@@ -575,46 +575,65 @@ export const SupermarketHUD: React.FC = () => {
       </footer>
 
       {/* ============================================================== */}
-      {/* --- Floating Confirmation Toast --- */}
+      {/* --- Floating Confirmation Toast (Positioned Top-Right Below Navbar) --- */}
       {/* ============================================================== */}
       {toast && (
-        <div className="pointer-events-auto fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
+        <div className="pointer-events-auto fixed top-[72px] sm:top-[76px] right-3 sm:right-6 md:right-8 z-50 animate-in slide-in-from-top-2 fade-in duration-200 ease-out">
           <div
-            className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 max-w-sm backdrop-blur-xl ${
+            className={`relative overflow-hidden px-3.5 py-2.5 rounded-2xl border flex items-center gap-2.5 max-w-[280px] sm:max-w-[320px] bg-white/95 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.16),0_2px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all ${
               toast.type === 'success'
-                ? 'bg-white/95 border-emerald-300/80 text-slate-900 shadow-emerald-500/10'
+                ? 'border-emerald-300/90'
                 : toast.type === 'warning'
-                ? 'bg-white/95 border-amber-300/80 text-slate-900 shadow-amber-500/10'
-                : 'bg-white/95 border-blue-300/80 text-slate-900 shadow-blue-500/10'
+                ? 'border-amber-300/90'
+                : 'border-blue-300/90'
             }`}
           >
+            {/* Type Icon Badge */}
             <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
                 toast.type === 'success'
-                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/90'
                   : toast.type === 'warning'
-                  ? 'bg-amber-50 text-amber-600 border border-amber-200'
-                  : 'bg-blue-50 text-blue-600 border border-blue-200'
+                  ? 'bg-amber-50 text-amber-600 border border-amber-200/90'
+                  : 'bg-blue-50 text-blue-600 border border-blue-200/90'
               }`}
             >
-              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
-              {toast.type === 'warning' && <AlertTriangle className="w-4 h-4" />}
-              {toast.type === 'info' && <Info className="w-4 h-4" />}
+              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+              {toast.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600" />}
+              {toast.type === 'info' && <Info className="w-4 h-4 text-blue-600" />}
             </div>
 
+            {/* Toast Title & Subtitle */}
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-slate-900">{toast.title}</div>
+              <div className="text-xs font-black text-slate-900 leading-tight tracking-tight">
+                {toast.title}
+              </div>
               {toast.subtitle && (
-                <div className="text-[11px] text-slate-500 truncate mt-0.5">{toast.subtitle}</div>
+                <div className="text-[11px] text-slate-500 font-medium truncate mt-0.5 leading-tight">
+                  {toast.subtitle}
+                </div>
               )}
             </div>
 
+            {/* Quick Dismiss Button */}
             <button
               onClick={hideToast}
-              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors cursor-pointer"
+              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+              title="Dismiss notification"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
+
+            {/* Bottom Accent Glow Line */}
+            <div
+              className={`absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full ${
+                toast.type === 'success'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                  : toast.type === 'warning'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-400'
+                  : 'bg-gradient-to-r from-blue-500 to-indigo-500'
+              }`}
+            />
           </div>
         </div>
       )}

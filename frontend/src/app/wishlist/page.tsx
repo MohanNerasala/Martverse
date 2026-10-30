@@ -22,6 +22,9 @@ import {
   ArrowRight,
   PackagePlus,
   ShieldCheck,
+  AlertTriangle,
+  Info,
+  X,
 } from 'lucide-react';
 
 export default function WishlistPage() {
@@ -34,6 +37,8 @@ export default function WishlistPage() {
   const addItem = useCartStore((state) => state.addItem);
   const cartTotalItems = useCartStore((state) => state.totalItems);
   const showToast = useMartStore((state) => state.showToast);
+  const toast = useMartStore((state) => state.toast);
+  const hideToast = useMartStore((state) => state.hideToast);
   const openProductModal = useMartStore((state) => state.openProductModal);
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -361,6 +366,69 @@ export default function WishlistPage() {
           </div>
         )}
       </main>
+
+      {/* Floating Confirmation Toast (Positioned Top-Right Below Header) */}
+      {toast && (
+        <div className="pointer-events-auto fixed top-20 right-4 sm:right-6 md:right-8 z-50 animate-in slide-in-from-top-2 fade-in duration-200 ease-out">
+          <div
+            className={`relative overflow-hidden px-3.5 py-2.5 rounded-2xl border flex items-center gap-2.5 max-w-[280px] sm:max-w-[320px] bg-white/95 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.16),0_2px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all ${
+              toast.type === 'success'
+                ? 'border-emerald-300/90'
+                : toast.type === 'warning'
+                ? 'border-amber-300/90'
+                : 'border-blue-300/90'
+            }`}
+          >
+            {/* Type Icon Badge */}
+            <div
+              className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
+                toast.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/90'
+                  : toast.type === 'warning'
+                  ? 'bg-amber-50 text-amber-600 border border-amber-200/90'
+                  : 'bg-blue-50 text-blue-600 border border-blue-200/90'
+              }`}
+            >
+              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+              {toast.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600" />}
+              {toast.type === 'info' && <Info className="w-4 h-4 text-blue-600" />}
+            </div>
+
+            {/* Toast Title & Subtitle */}
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-black text-slate-900 leading-tight tracking-tight">
+                {toast.title}
+              </div>
+              {toast.subtitle && (
+                <div className="text-[11px] text-slate-500 font-medium truncate mt-0.5 leading-tight">
+                  {toast.subtitle}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Dismiss Button */}
+            <button
+              onClick={hideToast}
+              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+              title="Dismiss notification"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Bottom Accent Glow Line */}
+            <div
+              className={`absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full ${
+                toast.type === 'success'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                  : toast.type === 'warning'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-400'
+                  : 'bg-gradient-to-r from-blue-500 to-indigo-500'
+              }`}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
