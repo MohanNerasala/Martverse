@@ -311,21 +311,6 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
 
   return (
     <group ref={trolleyRef} scale={[1.18, 1.18, 1.18]}>
-      {/* Soft Under-Cart Luminous Glow & Point Light */}
-      <pointLight position={[0, 0.25, 0]} color="#38bdf8" intensity={0.5} distance={1.8} decay={2} />
-
-      {/* Subtle Cyan/Sapphire Ambient Ground Glow Decal */}
-      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[1.0, 1.35]} />
-        <meshBasicMaterial
-          color="#38bdf8"
-          transparent
-          opacity={0.16}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
-
       {/* --- Trolley Base Chassis (Polished Mirror Chrome) --- */}
       <mesh position={[0, 0.15, 0]} castShadow>
         <boxGeometry args={[0.7, 0.05, 1.0]} />
