@@ -20,7 +20,7 @@ const ProductSmallImage: React.FC<{
   metalness?: number;
   alphaTest?: number;
 }> = ({ url, position, scale, rotation, materialType = 'basic', roughness = 0.25, metalness = 0.12, alphaTest = 0.02 }) => {
-  const resolvedUrl: string = typeof url === 'object' && url && 'src' in url ? url.src : (url || '');
+  const resolvedUrl: string = typeof url === 'object' && url && 'src' in url ? url.src : (url || '/products/sweets/DairyMilk.png');
 
   const [texture, setTexture] = useState<THREE.Texture | null>(() => {
     return resolvedUrl ? (shelfTextureCache.get(resolvedUrl) || null) : null;
@@ -38,14 +38,25 @@ const ProductSmallImage: React.FC<{
       resolvedUrl,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
+        tex.generateMipmaps = true;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
         tex.needsUpdate = true;
         shelfTextureCache.set(resolvedUrl, tex);
         setTexture(tex);
       },
       undefined,
       () => {
-        // Fallback gracefully without throwing runtime exceptions
-        setTexture(null);
+        // Fallback to DairyMilk.png if specific image not found
+        if (resolvedUrl !== '/products/sweets/DairyMilk.png') {
+          loader.load('/products/sweets/DairyMilk.png', (tex) => {
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.generateMipmaps = true;
+            tex.needsUpdate = true;
+            shelfTextureCache.set(resolvedUrl, tex);
+            setTexture(tex);
+          });
+        }
       }
     );
   }, [resolvedUrl]);
@@ -64,7 +75,7 @@ const ProductSmallImage: React.FC<{
             side={THREE.DoubleSide}
           />
         ) : (
-          <meshBasicMaterial map={texture} transparent alphaTest={alphaTest} toneMapped={false} />
+          <meshBasicMaterial map={texture} transparent alphaTest={alphaTest} toneMapped={false} side={THREE.DoubleSide} />
         )
       ) : (
         <meshBasicMaterial color="#ffffff" transparent opacity={0.7} />
@@ -202,17 +213,25 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
 
         const isHovered = hoveredProductId === prod.id;
         const color = plc.color || '#3b82f6';
-        const isDairyMilk = prod.slug.includes('dairy-milk') || prod.name.toLowerCase().includes('dairy milk');
+        const isSweetsAisle = aisle.aisleNumber === 2;
+        const isDairyMilk = prod.slug.includes('dairy-milk') ||
+                            prod.name.toLowerCase().includes('dairy milk') ||
+                            prod.brand?.toLowerCase().includes('cadbury') ||
+                            isSweetsAisle;
         const packagingUrl = isDairyMilk
-          ? (dairyMilkImg?.src || '/products/sweets/cadbury-dairy-milk.png')
+          ? '/products/sweets/DairyMilk.png'
           : (prod.imageUrl || '/products/fallback.svg');
+
+        // Automatic orientation: Left shelf faces West (-X), Right shelf faces East (+X)
+        const autoRotationY = plc.shelfSide === 'RIGHT' || relX > 0 ? Math.PI / 2 : -Math.PI / 2;
+        const finalRotationY = plc.rotationY !== undefined ? plc.rotationY : autoRotationY;
 
         return (
           <group
             key={prod.id}
             position={[relX, relY + (isHovered ? 0.05 : 0), relZ]}
-            scale={isHovered ? [1.06, 1.06, 1.06] : [1, 1, 1]}
-            rotation={[0, plc.rotationY || 0, 0]}
+            scale={isHovered ? [1.05, 1.05, 1.05] : [1, 1, 1]}
+            rotation={[0, finalRotationY, 0]}
             onPointerOver={(e) => {
               e.stopPropagation();
               setHoveredProductId(prod.id);
@@ -232,19 +251,19 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
           >
             {/* Hover Floating Instruction Tag */}
             {isHovered && (
-              <group position={[0, 0.52, 0]}>
+              <group position={[0, isDairyMilk ? 0.45 : 0.52, 0]}>
                 <mesh position={[0, 0, 0]}>
-                  <boxGeometry args={[0.38, 0.09, 0.02]} />
-                  <meshBasicMaterial color="#2563eb" />
+                  <boxGeometry args={[0.42, 0.09, 0.02]} />
+                  <meshBasicMaterial color="#1d4ed8" />
                 </mesh>
                 <Text
                   position={[0, 0, 0.015]}
-                  fontSize={0.04}
+                  fontSize={0.042}
                   color="#ffffff"
                   anchorX="center"
                   anchorY="middle"
                 >
-                  Click to View Big
+                  {isDairyMilk ? 'Cadbury Dairy Milk • ₹40' : 'Click to View Big'}
                 </Text>
               </group>
             )}
@@ -348,11 +367,11 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                 </mesh>
               </group>
             ) : plc.modelType === 'chocolate' || plc.modelType === 'bar' || isDairyMilk ? (
-              // Realistic 3D Chocolate Bar Package (Authentic Cadbury Dairy Milk Chocolate)
+              // Realistic Big-Size 3D Chocolate Bar Package (Authentic Cadbury Dairy Milk Packaging)
               <group position={[0, 0, 0]}>
                 {/* Clear Acrylic Confectionery Shelf Tray directly on shelf plank */}
-                <mesh position={[0, 0.008, 0.02]} receiveShadow>
-                  <boxGeometry args={[0.31, 0.016, 0.18]} />
+                <mesh position={[0, 0.01, 0.02]} receiveShadow>
+                  <boxGeometry args={[0.62, 0.02, 0.22]} />
                   <meshStandardMaterial
                     color="#ffffff"
                     transparent
@@ -362,8 +381,8 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                   />
                 </mesh>
                 {/* Front Acrylic Retaining Lip (prevents chocolate bar slipping off shelf) */}
-                <mesh position={[0, 0.024, 0.108]}>
-                  <boxGeometry args={[0.31, 0.032, 0.006]} />
+                <mesh position={[0, 0.035, 0.125]}>
+                  <boxGeometry args={[0.62, 0.05, 0.008]} />
                   <meshStandardMaterial
                     color="#ffffff"
                     transparent
@@ -373,68 +392,66 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                 </mesh>
 
                 {/* 2 Stocked Chocolate Bars Behind (Realistic retail shelf depth) */}
-                {[-0.05, -0.025].map((zOffset, stackIdx) => (
-                  <group key={`choc-stack-${stackIdx}`} position={[0, 0.065, zOffset]} rotation={[-0.08, 0, 0]}>
+                {[-0.07, -0.035].map((zOffset, stackIdx) => (
+                  <group key={`choc-stack-${stackIdx}`} position={[0, 0.19, zOffset]} rotation={[-0.07, 0, 0]}>
                     <mesh castShadow receiveShadow>
-                      <boxGeometry args={[0.26, 0.118, 0.018]} />
+                      <boxGeometry args={[0.54, 0.36, 0.03]} />
                       <meshStandardMaterial
-                        color={color}
-                        roughness={0.3}
+                        color="#1f053d"
+                        roughness={0.25}
                         metalness={0.15}
                       />
                     </mesh>
-                    <mesh position={[-0.134, 0, 0]}>
-                      <boxGeometry args={[0.008, 0.116, 0.004]} />
-                      <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+                    <mesh position={[-0.28, 0, 0]}>
+                      <boxGeometry args={[0.018, 0.35, 0.006]} />
+                      <meshStandardMaterial color="#1f053d" roughness={0.4} metalness={0.25} />
                     </mesh>
-                    <mesh position={[0.134, 0, 0]}>
-                      <boxGeometry args={[0.008, 0.116, 0.004]} />
-                      <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+                    <mesh position={[0.28, 0, 0]}>
+                      <boxGeometry args={[0.018, 0.35, 0.006]} />
+                      <meshStandardMaterial color="#1f053d" roughness={0.4} metalness={0.25} />
                     </mesh>
                   </group>
                 ))}
 
-                {/* --- Front Featured Chocolate Bar (Leaning at -5 deg for optimal aisle visibility) --- */}
-                <group position={[0, 0.065, 0.03]} rotation={[-0.06, 0, 0]}>
-                  {/* Main Chocolate Bar Solid Slab Body (Authentic Royal Purple Wrapper with Foil Sheen) */}
+                {/* --- Front Featured Chocolate Bar (Big Size with authentic DairyMilk.png packaging) --- */}
+                <group position={[0, 0.19, 0.03]} rotation={[-0.05, 0, 0]}>
+                  {/* Main Chocolate Bar Solid Slab Body (Authentic Royal Cadbury Purple Foil Wrapper) */}
                   <mesh castShadow receiveShadow>
-                    <boxGeometry args={[0.262, 0.12, 0.022]} />
+                    <boxGeometry args={[0.54, 0.36, 0.035]} />
                     <meshStandardMaterial
-                      color={color}
-                      roughness={0.25}
-                      metalness={0.14}
-                      emissive={isHovered ? color : '#000000'}
-                      emissiveIntensity={isHovered ? 0.45 : 0}
+                      color="#1f053d"
+                      roughness={0.2}
+                      metalness={0.15}
+                      emissive={isHovered ? '#3b0764' : '#000000'}
+                      emissiveIntensity={isHovered ? 0.4 : 0}
                     />
                   </mesh>
 
                   {/* Left Crimped Foil Seal Tab */}
-                  <mesh position={[-0.136, 0, 0]} castShadow>
-                    <boxGeometry args={[0.01, 0.118, 0.004]} />
-                    <meshStandardMaterial color={color} roughness={0.4} metalness={0.25} />
+                  <mesh position={[-0.28, 0, 0]} castShadow>
+                    <boxGeometry args={[0.018, 0.35, 0.006]} />
+                    <meshStandardMaterial color="#1f053d" roughness={0.35} metalness={0.25} />
                   </mesh>
 
                   {/* Right Crimped Foil Seal Tab */}
-                  <mesh position={[0.136, 0, 0]} castShadow>
-                    <boxGeometry args={[0.01, 0.118, 0.004]} />
-                    <meshStandardMaterial color={color} roughness={0.4} metalness={0.25} />
+                  <mesh position={[0.28, 0, 0]} castShadow>
+                    <boxGeometry args={[0.018, 0.35, 0.006]} />
+                    <meshStandardMaterial color="#1f053d" roughness={0.35} metalness={0.25} />
                   </mesh>
 
                   {/* Complete Dairy Milk High-Resolution Packaging Texture Plane */}
-                  {/* Aspect ratio 1.5 matches the 1536x1024 original image, perfectly rendering wrapper without distortion */}
+                  {/* Aspect ratio 1.5 matches 1536x1024 original image in big prominent size */}
                   <ProductSmallImage
                     url={packagingUrl}
-                    position={[0, 0, 0.012]}
-                    scale={[0.28, 0.187]}
-                    materialType="standard"
-                    roughness={0.25}
-                    metalness={0.12}
-                    alphaTest={0.02}
+                    position={[0, 0, 0.019]}
+                    scale={[0.54, 0.36]}
+                    materialType="basic"
+                    alphaTest={0.01}
                   />
 
                   {/* Subtle Glossy Foil Reflection Sheen Strip */}
-                  <mesh position={[0, 0.03, 0.0125]}>
-                    <planeGeometry args={[0.24, 0.015]} />
+                  <mesh position={[0, 0.08, 0.02]}>
+                    <planeGeometry args={[0.50, 0.03]} />
                     <meshBasicMaterial
                       color="#ffffff"
                       transparent
