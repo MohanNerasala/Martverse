@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { SupermarketAisle, Product, ProductPlacement } from '@/types';
-import { useMartStore, martRuntime } from '@/store/useMartStore';
+import { useMartStore } from '@/store/useMartStore';
 import { Text } from '@react-three/drei';
 
 // Shared texture cache to prevent duplicate fetches across shelf units
@@ -490,15 +490,6 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
                 e.stopPropagation();
                 if (!isFloorActive) return;
 
-                // Proximity reach guard: only allow hovering items within 6.5 meters of player
-                const px = martRuntime.playerPos[0];
-                const py = martRuntime.playerPos[1];
-                const pz = martRuntime.playerPos[2];
-                const dx = slot.worldX - px;
-                const dy = slot.worldY - py;
-                const dz = slot.worldZ - pz;
-                if (dx * dx + dy * dy + dz * dz > 42.25) return;
-
                 setHoveredSlotKey(slotKey);
                 setHoveredProduct(prod);
                 document.body.style.cursor = 'pointer';
@@ -513,14 +504,6 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
               onClick={(e) => {
                 e.stopPropagation();
                 if (!isFloorActive) return;
-
-                const px = martRuntime.playerPos[0];
-                const py = martRuntime.playerPos[1];
-                const pz = martRuntime.playerPos[2];
-                const dx = slot.worldX - px;
-                const dy = slot.worldY - py;
-                const dz = slot.worldZ - pz;
-                if (dx * dx + dy * dy + dz * dz > 42.25) return;
 
                 openProductModal(prod);
               }}
