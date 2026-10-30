@@ -154,9 +154,9 @@ export const BillingModal: React.FC = () => {
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const authPhone = useAuthStore((state) => state.phone);
 
-  // Customer Contact State
-  const [customerName, setCustomerName] = useState('Rahul Sharma');
-  const [customerPhone, setCustomerPhone] = useState(authPhone || '9876543210');
+  // Customer Contact State (Starts empty so Pay button stays disabled until filled)
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState(authPhone || '');
 
   // Address Management State (Clean start — no dummy addresses)
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -181,11 +181,11 @@ export const BillingModal: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'UPI' | 'CARD' | 'CASH'>('UPI');
   const [selectedUpiApp, setSelectedUpiApp] = useState<'PHONEPE' | 'PAYTM' | 'GPAY'>('PHONEPE');
 
-  // Card Inputs
-  const [cardNumber, setCardNumber] = useState('4532 8921 7382 4242');
-  const [cardHolder, setCardHolder] = useState('Rahul Sharma');
-  const [cardExpiry, setCardExpiry] = useState('12/28');
-  const [cardCvv, setCardCvv] = useState('883');
+  // Card Inputs (Clean Start - User fills details)
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
 
   const [formError, setFormError] = useState<string | null>(null);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
@@ -322,15 +322,16 @@ export const BillingModal: React.FC = () => {
 
   const isFormValid = isAddressValid && isCustomerValid && isPaymentValid && scannedItems.length > 0;
 
-  // Validation Helper Prompt
+  // Validation Helper Prompt ("Proceed to pay dont show clickable until i fill details")
   const validationHelperText = (() => {
     if (scannedItems.length === 0) return 'Trolley has no items';
     if (isAddingNewAddress) return 'Please save your address details above';
-    if (!isAddressValid) return 'Please add and save a delivery address';
-    if (!isCustomerValid) return 'Please enter your Full Name & 10-digit Mobile Number';
+    if (!isAddressValid) return 'Please add and select a delivery address';
+    if (!customerName.trim()) return 'Please enter your Full Name';
+    if (customerPhone.replace(/\D/g, '').length !== 10) return 'Please enter a valid 10-digit Mobile Number';
     if (!isPaymentValid) {
       if (selectedPaymentMethod === 'CARD') return 'Please complete card number, expiry date, and CVV';
-      if (selectedPaymentMethod === 'UPI') return 'Please select a payment app';
+      if (selectedPaymentMethod === 'UPI') return 'Please select a UPI payment app';
     }
     return null;
   })();
@@ -895,24 +896,24 @@ export const BillingModal: React.FC = () => {
   // MAIN CHECKOUT PAGE (Single-Page Viewport Layout — No Scroll Needed)
   // ==============================================================
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50 text-slate-900 overflow-y-auto xl:overflow-hidden select-none flex flex-col animate-in fade-in duration-200">
-      {/* --- Top Compact Executive Header --- */}
-      <header className="flex-shrink-0 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-6 py-2 shadow-2xs">
+    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-100/90 via-slate-50 to-blue-50/40 text-slate-900 overflow-y-auto xl:overflow-hidden select-none flex flex-col animate-in fade-in duration-200">
+      {/* --- Top Luxury Executive Header (Rich Dark Theme with Shimmering Light Blue to White Title) --- */}
+      <header className="flex-shrink-0 bg-slate-950/95 backdrop-blur-xl border-b border-slate-800/90 px-4 sm:px-6 py-2.5 shadow-[0_4px_25px_rgba(0,0,0,0.3)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
-              <Store className="w-3.5 h-3.5 text-white" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.35)] flex-shrink-0">
+              <Store className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-xs sm:text-sm tracking-tight text-slate-900">
+                <h1 className="text-xs sm:text-sm tracking-tight font-black uppercase text-light-blue-white-shimmer font-sans">
                   MARTVERSE POS BILLING
                 </h1>
-                <span className="text-[9px] bg-slate-900 text-cyan-400 font-bold px-1.5 py-0.5 rounded-full font-mono">
+                <span className="text-[9px] bg-sky-950/90 border border-sky-400/40 text-sky-300 font-bold px-2 py-0.5 rounded-full font-mono shadow-[0_0_10px_rgba(56,189,248,0.25)]">
                   LANE 02
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 font-medium leading-none">
+              <p className="text-[10px] text-slate-400 font-medium leading-none mt-0.5">
                 Official In-Store Express Checkout & Invoice
               </p>
             </div>
@@ -922,9 +923,9 @@ export const BillingModal: React.FC = () => {
             type="button"
             onClick={handleCancelBilling}
             title="Return to Supermarket Aisle"
-            className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 border border-slate-200/80 shadow-2xs"
+            className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 border border-slate-700/80 hover:border-slate-500 shadow-xs"
           >
-            <RotateCcw className="w-3 h-3 text-slate-500" />
+            <RotateCcw className="w-3 h-3 text-slate-400" />
             <span>Back to Store</span>
           </button>
         </div>
@@ -938,7 +939,7 @@ export const BillingModal: React.FC = () => {
           {/* ============================================================== */}
           <div className="lg:col-span-7 space-y-2.5">
             {/* 1. DELIVERY ADDRESS SECTION (Compact BigBasket Style) */}
-            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-3 sm:p-3.5 space-y-2">
+            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-3 sm:p-3.5 space-y-2">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
@@ -1228,7 +1229,7 @@ export const BillingModal: React.FC = () => {
             </div>
 
             {/* 2. CUSTOMER CONTACT DETAILS (Compact) */}
-            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-2.5 sm:p-3 space-y-1.5">
+            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-2.5 sm:p-3 space-y-1.5">
               <div className="flex items-center justify-between pb-1 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
@@ -1243,20 +1244,20 @@ export const BillingModal: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Full Name</label>
+                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Full Name <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Rahul Sharma"
-                    className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-semibold outline-none transition-all"
+                    placeholder="Enter your full name"
+                    className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-1.5 text-xs text-slate-900 font-semibold outline-none transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Mobile Number</label>
-                  <div className="flex items-center bg-slate-50 border border-slate-300 focus-within:bg-white focus-within:border-blue-600 rounded-lg px-2.5 py-1.5 transition-all">
+                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Mobile Number <span className="text-rose-500">*</span></label>
+                  <div className="flex items-center bg-slate-50 border border-slate-300 focus-within:bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20 rounded-xl px-3 py-1.5 transition-all">
                     <span className="text-[11px] font-bold text-slate-400 mr-1.5">+91</span>
                     <input
                       type="tel"
@@ -1264,7 +1265,7 @@ export const BillingModal: React.FC = () => {
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))}
-                      placeholder="9876543210"
+                      placeholder="10-digit mobile number"
                       className="w-full bg-transparent text-xs text-slate-900 font-semibold outline-none font-mono"
                     />
                   </div>
@@ -1273,7 +1274,7 @@ export const BillingModal: React.FC = () => {
             </div>
 
             {/* 3. PAYMENT METHOD (Compact Tabs: UPI, Card, Cash on Delivery) */}
-            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-2.5 sm:p-3.5 space-y-2">
+            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-2.5 sm:p-3.5 space-y-2">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
@@ -1386,7 +1387,7 @@ export const BillingModal: React.FC = () => {
                         type="text"
                         value={cardHolder}
                         onChange={(e) => setCardHolder(e.target.value)}
-                        placeholder="Rahul Sharma"
+                        placeholder="Name on card"
                         className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-900 outline-none"
                       />
                     </div>
@@ -1453,7 +1454,7 @@ export const BillingModal: React.FC = () => {
           {/* ============================================================== */}
           <div className="lg:col-span-5 space-y-2.5">
             {/* Scanned Items Card (Compact) */}
-            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-3 sm:p-3.5 space-y-1.5">
+            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-3 sm:p-3.5 space-y-1.5">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-1.5">
                   <Barcode className="w-3.5 h-3.5 text-blue-600" />
@@ -1531,7 +1532,7 @@ export const BillingModal: React.FC = () => {
             </div>
 
             {/* Bill Summary & Calculations (Compact) */}
-            <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-3 sm:p-3.5 space-y-2">
+            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-3 sm:p-3.5 space-y-2">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-1.5">
                   <Receipt className="w-3.5 h-3.5 text-emerald-600" />
@@ -1610,21 +1611,21 @@ export const BillingModal: React.FC = () => {
 
               {/* Validation Warning Notice */}
               {!isFormValid && validationHelperText && (
-                <div className="bg-amber-50/90 border border-amber-200 text-amber-900 text-[11px] font-medium p-2 rounded-lg flex items-center gap-1.5">
+                <div className="bg-amber-50/90 border border-amber-200/90 text-amber-900 text-[11px] font-semibold p-2 rounded-xl flex items-center gap-1.5 shadow-2xs animate-in fade-in">
                   <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                   <span>{validationHelperText}</span>
                 </div>
               )}
 
-              {/* Primary Action Pay Button */}
+              {/* Primary Action Pay Button (Muted & Non-Clickable Until Details Are Filled) */}
               <button
                 type="button"
                 onClick={handleProceedToPay}
                 disabled={!isFormValid || isButtonDisabled}
-                className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 select-none ${
                   isFormValid && !isButtonDisabled
                     ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 text-white shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 cursor-pointer active:scale-98'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                    : 'bg-slate-100 text-slate-400 border border-slate-200/90 cursor-not-allowed opacity-75 shadow-none'
                 }`}
               >
                 {isButtonDisabled ? (

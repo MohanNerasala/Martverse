@@ -336,6 +336,7 @@ input:focus, select:focus, textarea:focus {
   -webkit-text-fill-color: transparent;
   animation: lightBlueToWhiteSweep 3s linear infinite;
   display: inline-block;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.45));
 }
 
 /* Luxury White Box with Subtle Cyan/Sky Specular Glow */
