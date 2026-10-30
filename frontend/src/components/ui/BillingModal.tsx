@@ -59,7 +59,6 @@ export const BillingModal: React.FC = () => {
   const startExitAnimation = useMartStore((state) => state.startExitAnimation);
   const setCameraMode = useMartStore((state) => state.setCameraMode);
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
-  const showToast = useMartStore((state) => state.showToast);
   const authPhone = useAuthStore((state) => state.phone);
 
   // Customer Form state
@@ -129,7 +128,6 @@ export const BillingModal: React.FC = () => {
     if (currentX < -3.5) safeX = -5.7;
     else if (currentX > 0.0) safeX = 1.9;
     setPlayerPos([safeX, 1.5, 13.8], 0);
-    showToast('Returned to Store Floor', 'Trolley is parked safely outside POS billing lane', 'info');
   };
 
   const handleValidateDetails = () => {

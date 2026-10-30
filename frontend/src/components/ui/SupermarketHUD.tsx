@@ -50,7 +50,6 @@ export const SupermarketHUD: React.FC = () => {
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
   const setHasMovedTrolley = useMartStore((state) => state.setHasMovedTrolley);
-  const showToast = useMartStore((state) => state.showToast);
   const resetToOriginalState = useMartStore((state) => state.resetToOriginalState);
   const products = useMartStore((state) => state.products);
   const navigateToProduct = useMartStore((state) => state.navigateToProduct);
@@ -157,7 +156,6 @@ export const SupermarketHUD: React.FC = () => {
             <button
               onClick={() => {
                 resetToOriginalState();
-                showToast('Martverse Entrance', 'Returned to virtual hypermarket lobby', 'info');
               }}
               className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-600 border border-white/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden group shadow-xs"
               title="Martverse Home / Entrance"
@@ -190,7 +188,6 @@ export const SupermarketHUD: React.FC = () => {
                 if (activeFloor !== 1) {
                   setPlayerPos([14.7, 1.5, -9.2], 0);
                   setActiveFloor(1);
-                  showToast('Ground Floor', 'Welcome to Daily Groceries & Staples', 'info');
                 }
               }}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer active:scale-95 hover:scale-[1.02] ${
@@ -209,7 +206,6 @@ export const SupermarketHUD: React.FC = () => {
                 if (activeFloor !== 2) {
                   setPlayerPos([14.7, 6.5, 6.2], 0);
                   setActiveFloor(2);
-                  showToast('2nd Floor', 'Welcome to Fashion Studio & Apparel', 'info');
                 }
               }}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer active:scale-95 hover:scale-[1.02] ${
@@ -374,7 +370,6 @@ export const SupermarketHUD: React.FC = () => {
             <button
               onClick={() => {
                 resetToOriginalState();
-                showToast('Position Reset', 'Returned to store entrance & original view orientation', 'info');
               }}
               className="h-10 px-2.5 sm:px-3 rounded-xl bg-slate-100/80 hover:bg-slate-100 active:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200/90 hover:border-slate-300 transition-all duration-200 flex items-center gap-1.5 text-xs font-semibold group cursor-pointer shadow-xs active:scale-90 hover:scale-[1.03]"
               title="Reset to Original State & Starting Position (Entrance)"
@@ -489,7 +484,6 @@ export const SupermarketHUD: React.FC = () => {
               onClick={() => {
                 setPlayerPos([14.7, 6.5, 6.2], 0);
                 setActiveFloor(2);
-                showToast('2nd Floor Reached', 'Exploring Fashion Studio & Apparel', 'success');
               }}
               className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
                 activeFloor === 2
@@ -523,7 +517,6 @@ export const SupermarketHUD: React.FC = () => {
               onClick={() => {
                 setPlayerPos([14.7, 1.5, -9.2], 0);
                 setActiveFloor(1);
-                showToast('Ground Floor Reached', 'Exploring Daily Groceries & POS Billing', 'success');
               }}
               className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
                 activeFloor === 1

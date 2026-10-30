@@ -176,7 +176,6 @@ export const PlayerController: React.FC = () => {
   const openUnpaidExitAlert = useMartStore((state) => state.openUnpaidExitAlert);
   const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
   const setHasMovedTrolley = useMartStore((state) => state.setHasMovedTrolley);
-  const showToast = useMartStore((state) => state.showToast);
   const resetTrigger = useMartStore((state) => state.resetTrigger);
   const teleportTrigger = useMartStore((state) => state.teleportTrigger);
 
@@ -428,7 +427,6 @@ export const PlayerController: React.FC = () => {
         setCameraMode('exit');
       } else {
         sounds.playWarningBuzz();
-        showToast('Exit Gate Locked', 'Unpaid items in trolley! Please pay at Billing Counter.', 'warning');
         openUnpaidExitAlert();
       }
       return;
@@ -444,7 +442,6 @@ export const PlayerController: React.FC = () => {
       posRef.current.z = -7.0;
       yawRef.current = 0; // face forward up the ramp
       targetYawRef.current = 0;
-      showToast('Escalator Moving Walkway', 'Gliding to 2nd Floor (Fashion Studio)...', 'info');
       sounds.playPickSound();
       return;
     }
@@ -454,7 +451,6 @@ export const PlayerController: React.FC = () => {
       posRef.current.z = 5.0;
       yawRef.current = Math.PI; // face down the ramp
       targetYawRef.current = Math.PI;
-      showToast('Escalator Moving Walkway', 'Gliding to Ground Floor (Groceries)...', 'info');
       sounds.playPickSound();
       return;
     }
@@ -689,7 +685,6 @@ export const PlayerController: React.FC = () => {
           targetYawRef.current = 0;
           setActiveFloor(2);
           sounds.playPickSound();
-          showToast('2nd Floor Reached', 'Welcome to Fashion Studio & Apparel!', 'success');
         }
       } else {
         posRef.current.z -= (3.2 + forwardInput) * delta;
@@ -705,7 +700,6 @@ export const PlayerController: React.FC = () => {
           targetYawRef.current = 0;
           setActiveFloor(1);
           sounds.playPickSound();
-          showToast('Ground Floor Reached', 'Welcome back to Groceries & Billing!', 'success');
         }
       }
 
