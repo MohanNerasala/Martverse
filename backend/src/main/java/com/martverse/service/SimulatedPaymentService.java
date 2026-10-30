@@ -94,9 +94,10 @@ public class SimulatedPaymentService {
                     ? BigDecimal.ZERO
                     : new BigDecimal("40");
 
-            BigDecimal finalAmount = subtotal.add(deliveryCharge);
+            BigDecimal codFee = request.getCodFee() != null ? request.getCodFee() : BigDecimal.ZERO;
+            BigDecimal finalAmount = subtotal.add(deliveryCharge).add(codFee);
 
-            // 3. Persist Customer Delivery Address
+            // 3. Persist Customer Delivery Address (With Deduplication)
             String cleanPhone = request.getCustomerPhone() != null ? request.getCustomerPhone().replaceAll("[^0-9]", "") : "";
             if (cleanPhone.length() >= 10) {
                 cleanPhone = cleanPhone.substring(cleanPhone.length() - 10);
@@ -110,24 +111,47 @@ public class SimulatedPaymentService {
                 }
             }
 
-            Address address = Address.builder()
-                    .fullName(request.getCustomerName())
-                    .phone(!cleanPhone.isEmpty() ? cleanPhone : request.getCustomerPhone())
-                    .email(request.getCustomerEmail() != null ? request.getCustomerEmail() : "")
-                    .addressLine1(request.getAddressLine1())
-                    .addressLine2(request.getAddressLine2())
-                    .city(request.getCity())
-                    .state(request.getState() != null ? request.getState() : "India")
-                    .pinCode(request.getPinCode())
-                    .deliveryInstructions(request.getDeliveryInstructions())
-                    .build();
-
-            if (userId != null) {
-                User user = new User();
-                user.setId(userId);
-                address.setUser(user);
+            Address address = null;
+            if (request.getAddressId() != null && !request.getAddressId().isBlank() && !request.getAddressId().startsWith("addr-")) {
+                try {
+                    address = addressRepository.findById(UUID.fromString(request.getAddressId())).orElse(null);
+                } catch (Exception ignored) {}
             }
-            address = addressRepository.save(address);
+
+            if (address == null) {
+                String line1 = request.getAddressLine1();
+                if (userId != null) {
+                    address = addressRepository.findFirstByUserIdAndAddressLine1AndPinCode(userId, line1, request.getPinCode()).orElse(null);
+                } else if (!cleanPhone.isEmpty()) {
+                    address = addressRepository.findFirstByPhoneAndAddressLine1AndPinCode(cleanPhone, line1, request.getPinCode()).orElse(null);
+                }
+            }
+
+            if (address == null) {
+                address = Address.builder()
+                        .fullName(request.getCustomerName() != null ? request.getCustomerName() : "Customer")
+                        .phone(!cleanPhone.isEmpty() ? cleanPhone : request.getCustomerPhone())
+                        .email(request.getCustomerEmail() != null ? request.getCustomerEmail() : "")
+                        .addressType(request.getAddressType() != null ? request.getAddressType().toUpperCase() : "HOME")
+                        .houseNo(request.getHouseNo())
+                        .area(request.getArea())
+                        .landmark(request.getLandmark())
+                        .addressLine1(request.getAddressLine1())
+                        .addressLine2(request.getAddressLine2())
+                        .city(request.getCity())
+                        .state(request.getState() != null ? request.getState() : "Karnataka")
+                        .pinCode(request.getPinCode())
+                        .deliveryInstructions(request.getDeliveryInstructions())
+                        .isDefault(true)
+                        .build();
+
+                if (userId != null) {
+                    User user = new User();
+                    user.setId(userId);
+                    address.setUser(user);
+                }
+                address = addressRepository.save(address);
+            }
 
             // 4. Generate unique Order Number (MV + Date + 4-digit random)
             String orderNumber = generateOrderNumber();
@@ -206,26 +230,31 @@ public class SimulatedPaymentService {
             orderRepository.save(order);
 
             // 8. Record real Payment entity with status COMPLETED and payment method
-            PaymentMethod pMethod = PaymentMethod.CARD;
+            PaymentMethod pMethod = PaymentMethod.UPI;
             try {
                 if (request.getPaymentMethod() != null) {
                     pMethod = PaymentMethod.valueOf(request.getPaymentMethod().toUpperCase());
                 }
             } catch (Exception ignored) {}
 
+            String provider = request.getPaymentProvider();
+            if (provider == null || provider.isBlank()) {
+                provider = pMethod.name() + "_DIRECT";
+            }
+
             String txnId = "TXN-MV-" + UUID.randomUUID().toString().substring(0, 10).toUpperCase();
 
             Payment payment = Payment.builder()
                     .order(order)
                     .paymentMethod(pMethod)
-                    .paymentProvider(pMethod.name() + "_DIRECT")
+                    .paymentProvider(provider)
                     .providerOrderId("ORD_" + orderNumber)
                     .providerPaymentId(txnId)
                     .amount(finalAmount)
                     .currency("INR")
-                    .status(PaymentStatus.SIMULATED_SUCCESS)
+                    .status(pMethod == PaymentMethod.CASH ? PaymentStatus.PENDING : PaymentStatus.SIMULATED_SUCCESS)
                     .testMode(true)
-                    .paidAt(LocalDateTime.now())
+                    .paidAt(pMethod == PaymentMethod.CASH ? null : LocalDateTime.now())
                     .failureReason(null)
                     .build();
             paymentRepository.save(payment);
@@ -249,9 +278,9 @@ public class SimulatedPaymentService {
                     .discountAmount(BigDecimal.ZERO)
                     .deliveryCharge(deliveryCharge)
                     .finalAmount(finalAmount)
-                    .paymentStatus(PaymentStatus.SIMULATED_SUCCESS.name())
+                    .paymentStatus(pMethod == PaymentMethod.CASH ? "PENDING_CASH" : PaymentStatus.SIMULATED_SUCCESS.name())
                     .paymentMethod(pMethod.name())
-                    .paymentProvider("SIMULATED_GATEWAY")
+                    .paymentProvider(provider)
                     .transactionId(txnId)
                     .dateTime(formattedDateTime)
                     .message("Order placed with SIMULATED_SUCCESS payment status (DEMO MODE).")

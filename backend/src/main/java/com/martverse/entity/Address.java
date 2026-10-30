@@ -30,6 +30,18 @@ public class Address {
 
     private String email;
 
+    @Column(name = "address_type", length = 30)
+    private String addressType; // HOME, WORK, OTHER
+
+    @Column(name = "house_no", length = 255)
+    private String houseNo;
+
+    @Column(name = "area", length = 255)
+    private String area;
+
+    @Column(name = "landmark", length = 255)
+    private String landmark;
+
     @Column(name = "address_line1", nullable = false, length = 500)
     private String addressLine1;
 

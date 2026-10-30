@@ -208,6 +208,26 @@ export const BillingModal: React.FC = () => {
     }
   }, [authPhone]);
 
+  // Load saved addresses from backend database & sync with localStorage
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSavedAddresses = async () => {
+      try {
+        const list = await api.getAddresses(customerPhone);
+        if (isMounted && Array.isArray(list) && list.length > 0) {
+          setSavedAddresses(list);
+          const def = list.find((a: SavedAddress) => a.isDefault);
+          if (def) setSelectedAddressId(def.id);
+          else setSelectedAddressId(list[0].id);
+        }
+      } catch {}
+    };
+    fetchSavedAddresses();
+    return () => {
+      isMounted = false;
+    };
+  }, [customerPhone]);
+
   // Revalidate with backend
   useEffect(() => {
     if (phase === 'review' || phase === 'checkout_details' || phase === 'payment_methods') {
@@ -313,8 +333,8 @@ export const BillingModal: React.FC = () => {
     }, 700);
   };
 
-  // --- Save New Address Handler ---
-  const handleSaveNewAddress = (e: React.FormEvent) => {
+  // --- Save New Address Handler (Backend Database & Deduplication) ---
+  const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAddress.houseNo.trim()) {
       setFormError('House / Flat / Building details are required.');
@@ -329,28 +349,50 @@ export const BillingModal: React.FC = () => {
       return;
     }
 
-    const createdAddress: SavedAddress = {
-      id: 'addr-' + Date.now(),
+    const houseNoTrimmed = newAddress.houseNo.trim();
+    const areaTrimmed = newAddress.area.trim();
+    const pinCodeTrimmed = newAddress.pinCode.trim();
+
+    // DEDUPLICATION: Check if this address already exists in current list
+    const existingIndex = savedAddresses.findIndex(
+      (a) =>
+        a.houseNo?.trim().toLowerCase() === houseNoTrimmed.toLowerCase() &&
+        a.area?.trim().toLowerCase() === areaTrimmed.toLowerCase() &&
+        a.pinCode?.trim() === pinCodeTrimmed
+    );
+
+    const shouldBeDefault = newAddress.setAsDefault || savedAddresses.length === 0;
+
+    // Save to backend database + sync with localStorage
+    const saved = await api.saveAddress({
+      id: existingIndex >= 0 ? savedAddresses[existingIndex].id : undefined,
       name: customerName,
+      fullName: customerName,
       phone: customerPhone,
       type: newAddress.type,
-      houseNo: newAddress.houseNo.trim(),
-      area: newAddress.area.trim(),
+      addressType: newAddress.type,
+      houseNo: houseNoTrimmed,
+      area: areaTrimmed,
       landmark: newAddress.landmark.trim(),
       city: newAddress.city.trim(),
       state: newAddress.state.trim() || 'Karnataka',
-      pinCode: newAddress.pinCode.trim(),
-      isDefault: newAddress.setAsDefault || savedAddresses.length === 0,
-    };
+      pinCode: pinCodeTrimmed,
+      isDefault: shouldBeDefault,
+    });
 
     let updatedList = [...savedAddresses];
-    if (createdAddress.isDefault) {
+    if (shouldBeDefault) {
       updatedList = updatedList.map((a) => ({ ...a, isDefault: false }));
     }
-    updatedList.push(createdAddress);
+
+    if (existingIndex >= 0) {
+      updatedList[existingIndex] = saved;
+    } else {
+      updatedList.unshift(saved);
+    }
 
     setSavedAddresses(updatedList);
-    setSelectedAddressId(createdAddress.id);
+    setSelectedAddressId(saved.id);
     setIsAddingNewAddress(false);
     setFormError(null);
     setLocationSuccessMsg(null);
@@ -368,7 +410,7 @@ export const BillingModal: React.FC = () => {
   };
 
   // --- Set Address as Default ---
-  const handleSetDefaultAddress = (id: string, e: React.MouseEvent) => {
+  const handleSetDefaultAddress = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setSavedAddresses((prev) =>
       prev.map((addr) => ({
@@ -377,6 +419,7 @@ export const BillingModal: React.FC = () => {
       }))
     );
     setSelectedAddressId(id);
+    await api.setDefaultAddress(id, customerPhone);
   };
 
   // --- Cancel Billing & Return to 3D Store ---
@@ -405,20 +448,30 @@ export const BillingModal: React.FC = () => {
 
     try {
       const addressToUse = activeSelectedAddress!;
-      const paymentProviderName =
-        selectedPaymentMethod === 'UPI'
-          ? `UPI (${selectedUpiApp === 'CUSTOM' ? upiId : selectedUpiApp})`
-          : selectedPaymentMethod === 'CARD'
-          ? `Card (•••• ${cardNumber.slice(-4)})`
-          : 'Cash on Delivery';
+      let paymentProviderName = 'UPI';
+      if (selectedPaymentMethod === 'UPI') {
+        if (selectedUpiApp === 'PHONEPE') paymentProviderName = 'UPI (PhonePe)';
+        else if (selectedUpiApp === 'PAYTM') paymentProviderName = 'UPI (Paytm)';
+        else if (selectedUpiApp === 'GPAY') paymentProviderName = 'UPI (Google Pay)';
+        else paymentProviderName = `UPI (${upiId.trim() || 'Direct VPA'})`;
+      } else if (selectedPaymentMethod === 'CARD') {
+        paymentProviderName = `Card (•••• ${cardNumber.replace(/\s/g, '').slice(-4)}) - ${cardHolder}`;
+      } else {
+        paymentProviderName = 'Cash on Delivery (+₹20 COD Fee)';
+      }
 
       const orderRes = await api.checkoutSimulated({
         customerName,
         customerPhone,
+        addressId: addressToUse.id && !addressToUse.id.startsWith('addr-') ? addressToUse.id : undefined,
         fulfilmentType: selectedPaymentMethod === 'CASH' ? 'CASH_ON_DELIVERY' : 'ONLINE_DELIVERY',
         paymentMethod: selectedPaymentMethod,
         paymentProvider: paymentProviderName,
         codFee,
+        houseNo: addressToUse.houseNo,
+        area: addressToUse.area,
+        landmark: addressToUse.landmark,
+        addressType: addressToUse.type,
         addressLine1: `${addressToUse.houseNo}, ${addressToUse.area}${
           addressToUse.landmark ? ', Near ' + addressToUse.landmark : ''
         }`,

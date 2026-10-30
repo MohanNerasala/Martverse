@@ -176,8 +176,13 @@ export const api = {
     customerName: string;
     customerPhone: string;
     customerEmail?: string;
+    addressId?: string;
     addressLine1: string;
     addressLine2?: string;
+    houseNo?: string;
+    area?: string;
+    landmark?: string;
+    addressType?: string;
     city: string;
     state?: string;
     pinCode: string;
@@ -339,6 +344,151 @@ export const api = {
     } catch {}
 
     return finalOrder;
+  },
+
+  // --- Customer Address API (Full Backend DB Persistence & Deduplication) ---
+  async getAddresses(phone?: string): Promise<any[]> {
+    const cleanPhone = phone ? phone.replace(/[^0-9]/g, '').slice(-10) : '';
+    let localAddresses: any[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        localAddresses = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+      } catch {}
+    }
+
+    try {
+      const query = cleanPhone ? `?phone=${cleanPhone}` : '';
+      const remote = await fetchWithFallback<any[]>(`/addresses${query}`, { method: 'GET' }, []);
+      if (Array.isArray(remote) && remote.length > 0) {
+        // Normalize backend fields for frontend BigBasket-style cards
+        const formatted = remote.map((r: any) => ({
+          id: r.id ? String(r.id) : 'addr-' + Date.now(),
+          name: r.fullName || 'Rahul Sharma',
+          phone: r.phone || cleanPhone || '9876543210',
+          type: (r.addressType || 'HOME').toUpperCase(),
+          houseNo: r.houseNo || r.addressLine1 || '',
+          area: r.area || r.addressLine2 || '',
+          landmark: r.landmark || '',
+          city: r.city || 'Bengaluru',
+          state: r.state || 'Karnataka',
+          pinCode: r.pinCode || '',
+          isDefault: Boolean(r.isDefault),
+        }));
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('martverse_saved_addresses', JSON.stringify(formatted));
+        }
+        return formatted;
+      }
+    } catch {}
+
+    return localAddresses;
+  },
+
+  async saveAddress(address: {
+    id?: string;
+    fullName?: string;
+    name?: string;
+    phone: string;
+    email?: string;
+    type?: string;
+    addressType?: string;
+    houseNo: string;
+    area: string;
+    landmark?: string;
+    city: string;
+    state?: string;
+    pinCode: string;
+    isDefault?: boolean;
+    deliveryInstructions?: string;
+  }): Promise<any> {
+    const cleanPhone = address.phone ? address.phone.replace(/[^0-9]/g, '').slice(-10) : '9876543210';
+    const payload = {
+      id: address.id && !address.id.startsWith('addr-') ? address.id : undefined,
+      fullName: address.fullName || address.name || 'Rahul Sharma',
+      phone: cleanPhone,
+      email: address.email || '',
+      addressType: (address.addressType || address.type || 'HOME').toUpperCase(),
+      houseNo: address.houseNo.trim(),
+      area: address.area.trim(),
+      landmark: address.landmark?.trim() || '',
+      addressLine1: `${address.houseNo.trim()}, ${address.area.trim()}`,
+      addressLine2: address.landmark?.trim() || '',
+      city: address.city.trim() || 'Bengaluru',
+      state: address.state?.trim() || 'Karnataka',
+      pinCode: address.pinCode.trim(),
+      deliveryInstructions: address.deliveryInstructions || '',
+      isDefault: Boolean(address.isDefault),
+    };
+
+    let savedItem: any = null;
+    try {
+      savedItem = await fetchWithFallback<any>('/addresses', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }, null);
+    } catch {}
+
+    const normalized = {
+      id: savedItem?.id ? String(savedItem.id) : (address.id || 'addr-' + Date.now()),
+      name: payload.fullName,
+      phone: payload.phone,
+      type: payload.addressType,
+      houseNo: payload.houseNo,
+      area: payload.area,
+      landmark: payload.landmark,
+      city: payload.city,
+      state: payload.state,
+      pinCode: payload.pinCode,
+      isDefault: payload.isDefault,
+    };
+
+    // Update local storage without duplicates
+    if (typeof window !== 'undefined') {
+      try {
+        const existing: any[] = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        // Check if same houseNo and area and pinCode exists
+        let updatedList = existing.filter((item) => {
+          const isSameId = item.id === normalized.id;
+          const isSameDetails =
+            item.houseNo?.trim().toLowerCase() === normalized.houseNo.trim().toLowerCase() &&
+            item.area?.trim().toLowerCase() === normalized.area.trim().toLowerCase() &&
+            item.pinCode?.trim() === normalized.pinCode.trim();
+          return !isSameId && !isSameDetails;
+        });
+
+        if (normalized.isDefault) {
+          updatedList = updatedList.map((a) => ({ ...a, isDefault: false }));
+        }
+
+        updatedList.unshift(normalized);
+        localStorage.setItem('martverse_saved_addresses', JSON.stringify(updatedList));
+      } catch {}
+    }
+
+    return normalized;
+  },
+
+  async setDefaultAddress(id: string, phone?: string): Promise<void> {
+    const cleanPhone = phone ? phone.replace(/[^0-9]/g, '').slice(-10) : '';
+    if (id && !id.startsWith('addr-')) {
+      try {
+        await fetchWithFallback(`/addresses/${id}/default${cleanPhone ? `?phone=${cleanPhone}` : ''}`, {
+          method: 'PUT',
+        }, null);
+      } catch {}
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const existing: any[] = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        const updated = existing.map((a) => ({
+          ...a,
+          isDefault: a.id === id,
+        }));
+        localStorage.setItem('martverse_saved_addresses', JSON.stringify(updated));
+      } catch {}
+    }
   },
 
   // Auth helper

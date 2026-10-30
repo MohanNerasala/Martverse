@@ -66,10 +66,17 @@ public class PaymentDto {
 
         private String customerEmail;
 
+        private String addressId;
+
         @NotBlank(message = "Address line 1 is required")
         private String addressLine1;
 
         private String addressLine2;
+
+        private String houseNo;
+        private String area;
+        private String landmark;
+        private String addressType; // HOME, WORK, OTHER
 
         @NotBlank(message = "City is required")
         private String city;
@@ -85,7 +92,11 @@ public class PaymentDto {
         private String fulfilmentType = "DELIVERY";
 
         @Builder.Default
-        private String paymentMethod = "CARD";
+        private String paymentMethod = "UPI";
+
+        private String paymentProvider; // e.g. PhonePe, Paytm, Google Pay, Card, Cash on Delivery
+
+        private BigDecimal codFee;
 
         private List<CheckoutItemRequest> items;
     }
