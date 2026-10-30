@@ -580,85 +580,80 @@ export const BillingModal: React.FC = () => {
   };
 
   // ==============================================================
-  // STEP 1: SCANNING PHASE — Compact White Box (Item Name, Amount, Live Scan)
+  // STEP 1: SCANNING PHASE — Compact Vertical Card (Image, Name, Cost, Instant Checkout + OK)
   // ==============================================================
   if (phase === 'scanning') {
-    return (
-      <div className="fixed top-20 sm:top-22 right-3 sm:right-6 z-50 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-300 max-w-[calc(100vw-24px)] select-none">
-        <div
-          onClick={skipToReview}
-          className="bg-white/95 backdrop-blur-md text-slate-900 rounded-2xl p-2.5 sm:p-3 shadow-xl border border-slate-200/90 hover:border-blue-400/80 hover:shadow-2xl transition-all flex items-center gap-3 cursor-pointer group"
-          title="Click to view full bill or wait for conveyor scan"
-        >
-          {/* Modern Barcode Scanner Icon (Clean & Realistic - No Green Dots) */}
-          <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0 border border-slate-200">
-            <Barcode className="w-3.5 h-3.5" />
-          </div>
+    const itemName = currentScanningItem ? currentScanningItem.productName : 'Item from Trolley';
+    const itemCost = currentScanningItem ? currentScanningItem.price : runningTotal;
 
-          {/* Product Thumbnail with Laser Scanning Animation */}
-          <div className="relative w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform shadow-2xs">
+    return (
+      <div className="fixed top-20 sm:top-22 right-4 sm:right-6 z-50 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-300 select-none">
+        <div className="w-56 sm:w-60 bg-white/95 backdrop-blur-md text-slate-900 rounded-2xl p-3.5 shadow-2xl border border-slate-200/90 hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all flex flex-col items-center text-center relative group">
+          {/* Top subtle close 'X' */}
+          <button
+            type="button"
+            onClick={handleCancelBilling}
+            className="absolute top-2.5 right-2.5 text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Close"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+
+          {/* 1. Item Image */}
+          <div className="relative w-16 h-16 rounded-xl bg-slate-50 border border-slate-200 p-1.5 flex items-center justify-center overflow-hidden shadow-2xs mt-1">
             {currentScanningItem?.productImage ? (
               <img
                 src={currentScanningItem.productImage}
-                alt={currentScanningItem.productName}
+                alt={itemName}
                 className="w-full h-full object-contain filter drop-shadow-xs"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/products/fallback.svg';
                 }}
               />
             ) : (
-              <span className="text-base">🛍️</span>
+              <span className="text-2xl">🛍️</span>
             )}
-            {/* Animated Red Laser Scan Line */}
-            <div className="absolute inset-x-0 h-[2px] bg-red-500 shadow-[0_0_6px_#ef4444] animate-pulse pointer-events-none" style={{ top: '50%' }} />
+            {/* Subtle Laser Scan Line */}
+            <div
+              className="absolute inset-x-0 h-[2px] bg-red-500 shadow-[0_0_6px_#ef4444] animate-pulse pointer-events-none"
+              style={{ top: '50%' }}
+            />
           </div>
 
-          {/* Item Name & Live Scanning Status */}
-          <div className="min-w-0 max-w-[190px] sm:max-w-[250px]">
-            <h4
-              className="text-xs sm:text-[13px] font-bold text-slate-900 truncate tracking-tight leading-tight group-hover:text-blue-600 transition-colors"
-              title={currentScanningItem ? currentScanningItem.productName : ''}
-            >
-              {currentScanningItem ? currentScanningItem.productName : 'Scanning item from trolley...'}
-            </h4>
-            <div className="text-[10px] sm:text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5 font-medium">
-              <span className="font-semibold text-slate-700">
-                {currentScanningItem ? `₹${currentScanningItem.price} each` : ''}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="text-blue-600 font-bold font-mono text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60 truncate">
-                {totalToScan > 0
-                  ? `Scanned ${Math.min(totalToScan, currentIndex)} of ${totalToScan} units`
-                  : 'Scanning...'}
-              </span>
-            </div>
-          </div>
-
-          {/* Subtle Vertical Divider */}
-          <div className="h-7 w-[1px] bg-slate-200 flex-shrink-0" />
-
-          {/* Scanned Amount */}
-          <div className="text-right flex-shrink-0 pr-1">
-            <span className="text-[9px] text-slate-400 font-bold uppercase font-mono block leading-none">
-              Amount
-            </span>
-            <span className="text-xs sm:text-sm font-black text-emerald-600 font-mono leading-tight">
-              ₹{runningTotal.toFixed(2)}
-            </span>
-          </div>
-
-          {/* Close / Return Button */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCancelBilling();
-            }}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
-            title="Cancel scanning"
+          {/* 2. Item Name */}
+          <h4
+            className="text-xs font-bold text-slate-900 leading-snug line-clamp-2 mt-2.5 px-1"
+            title={itemName}
           >
-            <X className="w-3.5 h-3.5" />
-          </button>
+            {itemName}
+          </h4>
+
+          {/* 3. Cost */}
+          <div className="mt-1 font-mono font-black text-emerald-600 text-sm sm:text-base">
+            ₹{itemCost.toLocaleString('en-IN')}
+          </div>
+
+          {/* 4. Two Options: Instant Checkout and OK */}
+          <div className="w-full space-y-1.5 mt-3 pt-2.5 border-t border-slate-100">
+            {/* Option 1: Instant Checkout */}
+            <button
+              type="button"
+              onClick={skipToReview}
+              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <Zap className="w-3.5 h-3.5 fill-current" />
+              <span>Instant Checkout</span>
+            </button>
+
+            {/* Option 2: OK */}
+            <button
+              type="button"
+              onClick={handleCancelBilling}
+              className="w-full py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-bold text-xs border border-slate-200/80 active:scale-95 transition-all cursor-pointer"
+            >
+              OK
+            </button>
+          </div>
         </div>
       </div>
     );
