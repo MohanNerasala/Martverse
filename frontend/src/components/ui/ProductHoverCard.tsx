@@ -15,12 +15,16 @@ export const ProductHoverCard: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const openLoginModal = useAuthStore((state) => state.openLoginModal);
 
-  // Floor guard: don't show hover card for products on inactive floors
+  // Floor guard: strictly filter by active floor to prevent cross-floor product display
   if (!hoveredProduct) return null;
-  if (hoveredProduct.placement) {
-    const prodFloor = hoveredProduct.placement.aisleNumber <= 5 ? 1 : 2;
-    if (prodFloor !== activeFloor) return null;
-  }
+  const prodFloor =
+    hoveredProduct.placement?.floorNumber ??
+    (hoveredProduct.placement?.aisleNumber
+      ? hoveredProduct.placement.aisleNumber <= 5
+        ? 1
+        : 2
+      : null);
+  if (prodFloor !== null && prodFloor !== activeFloor) return null;
 
   const activePrice = hoveredProduct.price;
   const activeMrp = hoveredProduct.mrp || hoveredProduct.price;
@@ -54,7 +58,7 @@ export const ProductHoverCard: React.FC = () => {
       'Added to Trolley!',
       `1x ${hoveredProduct.name} • ₹${activePrice}`,
       'success',
-      hoveredProduct.imageUrl
+      hoveredProduct.imageUrl || '/products/fallback.svg'
     );
   };
 

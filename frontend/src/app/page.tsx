@@ -47,6 +47,9 @@ export default function Home() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      if (sessionStorage.getItem('martverse_entered') === 'true') {
+        setHasEnteredStore(true);
+      }
       useAuthStore.getState().hydrateAuth();
 
       // Check if user is already authenticated; if not, open LoginModal so user can sign in or skip
@@ -180,7 +183,10 @@ export default function Home() {
 
             {/* High-Visibility Animated Blue-to-Green-to-White Button */}
             <button
-              onClick={() => setHasEnteredStore(true)}
+              onClick={() => {
+                sessionStorage.setItem('martverse_entered', 'true');
+                setHasEnteredStore(true);
+              }}
               className="w-full animated-gradient-btn py-4 rounded-2xl flex items-center justify-center gap-3 text-white font-black text-sm sm:text-base active:scale-[0.98] group cursor-pointer"
               style={{
                 background: 'linear-gradient(135deg, #1d4ed8 0%, #0284c7 30%, #059669 68%, #2563eb 100%)',

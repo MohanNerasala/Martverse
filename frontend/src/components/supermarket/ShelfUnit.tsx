@@ -164,6 +164,13 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   // Active floor culling: render full detailed product items only on the player's active floor
   const isFloorActive = (floorYOffset > 2 ? 2 : 1) === activeFloor;
 
+  // Clear hovered slot immediately if floor becomes inactive
+  useEffect(() => {
+    if (!isFloorActive && hoveredSlotKey !== null) {
+      setHoveredSlotKey(null);
+    }
+  }, [isFloorActive, hoveredSlotKey]);
+
   const aisleProducts = useMemo(() => {
     return products.filter(
       (p) => p.placement && p.placement.aisleNumber === aisle.aisleNumber
@@ -391,9 +398,9 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 6 BLOCKS × 3 ITEMS PER BLOCK (POLE TO POLE PERFECTION) */}
-      {/* Kept mounted in GPU memory; visibility toggled for 0ms lag-free floor switching */}
+      {/* Kept mounted in GPU memory; visibility & raycasting disabled on inactive floors */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <group visible={isFloorActive}>
+      <group visible={isFloorActive} raycast={isFloorActive ? undefined : () => null}>
         {displaySlots.map((slot) => {
         const prod = slot.product;
         const plc = prod.placement || {

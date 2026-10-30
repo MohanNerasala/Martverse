@@ -44,7 +44,7 @@ export const SupermarketScene: React.FC = () => {
         shadows="percentage"
         dpr={[1, 1.5]}
         camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
-        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false }}
       >
         <color attach="background" args={['#0f172a']} />
         <fog attach="fog" args={['#0f172a', 35, 65]} />

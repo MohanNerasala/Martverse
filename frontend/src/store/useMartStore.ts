@@ -100,7 +100,7 @@ export const useMartStore = create<MartStore>((set) => ({
 
   setFloors: (floors) => set({ floors }),
   setProducts: (products) => set({ products }),
-  setActiveFloor: (floorNumber) => set({ activeFloor: floorNumber }),
+  setActiveFloor: (floorNumber) => set({ activeFloor: floorNumber, hoveredProduct: null }),
   setPlayerPos: (playerPos, yaw) => {
     martRuntime.playerPos[0] = playerPos[0];
     martRuntime.playerPos[1] = playerPos[1];
@@ -156,12 +156,24 @@ export const useMartStore = create<MartStore>((set) => ({
   },
 
   showToast: (title, subtitle, type = 'success', imageUrl) => {
+    let resolvedImage = imageUrl;
+    if (!resolvedImage && subtitle && (title.includes('Trolley') || title.includes('Cart') || title.includes('Added'))) {
+      const state = useMartStore.getState();
+      const match = state.products.find((p) =>
+        subtitle.toLowerCase().includes(p.name.toLowerCase()) ||
+        p.name.toLowerCase().includes(subtitle.toLowerCase())
+      );
+      if (match?.imageUrl) {
+        resolvedImage = match.imageUrl;
+      }
+    }
+
     const id = 'toast-' + Math.random().toString(36).substring(2, 9);
-    set({ toast: { id, title, subtitle, type, imageUrl } });
+    set({ toast: { id, title, subtitle, type, imageUrl: resolvedImage } });
     setTimeout(() => {
-      // Auto-hide after 3.5 seconds if current toast is the same
+      // Auto-hide after 3.8 seconds if current toast is the same
       set((state) => (state.toast?.id === id ? { toast: null } : {}));
-    }, 3500);
+    }, 3800);
   },
 
   hideToast: () => set({ toast: null }),

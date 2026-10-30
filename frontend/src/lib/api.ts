@@ -18,7 +18,16 @@ function getAuthToken(): string | null {
   return localStorage.getItem('martverse_token');
 }
 
+let isBackendOffline = false;
+let lastBackendCheck = 0;
+
 async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fallback: T): Promise<T> {
+  const now = Date.now();
+  // Circuit breaker: if backend proved unreachable recently, return fallback immediately (0ms refresh lag)
+  if (isBackendOffline && now - lastBackendCheck < 15000) {
+    return fallback;
+  }
+
   const token = getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -31,7 +40,7 @@ async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fall
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1200); // 1.2s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 400); // 400ms rapid probe
     const res = await fetch(`${API_BASE}${url}`, {
       ...options,
       headers,
@@ -42,10 +51,13 @@ async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fall
     if (!res.ok) {
       return fallback;
     }
+    isBackendOffline = false;
     const data = await res.json();
     return data.data !== undefined ? data.data : data;
   } catch {
-    // Backend offline: silently return mock data fallback without console noise
+    // Backend offline: mark offline to avoid blocking subsequent calls
+    isBackendOffline = true;
+    lastBackendCheck = now;
     return fallback;
   }
 }
@@ -57,14 +69,17 @@ export const api = {
   },
 
   async getProducts(): Promise<Product[]> {
+    if (isBackendOffline) return MOCK_PRODUCTS;
     try {
       const raw = await fetchWithFallback<any>('/products/all', { method: 'GET' }, null);
       if (Array.isArray(raw) && raw.length > 0) return raw;
       if (raw && Array.isArray(raw.content) && raw.content.length > 0) return raw.content;
 
-      const paged = await fetchWithFallback<any>('/products?size=100', { method: 'GET' }, null);
-      if (Array.isArray(paged) && paged.length > 0) return paged;
-      if (paged && Array.isArray(paged.content) && paged.content.length > 0) return paged.content;
+      if (!isBackendOffline) {
+        const paged = await fetchWithFallback<any>('/products?size=100', { method: 'GET' }, null);
+        if (Array.isArray(paged) && paged.length > 0) return paged;
+        if (paged && Array.isArray(paged.content) && paged.content.length > 0) return paged.content;
+      }
     } catch {}
     return MOCK_PRODUCTS;
   },

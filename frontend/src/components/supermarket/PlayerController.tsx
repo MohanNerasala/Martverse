@@ -153,6 +153,9 @@ function getCircleBoxDepenetration(
   return depenetrationResult;
 }
 
+// Pre-allocated static motion vector to eliminate GC heap allocation in useFrame
+const staticMoveVector = new THREE.Vector3();
+
 export const PlayerController: React.FC = () => {
   const { camera } = useThree();
   const keys = useRef<KeyState>({
@@ -456,13 +459,15 @@ export const PlayerController: React.FC = () => {
       return;
     }
 
-    // Check nearest product
+    // Check nearest product on active floor only
     const nearbyProd = products.find((p) => {
       if (!p.placement) return false;
+      const prodFloor = p.placement.floorNumber || (p.placement.aisleNumber <= 5 ? 1 : 2);
+      if (prodFloor !== activeFloor) return false;
       const dx = p.placement.worldX - px;
       const dz = p.placement.worldZ - pz;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-      return dist < 2.5;
+      const distSq = dx * dx + dz * dz;
+      return distSq < 6.25;
     });
 
     if (nearbyProd) {
@@ -493,47 +498,47 @@ export const PlayerController: React.FC = () => {
       yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 55, delta);
       pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 55, delta);
 
-      const speed = 9.2; // Silky smooth, agile gliding speed
-      const moveVector = new THREE.Vector3();
+      const speed = 12.2; // Brisk, snappy cruising speed (quick, smooth, zero sluggish drag)
+      staticMoveVector.set(0, 0, 0);
 
       // 1. Keyboard WASD & Arrow Keys — Full 8-direction continuous motion (Straight, Back, Left, Right, Cross)
-      if (keys.current.forward) moveVector.z += 1;
-      if (keys.current.backward) moveVector.z -= 1;
-      if (keys.current.left) moveVector.x -= 1;
-      if (keys.current.right) moveVector.x += 1;
+      if (keys.current.forward) staticMoveVector.z += 1;
+      if (keys.current.backward) staticMoveVector.z -= 1;
+      if (keys.current.left) staticMoveVector.x -= 1;
+      if (keys.current.right) staticMoveVector.x += 1;
 
       // 2. On-Screen 4-Arrow Navigator (Virtual D-Pad)
-      if (martRuntime.virtualKeys.forward) moveVector.z += 1;
-      if (martRuntime.virtualKeys.backward) moveVector.z -= 1;
-      if (martRuntime.virtualKeys.left) moveVector.x -= 1;
-      if (martRuntime.virtualKeys.right) moveVector.x += 1;
+      if (martRuntime.virtualKeys.forward) staticMoveVector.z += 1;
+      if (martRuntime.virtualKeys.backward) staticMoveVector.z -= 1;
+      if (martRuntime.virtualKeys.left) staticMoveVector.x -= 1;
+      if (martRuntime.virtualKeys.right) staticMoveVector.x += 1;
 
       // 3. Two-Finger Trackpad / Mouse Scroll Momentum
-      moveVector.z += wheelMomentum.current.z;
-      moveVector.x += wheelMomentum.current.x;
+      staticMoveVector.z += wheelMomentum.current.z;
+      staticMoveVector.x += wheelMomentum.current.x;
 
       // Smoothly damp wheel momentum
       wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 12, delta);
       wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 12, delta);
 
-      const isMoving = moveVector.lengthSq() > 0.001;
+      const isMoving = staticMoveVector.lengthSq() > 0.001;
       if (isMoving) {
         if (!hasMovedTrolley) {
           setHasMovedTrolley(true);
         }
-        if (moveVector.lengthSq() > 1) {
-          moveVector.normalize();
+        if (staticMoveVector.lengthSq() > 1) {
+          staticMoveVector.normalize();
         }
       }
 
-      // Smooth analog physical momentum curve (rate 22/18 eliminates step-step quantized jumps)
+      // Smooth analog physical momentum curve (rate 32/28 accelerates briskly & brakes cleanly without drag)
       // Camera-relative velocity projection: Right arrow moves to visual screen RIGHT, Left moves LEFT
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
-      const targetVelX = (-moveVector.x * cos + moveVector.z * sin) * speed;
-      const targetVelZ = (moveVector.x * sin + moveVector.z * cos) * speed;
+      const targetVelX = (-staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
+      const targetVelZ = (staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 22 : 18;
+      const accelRate = isMoving ? 32 : 28;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -733,8 +738,8 @@ export const PlayerController: React.FC = () => {
     const px = posRef.current.x;
     const pz = posRef.current.z;
 
-    const nearBilling = Math.abs(pz - 17.5) < 4.0 && Math.abs(px) < 7.8;
-    const nearExit = Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5;
+    const nearBilling = activeFloor === 1 && Math.abs(pz - 17.5) < 4.0 && Math.abs(px) < 7.8;
+    const nearExit = activeFloor === 1 && Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5;
     const nearEscalatorGround = activeFloor === 1 && Math.abs(px - 14.7) < 2.2 && pz >= -10.5 && pz <= -6.8;
     const nearEscalatorFloor2 = activeFloor === 2 && Math.abs(px - 14.7) < 2.2 && pz >= 5.0 && pz <= 8.5;
 

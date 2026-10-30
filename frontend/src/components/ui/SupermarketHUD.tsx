@@ -683,38 +683,37 @@ export const SupermarketHUD: React.FC = () => {
       )}
 
       {/* ============================================================== */}
-      {/* --- Floating Confirmation Toast (Positioned Gracefully Below Navbar) --- */}
+      {/* --- Floating Confirmation Toast (Moved Down with Best Look Small Box) --- */}
       {/* ============================================================== */}
       {toast && (
-        <div className="pointer-events-auto fixed top-[92px] sm:top-[104px] right-3 sm:right-6 md:right-8 z-50 animate-in slide-in-from-top-3 fade-in duration-250 ease-out">
+        <div className="pointer-events-auto fixed top-[118px] sm:top-[128px] right-3 sm:right-6 md:right-8 z-50 animate-in slide-in-from-top-4 fade-in duration-300 ease-out">
           <div
-            className={`relative overflow-hidden px-3.5 py-2.5 rounded-2xl border flex items-center gap-3 max-w-[310px] sm:max-w-[350px] bg-white/95 backdrop-blur-2xl shadow-[0_16px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] transition-all ${
+            className={`relative overflow-hidden px-3.5 py-3 rounded-2xl border flex items-center gap-3.5 max-w-[330px] sm:max-w-[370px] bg-white/95 backdrop-blur-2xl shadow-[0_20px_45px_rgba(15,23,42,0.15),0_4px_12px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] transition-all ${
               toast.type === 'success'
-                ? 'border-emerald-300/90'
+                ? 'border-emerald-300/90 ring-1 ring-emerald-400/20'
                 : toast.type === 'warning'
-                ? 'border-amber-300/90'
-                : 'border-sky-300/90'
+                ? 'border-amber-300/90 ring-1 ring-amber-400/20'
+                : 'border-sky-300/90 ring-1 ring-sky-400/20'
             }`}
           >
-            {/* Visual Thumbnail: Product Image or Dynamic Type Icon */}
-            {toast.imageUrl ? (
-              <div className="relative w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-center p-1 flex-shrink-0 overflow-hidden shadow-xs">
+            {/* Visual Thumbnail: Best-Look Small Product Box Image or Dynamic Icon */}
+            {toast.imageUrl || toast.title.includes('Trolley') ? (
+              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-b from-slate-50 to-slate-100 border border-slate-200/90 flex items-center justify-center p-1.5 flex-shrink-0 overflow-hidden shadow-xs">
                 <img
-                  src={toast.imageUrl}
+                  src={toast.imageUrl || '/products/fallback.svg'}
                   alt={toast.title}
                   className="w-full h-full object-contain drop-shadow-xs"
                   onError={(e) => {
-                    // Fallback to hidden if image fails
-                    (e.target as HTMLElement).style.display = 'none';
+                    (e.target as HTMLImageElement).src = '/products/fallback.svg';
                   }}
                 />
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-xs">
+                <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-xs">
                   <CheckCircle2 className="w-2.5 h-2.5 stroke-[3]" />
                 </div>
               </div>
             ) : (
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
+                className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
                   toast.type === 'success'
                     ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/90'
                     : toast.type === 'warning'
@@ -722,20 +721,20 @@ export const SupermarketHUD: React.FC = () => {
                     : 'bg-sky-50 text-sky-600 border border-sky-200/90'
                 }`}
               >
-                {toast.type === 'success' && <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 stroke-[2.5]" />}
-                {toast.type === 'warning' && <AlertTriangle className="w-4.5 h-4.5 text-amber-600 stroke-[2.5]" />}
-                {toast.type === 'info' && <Info className="w-4.5 h-4.5 text-sky-600 stroke-[2.5]" />}
+                {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600 stroke-[2.5]" />}
+                {toast.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-600 stroke-[2.5]" />}
+                {toast.type === 'info' && <Info className="w-5 h-5 text-sky-600 stroke-[2.5]" />}
               </div>
             )}
 
-            {/* Toast Title & Subtitle */}
+            {/* Toast Title & Subtitle in Clean Hierarchy */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-black text-slate-900 leading-tight tracking-tight">
                   {toast.title}
                 </span>
                 {toast.type === 'success' && (
-                  <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/80 leading-none">
+                  <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/80 leading-none">
                     In Trolley
                   </span>
                 )}
@@ -750,15 +749,15 @@ export const SupermarketHUD: React.FC = () => {
             {/* Quick Dismiss Button */}
             <button
               onClick={hideToast}
-              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer flex-shrink-0 active:scale-90"
               title="Dismiss notification"
             >
               <X className="w-3.5 h-3.5" />
             </button>
 
-            {/* Bottom Accent Glow Line */}
+            {/* Top Accent Micro-Indicator Bar */}
             <div
-              className={`absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full ${
+              className={`absolute top-0 left-3 right-3 h-[2px] rounded-full ${
                 toast.type === 'success'
                   ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-400'
                   : toast.type === 'warning'

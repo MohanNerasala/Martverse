@@ -115,6 +115,8 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
   );
 };
 
+const staticTargetPos = new THREE.Vector3();
+
 export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) => {
   const trolleyRef = useRef<THREE.Group>(null);
   const items = useCartStore((state) => state.items);
@@ -216,7 +218,8 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     }
 
     // Fast teleport recovery (e.g. floor change or reset)
-    const distToTarget = currentPos.current.distanceTo(new THREE.Vector3(desiredX, desiredY, desiredZ));
+    staticTargetPos.set(desiredX, desiredY, desiredZ);
+    const distToTarget = currentPos.current.distanceTo(staticTargetPos);
     if (distToTarget > 3.5) {
       currentPos.current.set(desiredX, desiredY, desiredZ);
       currentYaw.current = actualYaw;
