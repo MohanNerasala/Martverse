@@ -98,12 +98,6 @@ export const PlayerController: React.FC = () => {
     resetPending.current = true;
   }, [teleportTrigger]);
 
-  // Synchronize position if floor switched via HUD
-  useEffect(() => {
-    const targetY = activeFloor === 2 ? 6.5 : 1.5;
-    posRef.current.y = targetY;
-  }, [activeFloor]);
-
   // Keyboard events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

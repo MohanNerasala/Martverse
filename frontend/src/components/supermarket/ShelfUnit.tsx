@@ -199,7 +199,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
 
   // Generate 6 blocks x 3 items = 18 item display positions for both LEFT and RIGHT shelf faces
   const displaySlots = useMemo(() => {
-    if (!isFloorActive || !aisleProducts || aisleProducts.length === 0) return [];
+    if (!aisleProducts || aisleProducts.length === 0) return [];
 
     const slots: Array<{
       key: string;
@@ -242,7 +242,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
     });
 
     return slots;
-  }, [isFloorActive, aisleProducts, blockCenters, shelfTierY]);
+  }, [aisleProducts, blockCenters, shelfTierY]);
 
   return (
     <group position={[centerX, centerY, centerZ]}>
@@ -388,9 +388,10 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 6 BLOCKS × 3 ITEMS PER BLOCK (POLE TO POLE PERFECTION) */}
-      {/* Exactly 3 items placed evenly between every single pair of poles */}
+      {/* Kept mounted in GPU memory; visibility toggled for 0ms lag-free floor switching */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {displaySlots.map((slot) => {
+      <group visible={isFloorActive}>
+        {displaySlots.map((slot) => {
         const prod = slot.product;
         const plc = prod.placement || {
           color: '#3b82f6',
@@ -639,6 +640,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
           </group>
         );
       })}
+      </group>
     </group>
   );
 };

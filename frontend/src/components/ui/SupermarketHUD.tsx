@@ -152,22 +152,42 @@ export const SupermarketHUD: React.FC = () => {
       <header className="w-full max-w-7xl mx-auto pointer-events-auto">
         <div className="relative rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 bg-white/95 backdrop-blur-3xl backdrop-saturate-200 border border-slate-200/90 shadow-[0_16px_40px_rgba(15,23,42,0.08),0_1px_3px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,1)] select-none">
           
-          {/* Top Light Blue Specular Refraction Shimmer Line */}
-          <div className="absolute inset-x-8 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-sky-400/60 to-transparent pointer-events-none" />
+          {/* Top Light Blue Specular Refraction Shimmer Line (Subtle Whisper) */}
+          <div className="absolute inset-x-8 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-sky-400/25 to-transparent pointer-events-none" />
           {/* Bottom Subtle Soft Shadow Accent */}
-          <div className="absolute inset-x-14 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/10 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-14 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-slate-200/40 to-transparent pointer-events-none" />
 
-          {/* Brand Identity: Best 3D Jewel Logo with Light Blue to Passing White Text */}
+          {/* Brand Identity: Custom 3D Geometric Logo with Light Blue to Passing White Text */}
           <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
             <button
               onClick={() => {
                 resetToOriginalState();
                 showToast('Martverse Entrance', 'Returned to virtual hypermarket lobby', 'info');
               }}
-              className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 border border-white/60 flex items-center justify-center logo-jewel-shimmer animate-sheen hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden group"
+              className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 border border-white/50 flex items-center justify-center logo-jewel-shimmer animate-sheen hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden group shadow-xs"
               title="Martverse Home / Entrance"
             >
-              <Store className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] group-hover:scale-110 transition-transform duration-200" />
+              {/* Custom Modern 3D Folded Monogram 'M' Hypermarket Emblem */}
+              <svg viewBox="0 0 32 32" fill="none" className="w-5 h-5 sm:w-5.5 sm:h-5.5 transition-transform group-hover:scale-105 drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="mv-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="60%" stopColor="#e0f2fe" />
+                    <stop offset="100%" stopColor="#7dd3fc" />
+                  </linearGradient>
+                  <linearGradient id="mv-gem-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#ffffff" />
+                  </linearGradient>
+                </defs>
+                {/* 3D Folded Futuristic Ribbon Monogram 'M' */}
+                <path
+                  d="M5 23.5V8.5C5 7.67 5.67 7 6.5 7H8.2C8.8 7 9.35 7.35 9.6 7.9L16 20.2L22.4 7.9C22.65 7.35 23.2 7 23.8 7H25.5C26.33 7 27 7.67 27 8.5V23.5C27 24.33 26.33 25 25.5 25H23.5C22.67 25 22 24.33 22 23.5V13.8L17.2 23.2C16.95 23.7 16.45 24 16 24C15.55 24 15.05 23.7 14.8 23.2L10 13.8V23.5C10 24.33 9.33 25 8.5 25H6.5C5.67 25 5 24.33 5 23.5Z"
+                  fill="url(#mv-m-grad)"
+                />
+                {/* Luminous Center Dimensional Diamond */}
+                <circle cx="16" cy="11.5" r="2.2" fill="url(#mv-gem-grad)" />
+              </svg>
             </button>
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -177,7 +197,7 @@ export const SupermarketHUD: React.FC = () => {
                 <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded-full border border-sky-200/90 shadow-xs">
                   <span className="relative flex h-1.5 w-1.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,1)]" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500" />
                   </span>
                   3D LIVE
                 </span>
@@ -191,10 +211,16 @@ export const SupermarketHUD: React.FC = () => {
           {/* Floor Navigation Segmented Switcher — High-Contrast Capsule on White */}
           <nav className="h-10 flex items-center p-1 rounded-xl bg-slate-100/90 border border-slate-200/80 shadow-inner gap-1">
             <button
-              onClick={() => setActiveFloor(1)}
+              onClick={() => {
+                if (activeFloor !== 1) {
+                  setPlayerPos([14.7, 1.5, -9.2], 0);
+                  setActiveFloor(1);
+                  showToast('Ground Floor', 'Welcome to Daily Groceries & Staples', 'info');
+                }
+              }}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer active:scale-95 hover:scale-[1.02] ${
                 activeFloor === 1
-                  ? 'bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 text-white shadow-[0_2px_10px_rgba(14,165,233,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] border border-sky-400/40'
+                  ? 'bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 text-white shadow-xs border border-sky-400/40'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
               title="Ground Floor: Groceries & Staples"
@@ -204,10 +230,16 @@ export const SupermarketHUD: React.FC = () => {
               <span>Groceries</span>
             </button>
             <button
-              onClick={() => setActiveFloor(2)}
+              onClick={() => {
+                if (activeFloor !== 2) {
+                  setPlayerPos([14.7, 6.5, 6.2], 0);
+                  setActiveFloor(2);
+                  showToast('2nd Floor', 'Welcome to Fashion Studio & Apparel', 'info');
+                }
+              }}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer active:scale-95 hover:scale-[1.02] ${
                 activeFloor === 2
-                  ? 'bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 text-white shadow-[0_2px_10px_rgba(14,165,233,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] border border-sky-400/40'
+                  ? 'bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 text-white shadow-xs border border-sky-400/40'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
               title="First Floor: Fashion Studio & Apparel"
@@ -393,7 +425,7 @@ export const SupermarketHUD: React.FC = () => {
             {/* Hero Shopping Trolley Button — Luminous Light Blue to Passing White Jewel Pill */}
             <button
               onClick={() => toggleCart(true)}
-              className="h-10 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-sky-400 via-blue-600 to-sky-500 hover:from-sky-300 hover:via-blue-500 hover:to-sky-400 text-white font-black flex items-center gap-2 sm:gap-2.5 border border-sky-400/50 shadow-[0_4px_18px_rgba(14,165,233,0.35),0_2px_6px_rgba(0,0,0,0.06)] hover:shadow-[0_6px_24px_rgba(14,165,233,0.5)] hover:scale-[1.04] active:scale-90 transition-all duration-200 cursor-pointer flex-shrink-0 group overflow-hidden relative"
+              className="h-10 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-sky-400 via-blue-600 to-sky-500 hover:from-sky-300 hover:via-blue-500 hover:to-sky-400 text-white font-black flex items-center gap-2 sm:gap-2.5 border border-sky-400/40 shadow-xs hover:shadow-sm hover:scale-[1.03] active:scale-90 transition-all duration-200 cursor-pointer flex-shrink-0 group overflow-hidden relative"
               title="Open Shopping Trolley"
             >
               {/* Passing light gleam animation across cart button */}
