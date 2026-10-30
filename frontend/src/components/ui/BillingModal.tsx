@@ -489,14 +489,14 @@ export const BillingModal: React.FC = () => {
   if (phase === 'scanning') {
     return (
       <div className="fixed top-20 sm:top-22 right-3 sm:right-6 z-50 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-300 max-w-[calc(100vw-24px)] w-auto">
-        <div className="bg-slate-900/95 backdrop-blur-2xl text-white rounded-2xl px-3.5 sm:px-4 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.55)] border border-slate-700/80 flex items-center gap-2.5 sm:gap-3 select-none">
+        <div className="bg-slate-950/90 backdrop-blur-2xl text-white rounded-2xl px-4 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_25px_rgba(56,189,248,0.2)] border border-slate-700/80 hover:border-sky-500/50 transition-all flex items-center gap-3 select-none">
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
             </span>
             <div className="flex flex-col">
-              <span className="text-[10px] font-black tracking-wider text-slate-300 uppercase font-mono leading-none">
+              <span className="text-[10px] font-black tracking-wider text-sky-400 uppercase font-mono leading-none">
                 POS SCANNER 02
               </span>
               <span className="text-[9px] text-emerald-400 font-bold leading-tight mt-0.5">
@@ -505,15 +505,17 @@ export const BillingModal: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-6 w-[1px] bg-slate-800 flex-shrink-0" />
+          <div className="h-7 w-[1px] bg-gradient-to-b from-transparent via-slate-700 to-transparent flex-shrink-0" />
 
-          <div className="flex items-center gap-2.5 min-w-0 max-w-[190px] sm:max-w-[250px]">
-            <div className="w-8.5 h-8.5 rounded-lg bg-white/10 border border-white/20 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner">
+          {/* Product Thumbnail & Shimmering Title */}
+          <div className="flex items-center gap-3 min-w-0 max-w-[200px] sm:max-w-[270px]">
+            {/* The White Box with Specular Cyan Glow */}
+            <div className="w-10 h-10 scanner-white-box p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
               {currentScanningItem?.productImage ? (
                 <img
                   src={currentScanningItem.productImage}
                   alt={currentScanningItem.productName}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain filter drop-shadow-xs"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/products/fallback.svg';
                   }}
@@ -522,13 +524,15 @@ export const BillingModal: React.FC = () => {
                 <span className="text-sm">🛍️</span>
               )}
             </div>
+
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-black text-white truncate flex items-center gap-1.5">
-                <span className="truncate">
+              {/* Text Passing Light Blue to White Color Shimmer Font */}
+              <div className="text-xs font-black truncate flex items-center gap-1.5">
+                <span className="truncate text-light-blue-white-shimmer text-xs sm:text-[13px] font-black tracking-tight" title={currentScanningItem ? currentScanningItem.productName : ''}>
                   {currentScanningItem ? currentScanningItem.productName : 'Transferring item from trolley...'}
                 </span>
                 {currentUnitInfo && currentUnitInfo.totalUnits > 1 && (
-                  <span className="text-[9px] font-bold text-sky-400 bg-sky-950/80 px-1.5 py-0.2 rounded border border-sky-500/30 whitespace-nowrap flex-shrink-0">
+                  <span className="text-[9px] font-bold text-sky-300 bg-sky-950/90 px-1.5 py-0.2 rounded border border-sky-400/40 whitespace-nowrap flex-shrink-0">
                     Unit {currentUnitInfo.unitIndex}/{currentUnitInfo.totalUnits}
                   </span>
                 )}
@@ -545,7 +549,7 @@ export const BillingModal: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-6 w-[1px] bg-slate-800 flex-shrink-0" />
+          <div className="h-7 w-[1px] bg-gradient-to-b from-transparent via-slate-700 to-transparent flex-shrink-0" />
 
           <div className="text-right flex-shrink-0">
             <span className="text-[9px] text-slate-400 uppercase font-mono block leading-none">Amount</span>
@@ -557,7 +561,7 @@ export const BillingModal: React.FC = () => {
           <button
             type="button"
             onClick={skipToReview}
-            className="flex-shrink-0 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black text-xs px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+            className="flex-shrink-0 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 active:scale-95 text-white font-black text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-[0_0_20px_rgba(56,189,248,0.35)] transition-all cursor-pointer"
             title="Instant Bill: Skip conveyor scan & view bill [Space]"
           >
             <Zap className="w-3.5 h-3.5 fill-white text-white" />
@@ -567,7 +571,7 @@ export const BillingModal: React.FC = () => {
           <button
             type="button"
             onClick={handleCancelBilling}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer flex-shrink-0"
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer flex-shrink-0"
             title="Return to supermarket"
           >
             <X className="w-4 h-4" />
