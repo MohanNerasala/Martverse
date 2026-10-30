@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { SupermarketAisle, Product, ProductPlacement } from '@/types';
 import { useMartStore } from '@/store/useMartStore';
@@ -148,6 +149,313 @@ const ProductSmallImage: React.FC<{
     </mesh>
   );
 };
+
+interface ShelfSlotItemProps {
+  slot: {
+    key: string;
+    product: Product;
+    side: 'LEFT' | 'RIGHT';
+    blockIdx: number;
+    slotIdx: number;
+    relX: number;
+    relY: number;
+    relZ: number;
+    worldX: number;
+    worldY: number;
+    worldZ: number;
+    rotationY: number;
+  };
+  isFloorActive: boolean;
+  isHovered: boolean;
+  onHover: (key: string, prod: Product) => void;
+  onUnhover: () => void;
+  onSelect: (prod: Product) => void;
+  eslTexture: THREE.CanvasTexture;
+}
+
+const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({
+  slot,
+  isFloorActive,
+  isHovered,
+  onHover,
+  onUnhover,
+  onSelect,
+  eslTexture,
+}) => {
+  const prod = slot.product;
+  const plc = prod.placement || {
+    color: '#3b82f6',
+    modelType: 'box',
+  };
+  const color = plc.color || '#3b82f6';
+  const isDairyMilk = prod.slug.includes('dairy-milk') ||
+                      prod.name.toLowerCase().includes('dairy milk') ||
+                      prod.brand?.toLowerCase().includes('cadbury');
+  const packagingUrl = prod.imageUrl || (isDairyMilk ? '/products/sweets/DairyMilk_cropped.png' : '/products/fallback.svg');
+
+  // Animation group ref for continuous, buttery-smooth damp scale, lift & forward float
+  const animGroupRef = useRef<THREE.Group>(null);
+  const currentScale = useRef(1.0);
+  const currentLift = useRef(0.0);
+  const currentForward = useRef(0.0);
+
+  useFrame((_, delta) => {
+    if (!animGroupRef.current) return;
+
+    // Noticeable size increase (+24%) with upward lift and forward float towards the shopper
+    const targetScale = isHovered ? 1.24 : 1.0;
+    const targetLift = isHovered ? 0.07 : 0.0;
+    const targetForward = isHovered ? 0.08 : 0.0;
+
+    // Resting state check to avoid idle matrix recalculations
+    if (!isHovered && Math.abs(currentScale.current - 1.0) < 0.001 && Math.abs(currentLift.current) < 0.001) {
+      if (currentScale.current !== 1.0 || currentLift.current !== 0.0 || currentForward.current !== 0.0) {
+        currentScale.current = 1.0;
+        currentLift.current = 0.0;
+        currentForward.current = 0.0;
+        animGroupRef.current.scale.set(1.0, 1.0, 1.0);
+        animGroupRef.current.position.set(0, 0, 0);
+      }
+      return;
+    }
+
+    // Smooth exponential damping (~150ms fluid transition)
+    currentScale.current = THREE.MathUtils.damp(currentScale.current, targetScale, 14, delta);
+    currentLift.current = THREE.MathUtils.damp(currentLift.current, targetLift, 14, delta);
+    currentForward.current = THREE.MathUtils.damp(currentForward.current, targetForward, 14, delta);
+
+    animGroupRef.current.scale.set(currentScale.current, currentScale.current, currentScale.current);
+    animGroupRef.current.position.set(0, currentLift.current, currentForward.current);
+  });
+
+  return (
+    <group
+      position={[slot.relX, slot.relY, slot.relZ]}
+      rotation={[0, slot.rotationY, 0]}
+    >
+      {/* Lightweight Invisible Interaction Hitbox — unmounted on inactive floors */}
+      {isFloorActive && (
+        <mesh
+          visible={false}
+          position={[0, 0.18, 0.08]}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            if (!isFloorActive) return;
+            onHover(slot.key, prod);
+            document.body.style.cursor = 'pointer';
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation();
+            if (!isFloorActive) return;
+            onUnhover();
+            document.body.style.cursor = 'default';
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isFloorActive) return;
+            onSelect(prod);
+          }}
+        >
+          <boxGeometry args={[isDairyMilk ? 0.72 : 0.60, 0.46, 0.42]} />
+        </mesh>
+      )}
+
+      {/* Smoothly Animated Product Group */}
+      <group ref={animGroupRef}>
+        {/* Hover Floating Instruction Tag (Rendered only on active hovered item) */}
+        {isHovered && (
+          <group position={[0, isDairyMilk ? 0.38 : 0.48, 0]}>
+            <mesh position={[0, 0, 0]}>
+              <boxGeometry args={[0.56, 0.09, 0.02]} />
+              <meshBasicMaterial color="#1d4ed8" />
+            </mesh>
+            <Text
+              position={[0, 0, 0.015]}
+              fontSize={0.040}
+              color="#ffffff"
+              anchorX="center"
+              anchorY="middle"
+            >
+              {prod.name.length > 20 ? `${prod.name.slice(0, 19)}…` : prod.name} • ₹{prod.price}
+            </Text>
+          </group>
+        )}
+
+        {/* 3D Product Mesh based on modelType */}
+        {plc.modelType === 'bottle' ? (
+          <group position={[0, 0, 0]}>
+            {/* Cylindrical Main Bottle Body */}
+            <mesh castShadow position={[0, 0.12, 0]}>
+              <cylinderGeometry args={[0.08, 0.085, 0.24, 14]} />
+              <meshStandardMaterial
+                color={color}
+                roughness={0.15}
+                metalness={0.1}
+                emissive={isHovered ? color : '#000000'}
+                emissiveIntensity={isHovered ? 0.35 : 0}
+              />
+            </mesh>
+            {/* Tapered Bottle Shoulder */}
+            <mesh position={[0, 0.27, 0]}>
+              <cylinderGeometry args={[0.038, 0.08, 0.06, 14]} />
+              <meshStandardMaterial color={color} roughness={0.15} metalness={0.1} />
+            </mesh>
+            {/* Bottle Neck & Cap */}
+            <mesh position={[0, 0.34, 0]}>
+              <cylinderGeometry args={[0.034, 0.034, 0.06, 12]} />
+              <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
+            </mesh>
+            {/* Real Product Artwork on Bottle Label */}
+            <ProductSmallImage
+              url={packagingUrl}
+              position={[0, 0.12, 0.088]}
+              scale={[0.13, 0.14]}
+            />
+          </group>
+        ) : plc.modelType === 'shirt' || plc.modelType === 'hanger' ? (
+          <group position={[0, 0, 0]}>
+            {/* Polished Chrome Hanger Hook */}
+            <mesh position={[0, 0.44, 0]}>
+              <cylinderGeometry args={[0.008, 0.008, 0.1, 8]} />
+              <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+            </mesh>
+            {/* Dark Hanger Bar */}
+            <mesh position={[0, 0.38, 0]}>
+              <boxGeometry args={[0.42, 0.02, 0.02]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.5} />
+            </mesh>
+            {/* Realistic Folded Garment Body */}
+            <mesh castShadow position={[0, 0.18, 0]}>
+              <boxGeometry args={[0.36, 0.36, 0.09]} />
+              <meshStandardMaterial
+                color={color}
+                roughness={0.7}
+                metalness={0.05}
+                emissive={isHovered ? color : '#000000'}
+                emissiveIntensity={isHovered ? 0.3 : 0}
+              />
+            </mesh>
+            {/* Clean Inner Collar Trim */}
+            <mesh position={[0, 0.34, 0]}>
+              <boxGeometry args={[0.14, 0.03, 0.11]} />
+              <meshStandardMaterial color="#ffffff" roughness={0.5} />
+            </mesh>
+          </group>
+        ) : plc.modelType === 'chocolate' || plc.modelType === 'bar' || isDairyMilk ? (
+          // Realistic Big-Size 3D Chocolate Bar Package (Authentic Cadbury Dairy Milk Packaging)
+          <group position={[0, 0, 0]}>
+            {/* Clear Acrylic Confectionery Shelf Tray directly on shelf plank */}
+            <mesh position={[0, 0.008, 0.02]}>
+              <boxGeometry args={[0.70, 0.016, 0.16]} />
+              <meshStandardMaterial
+                color="#ffffff"
+                transparent
+                opacity={0.3}
+                roughness={0.1}
+                metalness={0.05}
+              />
+            </mesh>
+            {/* Front Acrylic Retaining Lip */}
+            <mesh position={[0, 0.026, 0.095]}>
+              <boxGeometry args={[0.70, 0.036, 0.006]} />
+              <meshStandardMaterial
+                color="#ffffff"
+                transparent
+                opacity={0.35}
+                roughness={0.1}
+              />
+            </mesh>
+
+            {/* --- Front Featured Chocolate Bar: BIG Prominent Packaging with ZERO Black Borders --- */}
+            <group position={[0, 0.155, 0.02]} rotation={[-0.04, 0, 0]}>
+              {/* Slim 3D Chocolate Packaging Body (Cadbury Royal Purple - perfectly hidden behind texture) */}
+              <mesh castShadow receiveShadow>
+                <boxGeometry args={[0.65, 0.296, 0.022]} />
+                <meshStandardMaterial
+                  color="#4a044e"
+                  roughness={0.3}
+                  metalness={0.1}
+                  emissive={isHovered ? '#6b21a8' : '#000000'}
+                  emissiveIntensity={isHovered ? 0.3 : 0}
+                />
+              </mesh>
+
+              {/* Complete Cadbury Dairy Milk High-Resolution Packaging Artwork Plane */}
+              <ProductSmallImage
+                url={packagingUrl}
+                position={[0, 0, 0.012]}
+                scale={[0.66, 0.302]}
+                materialType="basic"
+                alphaTest={0.01}
+              />
+
+              {/* Subtle Glossy Foil Reflection Sheen Strip */}
+              <mesh position={[0, 0.06, 0.013]}>
+                <planeGeometry args={[0.62, 0.03]} />
+                <meshBasicMaterial
+                  color="#ffffff"
+                  transparent
+                  opacity={isHovered ? 0.3 : 0.12}
+                />
+              </mesh>
+            </group>
+          </group>
+        ) : (
+          // Standard Premium Box (Biscuits, Tea, Atta, Snacks, etc.)
+          <group position={[0, 0, 0]}>
+            {/* Premium Carton Box */}
+            <mesh castShadow position={[0, 0.18, 0]}>
+              <boxGeometry args={[0.26, 0.36, 0.18]} />
+              <meshStandardMaterial
+                color={color}
+                roughness={0.3}
+                metalness={0.05}
+                emissive={isHovered ? color : '#000000'}
+                emissiveIntensity={isHovered ? 0.35 : 0}
+              />
+            </mesh>
+            {/* Front White Backer Faceplate */}
+            <mesh position={[0, 0.18, 0.093]}>
+              <boxGeometry args={[0.24, 0.32, 0.005]} />
+              <meshStandardMaterial color="#ffffff" roughness={0.2} />
+            </mesh>
+            {/* Real Product Image on Carton */}
+            <ProductSmallImage
+              url={packagingUrl}
+              position={[0, 0.18, 0.096]}
+              scale={[0.23, 0.30]}
+            />
+            {/* Top Fold Seal Flap */}
+            <mesh position={[0, 0.363, 0]}>
+              <boxGeometry args={[0.23, 0.008, 0.14]} />
+              <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
+            </mesh>
+          </group>
+        )}
+      </group>
+
+      {/* Shelf Edge ESL (Electronic Shelf Label) Tag mounted directly on blue LED rail */}
+      <group position={[0, -0.01, 0.44]}>
+        {/* Sleek Digital ESL Casing */}
+        <mesh>
+          <boxGeometry args={[0.32, 0.12, 0.018]} />
+          <meshStandardMaterial
+            color={isHovered ? '#047857' : '#0f172a'}
+            roughness={0.4}
+            metalness={0.2}
+          />
+        </mesh>
+        {/* Ultra-Fast High-Contrast Pre-Rendered Digital E-Ink Display Face */}
+        <mesh position={[0, 0, 0.011]}>
+          <planeGeometry args={[0.30, 0.10]} />
+          <meshBasicMaterial map={eslTexture} toneMapped={false} />
+        </mesh>
+      </group>
+    </group>
+  );
+});
+
+ShelfProductItem.displayName = 'ShelfProductItem';
 
 interface ShelfUnitProps {
   aisle: SupermarketAisle;
@@ -452,258 +760,27 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
       {/* ───────────────────────────────────────────────────────────── */}
       {isFloorActive && (
         <group>
-        {displaySlots.map((slot) => {
-        const prod = slot.product;
-        const plc = prod.placement || {
-          color: '#3b82f6',
-          modelType: 'box',
-        };
-        const relX = slot.relX;
-        const relY = slot.relY;
-        const relZ = slot.relZ;
-        const finalRotationY = slot.rotationY;
-        const slotKey = slot.key;
-
-        const isHovered = hoveredSlotKey === slotKey;
-        const color = plc.color || '#3b82f6';
-        const isDairyMilk = prod.slug.includes('dairy-milk') ||
-                            prod.name.toLowerCase().includes('dairy milk') ||
-                            prod.brand?.toLowerCase().includes('cadbury');
-        const packagingUrl = prod.imageUrl || (isDairyMilk ? '/products/sweets/DairyMilk_cropped.png' : '/products/fallback.svg');
-
-        // Pre-cached crisp canvas texture for ESL digital price tag
-        const eslTexture = getEslTexture(prod.price, prod.brand || 'Cadbury');
-
-        return (
-          <group
-            key={slotKey}
-            position={[relX, relY + (isHovered ? 0.04 : 0), relZ]}
-            scale={isHovered ? [1.04, 1.04, 1.04] : [1, 1, 1]}
-            rotation={[0, finalRotationY, 0]}
-          >
-            {/* Lightweight Invisible Interaction Hitbox — unmounted on inactive floors to prevent cross-floor raycasting */}
-            {isFloorActive && (
-            <mesh
-              visible={false}
-              position={[0, 0.16, 0.05]}
-              onPointerOver={(e) => {
-                e.stopPropagation();
-                if (!isFloorActive) return;
-
-                setHoveredSlotKey(slotKey);
-                setHoveredProduct(prod);
-                document.body.style.cursor = 'pointer';
-              }}
-              onPointerOut={(e) => {
-                e.stopPropagation();
-                if (!isFloorActive) return;
-                setHoveredSlotKey(null);
-                setHoveredProduct(null);
-                document.body.style.cursor = 'default';
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isFloorActive) return;
-
-                openProductModal(prod);
-              }}
-            >
-              <boxGeometry args={[isDairyMilk ? 0.68 : 0.55, 0.40, 0.35]} />
-            </mesh>
-            )}
-
-            {/* Hover Floating Instruction Tag (Rendered only on active hovered item) */}
-            {isHovered && (
-              <group position={[0, isDairyMilk ? 0.38 : 0.48, 0]}>
-                <mesh position={[0, 0, 0]}>
-                  <boxGeometry args={[0.56, 0.09, 0.02]} />
-                  <meshBasicMaterial color="#1d4ed8" />
-                </mesh>
-                <Text
-                  position={[0, 0, 0.015]}
-                  fontSize={0.040}
-                  color="#ffffff"
-                  anchorX="center"
-                  anchorY="middle"
-                >
-                  {prod.name.length > 20 ? `${prod.name.slice(0, 19)}…` : prod.name} • ₹{prod.price}
-                </Text>
-              </group>
-            )}
-
-            {/* 3D Product Mesh based on modelType */}
-            {plc.modelType === 'bottle' ? (
-              <group position={[0, 0, 0]}>
-                {/* Cylindrical Main Bottle Body */}
-                <mesh castShadow position={[0, 0.12, 0]}>
-                  <cylinderGeometry args={[0.08, 0.085, 0.24, 14]} />
-                  <meshStandardMaterial
-                    color={color}
-                    roughness={0.15}
-                    metalness={0.1}
-                    emissive={isHovered ? color : '#000000'}
-                    emissiveIntensity={isHovered ? 0.35 : 0}
-                  />
-                </mesh>
-                {/* Tapered Bottle Shoulder */}
-                <mesh position={[0, 0.27, 0]}>
-                  <cylinderGeometry args={[0.038, 0.08, 0.06, 14]} />
-                  <meshStandardMaterial color={color} roughness={0.15} metalness={0.1} />
-                </mesh>
-                {/* Bottle Neck & Cap */}
-                <mesh position={[0, 0.34, 0]}>
-                  <cylinderGeometry args={[0.034, 0.034, 0.06, 12]} />
-                  <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
-                </mesh>
-                {/* Real Product Artwork on Bottle Label */}
-                <ProductSmallImage
-                  url={packagingUrl}
-                  position={[0, 0.12, 0.088]}
-                  scale={[0.13, 0.14]}
-                />
-              </group>
-            ) : plc.modelType === 'shirt' || plc.modelType === 'hanger' ? (
-              <group position={[0, 0, 0]}>
-                {/* Polished Chrome Hanger Hook */}
-                <mesh position={[0, 0.44, 0]}>
-                  <cylinderGeometry args={[0.008, 0.008, 0.1, 8]} />
-                  <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
-                </mesh>
-                {/* Dark Hanger Bar */}
-                <mesh position={[0, 0.38, 0]}>
-                  <boxGeometry args={[0.42, 0.02, 0.02]} />
-                  <meshStandardMaterial color="#1e293b" roughness={0.5} />
-                </mesh>
-                {/* Realistic Folded Garment Body */}
-                <mesh castShadow position={[0, 0.18, 0]}>
-                  <boxGeometry args={[0.36, 0.36, 0.09]} />
-                  <meshStandardMaterial
-                    color={color}
-                    roughness={0.7}
-                    metalness={0.05}
-                    emissive={isHovered ? color : '#000000'}
-                    emissiveIntensity={isHovered ? 0.3 : 0}
-                  />
-                </mesh>
-                {/* Clean Inner Collar Trim */}
-                <mesh position={[0, 0.34, 0]}>
-                  <boxGeometry args={[0.14, 0.03, 0.11]} />
-                  <meshStandardMaterial color="#ffffff" roughness={0.5} />
-                </mesh>
-              </group>
-            ) : plc.modelType === 'chocolate' || plc.modelType === 'bar' || isDairyMilk ? (
-              // Realistic Big-Size 3D Chocolate Bar Package (Authentic Cadbury Dairy Milk Packaging)
-              <group position={[0, 0, 0]}>
-                {/* Clear Acrylic Confectionery Shelf Tray directly on shelf plank */}
-                <mesh position={[0, 0.008, 0.02]}>
-                  <boxGeometry args={[0.70, 0.016, 0.16]} />
-                  <meshStandardMaterial
-                    color="#ffffff"
-                    transparent
-                    opacity={0.3}
-                    roughness={0.1}
-                    metalness={0.05}
-                  />
-                </mesh>
-                {/* Front Acrylic Retaining Lip */}
-                <mesh position={[0, 0.026, 0.095]}>
-                  <boxGeometry args={[0.70, 0.036, 0.006]} />
-                  <meshStandardMaterial
-                    color="#ffffff"
-                    transparent
-                    opacity={0.35}
-                    roughness={0.1}
-                  />
-                </mesh>
-
-                {/* --- Front Featured Chocolate Bar: BIG Prominent Packaging with ZERO Black Borders --- */}
-                <group position={[0, 0.155, 0.02]} rotation={[-0.04, 0, 0]}>
-                  {/* Slim 3D Chocolate Packaging Body (Cadbury Royal Purple - perfectly hidden behind texture) */}
-                  <mesh castShadow receiveShadow>
-                    <boxGeometry args={[0.65, 0.296, 0.022]} />
-                    <meshStandardMaterial
-                      color="#4a044e"
-                      roughness={0.3}
-                      metalness={0.1}
-                      emissive={isHovered ? '#6b21a8' : '#000000'}
-                      emissiveIntensity={isHovered ? 0.3 : 0}
-                    />
-                  </mesh>
-
-                  {/* Complete Cadbury Dairy Milk High-Resolution Packaging Artwork Plane */}
-                  {/* Exact 2.1845 aspect ratio matches 1409x645 packaging artwork with edge-to-edge clarity */}
-                  <ProductSmallImage
-                    url={packagingUrl}
-                    position={[0, 0, 0.012]}
-                    scale={[0.66, 0.302]}
-                    materialType="basic"
-                    alphaTest={0.01}
-                  />
-
-                  {/* Subtle Glossy Foil Reflection Sheen Strip */}
-                  <mesh position={[0, 0.06, 0.013]}>
-                    <planeGeometry args={[0.62, 0.03]} />
-                    <meshBasicMaterial
-                      color="#ffffff"
-                      transparent
-                      opacity={isHovered ? 0.3 : 0.12}
-                    />
-                  </mesh>
-                </group>
-              </group>
-            ) : (
-              // Standard Premium Box (Biscuits, Tea, Atta, Snacks, etc.)
-              <group position={[0, 0, 0]}>
-                {/* Premium Carton Box */}
-                <mesh castShadow position={[0, 0.18, 0]}>
-                  <boxGeometry args={[0.26, 0.36, 0.18]} />
-                  <meshStandardMaterial
-                    color={color}
-                    roughness={0.3}
-                    metalness={0.05}
-                    emissive={isHovered ? color : '#000000'}
-                    emissiveIntensity={isHovered ? 0.35 : 0}
-                  />
-                </mesh>
-                {/* Front White Backer Faceplate */}
-                <mesh position={[0, 0.18, 0.093]}>
-                  <boxGeometry args={[0.24, 0.32, 0.005]} />
-                  <meshStandardMaterial color="#ffffff" roughness={0.2} />
-                </mesh>
-                {/* Real Product Image on Carton */}
-                <ProductSmallImage
-                  url={packagingUrl}
-                  position={[0, 0.18, 0.096]}
-                  scale={[0.23, 0.30]}
-                />
-                {/* Top Fold Seal Flap */}
-                <mesh position={[0, 0.363, 0]}>
-                  <boxGeometry args={[0.23, 0.008, 0.14]} />
-                  <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
-                </mesh>
-              </group>
-            )}
-
-            {/* Shelf Edge ESL (Electronic Shelf Label) Tag mounted directly on blue LED rail */}
-            <group position={[0, -0.01, 0.44]}>
-              {/* Sleek Digital ESL Casing */}
-              <mesh>
-                <boxGeometry args={[0.32, 0.12, 0.018]} />
-                <meshStandardMaterial
-                  color={isHovered ? '#047857' : '#0f172a'}
-                  roughness={0.4}
-                  metalness={0.2}
-                />
-              </mesh>
-              {/* Ultra-Fast High-Contrast Pre-Rendered Digital E-Ink Display Face */}
-              <mesh position={[0, 0, 0.011]}>
-                <planeGeometry args={[0.30, 0.10]} />
-                <meshBasicMaterial map={eslTexture} toneMapped={false} />
-              </mesh>
-            </group>
-          </group>
-        );
-      })}
+          {displaySlots.map((slot) => {
+            const eslTexture = getEslTexture(slot.product.price, slot.product.brand || 'Cadbury');
+            return (
+              <ShelfProductItem
+                key={slot.key}
+                slot={slot}
+                isFloorActive={isFloorActive}
+                isHovered={hoveredSlotKey === slot.key}
+                onHover={(key, prod) => {
+                  setHoveredSlotKey(key);
+                  setHoveredProduct(prod);
+                }}
+                onUnhover={() => {
+                  setHoveredSlotKey(null);
+                  setHoveredProduct(null);
+                }}
+                onSelect={(prod) => openProductModal(prod)}
+                eslTexture={eslTexture}
+              />
+            );
+          })}
         </group>
       )}
     </group>

@@ -65,20 +65,20 @@ export const ProductHoverCard: React.FC = () => {
   return (
     <div
       onClick={() => openProductModal(hoveredProduct)}
-      className="fixed bottom-6 right-6 z-40 w-80 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.14)] p-4 text-slate-900 transition-all duration-200 cursor-pointer hover:border-blue-400 hover:shadow-xl animate-in fade-in slide-in-from-bottom-2 select-none group"
+      className="fixed bottom-6 right-6 z-40 w-84 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] p-4 text-slate-900 transition-all duration-300 ease-out cursor-pointer hover:border-blue-400 hover:shadow-2xl animate-in fade-in slide-in-from-bottom-2 select-none group"
       role="tooltip"
       aria-label={`Product preview: ${hoveredProduct.name}`}
     >
       <div className="flex gap-3.5 items-start">
         {/* Product Image */}
-        <div className="w-20 h-20 shrink-0 bg-slate-50 rounded-xl p-1.5 flex items-center justify-center border border-slate-100 overflow-hidden shadow-inner">
+        <div className="w-22 h-22 shrink-0 bg-slate-50 rounded-xl p-1.5 flex items-center justify-center border border-slate-100 overflow-hidden shadow-inner">
           <img
             src={hoveredProduct.imageUrl || '/products/fallback.svg'}
             alt={hoveredProduct.name}
             onError={(e) => {
               (e.target as HTMLImageElement).src = '/products/fallback.svg';
             }}
-            className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
+            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
           />
         </div>
 
