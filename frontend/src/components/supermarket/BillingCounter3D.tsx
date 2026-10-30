@@ -106,12 +106,25 @@ const ConveyorItemMesh: React.FC<{
         </group>
       )}
 
-      {/* Holographic Laser Reflection Glow when passing scanner */}
+      {/* Holographic Laser Reflection & Barcode Scanning Visuals */}
       {isLaserActive && (
-        <mesh position={[0, 0.08, 0]}>
-          <sphereGeometry args={[0.14, 12, 12]} />
-          <meshBasicMaterial color="#ef4444" transparent opacity={0.35} wireframe />
-        </mesh>
+        <group>
+          {/* Sweeping Laser Plane Sheet cutting through item */}
+          <mesh position={[0, 0.08, 0]}>
+            <boxGeometry args={[0.22, 0.005, 0.16]} />
+            <meshBasicMaterial color="#ef4444" transparent opacity={0.85} />
+          </mesh>
+          {/* Holographic Laser Wireframe Aura */}
+          <mesh position={[0, 0.08, 0]}>
+            <sphereGeometry args={[0.16, 16, 16]} />
+            <meshBasicMaterial color="#ef4444" transparent opacity={0.25} wireframe />
+          </mesh>
+          {/* Emerald Green Holographic Confirmation Disk upon barcode beep */}
+          <mesh position={[0, -0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.08, 0.15, 24]} />
+            <meshBasicMaterial color="#10b981" transparent opacity={0.65} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
       )}
     </group>
   );
@@ -234,6 +247,11 @@ const ConveyorAnimation3D: React.FC<{
       if (t < 0) {
         // Waiting in trolley basket
         return p;
+      }
+
+      // Exact moment flight begins: instantly remove this unit from the trolley basket
+      if (useBillingStore.getState().transferredToBenchCount < p.flatIndex + 1) {
+        useBillingStore.getState().setTransferredToBenchCount(p.flatIndex + 1);
       }
 
       // Smooth, slow and clear animation pacing (3.6 seconds total per item)
@@ -545,11 +563,31 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
               <meshStandardMaterial color="#f8fafc" metalness={0.4} roughness={0.2} />
             </mesh>
 
-            {/* Black Rubber Conveyor Belt ("That Black Spot") */}
+            {/* Black Rubber Conveyor Belt with Stainless Steel Guide Rails */}
             <group position={[-0.15, 1.06, -0.6]}>
               <mesh receiveShadow>
                 <boxGeometry args={[0.65, 0.02, 1.6]} />
                 <meshStandardMaterial color="#09090b" roughness={0.9} />
+              </mesh>
+
+              {/* Polished Chrome Guide Rails along both sides */}
+              <mesh position={[-0.32, 0.03, 0]}>
+                <boxGeometry args={[0.02, 0.05, 1.6]} />
+                <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.1} />
+              </mesh>
+              <mesh position={[0.32, 0.03, 0]}>
+                <boxGeometry args={[0.02, 0.05, 1.6]} />
+                <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.1} />
+              </mesh>
+
+              {/* End Roller Cylinders */}
+              <mesh position={[0, -0.005, -0.8]} rotation={[0, 0, Math.PI / 2]}>
+                <cylinderGeometry args={[0.022, 0.022, 0.64, 12]} />
+                <meshStandardMaterial color="#64748b" metalness={0.85} roughness={0.2} />
+              </mesh>
+              <mesh position={[0, -0.005, 0.8]} rotation={[0, 0, Math.PI / 2]}>
+                <cylinderGeometry args={[0.022, 0.022, 0.64, 12]} />
+                <meshStandardMaterial color="#64748b" metalness={0.85} roughness={0.2} />
               </mesh>
 
               {/* Animated Conveyor Ribbed Tread Lines */}
@@ -566,12 +604,29 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
               </group>
             </group>
 
-            {/* Barcode Scanner Optical Glass Window with Red Laser Line */}
+            {/* Barcode Scanner Optical Glass Window with Multi-Laser Beams */}
             <group position={[-0.15, 1.07, 0.3]}>
-              {/* Glass Optical Aperture */}
-              <mesh>
-                <boxGeometry args={[0.32, 0.01, 0.32]} />
-                <meshStandardMaterial color="#38bdf8" roughness={0.1} transparent opacity={0.7} />
+              {/* Stainless Steel Outer Bezel Casing */}
+              <mesh position={[0, -0.005, 0]}>
+                <boxGeometry args={[0.36, 0.02, 0.36]} />
+                <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.2} />
+              </mesh>
+
+              {/* Sapphire Optical Aperture */}
+              <mesh position={[0, 0.002, 0]}>
+                <boxGeometry args={[0.32, 0.006, 0.32]} />
+                <meshStandardMaterial color="#0284c7" roughness={0.1} transparent opacity={0.75} />
+              </mesh>
+
+              {/* Glowing Perimeter Status Ring (Emerald Green pulse when scanning) */}
+              <mesh position={[0, 0.006, 0]}>
+                <boxGeometry args={[0.33, 0.004, 0.33]} />
+                <meshStandardMaterial
+                  color={isActiveDesk && phase === 'scanning' ? '#10b981' : '#38bdf8'}
+                  emissive={isActiveDesk && phase === 'scanning' ? '#059669' : '#0284c7'}
+                  emissiveIntensity={isActiveDesk && phase === 'scanning' ? 1.5 : 0.6}
+                  wireframe
+                />
               </mesh>
 
               {/* Dynamic Sweeping Red Laser Line */}
@@ -579,27 +634,56 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
                 ref={isActiveDesk ? laserRef : null}
                 position={[0, 0.02, 0]}
               >
-                <boxGeometry args={[0.28, 0.01, 0.025]} />
-                <meshBasicMaterial color="#ef4444" transparent opacity={0.85} />
+                <boxGeometry args={[0.30, 0.008, 0.03]} />
+                <meshBasicMaterial color="#ef4444" transparent opacity={0.9} />
               </mesh>
 
-              {/* Vertical Laser Scan Fan Light */}
-              <mesh position={[0, 0.12, 0]} rotation={[0, 0, 0]}>
-                <planeGeometry args={[0.28, 0.22]} />
+              {/* Crosshair Secondary Red Laser Line */}
+              <mesh position={[0, 0.018, 0]} rotation={[0, Math.PI / 2, 0]}>
+                <boxGeometry args={[0.30, 0.006, 0.018]} />
+                <meshBasicMaterial color="#ef4444" transparent opacity={phase === 'scanning' && isActiveDesk ? 0.75 : 0.3} />
+              </mesh>
+
+              {/* Volumetric Laser Scan Sheet Fan */}
+              <mesh position={[0, 0.16, 0]}>
+                <planeGeometry args={[0.30, 0.30]} />
                 <meshBasicMaterial
                   color="#ef4444"
                   transparent
-                  opacity={phase === 'scanning' && isActiveDesk ? 0.35 : 0.08}
+                  opacity={phase === 'scanning' && isActiveDesk ? 0.42 : 0.08}
                   side={THREE.DoubleSide}
                 />
               </mesh>
 
-              {/* Subtle Red Laser Light */}
+              {/* Bi-Optic Upright Scanner Tower */}
+              <group position={[0.22, 0.18, 0]}>
+                <mesh castShadow>
+                  <boxGeometry args={[0.08, 0.36, 0.32]} />
+                  <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.3} />
+                </mesh>
+                <mesh position={[-0.042, 0, 0]}>
+                  <planeGeometry args={[0.26, 0.28]} />
+                  <meshBasicMaterial
+                    color="#ef4444"
+                    transparent
+                    opacity={phase === 'scanning' && isActiveDesk ? 0.65 : 0.2}
+                    side={THREE.DoubleSide}
+                  />
+                </mesh>
+                {phase === 'scanning' && isActiveDesk && (
+                  <mesh position={[-0.14, 0, 0]}>
+                    <planeGeometry args={[0.20, 0.015]} />
+                    <meshBasicMaterial color="#ef4444" transparent opacity={0.85} side={THREE.DoubleSide} />
+                  </mesh>
+                )}
+              </group>
+
+              {/* High-intensity Red Scan Light */}
               <pointLight
-                position={[0, 0.15, 0]}
+                position={[0, 0.18, 0]}
                 color="#ef4444"
-                intensity={phase === 'scanning' && isActiveDesk ? 1.5 : 0.3}
-                distance={0.9}
+                intensity={phase === 'scanning' && isActiveDesk ? 2.5 : 0.5}
+                distance={1.2}
               />
             </group>
 

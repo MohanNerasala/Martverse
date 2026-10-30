@@ -284,14 +284,15 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     if (frontRightCasterRef.current) frontRightCasterRef.current.rotation.y = casterSwivelRef.current;
   });
 
-  // Calculate items to display inside the basket (capped at 16 for performance)
-  // During 3D billing scanning, items smoothly leave the basket as they float to the conveyor bench
+  // Calculate items to display inside the basket
+  // During 3D billing scanning, each item leaves the basket the exact instant it lifts towards the conveyor bench
   const billingPhase = useBillingStore((state) => state.phase);
-  const billingCurrentIndex = useBillingStore((state) => state.currentIndex);
+  const transferredToBenchCount = useBillingStore((state) => state.transferredToBenchCount);
 
-  const displayItems = items.flatMap((it) => Array(Math.min(it.quantity, 3)).fill(it)).slice(0, 16);
+  // Flatten items by exact quantity to match unit-by-unit conveyor scanning
+  const displayItems = items.flatMap((it) => Array(it.quantity).fill(it));
   const itemsInBasket = billingPhase === 'scanning'
-    ? displayItems.slice(Math.min(displayItems.length, billingCurrentIndex))
+    ? displayItems.slice(Math.min(displayItems.length, transferredToBenchCount))
     : (['review', 'checkout_details', 'processing', 'success_popup'].includes(billingPhase)
       ? []
       : displayItems);

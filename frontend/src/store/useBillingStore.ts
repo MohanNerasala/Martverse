@@ -66,6 +66,7 @@ interface BillingStore {
   currentUnitInfo: { unitIndex: number; totalUnits: number } | null;
   scanStage: ScanStage;
   currentIndex: number;
+  transferredToBenchCount: number;
   totalToScan: number;
   isPaused: boolean;
   isConveyorMoving: boolean;
@@ -75,6 +76,7 @@ interface BillingStore {
   isValidatingBackend: boolean;
 
   startCheckout: (items: CartItem[]) => void;
+  setTransferredToBenchCount: (count: number) => void;
   recordUnitScanned: (flatIndex: number, item: CartItem, unitNumber: number, totalUnits: number) => void;
   finishScanning: () => void;
   pauseScanning: () => void;
@@ -103,6 +105,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
   currentUnitInfo: null,
   scanStage: 'idle',
   currentIndex: 0,
+  transferredToBenchCount: 0,
   totalToScan: 0,
   isPaused: false,
   isConveyorMoving: false,
@@ -110,6 +113,8 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
   completedOrder: null,
   backendQuote: null,
   isValidatingBackend: false,
+
+  setTransferredToBenchCount: (count: number) => set({ transferredToBenchCount: count }),
 
   startCheckout: (items) => {
     if (items.length === 0) return;
@@ -135,6 +140,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       currentUnitInfo: firstItem ? { unitIndex: 1, totalUnits: firstItem.quantity } : null,
       scanStage: 'drop',
       currentIndex: 0,
+      transferredToBenchCount: 0,
       totalToScan: totalPhysicalUnits,
       isPaused: false,
       isConveyorMoving: true,
@@ -165,6 +171,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     set({
       phase: 'review',
       currentIndex: state.totalToScan,
+      transferredToBenchCount: state.totalToScan,
       runningTotal: total,
       isConveyorMoving: false,
       currentScanningItem: null,
@@ -199,6 +206,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       phase: 'review',
       scannedItems: allScanned,
       currentIndex: state.totalToScan,
+      transferredToBenchCount: state.totalToScan,
       runningTotal: total,
       isConveyorMoving: false,
       currentScanningItem: null,
@@ -320,6 +328,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       isPaused: false,
       isConveyorMoving: false,
       currentIndex: 0,
+      transferredToBenchCount: 0,
       scannedItems: [],
       currentScanningItem: null,
       scanStage: 'idle',
@@ -335,6 +344,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       phase: 'idle',
       scannedItems: [],
       currentIndex: 0,
+      transferredToBenchCount: 0,
       totalToScan: 0,
       isPaused: false,
       isConveyorMoving: false,
