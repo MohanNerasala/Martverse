@@ -459,7 +459,14 @@ export const PlayerController: React.FC = () => {
       return;
     }
 
-    // Check nearest product on active floor only
+    // If an item is actively hovered by the user's cursor, prioritize inspecting that exact item!
+    const hovered = useMartStore.getState().hoveredProduct;
+    if (hovered) {
+      openProductModal(hovered);
+      return;
+    }
+
+    // Otherwise check nearest product on active floor
     const nearbyProd = products.find((p) => {
       if (!p.placement) return false;
       const prodFloor = p.placement.floorNumber || (p.placement.aisleNumber <= 5 ? 1 : 2);

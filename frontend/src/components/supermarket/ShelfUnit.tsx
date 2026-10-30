@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { SupermarketAisle, Product } from '@/types';
-import { useMartStore } from '@/store/useMartStore';
+import { SupermarketAisle, Product, ProductPlacement } from '@/types';
+import { useMartStore, martRuntime } from '@/store/useMartStore';
 import { Text } from '@react-three/drei';
 
 // Shared texture cache to prevent duplicate fetches across shelf units
@@ -217,6 +217,9 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
       relX: number;
       relY: number;
       relZ: number;
+      worldX: number;
+      worldY: number;
+      worldZ: number;
       rotationY: number;
     }> = [];
 
@@ -233,15 +236,62 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
           const prodIdx = (b * 3 + k + (s.side === 'RIGHT' ? 2 : 0)) % aisleProducts.length;
           const product = aisleProducts[prodIdx];
 
+          const slotWorldX = centerX + s.relX;
+          const slotWorldY = centerY + shelfTierY;
+          const slotWorldZ = centerZ + zRel;
+
+          // Attach exact physical 3D world placement for this slot so add-to-trolley flies directly from here
+          const slotPlacement: ProductPlacement = product.placement
+            ? {
+                ...product.placement,
+                worldX: slotWorldX,
+                worldY: slotWorldY,
+                worldZ: slotWorldZ,
+                floorNumber: floorYOffset > 2 ? 2 : 1,
+                aisleNumber: aisle.aisleNumber,
+                aisleName: aisle.name,
+                shelfSide: s.side,
+              }
+            : {
+                id: `place-${product.id}-${b}-${k}`,
+                productId: product.id,
+                productName: product.name,
+                productSlug: product.slug,
+                productPrice: product.price,
+                productMrp: product.mrp,
+                floorNumber: floorYOffset > 2 ? 2 : 1,
+                aisleId: aisle.id,
+                aisleNumber: aisle.aisleNumber,
+                aisleName: aisle.name,
+                aisleCategory: aisle.categoryName,
+                shelfSide: s.side,
+                shelfTier: 2,
+                shelfPosition: k + 1,
+                worldX: slotWorldX,
+                worldY: slotWorldY,
+                worldZ: slotWorldZ,
+                rotationY: s.rotationY,
+                color: '#3b82f6',
+                modelType: 'box',
+              };
+
+          const slotProduct: Product = {
+            ...product,
+            placement: slotPlacement,
+          };
+
           slots.push({
             key: `${s.side}-b${b}-s${k}-${product.id}`,
-            product,
+            product: slotProduct,
             side: s.side,
             blockIdx: b,
             slotIdx: k,
             relX: s.relX,
             relY: shelfTierY,
             relZ: zRel,
+            worldX: slotWorldX,
+            worldY: slotWorldY,
+            worldZ: slotWorldZ,
             rotationY: s.rotationY,
           });
         }
@@ -249,7 +299,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
     });
 
     return slots;
-  }, [aisleProducts, blockCenters, shelfTierY]);
+  }, [aisleProducts, blockCenters, shelfTierY, centerX, centerY, centerZ, floorYOffset, aisle.aisleNumber, aisle.name]);
 
   return (
     <group position={[centerX, centerY, centerZ]}>
@@ -416,14 +466,10 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
 
         const isHovered = hoveredSlotKey === slotKey;
         const color = plc.color || '#3b82f6';
-        const isSweetsAisle = aisle.aisleNumber === 2;
         const isDairyMilk = prod.slug.includes('dairy-milk') ||
                             prod.name.toLowerCase().includes('dairy milk') ||
-                            prod.brand?.toLowerCase().includes('cadbury') ||
-                            isSweetsAisle;
-        const packagingUrl = isDairyMilk
-          ? '/products/sweets/DairyMilk_cropped.png'
-          : (prod.imageUrl || '/products/fallback.svg');
+                            prod.brand?.toLowerCase().includes('cadbury');
+        const packagingUrl = prod.imageUrl || (isDairyMilk ? '/products/sweets/DairyMilk_cropped.png' : '/products/fallback.svg');
 
         // Pre-cached crisp canvas texture for ESL digital price tag
         const eslTexture = getEslTexture(prod.price, prod.brand || 'Cadbury');
@@ -442,18 +488,40 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
               position={[0, 0.16, 0.05]}
               onPointerOver={(e) => {
                 e.stopPropagation();
+                if (!isFloorActive) return;
+
+                // Proximity reach guard: only allow hovering items within 6.5 meters of player
+                const px = martRuntime.playerPos[0];
+                const py = martRuntime.playerPos[1];
+                const pz = martRuntime.playerPos[2];
+                const dx = slot.worldX - px;
+                const dy = slot.worldY - py;
+                const dz = slot.worldZ - pz;
+                if (dx * dx + dy * dy + dz * dz > 42.25) return;
+
                 setHoveredSlotKey(slotKey);
                 setHoveredProduct(prod);
                 document.body.style.cursor = 'pointer';
               }}
               onPointerOut={(e) => {
                 e.stopPropagation();
+                if (!isFloorActive) return;
                 setHoveredSlotKey(null);
                 setHoveredProduct(null);
                 document.body.style.cursor = 'default';
               }}
               onClick={(e) => {
                 e.stopPropagation();
+                if (!isFloorActive) return;
+
+                const px = martRuntime.playerPos[0];
+                const py = martRuntime.playerPos[1];
+                const pz = martRuntime.playerPos[2];
+                const dx = slot.worldX - px;
+                const dy = slot.worldY - py;
+                const dz = slot.worldZ - pz;
+                if (dx * dx + dy * dy + dz * dz > 42.25) return;
+
                 openProductModal(prod);
               }}
             >
@@ -465,17 +533,17 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
             {isHovered && (
               <group position={[0, isDairyMilk ? 0.38 : 0.48, 0]}>
                 <mesh position={[0, 0, 0]}>
-                  <boxGeometry args={[0.48, 0.09, 0.02]} />
+                  <boxGeometry args={[0.56, 0.09, 0.02]} />
                   <meshBasicMaterial color="#1d4ed8" />
                 </mesh>
                 <Text
                   position={[0, 0, 0.015]}
-                  fontSize={0.042}
+                  fontSize={0.040}
                   color="#ffffff"
                   anchorX="center"
                   anchorY="middle"
                 >
-                  {isDairyMilk ? 'Cadbury Dairy Milk • ₹40' : `${prod.name.slice(0, 20)} • ₹${prod.price}`}
+                  {prod.name.length > 20 ? `${prod.name.slice(0, 19)}…` : prod.name} • ₹{prod.price}
                 </Text>
               </group>
             )}

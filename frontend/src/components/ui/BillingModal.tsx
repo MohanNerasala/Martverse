@@ -36,6 +36,7 @@ export const BillingModal: React.FC = () => {
   const phase = useBillingStore((state) => state.phase);
   const scannedItems = useBillingStore((state) => state.scannedItems);
   const currentScanningItem = useBillingStore((state) => state.currentScanningItem);
+  const currentUnitInfo = useBillingStore((state) => state.currentUnitInfo);
   const currentIndex = useBillingStore((state) => state.currentIndex);
   const totalToScan = useBillingStore((state) => state.totalToScan);
   const runningTotal = useBillingStore((state) => state.runningTotal);
@@ -234,13 +235,20 @@ export const BillingModal: React.FC = () => {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-black text-white truncate">
-                {currentScanningItem ? currentScanningItem.productName : 'Transferring item from trolley...'}
+              <div className="text-xs font-black text-white truncate flex items-center gap-1.5">
+                <span>{currentScanningItem ? currentScanningItem.productName : 'Transferring item from trolley...'}</span>
+                {currentUnitInfo && currentUnitInfo.totalUnits > 1 && (
+                  <span className="text-[10px] font-bold text-sky-400 bg-sky-950/80 px-1.5 py-0.5 rounded border border-sky-500/30 whitespace-nowrap">
+                    Unit {currentUnitInfo.unitIndex}/{currentUnitInfo.totalUnits}
+                  </span>
+                )}
               </div>
               <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
-                <span className="text-white font-bold">{currentScanningItem ? `₹${currentScanningItem.price}` : ''}</span>
+                <span className="text-white font-bold">{currentScanningItem ? `₹${currentScanningItem.price} each` : ''}</span>
                 <span className="text-slate-600">•</span>
-                <span className="text-emerald-400 font-bold">Item {Math.min(totalToScan, currentIndex + 1)} of {totalToScan}</span>
+                <span className="text-emerald-400 font-bold">
+                  {totalToScan > 0 ? `Scanned ${Math.min(totalToScan, currentIndex)} of ${totalToScan} units` : 'Scanning...'}
+                </span>
               </div>
             </div>
           </div>

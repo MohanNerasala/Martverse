@@ -126,16 +126,36 @@ const ConveyorAnimation3D: React.FC<{
   const isPaused = useBillingStore((state) => state.isPaused);
   const cartItems = useCartStore((state) => state.items);
 
-  // Flatten items for individual physical scanning
+  // Flatten cart items into individual physical units: if same item has quantity 2, it is physically scanned twice!
   const unitItems = useMemo(() => {
-    return cartItems.flatMap((it) => Array(Math.min(it.quantity, 4)).fill(it)).slice(0, 14);
+    const list: Array<{
+      item: CartItem;
+      unitIndex: number;
+      totalUnits: number;
+      flatIndex: number;
+      uniqueScanId: string;
+    }> = [];
+    cartItems.forEach((it) => {
+      for (let q = 0; q < it.quantity; q++) {
+        list.push({
+          item: it,
+          unitIndex: q + 1,
+          totalUnits: it.quantity,
+          flatIndex: list.length,
+          uniqueScanId: `${it.id}-unit-${q}-${list.length}`,
+        });
+      }
+    });
+    return list;
   }, [cartItems]);
 
   const [activeItems, setActiveItems] = useState<
     Array<{
       id: string;
       item: CartItem;
-      index: number;
+      unitIndex: number;
+      totalUnits: number;
+      flatIndex: number;
       startTime: number;
       pos: [number, number, number];
       rot: [number, number, number];
@@ -157,12 +177,15 @@ const ConveyorAnimation3D: React.FC<{
       lastTimeRef.current = Date.now();
       finishedRef.current = false;
 
-      // Initialize all items with staggered start times (2.6s gap for smooth, clear, visible pacing)
-      const initialized = unitItems.map((it, idx) => ({
-        id: `${it.id}-${idx}`,
-        item: it,
-        index: idx,
-        startTime: idx * 2.6,
+      // Smooth pacing: Stagger units so each physical item has its own distinct moment
+      const stagger = unitItems.length > 5 ? 1.8 : 2.4;
+      const initialized = unitItems.map((u) => ({
+        id: u.uniqueScanId,
+        item: u.item,
+        unitIndex: u.unitIndex,
+        totalUnits: u.totalUnits,
+        flatIndex: u.flatIndex,
+        startTime: u.flatIndex * stagger,
         pos: [activeDeskX - 1.9, 0.72, -1.0] as [number, number, number],
         rot: [0, 0, 0] as [number, number, number],
         stage: 'fly' as const,
@@ -176,7 +199,7 @@ const ConveyorAnimation3D: React.FC<{
     } else if (phase === 'idle') {
       setActiveItems([]);
     }
-  }, [phase, unitItems.length, activeDeskX]);
+  }, [phase, unitItems, activeDeskX]);
 
   useFrame((_, delta) => {
     if (phase !== 'scanning' || isPaused || activeItems.length === 0) return;
@@ -221,7 +244,7 @@ const ConveyorAnimation3D: React.FC<{
       let curY = 0.72;
       let curZ = trolleyZ;
       let rotX = 0;
-      let rotY = p.index * 0.4;
+      let rotY = p.flatIndex * 0.4;
       let rotZ = 0;
       let curStage: 'fly' | 'convey' | 'scan' | 'pack' | 'done' = p.stage;
       let landSound = p.landSoundPlayed;
@@ -279,12 +302,13 @@ const ConveyorAnimation3D: React.FC<{
         if (!scanSound) {
           scanSound = true;
           sounds.playScanBeep();
-          // Update live cumulative total and item in store
-          useBillingStore.setState((prev) => ({
-            runningTotal: prev.runningTotal + p.item.price,
-            currentIndex: Math.min(prev.totalToScan, p.index + 1),
-            currentScanningItem: p.item,
-          }));
+          // Real-time unit scan registration in billing store
+          useBillingStore.getState().recordUnitScanned(
+            p.flatIndex + 1,
+            p.item,
+            p.unitIndex,
+            p.totalUnits
+          );
           priceY = 1.25;
           priceOp = 1.0;
           anyStateChanged = true;
@@ -340,8 +364,8 @@ const ConveyorAnimation3D: React.FC<{
       finishedRef.current = true;
       sounds.playCashRegister();
       setTimeout(() => {
-        useBillingStore.getState().skipToReview();
-      }, 400);
+        useBillingStore.getState().finishScanning();
+      }, 500);
     }
   });
 

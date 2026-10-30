@@ -63,6 +63,7 @@ interface BillingStore {
   phase: BillingPhase;
   scannedItems: BillingScannedItem[];
   currentScanningItem: CartItem | null;
+  currentUnitInfo: { unitIndex: number; totalUnits: number } | null;
   scanStage: ScanStage;
   currentIndex: number;
   totalToScan: number;
@@ -74,6 +75,8 @@ interface BillingStore {
   isValidatingBackend: boolean;
 
   startCheckout: (items: CartItem[]) => void;
+  recordUnitScanned: (flatIndex: number, item: CartItem, unitNumber: number, totalUnits: number) => void;
+  finishScanning: () => void;
   pauseScanning: () => void;
   resumeScanning: () => void;
   skipToReview: () => void;
@@ -97,6 +100,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
   phase: 'idle',
   scannedItems: [],
   currentScanningItem: null,
+  currentUnitInfo: null,
   scanStage: 'idle',
   currentIndex: 0,
   totalToScan: 0,
@@ -116,90 +120,58 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
     currentItemsToScan = [...items];
 
+    // Count EVERY physical unit (if same item has quantity 2, it is scanned twice!)
+    const totalPhysicalUnits = items.reduce((sum, it) => sum + it.quantity, 0);
+    const firstItem = items[0] || null;
+
     set({
       phase: 'scanning',
-      scannedItems: [],
-      currentScanningItem: items[0] || null,
+      scannedItems: items.map((it) => ({
+        ...it,
+        scannedAt: Date.now(),
+        scanSoundPlayed: true,
+      })),
+      currentScanningItem: firstItem,
+      currentUnitInfo: firstItem ? { unitIndex: 1, totalUnits: firstItem.quantity } : null,
       scanStage: 'drop',
       currentIndex: 0,
-      totalToScan: items.length,
+      totalToScan: totalPhysicalUnits,
       isPaused: false,
       isConveyorMoving: true,
       runningTotal: 0,
       completedOrder: null,
       backendQuote: null,
     });
+  },
 
-    const processNextItem = (index: number) => {
-      const state = get();
-      if (state.phase !== 'scanning') return;
+  recordUnitScanned: (flatIndex, item, unitNumber, totalUnits) => {
+    set((prev) => ({
+      currentIndex: flatIndex,
+      runningTotal: prev.runningTotal + item.price,
+      currentScanningItem: item,
+      currentUnitInfo: { unitIndex: unitNumber, totalUnits },
+      scanStage: 'laser',
+    }));
+  },
 
-      if (state.isPaused) {
-        // Retry shortly when paused
-        scanStepTimeout = setTimeout(() => processNextItem(index), 250);
-        return;
-      }
+  finishScanning: () => {
+    if (scanStepTimeout) {
+      clearTimeout(scanStepTimeout);
+      scanStepTimeout = null;
+    }
+    const state = get();
+    const total = state.scannedItems.reduce((acc, it) => acc + it.subtotal, 0);
 
-      if (index >= currentItemsToScan.length) {
-        // All items scanned!
-        set({
-          phase: 'review',
-          isConveyorMoving: false,
-          currentScanningItem: null,
-          scanStage: 'idle',
-        });
-        get().revalidateCartWithBackend();
-        return;
-      }
-
-      const item = currentItemsToScan[index];
-
-      // Stage 1: Item drops onto conveyor belt
-      set({
-        currentScanningItem: item,
-        scanStage: 'drop',
-        currentIndex: index,
-        isConveyorMoving: true,
-      });
-
-      // Stage 2: Glides forward under barcode scanner laser
-      scanStepTimeout = setTimeout(() => {
-        const curr = get();
-        if (curr.phase !== 'scanning') return;
-
-        set({ scanStage: 'laser' });
-        sounds.playScanBeep();
-
-        // Stage 3: Scanned successfully and registered
-        scanStepTimeout = setTimeout(() => {
-          const cState = get();
-          if (cState.phase !== 'scanning') return;
-
-          const scannedItem: BillingScannedItem = {
-            ...item,
-            scannedAt: Date.now(),
-            scanSoundPlayed: true,
-          };
-
-          const newTotal = cState.runningTotal + item.subtotal;
-
-          set((prev) => ({
-            scannedItems: [...prev.scannedItems, scannedItem],
-            runningTotal: newTotal,
-            scanStage: 'bagged',
-            currentIndex: index + 1,
-          }));
-
-          // Pause briefly between items for graceful conveyor flow
-          scanStepTimeout = setTimeout(() => {
-            processNextItem(index + 1);
-          }, 280);
-        }, 450);
-      }, 420);
-    };
-
-    // Start with the first item
-    processNextItem(0);
+    set({
+      phase: 'review',
+      currentIndex: state.totalToScan,
+      runningTotal: total,
+      isConveyorMoving: false,
+      currentScanningItem: null,
+      currentUnitInfo: null,
+      scanStage: 'idle',
+    });
+    get().revalidateCartWithBackend();
   },
 
   pauseScanning: () => {
@@ -215,6 +187,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       clearTimeout(scanStepTimeout);
       scanStepTimeout = null;
     }
+    const state = get();
     const allScanned: BillingScannedItem[] = currentItemsToScan.map((it) => ({
       ...it,
       scannedAt: Date.now(),
@@ -225,10 +198,11 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     set({
       phase: 'review',
       scannedItems: allScanned,
-      currentIndex: allScanned.length,
+      currentIndex: state.totalToScan,
       runningTotal: total,
       isConveyorMoving: false,
       currentScanningItem: null,
+      currentUnitInfo: null,
       scanStage: 'idle',
     });
     get().revalidateCartWithBackend();
