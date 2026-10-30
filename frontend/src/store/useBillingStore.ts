@@ -269,6 +269,8 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
           productId: it.productId,
           variantId: it.variantId,
           quantity: it.quantity,
+          unitPrice: it.price,
+          mrp: it.mrp,
         })),
         fulfilmentType,
       });

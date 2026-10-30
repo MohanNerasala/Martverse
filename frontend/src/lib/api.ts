@@ -123,7 +123,7 @@ export const api = {
 
   // Authoritative Backend Cart Revalidation (calculates authoritative totals & verifies stock)
   async revalidateCart(payload: {
-    items: Array<{ productId: string; variantId?: string; quantity: number }>;
+    items: Array<{ productId: string; variantId?: string; quantity: number; unitPrice?: number; mrp?: number }>;
     fulfilmentType?: string;
   }): Promise<{
     valid: boolean;
@@ -144,13 +144,21 @@ export const api = {
     }>;
     warnings?: string[];
   }> {
-    const fallbackSubtotal = payload.items.reduce((acc, it) => acc + (it.quantity * 100), 0);
-    const fallbackDelivery = fallbackSubtotal >= 499 || payload.fulfilmentType === 'STORE_PICKUP' ? 0 : 40;
+    const fallbackSubtotal = payload.items.reduce((acc, it) => {
+      const price = it.unitPrice !== undefined ? it.unitPrice : 0;
+      return acc + (it.quantity * price);
+    }, 0);
+    const fallbackMrpTotal = payload.items.reduce((acc, it) => {
+      const mrp = it.mrp !== undefined ? it.mrp : (it.unitPrice || 0);
+      return acc + (it.quantity * mrp);
+    }, 0);
+    const fallbackDiscount = Math.max(0, fallbackMrpTotal - fallbackSubtotal);
+    const fallbackDelivery = payload.fulfilmentType === 'STORE_PICKUP' || fallbackSubtotal >= 499 ? 0 : 40;
     const fallbackResponse = {
       valid: true,
       totalItems: payload.items.reduce((acc, it) => acc + it.quantity, 0),
       subtotal: fallbackSubtotal,
-      discountAmount: 0,
+      discountAmount: fallbackDiscount,
       deliveryCharge: fallbackDelivery,
       totalAmount: fallbackSubtotal + fallbackDelivery,
       items: [],
