@@ -468,148 +468,38 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
           <meshStandardMaterial color="#ffffff" roughness={0.08} metalness={0.04} />
         </mesh>
 
-        {/* Top Electric Sapphire / Cyan LED Glow Header Strip */}
-        <mesh position={[0, 0.40, 0]}>
-          <boxGeometry args={[10.8, 0.035, 0.17]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.6} />
-        </mesh>
-
-        {/* Bottom Emerald Green LED Glow Accent Strip */}
-        <mesh position={[0, -0.40, 0]}>
-          <boxGeometry args={[10.8, 0.025, 0.17]} />
-          <meshStandardMaterial color="#34d399" emissive="#059669" emissiveIntensity={0.5} />
-        </mesh>
-
         {/* ============================================================== */}
         {/* FRONT FACE (Facing -Z towards supermarket aisles & customers approaching) */}
         {/* ============================================================== */}
         <group position={[0, 0, -0.085]} rotation={[0, Math.PI, 0]}>
-          {/* Top Subtitle Pill */}
+          {/* Clean, Prominent Dark Slate Title - No Colors or Clutter */}
           <Text
-            position={[0, 0.24, 0.01]}
-            fontSize={0.13}
-            color="#0284c7"
+            position={[0, 0, 0.01]}
+            fontSize={0.42}
+            color="#0f172a"
             anchorX="center"
             anchorY="middle"
             letterSpacing={0.06}
           >
-            {'⚡ MARTVERSE EXPRESS CHECKOUT'}
+            {'BILLING CHECKOUT'}
           </Text>
-
-          {/* Large Prominent BILLING & CHECKOUT Title */}
-          <Text
-            position={[0, 0.04, 0.01]}
-            fontSize={0.32}
-            color="#0f172a"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.02}
-          >
-            {'POS BILLING & CHECKOUT'}
-          </Text>
-
-          {/* Divider Line */}
-          <mesh position={[0, -0.13, 0.01]}>
-            <boxGeometry args={[10.0, 0.014, 0.005]} />
-            <meshBasicMaterial color="#e2e8f0" />
-          </mesh>
-
-          {/* Lane Indicators & Accepted Payments Subtitle */}
-          <Text
-            position={[0, -0.25, 0.01]}
-            fontSize={0.12}
-            color="#334155"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.04}
-          >
-            {'LANE 1  •  LANE 2  •  LANE 3    |    UPI  •  CARDS  •  CASH ACCEPTED'}
-          </Text>
-
-          {/* Individual Lane Open Badges above each counter */}
-          {[-3.8, 0, 3.8].map((laneX, lIdx) => (
-            <group key={`lane-badge-front-${lIdx}`} position={[laneX, -0.08, 0.015]}>
-              <mesh>
-                <boxGeometry args={[1.2, 0.08, 0.004]} />
-                <meshBasicMaterial color="#ecfdf5" />
-              </mesh>
-              <Text
-                position={[0, 0, 0.005]}
-                fontSize={0.065}
-                color="#059669"
-                anchorX="center"
-                anchorY="middle"
-              >
-                {`🟢 LANE 0${lIdx + 1} OPEN`}
-              </Text>
-            </group>
-          ))}
         </group>
 
         {/* ============================================================== */}
         {/* BACK FACE (Facing +Z towards store exit & rear wall) */}
         {/* ============================================================== */}
         <group position={[0, 0, 0.085]}>
-          {/* Top Subtitle Pill */}
+          {/* Clean, Prominent Dark Slate Title - No Colors or Clutter */}
           <Text
-            position={[0, 0.24, 0.01]}
-            fontSize={0.13}
-            color="#0284c7"
+            position={[0, 0, 0.01]}
+            fontSize={0.42}
+            color="#0f172a"
             anchorX="center"
             anchorY="middle"
             letterSpacing={0.06}
           >
-            {'⚡ MARTVERSE EXPRESS CHECKOUT'}
+            {'BILLING CHECKOUT'}
           </Text>
-
-          {/* Large Prominent BILLING & CHECKOUT Title */}
-          <Text
-            position={[0, 0.04, 0.01]}
-            fontSize={0.32}
-            color="#0f172a"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.02}
-          >
-            {'POS BILLING & CHECKOUT'}
-          </Text>
-
-          {/* Divider Line */}
-          <mesh position={[0, -0.13, 0.01]}>
-            <boxGeometry args={[10.0, 0.014, 0.005]} />
-            <meshBasicMaterial color="#e2e8f0" />
-          </mesh>
-
-          {/* Lane Indicators & Accepted Payments Subtitle */}
-          <Text
-            position={[0, -0.25, 0.01]}
-            fontSize={0.12}
-            color="#334155"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.04}
-          >
-            {'LANE 1  •  LANE 2  •  LANE 3    |    UPI  •  CARDS  •  CASH ACCEPTED'}
-          </Text>
-
-          {/* Individual Lane Open Badges above each counter */}
-          {[-3.8, 0, 3.8].map((laneX, lIdx) => (
-            <group key={`lane-badge-back-${lIdx}`} position={[laneX, -0.08, 0.015]}>
-              <mesh>
-                <boxGeometry args={[1.2, 0.08, 0.004]} />
-                <meshBasicMaterial color="#ecfdf5" />
-              </mesh>
-              <Text
-                position={[0, 0, 0.005]}
-                fontSize={0.065}
-                color="#059669"
-                anchorX="center"
-                anchorY="middle"
-              >
-                {`🟢 LANE 0${lIdx + 1} OPEN`}
-              </Text>
-            </group>
-          ))}
         </group>
       </group>
 
