@@ -452,10 +452,10 @@ export const PlayerController: React.FC = () => {
       }
     } else {
       // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 28, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 28, delta);
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 32, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 32, delta);
 
-      const speed = 7.5; // m/s walking speed
+      const speed = 10.2; // Snappy, swift walking speed with buttery smoothness
       const moveVector = new THREE.Vector3();
 
       // 1. Keyboard WASD & Arrow Keys
@@ -494,7 +494,7 @@ export const PlayerController: React.FC = () => {
       const targetVelX = (moveVector.x * cos + moveVector.z * sin) * speed;
       const targetVelZ = (-moveVector.x * sin + moveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 22 : 25;
+      const accelRate = isMoving ? 26 : 28;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -626,11 +626,11 @@ export const PlayerController: React.FC = () => {
       posRef.current.x = THREE.MathUtils.damp(posRef.current.x, 14.70, 10, delta);
 
       // 2. Automatic moving walkway propulsion:
-      const forwardInput = keys.current.forward ? 2.5 : 0;
+      const forwardInput = keys.current.forward ? 3.5 : 0;
       const isAscending = Math.cos(yawRef.current) >= -0.2;
 
       if (isAscending) {
-        posRef.current.z += (2.4 + forwardInput) * delta;
+        posRef.current.z += (3.2 + forwardInput) * delta;
         targetYawRef.current = 0;
         yawRef.current = THREE.MathUtils.clamp(yawRef.current, -0.4, 0.4);
         yawRef.current = THREE.MathUtils.damp(yawRef.current, 0, 8, delta);
@@ -645,7 +645,7 @@ export const PlayerController: React.FC = () => {
           showToast('2nd Floor Reached', 'Welcome to Fashion Studio & Apparel!', 'success');
         }
       } else {
-        posRef.current.z -= (2.4 + forwardInput) * delta;
+        posRef.current.z -= (3.2 + forwardInput) * delta;
         targetYawRef.current = Math.PI;
         yawRef.current = THREE.MathUtils.clamp(yawRef.current, Math.PI - 0.4, Math.PI + 0.4);
         yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 8, delta);
@@ -766,7 +766,7 @@ export const PlayerController: React.FC = () => {
       const targetLookZ = posRef.current.z + Math.cos(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
       camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {
-      // Third Person (Over the shoulder with smooth camera dampening to prevent viewport stutter)
+      // Third Person (Orbit lock: camera position and gaze vectors move along exact mathematical circular arc)
       const camDist = 3.0;
       const camHeight = 1.95;
       let targetCamX = posRef.current.x - Math.sin(yawRef.current) * camDist;
@@ -774,30 +774,17 @@ export const PlayerController: React.FC = () => {
       let targetCamZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
 
       // Prevent camera from clipping through store perimeter walls
-      targetCamX = Math.max(-17.2, Math.min(17.2, targetCamX));
-      targetCamZ = Math.max(-25.2, Math.min(25.2, targetCamZ));
+      targetCamX = THREE.MathUtils.clamp(targetCamX, -17.2, 17.2);
+      targetCamZ = THREE.MathUtils.clamp(targetCamZ, -25.2, 25.2);
       targetCamY = Math.max(0.4, targetCamY);
 
       const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.3;
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
       const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.3;
 
-      if (resetPending.current) {
-        resetPending.current = false;
-        camera.position.set(targetCamX, targetCamY, targetCamZ);
-        currentLookTarget.current.set(lookTargetX, lookTargetY, lookTargetZ);
-      } else {
-        // Synchronized camera position and lookAt dampening for butter-smooth gliding motion without viewport stutter or wobble
-        camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 26, delta);
-        camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 26, delta);
-        camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 26, delta);
-
-        currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, lookTargetX, 26, delta);
-        currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, lookTargetY, 26, delta);
-        currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, lookTargetZ, 26, delta);
-      }
-
-      camera.lookAt(currentLookTarget.current.x, currentLookTarget.current.y, currentLookTarget.current.z);
+      camera.position.set(targetCamX, targetCamY, targetCamZ);
+      currentLookTarget.current.set(lookTargetX, lookTargetY, lookTargetZ);
+      camera.lookAt(currentLookTarget.current);
     }
   });
 

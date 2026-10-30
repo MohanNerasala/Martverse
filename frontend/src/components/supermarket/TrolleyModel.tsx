@@ -234,10 +234,10 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     }
     basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 10, delta);
 
-    // Smooth lerp movement with responsive dampening (rate 28 for silky smooth motion)
-    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 28, delta);
-    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 22, delta);
-    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 28, delta);
+    // Responsive lerp movement with fast tracking (rate 36 for locked-in responsive trolley follow)
+    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 36, delta);
+    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 26, delta);
+    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 36, delta);
 
     // Calculate forward motion direction relative to trolley heading
     const prevP = prevTrolleyPos.current;
@@ -264,8 +264,8 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     const targetSwivel = THREE.MathUtils.clamp(-turningRate * 0.15, -0.55, 0.55);
     casterSwivelRef.current = THREE.MathUtils.damp(casterSwivelRef.current, targetSwivel, 14, delta);
 
-    // Shortest-path circular yaw dampening towards player direction
-    currentYaw.current += diffYaw * (1 - Math.exp(-22 * delta));
+    // Shortest-path circular yaw dampening towards player direction (rate 32 for snappy 360-turn follow)
+    currentYaw.current += diffYaw * (1 - Math.exp(-32 * delta));
 
     // Strict final containment pass on currentPos so the cart NEVER clips perimeter walls
     if (isOnEscalatorRamp) {

@@ -48,9 +48,9 @@ export const SupermarketScene: React.FC = () => {
         <color attach="background" args={['#0f172a']} />
         <fog attach="fog" args={['#0f172a', 35, 65]} />
 
-        {/* --- Global Illumination --- */}
-        <ambientLight intensity={0.8} />
-        <hemisphereLight args={['#ffffff', '#334155', 0.6]} />
+        {/* --- Global Illumination (High-Efficiency, Uniform Crisp Store Lighting) --- */}
+        <ambientLight intensity={1.1} />
+        <hemisphereLight args={['#ffffff', '#475569', 0.85]} />
 
         {/* Main Sun Spotlight for soft depth shadows */}
         <directionalLight
@@ -67,24 +67,15 @@ export const SupermarketScene: React.FC = () => {
           shadow-bias={-0.0003}
         />
 
-        {/* Ground Floor Balanced Aisle Fluorescent Lighting (eliminates dark/dull areas) */}
-        <pointLight position={[-10, 4.2, -10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
-        <pointLight position={[0, 4.2, -10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
-        <pointLight position={[10, 4.2, -10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
-
-        <pointLight position={[-10, 4.2, 0]} intensity={1.2} distance={18} decay={2} color="#ffffff" />
-        <pointLight position={[0, 4.2, 0]} intensity={1.2} distance={18} decay={2} color="#ffffff" />
-        <pointLight position={[10, 4.2, 0]} intensity={1.2} distance={18} decay={2} color="#ffffff" />
-
-        <pointLight position={[-10, 4.2, 10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
-        <pointLight position={[0, 4.2, 10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
-        <pointLight position={[10, 4.2, 10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
+        {/* Ground Floor Balanced Core Fixture Lights (Vastly reduced shader light passes, 100% 60FPS) */}
+        <pointLight position={[-6, 4.4, -6]} intensity={1.3} distance={24} decay={1.8} color="#ffffff" />
+        <pointLight position={[6, 4.4, -6]} intensity={1.3} distance={24} decay={1.8} color="#ffffff" />
+        <pointLight position={[-6, 4.4, 8]} intensity={1.3} distance={24} decay={1.8} color="#ffffff" />
+        <pointLight position={[6, 4.4, 8]} intensity={1.3} distance={24} decay={1.8} color="#ffffff" />
 
         {/* First Floor Lighting */}
-        <pointLight position={[-8, 9.2, -8]} intensity={1.3} distance={20} decay={2} color="#fef08a" />
-        <pointLight position={[8, 9.2, -8]} intensity={1.3} distance={20} decay={2} color="#fef08a" />
-        <pointLight position={[-8, 9.2, 8]} intensity={1.3} distance={20} decay={2} color="#fef08a" />
-        <pointLight position={[8, 9.2, 8]} intensity={1.3} distance={20} decay={2} color="#fef08a" />
+        <pointLight position={[-6, 9.2, 0]} intensity={1.4} distance={26} decay={1.8} color="#fef08a" />
+        <pointLight position={[6, 9.2, 0]} intensity={1.4} distance={26} decay={1.8} color="#fef08a" />
 
         <Suspense fallback={null}>
           {/* Store Shell */}

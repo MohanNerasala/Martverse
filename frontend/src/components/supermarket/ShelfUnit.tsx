@@ -258,8 +258,11 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
           <boxGeometry args={[2.7, 0.08, 0.02]} />
           <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
         </mesh>
-        {/* Soft Aisle Downlight Glow (Illuminates walkway between shelves realistically) */}
-        <pointLight position={[0, -0.2, 0]} color="#bae6fd" intensity={0.45} distance={7.5} decay={2} />
+        {/* Soft Aisle Downlight Glow Strip (Emissive 0-lag visual illumination) */}
+        <mesh position={[0, -0.32, 0]}>
+          <boxGeometry args={[2.4, 0.04, 0.06]} />
+          <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.8} />
+        </mesh>
         {/* Hanging chrome metal chains */}
         <mesh position={[-1.1, 0.8, 0]}>
           <cylinderGeometry args={[0.015, 0.015, 1.2, 6]} />
