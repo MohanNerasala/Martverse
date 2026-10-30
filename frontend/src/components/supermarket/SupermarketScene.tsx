@@ -68,14 +68,24 @@ export const SupermarketScene: React.FC = () => {
           shadow-bias={-0.0003}
         />
 
-        {/* Ground Floor Fluorescent Point Lights */}
+        {/* Ground Floor Balanced Aisle Fluorescent Lighting (eliminates dark/dull areas) */}
+        <pointLight position={[-10, 4.2, -10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
+        <pointLight position={[0, 4.2, -10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
+        <pointLight position={[10, 4.2, -10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
+
         <pointLight position={[-10, 4.2, 0]} intensity={1.2} distance={18} decay={2} color="#ffffff" />
         <pointLight position={[0, 4.2, 0]} intensity={1.2} distance={18} decay={2} color="#ffffff" />
         <pointLight position={[10, 4.2, 0]} intensity={1.2} distance={18} decay={2} color="#ffffff" />
 
+        <pointLight position={[-10, 4.2, 10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
+        <pointLight position={[0, 4.2, 10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
+        <pointLight position={[10, 4.2, 10]} intensity={1.1} distance={18} decay={2} color="#ffffff" />
+
         {/* First Floor Lighting */}
-        <pointLight position={[-8, 9.2, 0]} intensity={1.5} distance={20} decay={2} color="#fef08a" />
-        <pointLight position={[8, 9.2, 0]} intensity={1.5} distance={20} decay={2} color="#fef08a" />
+        <pointLight position={[-8, 9.2, -8]} intensity={1.3} distance={20} decay={2} color="#fef08a" />
+        <pointLight position={[8, 9.2, -8]} intensity={1.3} distance={20} decay={2} color="#fef08a" />
+        <pointLight position={[-8, 9.2, 8]} intensity={1.3} distance={20} decay={2} color="#fef08a" />
+        <pointLight position={[8, 9.2, 8]} intensity={1.3} distance={20} decay={2} color="#fef08a" />
 
         <Suspense fallback={null}>
           {/* Store Shell */}

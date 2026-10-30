@@ -399,7 +399,7 @@ export const PlayerController: React.FC = () => {
       const targetVelX = (moveVector.x * cos + moveVector.z * sin) * speed;
       const targetVelZ = (-moveVector.x * sin + moveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 15 : 18;
+      const accelRate = isMoving ? 22 : 25;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -447,28 +447,28 @@ export const PlayerController: React.FC = () => {
           return false; // Landing zones are wide open walkways
         }
 
-        // Compound assembly test circles (Player + Trolley)
+        // Compound assembly test circles calibrated strictly to visible physical dimensions
         const testCircles = [
-          // 1. Player body cylinder
-          { x: testPx, z: testPz, r: 0.38 },
-          // 2. Trolley front bumper
-          { x: testPx + sin * 1.45, z: testPz + cos * 1.45, r: 0.44 },
-          // 3. Trolley center chassis
-          { x: testPx + sin * 0.95, z: testPz + cos * 0.95, r: 0.44 },
+          // 1. Player body cylinder (slender natural cylinder)
+          { x: testPx, z: testPz, r: 0.28 },
+          // 2. Trolley center chassis
+          { x: testPx + sin * 0.90, z: testPz + cos * 0.90, r: 0.32 },
+          // 3. Trolley front bumper (accurate to front chrome rail)
+          { x: testPx + sin * 1.25, z: testPz + cos * 1.25, r: 0.26 },
           // 4. Trolley front-left corner
-          { x: testPx + sin * 1.40 - rightX * 0.36, z: testPz + cos * 1.40 - rightZ * 0.36, r: 0.22 },
+          { x: testPx + sin * 1.20 - rightX * 0.28, z: testPz + cos * 1.20 - rightZ * 0.28, r: 0.14 },
           // 5. Trolley front-right corner
-          { x: testPx + sin * 1.40 + rightX * 0.36, z: testPz + cos * 1.40 + rightZ * 0.36, r: 0.22 },
+          { x: testPx + sin * 1.20 + rightX * 0.28, z: testPz + cos * 1.20 + rightZ * 0.28, r: 0.14 },
         ];
 
         // 1. Outer store perimeter walls (width 36, length 52)
         for (const c of testCircles) {
-          if (c.x - c.r < -17.1 || c.x + c.r > 17.1) return true;
-          if (c.z - c.r < -24.6) {
+          if (c.x - c.r < -17.2 || c.x + c.r > 17.2) return true;
+          if (c.z - c.r < -24.8) {
             // Front doorway opening allowed
             if (Math.abs(c.x) > 3.8 || c.z - c.r < -25.8) return true;
           }
-          if (c.z + c.r > 24.6) return true;
+          if (c.z + c.r > 24.8) return true;
         }
 
         // 2. Escalator outer structure barrier on Floor 1 (stops walking into side balustrade from aisle 5)
@@ -488,18 +488,18 @@ export const PlayerController: React.FC = () => {
           }
         }
 
-        // 4. Shelf Rows Physical Collision Boxes (stops player and cart from entering shelves or edges)
+        // 4. Shelf Rows Physical Collision Boxes (calibrated strictly to visible shelf width 0.88m)
         const aisleXs =
           floor === 1
             ? [-10, -5, 0, 5, 10]
             : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
 
+        const halfW = 0.88; // Exactly matches visible shelf rim (eliminates 15cm invisible phantom catch)
         for (const ax of aisleXs) {
-          // Rack width: 1.9m (±0.95m from center ax), length: 24.8m (-12.4m to +12.4m)
-          const minX = ax - 0.95;
-          const maxX = ax + 0.95;
-          const minZ = -12.4;
-          const maxZ = 12.4;
+          const minX = ax - halfW;
+          const maxX = ax + halfW;
+          const minZ = -12.3;
+          const maxZ = 12.3;
 
           for (const c of testCircles) {
             if (circleIntersectsAABB(c.x, c.z, c.r, minX, maxX, minZ, maxZ)) {
@@ -545,27 +545,35 @@ export const PlayerController: React.FC = () => {
             posRef.current.x += worldDX;
             posRef.current.z += worldDZ;
           } else {
-            // Smoothly slide along dominant motion axis
-            if (Math.abs(worldDX) > Math.abs(worldDZ)) {
+            // Smooth corner deflection along dominant axis without killing velocity
+            if (Math.abs(worldDX) >= Math.abs(worldDZ)) {
               posRef.current.x += worldDX;
-              velocityRef.current.z = 0;
+              velocityRef.current.z *= 0.6; // Retain smooth deflection momentum
             } else {
               posRef.current.z += worldDZ;
-              velocityRef.current.x = 0;
+              velocityRef.current.x *= 0.6; // Retain smooth deflection momentum
             }
           }
         } else if (canMoveX) {
-          // Smooth wall sliding along X axis: cancel blocked Z momentum
+          // Smooth sliding along X axis when Z is obstructed
           posRef.current.x += worldDX;
-          velocityRef.current.z = 0;
+          velocityRef.current.z *= 0.6;
         } else if (canMoveZ) {
-          // Smooth aisle gliding along Z axis: cancel blocked X momentum
+          // Smooth sliding along Z axis when X is obstructed
           posRef.current.z += worldDZ;
-          velocityRef.current.x = 0;
+          velocityRef.current.x *= 0.6;
         } else {
-          // Blocked on both axes: zero velocity to prevent momentum accumulation
-          velocityRef.current.x = 0;
-          velocityRef.current.z = 0;
+          // Fractional sub-step test to gracefully glide past tight corners without catching
+          const halfDX = worldDX * 0.5;
+          const halfDZ = worldDZ * 0.5;
+          if (!checkObstacle(posRef.current.x + halfDX, posRef.current.z, currentFloor, yawRef.current)) {
+            posRef.current.x += halfDX;
+          } else if (!checkObstacle(posRef.current.x, posRef.current.z + halfDZ, currentFloor, yawRef.current)) {
+            posRef.current.z += halfDZ;
+          } else {
+            velocityRef.current.x = 0;
+            velocityRef.current.z = 0;
+          }
         }
       }
 
@@ -763,13 +771,13 @@ export const PlayerController: React.FC = () => {
         currentLookTarget.current.set(lookTargetX, lookTargetY, lookTargetZ);
       } else {
         // Synchronized camera position and lookAt dampening for butter-smooth gliding motion without viewport stutter or wobble
-        camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 22, delta);
-        camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 22, delta);
-        camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 22, delta);
+        camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 26, delta);
+        camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 26, delta);
+        camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 26, delta);
 
-        currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, lookTargetX, 22, delta);
-        currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, lookTargetY, 22, delta);
-        currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, lookTargetZ, 22, delta);
+        currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, lookTargetX, 26, delta);
+        currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, lookTargetY, 26, delta);
+        currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, lookTargetZ, 26, delta);
       }
 
       camera.lookAt(currentLookTarget.current.x, currentLookTarget.current.y, currentLookTarget.current.z);

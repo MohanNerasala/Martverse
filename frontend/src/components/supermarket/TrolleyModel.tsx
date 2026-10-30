@@ -234,10 +234,10 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     }
     basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 10, delta);
 
-    // Smooth lerp movement with responsive dampening (rate 22 for silky smooth motion)
-    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 22, delta);
-    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 18, delta);
-    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 22, delta);
+    // Smooth lerp movement with responsive dampening (rate 28 for silky smooth motion)
+    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 28, delta);
+    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 22, delta);
+    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 28, delta);
 
     // Calculate forward motion direction relative to trolley heading
     const prevP = prevTrolleyPos.current;

@@ -256,8 +256,10 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
         {/* Cyan/Blue glow header strip */}
         <mesh position={[0, 0.28, 0.05]}>
           <boxGeometry args={[2.7, 0.08, 0.02]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.6} />
+          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
         </mesh>
+        {/* Soft Aisle Downlight Glow (Illuminates walkway between shelves realistically) */}
+        <pointLight position={[0, -0.2, 0]} color="#bae6fd" intensity={0.45} distance={7.5} decay={2} />
         {/* Hanging chrome metal chains */}
         <mesh position={[-1.1, 0.8, 0]}>
           <cylinderGeometry args={[0.015, 0.015, 1.2, 6]} />
@@ -309,10 +311,20 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
               <boxGeometry args={[0.85, 0.04, length]} />
               <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
             </mesh>
-            {/* Left Price Tag Rail (Electric Sapphire LED Rail) */}
+            {/* Left Under-Shelf Linear LED Glow Strip */}
+            <mesh position={[-0.45, -0.024, 0]}>
+              <boxGeometry args={[0.06, 0.012, length]} />
+              <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.75} roughness={0.1} />
+            </mesh>
+            {/* Left Price Tag Rail (Electric Sapphire LED Rail with Luminous Glow) */}
             <mesh position={[-0.88, 0, 0]}>
               <boxGeometry args={[0.02, 0.06, length]} />
-              <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.3} />
+              <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.55} />
+            </mesh>
+            {/* Left Slim Cyan Neon Accent Edge Line */}
+            <mesh position={[-0.892, 0, 0]}>
+              <boxGeometry args={[0.004, 0.018, length]} />
+              <meshBasicMaterial color="#38bdf8" />
             </mesh>
 
             {/* Right Shelf Plank (High-gloss White) */}
@@ -320,10 +332,20 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
               <boxGeometry args={[0.85, 0.04, length]} />
               <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
             </mesh>
-            {/* Right Price Tag Rail (Electric Sapphire LED Rail) */}
+            {/* Right Under-Shelf Linear LED Glow Strip */}
+            <mesh position={[0.45, -0.024, 0]}>
+              <boxGeometry args={[0.06, 0.012, length]} />
+              <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.75} roughness={0.1} />
+            </mesh>
+            {/* Right Price Tag Rail (Electric Sapphire LED Rail with Luminous Glow) */}
             <mesh position={[0.88, 0, 0]}>
               <boxGeometry args={[0.02, 0.06, length]} />
-              <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.3} />
+              <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.55} />
+            </mesh>
+            {/* Right Slim Cyan Neon Accent Edge Line */}
+            <mesh position={[0.892, 0, 0]}>
+              <boxGeometry args={[0.004, 0.018, length]} />
+              <meshBasicMaterial color="#38bdf8" />
             </mesh>
           </group>
         );
@@ -332,19 +354,35 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
       {/* ───────────────────────────────────────────────────────────── */}
       {/* UPRIGHT SUPPORT POLES: 7 poles defining exactly 6 distinct blocks */}
       {/* Positions: [-12, -8, -4, 0, 4, 8, 12] across 24m shelf length */}
+      {/* With Luminous Vertical Section Indicator Glow Strips */}
       {/* ───────────────────────────────────────────────────────────── */}
       {[-length / 2, -length / 3, -length / 6, 0, length / 6, length / 3, length / 2].map((zPos, pIdx) => (
         <group key={`post-${pIdx}`} position={[0, 0, zPos]}>
-          {/* Left Support Pole (Crisp dark industrial metal finish) */}
-          <mesh position={[-0.86, 0, 0]}>
-            <boxGeometry args={[0.05, aisle.shelfHeight, 0.05]} />
-            <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
-          </mesh>
-          {/* Right Support Pole (Crisp dark industrial metal finish) */}
-          <mesh position={[0.86, 0, 0]}>
-            <boxGeometry args={[0.05, aisle.shelfHeight, 0.05]} />
-            <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
-          </mesh>
+          {/* Left Support Pole (Crisp dark industrial metal finish with Glowing Cyan Neon Strip) */}
+          <group position={[-0.86, 0, 0]}>
+            <mesh>
+              <boxGeometry args={[0.05, aisle.shelfHeight, 0.05]} />
+              <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
+            </mesh>
+            {/* Vertical Section Indicator Glow Strip */}
+            <mesh position={[-0.028, 0, 0]}>
+              <boxGeometry args={[0.006, aisle.shelfHeight * 0.94, 0.02]} />
+              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
+            </mesh>
+          </group>
+
+          {/* Right Support Pole (Crisp dark industrial metal finish with Glowing Cyan Neon Strip) */}
+          <group position={[0.86, 0, 0]}>
+            <mesh>
+              <boxGeometry args={[0.05, aisle.shelfHeight, 0.05]} />
+              <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
+            </mesh>
+            {/* Vertical Section Indicator Glow Strip */}
+            <mesh position={[0.028, 0, 0]}>
+              <boxGeometry args={[0.006, aisle.shelfHeight * 0.94, 0.02]} />
+              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
+            </mesh>
+          </group>
         </group>
       ))}
 
