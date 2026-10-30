@@ -141,41 +141,41 @@ export const SupermarketHUD: React.FC = () => {
       {/* --- Top Unified Floating Executive Command Navbar --- */}
       {/* ============================================================== */}
       <header className="w-full max-w-7xl mx-auto pointer-events-auto">
-        <div className="rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 bg-[#0a101f]/92 backdrop-blur-2xl border border-white/[0.14] shadow-[0_16px_50px_rgba(0,0,0,0.7),0_0_32px_rgba(56,189,248,0.18),0_0_0_1px_rgba(59,130,246,0.22),inset_0_1px_0_0_rgba(255,255,255,0.22)]">
+        <div className="rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 bg-slate-950/45 backdrop-blur-3xl backdrop-saturate-180 border border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.55),inset_0_1px_1px_rgba(255,255,255,0.3),inset_0_-1px_1px_rgba(0,0,0,0.4)]">
           
-          {/* Brand Identity: Gradient text blue to white */}
+          {/* Brand Identity: Pristine Frosted Glass Logo */}
           <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/35 ring-1 ring-white/25">
-              <Store className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/[0.09] hover:bg-white/[0.14] backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-inner transition-colors">
+              <Store className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]" />
             </div>
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-black tracking-wider text-sm sm:text-base leading-none bg-gradient-to-r from-blue-400 via-sky-200 to-white bg-clip-text text-transparent drop-shadow-[0_0_14px_rgba(56,189,248,0.45)]">
-                  MART<span className="text-white">VERSE</span>
+                <span className="font-black tracking-wider text-sm sm:text-base leading-none text-white drop-shadow-[0_2px_8px_rgba(255,255,255,0.25)]">
+                  MART<span className="text-white/60 font-medium">VERSE</span>
                 </span>
-                <span className="hidden md:inline-flex items-center gap-1 text-[9px] bg-emerald-500/15 text-emerald-400 font-bold px-1.5 py-0.5 rounded-full border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.25)]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-white/[0.07] text-white/90 font-bold px-2 py-0.5 rounded-full border border-white/15 backdrop-blur-md shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
                   3D LIVE
                 </span>
               </div>
-              <p className="text-[9px] sm:text-[10px] text-slate-400 font-medium hidden xs:block leading-tight mt-0.5">
+              <p className="text-[9px] sm:text-[10px] text-white/45 font-medium hidden xs:block leading-tight mt-0.5 tracking-wide">
                 Virtual Hypermarket
               </p>
             </div>
           </div>
 
-          {/* Floor Navigation Segmented Switcher (Floor 1 & Floor 2) */}
-          <nav className="h-10 flex items-center p-1 rounded-xl bg-white/[0.06] border border-white/[0.1] backdrop-blur-md flex-shrink-0 shadow-inner">
+          {/* Floor Navigation Segmented Glass Switcher (Apple-style High-Contrast Glass Capsule) */}
+          <nav className="h-10 flex items-center p-1 rounded-xl bg-white/[0.06] border border-white/[0.12] backdrop-blur-xl flex-shrink-0 shadow-inner">
             <button
               onClick={() => setActiveFloor(1)}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                 activeFloor === 1
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/35 shadow-[0_0_16px_rgba(59,130,246,0.45)] font-bold ring-1 ring-white/20'
-                  : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                  ? 'bg-white text-slate-950 shadow-md shadow-black/25 font-black ring-1 ring-white/50'
+                  : 'text-white/70 hover:text-white hover:bg-white/[0.08]'
               }`}
               title="Ground Floor: Groceries & Staples"
             >
-              <Layers className="w-3.5 h-3.5 text-blue-300" />
+              <Layers className={`w-3.5 h-3.5 ${activeFloor === 1 ? 'text-slate-950' : 'text-white/60'}`} />
               <span className="hidden sm:inline">Floor 1:</span>
               <span>Groceries</span>
             </button>
@@ -183,21 +183,21 @@ export const SupermarketHUD: React.FC = () => {
               onClick={() => setActiveFloor(2)}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                 activeFloor === 2
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/35 shadow-[0_0_16px_rgba(168,85,247,0.45)] font-bold ring-1 ring-white/20'
-                  : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                  ? 'bg-white text-slate-950 shadow-md shadow-black/25 font-black ring-1 ring-white/50'
+                  : 'text-white/70 hover:text-white hover:bg-white/[0.08]'
               }`}
               title="First Floor: Fashion Studio & Apparel"
             >
-              <Layers className="w-3.5 h-3.5 text-purple-300" />
+              <Layers className={`w-3.5 h-3.5 ${activeFloor === 2 ? 'text-slate-950' : 'text-white/60'}`} />
               <span className="hidden sm:inline">Floor 2:</span>
               <span>Fashion</span>
             </button>
           </nav>
 
-          {/* Search Bar - Standardized h-10 height, No slash, clean placeholder */}
+          {/* Search Bar - Standardized h-10 height, Pure Frosted Glass */}
           <div ref={searchContainerRef} className="relative flex-1 max-w-[160px] xs:max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md h-10">
             <div className="relative h-10 flex items-center">
-              <Search className="w-3.5 h-3.5 text-blue-400 absolute left-3 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-white/50 absolute left-3 pointer-events-none" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -212,7 +212,7 @@ export const SupermarketHUD: React.FC = () => {
                   }
                 }}
                 placeholder="Search items..."
-                className="w-full h-10 bg-white/[0.05] hover:bg-white/[0.08] focus:bg-[#070d18] text-white placeholder-slate-400 text-xs rounded-xl pl-8 sm:pl-9 pr-8 border border-white/[0.1] focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(56,189,248,0.35)] transition-all outline-none shadow-inner"
+                className="w-full h-10 bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.12] text-white placeholder-white/40 text-xs rounded-xl pl-8 sm:pl-9 pr-8 border border-white/[0.12] focus:border-white/40 focus:ring-2 focus:ring-white/10 transition-all outline-none backdrop-blur-xl shadow-inner"
               />
               {searchQuery && (
                 <button
@@ -220,7 +220,7 @@ export const SupermarketHUD: React.FC = () => {
                     setSearchQuery('');
                     setIsSearchOpen(false);
                   }}
-                  className="absolute right-2.5 text-slate-400 hover:text-white p-1 cursor-pointer transition-colors active:scale-95"
+                  className="absolute right-2.5 text-white/50 hover:text-white p-1 cursor-pointer transition-colors active:scale-95"
                   title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -230,20 +230,20 @@ export const SupermarketHUD: React.FC = () => {
 
             {/* Clean Dropdown — ONLY displayed when user has typed a search query */}
             {isSearchOpen && searchQuery.trim().length > 0 && (
-              <div className="absolute top-[calc(100%+8px)] left-0 sm:left-auto sm:right-0 w-72 sm:w-80 md:w-96 bg-[#0a101f]/98 backdrop-blur-2xl rounded-2xl border border-white/[0.14] shadow-[0_24px_60px_rgba(0,0,0,0.85),0_0_0_1px_rgba(59,130,246,0.15)] z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute top-[calc(100%+8px)] left-0 sm:left-auto sm:right-0 w-72 sm:w-80 md:w-96 bg-slate-950/90 backdrop-blur-3xl rounded-2xl border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.2)] z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="px-3 py-2 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.03]">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-slate-200">Matching Items</span>
-                    <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-1.5 py-0.5 rounded-full border border-blue-500/30">
+                    <span className="text-[11px] font-bold text-white/90">Matching Items</span>
+                    <span className="text-[10px] bg-white/10 text-white font-bold px-1.5 py-0.5 rounded-full border border-white/15">
                       {filteredProducts.length}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400">Click to locate</span>
+                  <span className="text-[10px] text-white/50">Click to locate</span>
                 </div>
 
                 <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5 divide-y divide-white/[0.04]">
                   {filteredProducts.length === 0 ? (
-                    <div className="p-6 text-center text-slate-400 text-xs font-medium">
+                    <div className="p-6 text-center text-white/50 text-xs font-medium">
                       No items found starting with &quot;{searchQuery}&quot;
                     </div>
                   ) : (
@@ -255,7 +255,7 @@ export const SupermarketHUD: React.FC = () => {
                           setSearchQuery('');
                           navigateToProduct(p);
                         }}
-                        className="w-full px-2.5 py-2 flex items-center justify-between gap-3 hover:bg-white/[0.08] transition-colors text-left group cursor-pointer rounded-xl"
+                        className="w-full px-2.5 py-2 flex items-center justify-between gap-3 hover:bg-white/[0.1] transition-colors text-left group cursor-pointer rounded-xl"
                       >
                         {/* 1. Item Image & 2. Item Name */}
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -273,7 +273,7 @@ export const SupermarketHUD: React.FC = () => {
                               <span className="text-xs">🛍️</span>
                             )}
                           </div>
-                          <span className="font-semibold text-white text-xs truncate group-hover:text-blue-300 transition-colors">
+                          <span className="font-semibold text-white text-xs truncate group-hover:text-white transition-colors">
                             {p.name}
                           </span>
                         </div>
@@ -290,20 +290,20 @@ export const SupermarketHUD: React.FC = () => {
             )}
           </div>
 
-          {/* Action Utilities & User Area - All standardized to h-10 with premium obsidian glass styling */}
+          {/* Action Utilities & User Area - All standardized to h-10 with Frosted Platinum Glass */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Camera Perspective Mode (1st / 3rd Person) */}
             <button
               onClick={() =>
                 setCameraMode(cameraMode === 'third_person' ? 'first_person' : 'third_person')
               }
-              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.1] hover:border-cyan-400/30 hover:shadow-[0_0_14px_rgba(56,189,248,0.25)] transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer shadow-sm active:scale-95"
+              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-white/85 hover:text-white border border-white/[0.12] hover:border-white/25 transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer shadow-sm active:scale-95 backdrop-blur-xl"
               title="Toggle Camera View (1st / 3rd Person)"
             >
               {cameraMode === 'first_person' ? (
-                <Eye className="w-4 h-4 text-cyan-400" />
+                <Eye className="w-4 h-4 text-white" />
               ) : (
-                <Camera className="w-4 h-4 text-slate-300" />
+                <Camera className="w-4 h-4 text-white/80" />
               )}
               <span className="hidden xl:inline font-medium">
                 {cameraMode === 'first_person' ? '1st Person' : '3rd Person'}
@@ -313,13 +313,13 @@ export const SupermarketHUD: React.FC = () => {
             {/* Sound Toggle */}
             <button
               onClick={toggleSound}
-              className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.1] hover:border-white/[0.2] transition-all flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
+              className="h-10 w-10 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-white/85 hover:text-white border border-white/[0.12] hover:border-white/25 transition-all flex items-center justify-center cursor-pointer shadow-sm active:scale-95 backdrop-blur-xl"
               title={isSoundMuted ? 'Unmute Ambient Sound' : 'Mute Ambient Sound'}
             >
               {isSoundMuted ? (
                 <VolumeX className="w-4 h-4 text-rose-400" />
               ) : (
-                <Volume2 className="w-4 h-4 text-emerald-400" />
+                <Volume2 className="w-4 h-4 text-white/85" />
               )}
             </button>
 
@@ -329,63 +329,63 @@ export const SupermarketHUD: React.FC = () => {
                 resetToOriginalState();
                 showToast('Position Reset', 'Returned to store entrance & original view orientation', 'info');
               }}
-              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.05] hover:bg-blue-600/20 text-slate-200 hover:text-cyan-300 border border-white/[0.1] hover:border-cyan-500/40 hover:shadow-[0_0_16px_rgba(56,189,248,0.3)] transition-all flex items-center gap-1.5 text-xs font-medium group cursor-pointer shadow-sm active:scale-95"
+              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-white/85 hover:text-white border border-white/[0.12] hover:border-white/25 transition-all flex items-center gap-1.5 text-xs font-medium group cursor-pointer shadow-sm active:scale-95 backdrop-blur-xl"
               title="Reset to Original State & Starting Position (Entrance)"
             >
-              <RotateCcw className="w-4 h-4 text-cyan-400 group-hover:-rotate-90 transition-transform duration-300" />
-              <span className="hidden xl:inline font-semibold text-slate-200 group-hover:text-white">Reset</span>
+              <RotateCcw className="w-4 h-4 text-white/80 group-hover:-rotate-90 transition-transform duration-300" />
+              <span className="hidden xl:inline font-semibold text-white/85 group-hover:text-white">Reset</span>
             </button>
 
             {/* Wishlist Icon Only — Routes directly to dedicated /wishlist page */}
             <button
               onClick={() => router.push('/wishlist')}
-              className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-rose-500/20 text-slate-200 hover:text-rose-300 border border-white/[0.1] hover:border-rose-500/40 hover:shadow-[0_0_16px_rgba(244,63,94,0.35)] transition-all relative flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
+              className="h-10 w-10 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-white/85 hover:text-white border border-white/[0.12] hover:border-white/25 transition-all relative flex items-center justify-center cursor-pointer shadow-sm active:scale-95 backdrop-blur-xl"
               title="View Saved Wishlist"
             >
-              <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-rose-400 fill-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'text-slate-300'}`} />
+              <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-rose-400 fill-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]' : 'text-white/80'}`} />
               {wishlistItems.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#090D14] shadow-sm animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-sm animate-pulse">
                   {wishlistItems.length}
                 </span>
               )}
             </button>
 
-            {/* Hero Shopping Trolley Button */}
+            {/* Hero Shopping Trolley Button — Ultra-Luxury Pure White Crystal Glass Pill */}
             <button
               onClick={() => toggleCart(true)}
-              className="h-10 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/35 hover:shadow-[0_0_24px_rgba(56,189,248,0.5)] border border-white/20 hover:scale-[1.02] active:scale-[0.97] transition-all btn-shine cursor-pointer flex-shrink-0"
+              className="h-10 px-3 sm:px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black flex items-center gap-2 sm:gap-2.5 shadow-[0_4px_20px_rgba(255,255,255,0.35),0_2px_8px_rgba(0,0,0,0.5)] hover:shadow-[0_0_28px_rgba(255,255,255,0.65)] hover:scale-[1.02] active:scale-[0.96] transition-all cursor-pointer flex-shrink-0"
               title="Open Shopping Trolley"
             >
               <div className="relative flex items-center">
-                <ShoppingCart className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                <ShoppingCart className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-950" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-2.5 -right-2.5 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#090D14] shadow-sm shadow-rose-500/50">
+                  <span className="absolute -top-2.5 -right-2.5 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                     {totalItems}
                   </span>
                 )}
               </div>
-              <div className="h-3.5 w-px bg-white/20 hidden xs:block" />
-              <span className="text-xs sm:text-sm font-extrabold tracking-tight">
+              <div className="h-3.5 w-px bg-slate-300 hidden xs:block" />
+              <span className="text-xs sm:text-sm font-black tracking-tight text-slate-950 font-mono">
                 ₹{totalAmount.toLocaleString('en-IN')}
               </span>
             </button>
 
-            {/* Profile Icon */}
+            {/* Profile Icon — Frosted Platinum Glass */}
             {!isAuthenticated ? (
               <button
                 onClick={() => openLoginModal()}
-                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600/30 to-indigo-600/30 hover:from-blue-600/50 hover:to-indigo-600/50 text-blue-300 hover:text-white border border-blue-500/40 hover:shadow-[0_0_16px_rgba(59,130,246,0.35)] transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0 active:scale-95"
+                className="h-10 w-10 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white/90 hover:text-white border border-white/[0.15] hover:border-white/30 backdrop-blur-xl flex items-center justify-center shadow-sm active:scale-95 cursor-pointer flex-shrink-0 transition-all"
                 title="Sign in with Indian Mobile Number (+91)"
               >
-                <LogIn className="w-4 h-4 text-cyan-400" />
+                <LogIn className="w-4 h-4 text-white" />
               </button>
             ) : (
               <button
                 onClick={() => router.push('/profile')}
-                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 hover:shadow-[0_0_20px_rgba(56,189,248,0.45)] ring-2 ring-white/20 hover:ring-white/40 transition-all cursor-pointer flex-shrink-0 active:scale-95"
+                className="h-10 w-10 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white border border-white/[0.15] hover:border-white/30 backdrop-blur-xl flex items-center justify-center shadow-sm active:scale-95 cursor-pointer flex-shrink-0 transition-all"
                 title="My Profile"
               >
-                <User className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                <User className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
               </button>
             )}
           </div>
@@ -516,21 +516,21 @@ export const SupermarketHUD: React.FC = () => {
             : 'opacity-100 translate-y-0 scale-100'
         }`}
       >
-        <div className="glass-panel px-7 py-3.5 rounded-3xl border border-blue-400/30 shadow-[0_20px_60px_rgba(0,0,0,0.85)] text-center flex flex-col items-center gap-1.5 backdrop-blur-xl">
+        <div className="bg-slate-950/60 px-7 py-3.5 rounded-3xl border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.25)] text-center flex flex-col items-center gap-1.5 backdrop-blur-2xl">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/35 ring-1 ring-white/20">
+            <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-inner">
               <Store className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-              MART<span className="text-blue-400">VERSE</span>
+              MART<span className="text-white/60">VERSE</span>
             </h1>
           </div>
-          <p className="text-xs text-blue-200 font-semibold tracking-wide">
+          <p className="text-xs text-white/70 font-semibold tracking-wide">
             3D Virtual Hypermarket
           </p>
-          <div className="flex items-center gap-2 text-[11px] text-slate-300 font-mono mt-1 bg-black/40 px-3 py-1 rounded-full border border-white/[0.08]">
-            <span className="text-blue-400 font-bold">W A S D</span>
-            <span className="text-slate-400">•</span>
+          <div className="flex items-center gap-2 text-[11px] text-white/80 font-mono mt-1 bg-white/[0.08] px-3.5 py-1 rounded-full border border-white/15 backdrop-blur-md">
+            <span className="text-white font-bold">W A S D</span>
+            <span className="text-white/40">•</span>
             <span>Push Trolley to Explore</span>
           </div>
         </div>
