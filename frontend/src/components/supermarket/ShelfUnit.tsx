@@ -103,6 +103,7 @@ const ProductSmallImage: React.FC<{
         tex.generateMipmaps = true;
         tex.minFilter = THREE.LinearMipmapLinearFilter;
         tex.magFilter = THREE.LinearFilter;
+        tex.anisotropy = 16;
         tex.needsUpdate = true;
         shelfTextureCache.set(resolvedUrl, tex);
         setTexture(tex);
@@ -113,6 +114,9 @@ const ProductSmallImage: React.FC<{
           loader.load('/products/sweets/DairyMilk.png', (tex) => {
             tex.colorSpace = THREE.SRGBColorSpace;
             tex.generateMipmaps = true;
+            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            tex.anisotropy = 16;
             tex.needsUpdate = true;
             shelfTextureCache.set(resolvedUrl, tex);
             setTexture(tex);
@@ -368,7 +372,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                             prod.brand?.toLowerCase().includes('cadbury') ||
                             isSweetsAisle;
         const packagingUrl = isDairyMilk
-          ? '/products/sweets/DairyMilk.png'
+          ? '/products/sweets/DairyMilk_cropped.png'
           : (prod.imageUrl || '/products/fallback.svg');
 
         // Pre-cached crisp canvas texture for ESL digital price tag
@@ -402,12 +406,12 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                 openProductModal(prod);
               }}
             >
-              <boxGeometry args={[0.55, 0.40, 0.35]} />
+              <boxGeometry args={[isDairyMilk ? 0.68 : 0.55, 0.40, 0.35]} />
             </mesh>
 
             {/* Hover Floating Instruction Tag (Rendered only on active hovered item) */}
             {isHovered && (
-              <group position={[0, isDairyMilk ? 0.44 : 0.50, 0]}>
+              <group position={[0, isDairyMilk ? 0.38 : 0.48, 0]}>
                 <mesh position={[0, 0, 0]}>
                   <boxGeometry args={[0.48, 0.09, 0.02]} />
                   <meshBasicMaterial color="#1d4ed8" />
@@ -488,69 +492,58 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
               // Realistic Big-Size 3D Chocolate Bar Package (Authentic Cadbury Dairy Milk Packaging)
               <group position={[0, 0, 0]}>
                 {/* Clear Acrylic Confectionery Shelf Tray directly on shelf plank */}
-                <mesh position={[0, 0.01, 0.02]}>
-                  <boxGeometry args={[0.62, 0.02, 0.22]} />
+                <mesh position={[0, 0.008, 0.02]}>
+                  <boxGeometry args={[0.70, 0.016, 0.16]} />
+                  <meshStandardMaterial
+                    color="#ffffff"
+                    transparent
+                    opacity={0.3}
+                    roughness={0.1}
+                    metalness={0.05}
+                  />
+                </mesh>
+                {/* Front Acrylic Retaining Lip */}
+                <mesh position={[0, 0.026, 0.095]}>
+                  <boxGeometry args={[0.70, 0.036, 0.006]} />
                   <meshStandardMaterial
                     color="#ffffff"
                     transparent
                     opacity={0.35}
                     roughness={0.1}
-                    metalness={0.1}
-                  />
-                </mesh>
-                {/* Front Acrylic Retaining Lip */}
-                <mesh position={[0, 0.035, 0.125]}>
-                  <boxGeometry args={[0.62, 0.05, 0.008]} />
-                  <meshStandardMaterial
-                    color="#ffffff"
-                    transparent
-                    opacity={0.4}
-                    roughness={0.1}
                   />
                 </mesh>
 
-                {/* --- Front Featured Chocolate Bar (Big Size with authentic DairyMilk.png packaging) --- */}
-                <group position={[0, 0.19, 0.03]} rotation={[-0.05, 0, 0]}>
-                  {/* Main Chocolate Bar Solid Slab Body (Authentic Royal Cadbury Purple Foil Wrapper) */}
+                {/* --- Front Featured Chocolate Bar: BIG Prominent Packaging with ZERO Black Borders --- */}
+                <group position={[0, 0.155, 0.02]} rotation={[-0.04, 0, 0]}>
+                  {/* Slim 3D Chocolate Packaging Body (Cadbury Royal Purple - perfectly hidden behind texture) */}
                   <mesh castShadow receiveShadow>
-                    <boxGeometry args={[0.54, 0.36, 0.035]} />
+                    <boxGeometry args={[0.65, 0.296, 0.022]} />
                     <meshStandardMaterial
-                      color="#1f053d"
-                      roughness={0.2}
-                      metalness={0.15}
-                      emissive={isHovered ? '#3b0764' : '#000000'}
-                      emissiveIntensity={isHovered ? 0.4 : 0}
+                      color="#4a044e"
+                      roughness={0.3}
+                      metalness={0.1}
+                      emissive={isHovered ? '#6b21a8' : '#000000'}
+                      emissiveIntensity={isHovered ? 0.3 : 0}
                     />
                   </mesh>
 
-                  {/* Left Crimped Foil Seal Tab */}
-                  <mesh position={[-0.28, 0, 0]}>
-                    <boxGeometry args={[0.018, 0.35, 0.006]} />
-                    <meshStandardMaterial color="#1f053d" roughness={0.35} metalness={0.25} />
-                  </mesh>
-
-                  {/* Right Crimped Foil Seal Tab */}
-                  <mesh position={[0.28, 0, 0]}>
-                    <boxGeometry args={[0.018, 0.35, 0.006]} />
-                    <meshStandardMaterial color="#1f053d" roughness={0.35} metalness={0.25} />
-                  </mesh>
-
-                  {/* Complete Dairy Milk High-Resolution Packaging Texture Plane */}
+                  {/* Complete Cadbury Dairy Milk High-Resolution Packaging Artwork Plane */}
+                  {/* Exact 2.1845 aspect ratio matches 1409x645 packaging artwork with edge-to-edge clarity */}
                   <ProductSmallImage
                     url={packagingUrl}
-                    position={[0, 0, 0.019]}
-                    scale={[0.54, 0.36]}
+                    position={[0, 0, 0.012]}
+                    scale={[0.66, 0.302]}
                     materialType="basic"
                     alphaTest={0.01}
                   />
 
                   {/* Subtle Glossy Foil Reflection Sheen Strip */}
-                  <mesh position={[0, 0.08, 0.02]}>
-                    <planeGeometry args={[0.50, 0.03]} />
+                  <mesh position={[0, 0.06, 0.013]}>
+                    <planeGeometry args={[0.62, 0.03]} />
                     <meshBasicMaterial
                       color="#ffffff"
                       transparent
-                      opacity={isHovered ? 0.35 : 0.15}
+                      opacity={isHovered ? 0.3 : 0.12}
                     />
                   </mesh>
                 </group>
