@@ -102,14 +102,14 @@ export const SupermarketScene: React.FC = () => {
           {/* Exit Gate on Ground Floor near z = -23 */}
           <ExitGate3D position={[0, 0, -23]} />
 
-          {/* Interactive Player Trolley in front of customer */}
+          {/* Player Navigation & Camera Controller (Must execute first in useFrame loop to update positions) */}
+          <PlayerController />
+
+          {/* Interactive Player Trolley in front of customer (Executes in 100% sync with PlayerController) */}
           <TrolleyModel />
 
           {/* 3D Flying Item Parabolic Arc targeting the trolley basket */}
           <FlyingProductArc />
-
-          {/* Player Navigation & Camera Controller */}
-          <PlayerController />
         </Suspense>
       </Canvas>
     </div>

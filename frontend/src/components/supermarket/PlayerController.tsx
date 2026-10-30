@@ -493,16 +493,16 @@ export const PlayerController: React.FC = () => {
       yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 55, delta);
       pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 55, delta);
 
-      const speed = 12.5; // Instant, fast, professional navigation speed
+      const speed = 9.2; // Silky smooth, agile gliding speed
       const moveVector = new THREE.Vector3();
 
-      // 1. Keyboard WASD & Arrow Keys — Pure lateral strafing (NO rotation on Left/Right keys)
+      // 1. Keyboard WASD & Arrow Keys — Full 8-direction continuous motion (Straight, Back, Left, Right, Cross)
       if (keys.current.forward) moveVector.z += 1;
       if (keys.current.backward) moveVector.z -= 1;
-      if (keys.current.left) moveVector.x -= 1; // Pure leftward translation
-      if (keys.current.right) moveVector.x += 1; // Pure rightward translation
+      if (keys.current.left) moveVector.x -= 1;
+      if (keys.current.right) moveVector.x += 1;
 
-      // 2. On-Screen 4-Arrow Navigator (Virtual D-Pad) — Pure lateral strafing
+      // 2. On-Screen 4-Arrow Navigator (Virtual D-Pad)
       if (martRuntime.virtualKeys.forward) moveVector.z += 1;
       if (martRuntime.virtualKeys.backward) moveVector.z -= 1;
       if (martRuntime.virtualKeys.left) moveVector.x -= 1;
@@ -526,14 +526,14 @@ export const PlayerController: React.FC = () => {
         }
       }
 
-      // Instant acceleration and snappy response (55/45 eliminates any start/stop delay)
+      // Smooth analog physical momentum curve (rate 22/18 eliminates step-step quantized jumps)
       // Camera-relative velocity projection: Right arrow moves to visual screen RIGHT, Left moves LEFT
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
       const targetVelX = (-moveVector.x * cos + moveVector.z * sin) * speed;
       const targetVelZ = (moveVector.x * sin + moveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 55 : 45;
+      const accelRate = isMoving ? 22 : 18;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -564,20 +564,22 @@ export const PlayerController: React.FC = () => {
         let nextX = posRef.current.x + worldDX;
         let nextZ = posRef.current.z + worldDZ;
 
-        // Front trolley bumper center: 0.45m in front of player, radius 0.44m
+        // Front trolley bumper center: 0.45m in front of player, radius 0.42m
         const cartCenterDist = 0.45;
-        const cartRadius = 0.44;
+        const cartRadius = 0.42;
 
         for (let iter = 0; iter < 2; iter++) {
           // Pass 1: Front capsule (Trolley body & bumper)
-          const cx = nextX + sinYaw * cartCenterDist;
-          const cz = nextZ + cosYaw * cartCenterDist;
+          let cx = nextX + sinYaw * cartCenterDist;
+          let cz = nextZ + cosYaw * cartCenterDist;
 
           for (let i = 0; i < boxes.length; i++) {
             const res = getCircleBoxDepenetration(cx, cz, cartRadius, boxes[i]);
             if (res.overlap) {
               nextX += res.pX;
               nextZ += res.pZ;
+              cx = nextX + sinYaw * cartCenterDist;
+              cz = nextZ + cosYaw * cartCenterDist;
               const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;
               if (vn < 0) {
                 velocityRef.current.x -= vn * res.normalX;
@@ -588,7 +590,7 @@ export const PlayerController: React.FC = () => {
 
           // Pass 2: Rear capsule (Player body)
           for (let i = 0; i < boxes.length; i++) {
-            const resP = getCircleBoxDepenetration(nextX, nextZ, 0.28, boxes[i]);
+            const resP = getCircleBoxDepenetration(nextX, nextZ, 0.26, boxes[i]);
             if (resP.overlap) {
               nextX += resP.pX;
               nextZ += resP.pZ;
@@ -602,8 +604,8 @@ export const PlayerController: React.FC = () => {
 
           // Unpaid exit barrier check
           if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
-            const curCx = nextX + sinYaw * cartCenterDist;
-            const curCz = nextZ + cosYaw * cartCenterDist;
+            let curCx = nextX + sinYaw * cartCenterDist;
+            let curCz = nextZ + cosYaw * cartCenterDist;
             const resExit = getCircleBoxDepenetration(curCx, curCz, cartRadius, UNPAID_EXIT_BARRIER);
             if (resExit.overlap) {
               nextX += resExit.pX;
