@@ -51,6 +51,8 @@ interface MartStore {
   hideToast: () => void;
   openUnpaidExitAlert: () => void;
   closeUnpaidExitAlert: () => void;
+  isNavigatorOpen: boolean;
+  toggleNavigator: (open?: boolean) => void;
   resetTrigger: number;
   resetToOriginalState: () => void;
   teleportTrigger: number;
@@ -61,6 +63,12 @@ interface MartStore {
 export const martRuntime = {
   playerPos: [0, 1.5, -20] as [number, number, number],
   playerYaw: 0,
+  virtualKeys: {
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+  },
 };
 
 export const useMartStore = create<MartStore>((set) => ({
@@ -73,6 +81,7 @@ export const useMartStore = create<MartStore>((set) => ({
   hoveredProduct: null,
   isProductModalOpen: false,
   isMinimapOpen: false,
+  isNavigatorOpen: true, // On-screen 4-arrow navigator visible by default
   isSoundMuted: false,
   cameraMode: 'third_person',
   nearBillingCounter: false,
@@ -110,6 +119,7 @@ export const useMartStore = create<MartStore>((set) => ({
   closeProductModal: () => set({ isProductModalOpen: false, selectedProduct: null }),
 
   toggleMinimap: (open) => set((state) => ({ isMinimapOpen: open !== undefined ? open : !state.isMinimapOpen })),
+  toggleNavigator: (open) => set((state) => ({ isNavigatorOpen: open !== undefined ? open : !state.isNavigatorOpen })),
   
   toggleSound: () => {
     sounds.enabled = !sounds.enabled;

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMartStore } from '@/store/useMartStore';
+import { useMartStore, martRuntime } from '@/store/useMartStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useBillingStore } from '@/store/useBillingStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -28,6 +28,11 @@ import {
   LogIn,
   Heart,
   Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Navigation,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { ProductHoverCard } from '@/components/ui/ProductHoverCard';
@@ -43,12 +48,15 @@ export const SupermarketHUD: React.FC = () => {
   const promptText = useMartStore((state) => state.promptText);
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
+  const setHasMovedTrolley = useMartStore((state) => state.setHasMovedTrolley);
   const showToast = useMartStore((state) => state.showToast);
   const resetToOriginalState = useMartStore((state) => state.resetToOriginalState);
   const products = useMartStore((state) => state.products);
   const navigateToProduct = useMartStore((state) => state.navigateToProduct);
   const isMinimapOpen = useMartStore((state) => state.isMinimapOpen);
   const toggleMinimap = useMartStore((state) => state.toggleMinimap);
+  const isNavigatorOpen = useMartStore((state) => state.isNavigatorOpen);
+  const toggleNavigator = useMartStore((state) => state.toggleNavigator);
 
   const toast = useMartStore((state) => state.toast);
   const hideToast = useMartStore((state) => state.hideToast);
@@ -310,6 +318,20 @@ export const SupermarketHUD: React.FC = () => {
               </span>
             </button>
 
+            {/* On-Screen 4-Arrow Navigator Toggle */}
+            <button
+              onClick={() => toggleNavigator()}
+              className={`h-10 px-2.5 sm:px-3 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer shadow-sm active:scale-95 backdrop-blur-xl ${
+                isNavigatorOpen
+                  ? 'bg-white text-slate-950 font-bold border-white shadow-md'
+                  : 'bg-white/[0.06] hover:bg-white/[0.12] text-white/85 hover:text-white border border-white/[0.12]'
+              }`}
+              title={isNavigatorOpen ? 'Hide On-Screen 4-Arrow Navigator' : 'Show On-Screen 4-Arrow Navigator'}
+            >
+              <Compass className={`w-4 h-4 ${isNavigatorOpen ? 'text-slate-950' : 'text-white/80'}`} />
+              <span className="hidden xl:inline font-medium">Arrows</span>
+            </button>
+
             {/* Sound Toggle */}
             <button
               onClick={toggleSound}
@@ -537,39 +559,139 @@ export const SupermarketHUD: React.FC = () => {
       </div>
 
       {/* ============================================================== */}
-      {/* --- Bottom: Controls Legend & Interactive 2D Minimap --- */}
+      {/* --- Bottom: 4-Arrow On-Screen Navigator & Legend --- */}
       {/* ============================================================== */}
       <footer className="flex items-end justify-between pointer-events-none gap-4">
-        {/* Navigation Legend */}
-        <div className="pointer-events-auto glass-panel p-3.5 rounded-2xl text-xs text-slate-300 shadow-2xl space-y-2 hidden md:block max-w-xs border border-white/[0.08]">
-          <div className="font-bold text-white text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-400">
-            <Compass className="w-3.5 h-3.5 text-blue-400" />
-            <span>Store Navigation</span>
+        {/* On-Screen 4-Arrow Navigator (Compact Frosted Glass D-Pad) */}
+        {isNavigatorOpen ? (
+          <div className="pointer-events-auto bg-slate-950/65 backdrop-blur-2xl border border-white/20 p-2.5 rounded-3xl shadow-[0_16px_40px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.25)] flex flex-col items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200 select-none">
+            {/* Header: Title & Close */}
+            <div className="w-full flex items-center justify-between px-1 pb-1 border-b border-white/10">
+              <div className="flex items-center gap-1.5 text-[10px] font-black tracking-wider text-white/80 uppercase">
+                <Navigation className="w-3 h-3 text-white/70" />
+                <span>NAVIGATOR</span>
+              </div>
+              <button
+                onClick={() => toggleNavigator(false)}
+                className="text-white/40 hover:text-white p-0.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                title="Hide Arrows (Click 'Arrows' in top bar to reopen)"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* 4 Directional Arrows Grid (Small, clean, high-precision D-Pad) */}
+            <div className="grid grid-cols-3 gap-1.5 items-center justify-items-center w-28 h-28 my-0.5">
+              {/* Row 1: Forward (Up Arrow) */}
+              <div />
+              <button
+                onMouseDown={() => { martRuntime.virtualKeys.forward = true; if (!hasMovedTrolley) setHasMovedTrolley(true); }}
+                onMouseUp={() => { martRuntime.virtualKeys.forward = false; }}
+                onMouseLeave={() => { martRuntime.virtualKeys.forward = false; }}
+                onTouchStart={(e) => { e.preventDefault(); martRuntime.virtualKeys.forward = true; if (!hasMovedTrolley) setHasMovedTrolley(true); }}
+                onTouchEnd={() => { martRuntime.virtualKeys.forward = false; }}
+                onTouchCancel={() => { martRuntime.virtualKeys.forward = false; }}
+                className="w-8.5 h-8.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.18] active:bg-white active:text-slate-950 text-white border border-white/15 hover:border-white/30 flex items-center justify-center transition-all shadow-sm active:scale-90 cursor-pointer backdrop-blur-md"
+                title="Push Forward (Up Arrow / W)"
+              >
+                <ChevronUp className="w-5 h-5 stroke-[2.5]" />
+              </button>
+              <div />
+
+              {/* Row 2: Turn Left, Center Dot, Turn Right */}
+              <button
+                onMouseDown={() => { martRuntime.virtualKeys.left = true; if (!hasMovedTrolley) setHasMovedTrolley(true); }}
+                onMouseUp={() => { martRuntime.virtualKeys.left = false; }}
+                onMouseLeave={() => { martRuntime.virtualKeys.left = false; }}
+                onTouchStart={(e) => { e.preventDefault(); martRuntime.virtualKeys.left = true; if (!hasMovedTrolley) setHasMovedTrolley(true); }}
+                onTouchEnd={() => { martRuntime.virtualKeys.left = false; }}
+                onTouchCancel={() => { martRuntime.virtualKeys.left = false; }}
+                className="w-8.5 h-8.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.18] active:bg-white active:text-slate-950 text-white border border-white/15 hover:border-white/30 flex items-center justify-center transition-all shadow-sm active:scale-90 cursor-pointer backdrop-blur-md"
+                title="Steer Left (Left Arrow / A)"
+              >
+                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+              </button>
+
+              <div className="w-8.5 h-8.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-white/50" />
+              </div>
+
+              <button
+                onMouseDown={() => { martRuntime.virtualKeys.right = true; if (!hasMovedTrolley) setHasMovedTrolley(true); }}
+                onMouseUp={() => { martRuntime.virtualKeys.right = false; }}
+                onMouseLeave={() => { martRuntime.virtualKeys.right = false; }}
+                onTouchStart={(e) => { e.preventDefault(); martRuntime.virtualKeys.right = true; if (!hasMovedTrolley) setHasMovedTrolley(true); }}
+                onTouchEnd={() => { martRuntime.virtualKeys.right = false; }}
+                onTouchCancel={() => { martRuntime.virtualKeys.right = false; }}
+                className="w-8.5 h-8.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.18] active:bg-white active:text-slate-950 text-white border border-white/15 hover:border-white/30 flex items-center justify-center transition-all shadow-sm active:scale-90 cursor-pointer backdrop-blur-md"
+                title="Steer Right (Right Arrow / D)"
+              >
+                <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+              </button>
+
+              {/* Row 3: Pull Backward (Down Arrow) */}
+              <div />
+              <button
+                onMouseDown={() => { martRuntime.virtualKeys.backward = true; if (!hasMovedTrolley) setHasMovedTrolley(true); }}
+                onMouseUp={() => { martRuntime.virtualKeys.backward = false; }}
+                onMouseLeave={() => { martRuntime.virtualKeys.backward = false; }}
+                onTouchStart={(e) => { e.preventDefault(); martRuntime.virtualKeys.backward = true; if (!hasMovedTrolley) setHasMovedTrolley(true); }}
+                onTouchEnd={() => { martRuntime.virtualKeys.backward = false; }}
+                onTouchCancel={() => { martRuntime.virtualKeys.backward = false; }}
+                className="w-8.5 h-8.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.18] active:bg-white active:text-slate-950 text-white border border-white/15 hover:border-white/30 flex items-center justify-center transition-all shadow-sm active:scale-90 cursor-pointer backdrop-blur-md"
+                title="Pull Backward (Down Arrow / S)"
+              >
+                <ChevronDown className="w-5 h-5 stroke-[2.5]" />
+              </button>
+              <div />
+            </div>
+
+            {/* Sub-label explaining 3 input ways */}
+            <div className="text-[9px] text-white/50 font-medium tracking-tight text-center">
+              Keys • Arrows • 2-Finger Scroll
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
+        ) : (
+          <button
+            onClick={() => toggleNavigator(true)}
+            className="pointer-events-auto bg-slate-950/60 hover:bg-slate-950/80 backdrop-blur-2xl border border-white/20 px-3.5 py-2 rounded-2xl shadow-lg text-white/85 hover:text-white flex items-center gap-2 text-xs font-semibold cursor-pointer active:scale-95 transition-all"
+            title="Open 4-Arrow On-Screen Navigator"
+          >
+            <Compass className="w-4 h-4 text-white" />
+            <span>Show 4 Arrows</span>
+          </button>
+        )}
+
+        {/* Navigation Legend */}
+        <div className="pointer-events-auto bg-slate-950/60 backdrop-blur-2xl p-3.5 rounded-2xl text-xs text-white/80 shadow-2xl space-y-2 hidden md:block max-w-xs border border-white/15">
+          <div className="font-bold text-white text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-white/60">
+            <Compass className="w-3.5 h-3.5 text-white/80" />
+            <span>Store Navigation (3 Options)</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
             <div className="flex items-center gap-1.5">
-              <span className="bg-white/[0.06] text-blue-300 font-mono font-bold px-1.5 py-0.5 rounded border border-white/[0.08]">
-                W A S D
+              <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
+                Keys
               </span>
-              <span>Walk</span>
+              <span>Arrows / WASD</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="bg-white/[0.06] text-blue-300 font-mono font-bold px-1.5 py-0.5 rounded border border-white/[0.08]">
+              <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
+                Screen
+              </span>
+              <span>4-Arrow D-Pad</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
                 Mouse
               </span>
-              <span>Look 360°</span>
+              <span>2-Finger Scroll</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="bg-white/[0.06] text-blue-300 font-mono font-bold px-1.5 py-0.5 rounded border border-white/[0.08]">
-                E
+              <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
+                Look
               </span>
-              <span>Inspect Shelf</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="bg-white/[0.06] text-blue-300 font-mono font-bold px-1.5 py-0.5 rounded border border-white/[0.08]">
-                Click
-              </span>
-              <span>Add Product</span>
+              <span>Drag to Pan</span>
             </div>
           </div>
         </div>

@@ -47,6 +47,8 @@ export const PlayerController: React.FC = () => {
   // Motion physics refs
   const posRef = useRef(new THREE.Vector3(...martRuntime.playerPos));
   const velocityRef = useRef({ x: 0, z: 0 });
+  const wheelMomentum = useRef({ x: 0, z: 0 });
+  const isRightDragging = useRef(false);
   const yawRef = useRef(0);
   const pitchRef = useRef(0);
   const targetYawRef = useRef(0);
@@ -166,14 +168,29 @@ export const PlayerController: React.FC = () => {
       if (e.button === 0) {
         isDragging.current = true;
         prevMouse.current = { x: e.clientX, y: e.clientY };
+      } else if (e.button === 2) {
+        isRightDragging.current = true;
+        prevMouse.current = { x: e.clientX, y: e.clientY };
       }
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
       const dx = e.clientX - prevMouse.current.x;
       const dy = e.clientY - prevMouse.current.y;
       prevMouse.current = { x: e.clientX, y: e.clientY };
+
+      if (isRightDragging.current) {
+        // Dragging mouse forward (dy < 0) pushes trolley forward
+        wheelMomentum.current.z -= dy * 0.025;
+        wheelMomentum.current.x += dx * 0.02;
+        wheelMomentum.current.z = THREE.MathUtils.clamp(wheelMomentum.current.z, -1.2, 1.2);
+        wheelMomentum.current.x = THREE.MathUtils.clamp(wheelMomentum.current.x, -1.2, 1.2);
+        if (Math.abs(dy) > 2) {
+          if (!hasMovedTrolley) setHasMovedTrolley(true);
+        }
+      }
+
+      if (!isDragging.current) return;
 
       targetYawRef.current -= dx * 0.0032;
       targetPitchRef.current = Math.max(-0.55, Math.min(0.55, targetPitchRef.current - dy * 0.0028));
@@ -194,8 +211,46 @@ export const PlayerController: React.FC = () => {
       }
     };
 
-    const handleMouseUp = () => {
-      isDragging.current = false;
+    const handleMouseUp = (e: MouseEvent) => {
+      if (e.button === 0) isDragging.current = false;
+      if (e.button === 2) isRightDragging.current = false;
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target?.closest('.overflow-y-auto') ||
+        target?.closest('.overflow-x-auto') ||
+        ['INPUT', 'TEXTAREA'].includes(target?.tagName)
+      ) {
+        return;
+      }
+      e.preventDefault();
+
+      // Two-finger trackpad swipe or mouse wheel roll:
+      // deltaY < 0 is rolling up / swiping up -> move forward (+Z)
+      // deltaY > 0 is rolling down / swiping down -> move backward (-Z)
+      // deltaX < 0 is swiping left -> move left (+X)
+      // deltaX > 0 is swiping right -> move right (-X)
+      const factor = 0.0075;
+      wheelMomentum.current.z -= e.deltaY * factor;
+      wheelMomentum.current.x -= e.deltaX * factor;
+
+      wheelMomentum.current.z = THREE.MathUtils.clamp(wheelMomentum.current.z, -1.2, 1.2);
+      wheelMomentum.current.x = THREE.MathUtils.clamp(wheelMomentum.current.x, -1.2, 1.2);
+
+      if (Math.abs(e.deltaY) > 2 || Math.abs(e.deltaX) > 2) {
+        if (!hasMovedTrolley) {
+          setHasMovedTrolley(true);
+        }
+      }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.tagName === 'CANVAS') {
+        e.preventDefault();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -203,6 +258,8 @@ export const PlayerController: React.FC = () => {
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -210,6 +267,8 @@ export const PlayerController: React.FC = () => {
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('contextmenu', handleContextMenu);
     };
   }, [products, cartItems, isPaid]);
 
@@ -304,17 +363,34 @@ export const PlayerController: React.FC = () => {
       const speed = 7.5; // m/s walking speed
       const moveVector = new THREE.Vector3();
 
+      // 1. Keyboard WASD & Arrow Keys
       if (keys.current.forward) moveVector.z += 1;
       if (keys.current.backward) moveVector.z -= 1;
       if (keys.current.left) moveVector.x += 1;
       if (keys.current.right) moveVector.x -= 1;
 
-      const isMoving = moveVector.lengthSq() > 0;
+      // 2. On-Screen 4-Arrow Navigator (Virtual D-Pad)
+      if (martRuntime.virtualKeys.forward) moveVector.z += 1;
+      if (martRuntime.virtualKeys.backward) moveVector.z -= 1;
+      if (martRuntime.virtualKeys.left) moveVector.x += 1;
+      if (martRuntime.virtualKeys.right) moveVector.x -= 1;
+
+      // 3. Two-Finger Trackpad / Mouse Scroll Momentum
+      moveVector.z += wheelMomentum.current.z;
+      moveVector.x += wheelMomentum.current.x;
+
+      // Smoothly damp wheel momentum
+      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 8, delta);
+      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 8, delta);
+
+      const isMoving = moveVector.lengthSq() > 0.001;
       if (isMoving) {
         if (!hasMovedTrolley) {
           setHasMovedTrolley(true);
         }
-        moveVector.normalize();
+        if (moveVector.lengthSq() > 1) {
+          moveVector.normalize();
+        }
       }
 
       // Smooth acceleration and deceleration (rate 15/18 for responsive fluid motion without snapping)
