@@ -271,4 +271,45 @@ input:focus, select:focus, textarea:focus {
   animation: logo-jewel-pulse 3s ease-in-out infinite;
 }
 
+/* Luxury Cart Drawer Animations */
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0.95;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-drawer-slide {
+  animation: drawerSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-backdrop-fade {
+  animation: backdropFadeIn 0.25s ease-out forwards;
+}
+
+.cart-item-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+}
+.cart-item-card:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
+}
+
+
 
