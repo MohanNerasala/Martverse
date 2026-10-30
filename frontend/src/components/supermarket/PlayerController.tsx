@@ -32,12 +32,12 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 3.8, maxX: 22.0, minZ: -28.0, maxZ: -24.8 },  // Front Entrance Wall (Right of door)
   { minX: -3.8, maxX: 3.8, minZ: -28.0, maxZ: -25.8 },  // Front Doorway Backstop
 
-  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 0.85, z from -11.8 to 11.8
-  { minX: -10.85, maxX: -9.15, minZ: -11.8, maxZ: 11.8 },
-  { minX: -5.85, maxX: -4.15, minZ: -11.8, maxZ: 11.8 },
-  { minX: -0.85, maxX: 0.85, minZ: -11.8, maxZ: 11.8 },
-  { minX: 4.15, maxX: 5.85, minZ: -11.8, maxZ: 11.8 },
-  { minX: 9.15, maxX: 10.85, minZ: -11.8, maxZ: 11.8 },
+  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 0.85, z from -12.0 to 12.0
+  { minX: -10.85, maxX: -9.15, minZ: -12.0, maxZ: 12.0 },
+  { minX: -5.85, maxX: -4.15, minZ: -12.0, maxZ: 12.0 },
+  { minX: -0.85, maxX: 0.85, minZ: -12.0, maxZ: 12.0 },
+  { minX: 4.15, maxX: 5.85, minZ: -12.0, maxZ: 12.0 },
+  { minX: 9.15, maxX: 10.85, minZ: -12.0, maxZ: 12.0 },
 
   // Billing Counter Desks at [-3.8, 0, 3.8]
   { minX: -4.45, maxX: -3.15, minZ: 16.5, maxZ: 19.5 },
@@ -61,12 +61,12 @@ const STATIC_OBSTACLES_FLOOR2: ObstacleBox[] = [
   { minX: -22.0, maxX: 22.0, minZ: -28.0, maxZ: -24.8 }, // Front Wall
 
   // Shelves Floor 2: [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5]
-  { minX: -11.85, maxX: -10.15, minZ: -11.8, maxZ: 11.8 },
-  { minX: -7.35, maxX: -5.65, minZ: -11.8, maxZ: 11.8 },
-  { minX: -2.85, maxX: -1.15, minZ: -11.8, maxZ: 11.8 },
-  { minX: 1.65, maxX: 3.35, minZ: -11.8, maxZ: 11.8 },
-  { minX: 6.15, maxX: 7.85, minZ: -11.8, maxZ: 11.8 },
-  { minX: 10.65, maxX: 12.35, minZ: -11.8, maxZ: 11.8 },
+  { minX: -11.85, maxX: -10.15, minZ: -12.0, maxZ: 12.0 },
+  { minX: -7.35, maxX: -5.65, minZ: -12.0, maxZ: 12.0 },
+  { minX: -2.85, maxX: -1.15, minZ: -12.0, maxZ: 12.0 },
+  { minX: 1.65, maxX: 3.35, minZ: -12.0, maxZ: 12.0 },
+  { minX: 6.15, maxX: 7.85, minZ: -12.0, maxZ: 12.0 },
+  { minX: 10.65, maxX: 12.35, minZ: -12.0, maxZ: 12.0 },
 
   // Floor 2 Escalator void opening guardrails
   { minX: 13.0, maxX: 13.4, minZ: -6.5, maxZ: 5.2 },
@@ -85,7 +85,7 @@ function getCircleBoxDepenetration(
   cz: number,
   cr: number,
   box: ObstacleBox
-): { overlap: boolean; pX: number; pZ: number } {
+): { overlap: boolean; pX: number; pZ: number; normalX: number; normalZ: number } {
   const closestX = Math.max(box.minX, Math.min(cx, box.maxX));
   const closestZ = Math.max(box.minZ, Math.min(cz, box.maxZ));
   const dx = cx - closestX;
@@ -93,7 +93,7 @@ function getCircleBoxDepenetration(
   const distSq = dx * dx + dz * dz;
 
   if (distSq >= cr * cr) {
-    return { overlap: false, pX: 0, pZ: 0 };
+    return { overlap: false, pX: 0, pZ: 0, normalX: 0, normalZ: 0 };
   }
 
   const dist = Math.sqrt(distSq);
@@ -103,17 +103,21 @@ function getCircleBoxDepenetration(
     const dB = cz - box.minZ;
     const dT = box.maxZ - cz;
     const minD = Math.min(dL, dR, dB, dT);
-    if (minD === dL) return { overlap: true, pX: -(dL + cr), pZ: 0 };
-    if (minD === dR) return { overlap: true, pX: (dR + cr), pZ: 0 };
-    if (minD === dB) return { overlap: true, pX: 0, pZ: -(dB + cr) };
-    return { overlap: true, pX: 0, pZ: (dT + cr) };
+    if (minD === dL) return { overlap: true, pX: -(dL + cr), pZ: 0, normalX: -1, normalZ: 0 };
+    if (minD === dR) return { overlap: true, pX: (dR + cr), pZ: 0, normalX: 1, normalZ: 0 };
+    if (minD === dB) return { overlap: true, pX: 0, pZ: -(dB + cr), normalX: 0, normalZ: -1 };
+    return { overlap: true, pX: 0, pZ: (dT + cr), normalX: 0, normalZ: 1 };
   }
 
   const overlap = cr - dist;
+  const normalX = dx / dist;
+  const normalZ = dz / dist;
   return {
     overlap: true,
-    pX: (dx / dist) * overlap,
-    pZ: (dz / dist) * overlap,
+    pX: normalX * overlap,
+    pZ: normalZ * overlap,
+    normalX,
+    normalZ,
   };
 }
 
@@ -158,6 +162,7 @@ export const PlayerController: React.FC = () => {
   const isDragging = useRef(false);
   const prevMouse = useRef({ x: 0, y: 0 });
   const lastSyncTime = useRef(0);
+  const lastProximityCheck = useRef(0);
   const resetPending = useRef(false);
   const proximityCache = useRef<{
     nearBilling: boolean;
@@ -452,10 +457,10 @@ export const PlayerController: React.FC = () => {
       }
     } else {
       // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 32, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 32, delta);
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 45, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 45, delta);
 
-      const speed = 10.2; // Snappy, swift walking speed with buttery smoothness
+      const speed = 11.2; // Snappy, responsive walking speed with buttery smoothness
       const moveVector = new THREE.Vector3();
 
       // 1. Keyboard WASD & Arrow Keys
@@ -475,8 +480,8 @@ export const PlayerController: React.FC = () => {
       moveVector.x += wheelMomentum.current.x;
 
       // Smoothly damp wheel momentum
-      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 8, delta);
-      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 8, delta);
+      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 10, delta);
+      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 10, delta);
 
       const isMoving = moveVector.lengthSq() > 0.001;
       if (isMoving) {
@@ -488,13 +493,13 @@ export const PlayerController: React.FC = () => {
         }
       }
 
-      // Smooth acceleration and deceleration (rate 15/18 for responsive fluid motion without snapping)
+      // Smooth acceleration and deceleration for instant, fluid movement
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
       const targetVelX = (moveVector.x * cos + moveVector.z * sin) * speed;
       const targetVelZ = (-moveVector.x * sin + moveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 26 : 28;
+      const accelRate = isMoving ? 30 : 32;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -504,7 +509,7 @@ export const PlayerController: React.FC = () => {
       const currentFloor = posRef.current.y > 4.5 ? 2 : 1;
 
       // -------------------------------------------------------------
-      // AAA Buttery-Smooth Zero-Lag Collision Slide Resolver
+      // AAA Buttery-Smooth Tangent-Projected Collision Slide Resolver
       // -------------------------------------------------------------
       // Exclude escalator moving ramp & landing zones so movement between floors is 100% free
       const onRampCorridor =
@@ -520,78 +525,75 @@ export const PlayerController: React.FC = () => {
         const boxes = currentFloor === 1 ? STATIC_OBSTACLES_FLOOR1 : STATIC_OBSTACLES_FLOOR2;
         const sinYaw = Math.sin(yawRef.current);
         const cosYaw = Math.cos(yawRef.current);
-        const cartDist = 0.85;
+        const cartDist = 0.80;
+        const cartRadius = 0.30;
+        const playerRadius = 0.28;
 
-        // Decoupled X-Axis Move & Slide (glides along walls with zero sticking)
-        let newX = posRef.current.x + worldDX;
-        let blockedX = false;
-        if (Math.abs(worldDX) > 0.00001) {
-          // Check player circle
+        let nextX = posRef.current.x + worldDX;
+        let nextZ = posRef.current.z + worldDZ;
+
+        // 2-pass iterative relaxation for 100% impenetrable, ultra-smooth sliding
+        for (let iter = 0; iter < 2; iter++) {
+          // Pass 1: Player character body
           for (let i = 0; i < boxes.length; i++) {
-            const res = getCircleBoxDepenetration(newX, posRef.current.z, 0.28, boxes[i]);
+            const res = getCircleBoxDepenetration(nextX, nextZ, playerRadius, boxes[i]);
             if (res.overlap) {
-              newX += res.pX;
-              blockedX = true;
+              nextX += res.pX;
+              nextZ += res.pZ;
+              // Project velocity along collision surface tangent (preserves 100% sliding speed)
+              const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;
+              if (vn < 0) {
+                velocityRef.current.x -= vn * res.normalX;
+                velocityRef.current.z -= vn * res.normalZ;
+              }
             }
           }
-          // Check trolley circle
+
+          // Pass 2: Trolley body in front of player
+          const tx = nextX + sinYaw * cartDist;
+          const tz = nextZ + cosYaw * cartDist;
           for (let i = 0; i < boxes.length; i++) {
-            const tx = newX + sinYaw * cartDist;
-            const tz = posRef.current.z + cosYaw * cartDist;
-            const res = getCircleBoxDepenetration(tx, tz, 0.34, boxes[i]);
+            const res = getCircleBoxDepenetration(tx, tz, cartRadius, boxes[i]);
             if (res.overlap) {
-              newX += res.pX;
-              blockedX = true;
+              nextX += res.pX;
+              nextZ += res.pZ;
+              const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;
+              if (vn < 0) {
+                velocityRef.current.x -= vn * res.normalX;
+                velocityRef.current.z -= vn * res.normalZ;
+              }
             }
           }
+
+          // Unpaid exit barrier check
           if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
-            const res = getCircleBoxDepenetration(newX, posRef.current.z, 0.28, UNPAID_EXIT_BARRIER);
-            if (res.overlap) { newX += res.pX; blockedX = true; }
-            const tx = newX + sinYaw * cartDist;
-            const tz = posRef.current.z + cosYaw * cartDist;
-            const resT = getCircleBoxDepenetration(tx, tz, 0.34, UNPAID_EXIT_BARRIER);
-            if (resT.overlap) { newX += resT.pX; blockedX = true; }
+            const resP = getCircleBoxDepenetration(nextX, nextZ, playerRadius, UNPAID_EXIT_BARRIER);
+            if (resP.overlap) {
+              nextX += resP.pX;
+              nextZ += resP.pZ;
+              const vn = velocityRef.current.x * resP.normalX + velocityRef.current.z * resP.normalZ;
+              if (vn < 0) {
+                velocityRef.current.x -= vn * resP.normalX;
+                velocityRef.current.z -= vn * resP.normalZ;
+              }
+            }
+            const curTx = nextX + sinYaw * cartDist;
+            const curTz = nextZ + cosYaw * cartDist;
+            const resT = getCircleBoxDepenetration(curTx, curTz, cartRadius, UNPAID_EXIT_BARRIER);
+            if (resT.overlap) {
+              nextX += resT.pX;
+              nextZ += resT.pZ;
+              const vn = velocityRef.current.x * resT.normalX + velocityRef.current.z * resT.normalZ;
+              if (vn < 0) {
+                velocityRef.current.x -= vn * resT.normalX;
+                velocityRef.current.z -= vn * resT.normalZ;
+              }
+            }
           }
         }
 
-        // Decoupled Z-Axis Move & Slide (with newX already safely clamped)
-        let newZ = posRef.current.z + worldDZ;
-        let blockedZ = false;
-        if (Math.abs(worldDZ) > 0.00001) {
-          // Check player circle
-          for (let i = 0; i < boxes.length; i++) {
-            const res = getCircleBoxDepenetration(newX, newZ, 0.28, boxes[i]);
-            if (res.overlap) {
-              newZ += res.pZ;
-              blockedZ = true;
-            }
-          }
-          // Check trolley circle
-          for (let i = 0; i < boxes.length; i++) {
-            const tx = newX + sinYaw * cartDist;
-            const tz = newZ + cosYaw * cartDist;
-            const res = getCircleBoxDepenetration(tx, tz, 0.34, boxes[i]);
-            if (res.overlap) {
-              newZ += res.pZ;
-              blockedZ = true;
-            }
-          }
-          if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
-            const res = getCircleBoxDepenetration(newX, newZ, 0.28, UNPAID_EXIT_BARRIER);
-            if (res.overlap) { newZ += res.pZ; blockedZ = true; }
-            const tx = newX + sinYaw * cartDist;
-            const tz = newZ + cosYaw * cartDist;
-            const resT = getCircleBoxDepenetration(tx, tz, 0.34, UNPAID_EXIT_BARRIER);
-            if (resT.overlap) { newZ += resT.pZ; blockedZ = true; }
-          }
-        }
-
-        posRef.current.x = newX;
-        posRef.current.z = newZ;
-
-        // Dampen ONLY the blocked axis so the player effortlessly glides along walls!
-        if (blockedX) velocityRef.current.x = 0;
-        if (blockedZ) velocityRef.current.z = 0;
+        posRef.current.x = nextX;
+        posRef.current.z = nextZ;
       }
 
       // Store outer boundaries safety clamp
@@ -719,7 +721,8 @@ export const PlayerController: React.FC = () => {
       prompt = null; // Do NOT show prompt banner per user request
     } else if (nearExit) {
       prompt = isPaid || cartItems.length === 0 ? 'Press [E] to Exit Supermarket' : 'Exit Locked: Please pay at the billing counter!';
-    } else {
+    } else if (now - lastProximityCheck.current > 80) {
+      lastProximityCheck.current = now;
       const nearbyProd = products.find((p) => {
         if (!p.placement) return false;
         // Floor filter: aisles 1-5 = Floor 1, aisles 6-10 = Floor 2
@@ -727,13 +730,15 @@ export const PlayerController: React.FC = () => {
         if (prodFloor !== activeFloor) return false;
         const dx = p.placement.worldX - px;
         const dz = p.placement.worldZ - pz;
-        return Math.sqrt(dx * dx + dz * dz) < 2.5;
+        return (dx * dx + dz * dz) < 6.25; // 2.5m squared (zero Math.sqrt)
       });
 
       if (nearbyProd && nearbyProd.placement) {
         prompt = `Press [E] or Click to Inspect ${nearbyProd.name} (₹${nearbyProd.price})`;
         targetPos = [nearbyProd.placement.worldX, nearbyProd.placement.worldY, nearbyProd.placement.worldZ];
       }
+    } else {
+      prompt = proximityCache.current.prompt;
     }
 
     // Cached proximity update to eliminate unnecessary Zustand dispatches
@@ -769,17 +774,32 @@ export const PlayerController: React.FC = () => {
       const targetLookZ = posRef.current.z + Math.cos(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
       camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {
-      // Third Person (Orbit lock: camera position and gaze vectors move along exact mathematical circular arc)
+      // Third Person (Orbit lock with smooth perimeter wall avoidance - zero jitter / zero angle distortion)
       const camDist = 3.0;
       const camHeight = 1.95;
-      let targetCamX = posRef.current.x - Math.sin(yawRef.current) * camDist;
-      let targetCamY = posRef.current.y + camHeight;
-      let targetCamZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
+      const rayDirX = -Math.sin(yawRef.current);
+      const rayDirZ = -Math.cos(yawRef.current);
 
-      // Prevent camera from clipping through store perimeter walls
-      targetCamX = THREE.MathUtils.clamp(targetCamX, -17.2, 17.2);
-      targetCamZ = THREE.MathUtils.clamp(targetCamZ, -25.2, 25.2);
-      targetCamY = Math.max(0.4, targetCamY);
+      let effectiveCamDist = camDist;
+      if (rayDirX < -0.001) {
+        const dX = (-17.0 - posRef.current.x) / rayDirX;
+        if (dX > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dX - 0.25));
+      } else if (rayDirX > 0.001) {
+        const dX = (17.0 - posRef.current.x) / rayDirX;
+        if (dX > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dX - 0.25));
+      }
+
+      if (rayDirZ < -0.001) {
+        const dZ = (-25.0 - posRef.current.z) / rayDirZ;
+        if (dZ > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dZ - 0.25));
+      } else if (rayDirZ > 0.001) {
+        const dZ = (25.0 - posRef.current.z) / rayDirZ;
+        if (dZ > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dZ - 0.25));
+      }
+
+      const targetCamX = posRef.current.x + rayDirX * effectiveCamDist;
+      const targetCamY = posRef.current.y + camHeight;
+      const targetCamZ = posRef.current.z + rayDirZ * effectiveCamDist;
 
       const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.3;
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;

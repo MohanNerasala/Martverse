@@ -232,12 +232,10 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     if (isLanding) {
       basketBump.current = 0.04;
     }
-    basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 10, delta);
+    basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 12, delta);
 
-    // Responsive lerp movement with fast tracking (rate 36 for locked-in responsive trolley follow)
-    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 36, delta);
-    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 26, delta);
-    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 36, delta);
+    // Instant zero-lag follow: Cart firmly locked to player hands at all times
+    currentPos.current.set(desiredX, desiredY - basketBump.current, desiredZ);
 
     // Calculate forward motion direction relative to trolley heading
     const prevP = prevTrolleyPos.current;
@@ -246,8 +244,8 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     const dz = currP.z - prevP.z;
 
     // Project displacement onto cart forward vector (-sin(yaw), -cos(yaw))
-    const fwdX = -Math.sin(currentYaw.current);
-    const fwdZ = -Math.cos(currentYaw.current);
+    const fwdX = -Math.sin(actualYaw);
+    const fwdZ = -Math.cos(actualYaw);
     const forwardStep = dx * fwdX + dz * fwdZ;
 
     // Wheel radius = 0.07m
@@ -255,32 +253,23 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     prevTrolleyPos.current.copy(currP);
 
     // Dynamic front caster swivel based on turning angular velocity
-    let diffYaw = actualYaw - currentYaw.current;
+    let diffYaw = actualYaw - prevYaw.current;
     while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
     while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
 
-    const turningRate = delta > 0.0001 ? (currentYaw.current - prevYaw.current) / delta : 0;
-    prevYaw.current = currentYaw.current;
+    const turningRate = delta > 0.0001 ? diffYaw / delta : 0;
+    prevYaw.current = actualYaw;
     const targetSwivel = THREE.MathUtils.clamp(-turningRate * 0.15, -0.55, 0.55);
-    casterSwivelRef.current = THREE.MathUtils.damp(casterSwivelRef.current, targetSwivel, 14, delta);
+    casterSwivelRef.current = THREE.MathUtils.damp(casterSwivelRef.current, targetSwivel, 20, delta);
 
-    // Shortest-path circular yaw dampening towards player direction (rate 32 for snappy 360-turn follow)
-    currentYaw.current += diffYaw * (1 - Math.exp(-32 * delta));
-
-    // Strict final containment pass on currentPos so the cart NEVER clips perimeter walls
-    if (isOnEscalatorRamp) {
-      currentPos.current.x = 14.70;
-    } else {
-      currentPos.current.x = THREE.MathUtils.clamp(currentPos.current.x, -16.8 + cartHalfW, 16.8 - cartHalfW);
-      currentPos.current.z = THREE.MathUtils.clamp(currentPos.current.z, -24.2 + cartHalfD, 24.2 - cartHalfD);
-    }
+    currentYaw.current = actualYaw;
 
     trolleyRef.current.position.copy(currentPos.current);
-    trolleyRef.current.rotation.y = currentYaw.current + Math.PI;
+    trolleyRef.current.rotation.y = actualYaw + Math.PI;
 
     // Subtle realistic inertial banking on turns
     const rollTilt = THREE.MathUtils.clamp(-turningRate * 0.02, -0.04, 0.04);
-    trolleyRef.current.rotation.z = THREE.MathUtils.damp(trolleyRef.current.rotation.z, rollTilt, 12, delta);
+    trolleyRef.current.rotation.z = THREE.MathUtils.damp(trolleyRef.current.rotation.z, rollTilt, 16, delta);
 
     // Update wheel rotations
     if (frontLeftWheelRef.current) frontLeftWheelRef.current.rotation.x = wheelRollRef.current;
