@@ -567,12 +567,9 @@ export const BillingModal: React.FC = () => {
           className="bg-white/95 backdrop-blur-md text-slate-900 rounded-2xl p-2.5 sm:p-3 shadow-xl border border-slate-200/90 hover:border-blue-400/80 hover:shadow-2xl transition-all flex items-center gap-3 cursor-pointer group"
           title="Click to view full bill or wait for conveyor scan"
         >
-          {/* Live Scanner Green Pulsing Dot */}
-          <div className="flex items-center gap-1.5 flex-shrink-0 pl-0.5">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-xs" />
-            </span>
+          {/* Modern Barcode Scanner Icon (Clean & Realistic - No Green Dots) */}
+          <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0 border border-slate-200">
+            <Barcode className="w-3.5 h-3.5" />
           </div>
 
           {/* Product Thumbnail with Laser Scanning Animation */}

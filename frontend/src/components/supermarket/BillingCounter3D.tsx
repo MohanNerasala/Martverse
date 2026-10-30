@@ -1201,50 +1201,46 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
           </mesh>
         </group>
 
-        {/* Realistic Martverse Reusable Shopping Bag Assembly */}
+        {/* Realistic Authentic Kraft Paper Grocery Bag Packing Assembly */}
         <group
           ref={bagGroupRef}
           position={[0, 0.16, 0]}
           scale={isActiveDesk ? [1, bagScale, 1] : [1, 1, 1]}
         >
-          {/* Bag Outer Fabric Body (Textured Green Polypropylene) */}
+          {/* Main Kraft Paper Bag Body */}
           <mesh castShadow receiveShadow>
-            <boxGeometry args={[0.42, 0.3, 0.28]} />
-            <meshStandardMaterial color="#16a34a" roughness={0.85} metalness={0.05} />
+            <boxGeometry args={[0.42, 0.32, 0.28]} />
+            <meshStandardMaterial color="#c29b67" roughness={0.96} metalness={0.02} />
           </mesh>
-          {/* Reinforced Top Hem Lip */}
-          <mesh position={[0, 0.152, 0]}>
-            <boxGeometry args={[0.43, 0.016, 0.29]} />
-            <meshStandardMaterial color="#15803d" roughness={0.7} />
+          {/* Top Folded Paper Serrated Lip */}
+          <mesh position={[0, 0.162, 0]}>
+            <boxGeometry args={[0.426, 0.016, 0.286]} />
+            <meshStandardMaterial color="#ab834f" roughness={0.9} />
           </mesh>
           {/* Open Hollow Interior Depth */}
-          <mesh position={[0, 0.155, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <mesh position={[0, 0.165, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={[0.39, 0.25]} />
-            <meshBasicMaterial color="#052e16" />
+            <meshBasicMaterial color="#543c1f" />
           </mesh>
 
-          {/* Curved Fabric Loop Handles (Torus arches draped over rack) */}
+          {/* Realistic Twisted Kraft Paper Rope Handles */}
           {/* Front Loop Handle */}
-          <mesh position={[0, 0.21, 0.135]}>
-            <torusGeometry args={[0.075, 0.01, 8, 20, Math.PI]} />
-            <meshStandardMaterial color="#15803d" roughness={0.8} />
+          <mesh position={[0, 0.22, 0.125]}>
+            <torusGeometry args={[0.075, 0.008, 8, 20, Math.PI]} />
+            <meshStandardMaterial color="#8f6a39" roughness={0.85} />
           </mesh>
           {/* Back Loop Handle */}
-          <mesh position={[0, 0.21, -0.135]}>
-            <torusGeometry args={[0.075, 0.01, 8, 20, Math.PI]} />
-            <meshStandardMaterial color="#15803d" roughness={0.8} />
+          <mesh position={[0, 0.22, -0.125]}>
+            <torusGeometry args={[0.075, 0.008, 8, 20, Math.PI]} />
+            <meshStandardMaterial color="#8f6a39" roughness={0.85} />
           </mesh>
 
-          {/* Front Printed Martverse Emblem & Typography */}
-          <group position={[0, 0, 0.143]}>
-            <mesh position={[0, 0.04, 0]}>
-              <boxGeometry args={[0.08, 0.04, 0.002]} />
-              <meshBasicMaterial color="#ffffff" />
-            </mesh>
+          {/* Front Printed Martverse Eco Kraft Typography */}
+          <group position={[0, 0, 0.142]}>
             <Text
-              position={[0, -0.02, 0.002]}
+              position={[0, 0.04, 0.002]}
               fontSize={0.038}
-              color="#ffffff"
+              color="#2d4030"
               anchorX="center"
               anchorY="middle"
               letterSpacing={0.06}
@@ -1252,64 +1248,102 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
               MARTVERSE
             </Text>
             <Text
-              position={[0, -0.065, 0.002]}
-              fontSize={0.018}
-              color="#dcfce7"
+              position={[0, -0.015, 0.002]}
+              fontSize={0.016}
+              color="#4a634e"
+              anchorX="center"
+              anchorY="middle"
+              letterSpacing={0.04}
+            >
+              100% RECYCLED KRAFT
+            </Text>
+            <Text
+              position={[0, -0.06, 0.002]}
+              fontSize={0.013}
+              color="#68876d"
               anchorX="center"
               anchorY="middle"
             >
-              REUSABLE ECO TOTE
+              HYPERMARKET EXPRESS
             </Text>
           </group>
         </group>
 
-        {/* Stack of Spare Folded Bags Hanging behind the main bag */}
+        {/* Stack of Folded Spare Kraft Bags Next to the Packing Bay */}
         <group position={[0.08, 0.22, 0.22]} rotation={[0, 0.1, 0]}>
           <mesh>
             <boxGeometry args={[0.26, 0.26, 0.03]} />
-            <meshStandardMaterial color="#15803d" roughness={0.9} />
+            <meshStandardMaterial color="#ab834f" roughness={0.95} />
           </mesh>
           <mesh position={[0, 0.14, 0]}>
             <torusGeometry args={[0.04, 0.006, 6, 16, Math.PI]} />
-            <meshStandardMaterial color="#15803d" />
+            <meshStandardMaterial color="#845e2c" />
           </mesh>
         </group>
       </group>
 
       {/* ============================================================== */}
-      {/* 7. OVERHEAD LANE NUMBER BEACON & STATUS MAST                    */}
+      {/* 7. OVERHEAD LANE NUMBER BEACON & STATUS MAST (REALISTIC - NO GREEN DOTS) */}
       {/* ============================================================== */}
       <group position={[0.56, 1.05, -1.45]}>
-        {/* Brushed Stainless Steel Tower Mast */}
+        {/* Brushed Stainless Steel Tower Mast with Base Mounting Ring */}
+        <mesh position={[0, 0.02, 0]}>
+          <cylinderGeometry args={[0.04, 0.045, 0.03, 14]} />
+          <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.2} />
+        </mesh>
         <mesh position={[0, 0.8, 0]}>
           <cylinderGeometry args={[0.022, 0.022, 1.6, 14]} />
           <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
         </mesh>
+
         {/* Dual-Sided Backlit Acrylic Lane Number Box */}
         <group position={[0, 1.7, 0]}>
-          {/* Black Outer Bezel */}
+          {/* Black Machined Aluminum Outer Bezel */}
           <mesh castShadow>
-            <boxGeometry args={[0.38, 0.28, 0.1]} />
-            <meshStandardMaterial color="#0f172a" roughness={0.3} />
+            <boxGeometry args={[0.38, 0.28, 0.08]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.25} metalness={0.8} />
           </mesh>
-          {/* Backlit White Acrylic Panels */}
-          <mesh position={[0, 0, 0.052]}>
+
+          {/* Top Machined Flat Cap (Realistic Architectural Cap - No Green Spheres) */}
+          <mesh position={[0, 0.145, 0]}>
+            <boxGeometry args={[0.39, 0.016, 0.086]} />
+            <meshStandardMaterial color="#090d16" roughness={0.3} metalness={0.85} />
+          </mesh>
+          {/* Integrated Slim Diffused LED Status Edge Bar */}
+          <mesh position={[0, 0.148, 0]}>
+            <boxGeometry args={[0.32, 0.008, 0.07]} />
+            <meshStandardMaterial
+              color={isActiveDesk ? '#38bdf8' : '#ffffff'}
+              emissive={isActiveDesk ? '#38bdf8' : '#ffffff'}
+              emissiveIntensity={isActiveDesk ? 0.8 : 0.25}
+              roughness={0.2}
+            />
+          </mesh>
+
+          {/* Bottom Machined Base Cap */}
+          <mesh position={[0, -0.145, 0]}>
+            <boxGeometry args={[0.39, 0.016, 0.086]} />
+            <meshStandardMaterial color="#090d16" roughness={0.3} metalness={0.85} />
+          </mesh>
+
+          {/* Backlit White Acrylic Panels - Front Side (-Z facing aisle) */}
+          <mesh position={[0, 0, 0.042]}>
             <planeGeometry args={[0.34, 0.24]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
           <Text
-            position={[0, 0.03, 0.054]}
+            position={[0, 0.03, 0.044]}
             fontSize={0.11}
-            color="#0f172a"
+            color="#090d16"
             anchorX="center"
             anchorY="middle"
           >
             {laneNumberStr}
           </Text>
           <Text
-            position={[0, -0.065, 0.054]}
-            fontSize={0.028}
-            color="#059669"
+            position={[0, -0.065, 0.044]}
+            fontSize={0.026}
+            color="#047857"
             anchorX="center"
             anchorY="middle"
             letterSpacing={0.08}
@@ -1318,25 +1352,25 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
           </Text>
 
           {/* Reverse Side Facing +Z */}
-          <mesh position={[0, 0, -0.052]} rotation={[0, Math.PI, 0]}>
+          <mesh position={[0, 0, -0.042]} rotation={[0, Math.PI, 0]}>
             <planeGeometry args={[0.34, 0.24]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
           <Text
-            position={[0, 0.03, -0.054]}
+            position={[0, 0.03, -0.044]}
             rotation={[0, Math.PI, 0]}
             fontSize={0.11}
-            color="#0f172a"
+            color="#090d16"
             anchorX="center"
             anchorY="middle"
           >
             {laneNumberStr}
           </Text>
           <Text
-            position={[0, -0.065, -0.054]}
+            position={[0, -0.065, -0.044]}
             rotation={[0, Math.PI, 0]}
-            fontSize={0.028}
-            color="#059669"
+            fontSize={0.026}
+            color="#047857"
             anchorX="center"
             anchorY="middle"
             letterSpacing={0.08}
@@ -1344,20 +1378,12 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
             LANE OPEN
           </Text>
 
-          {/* Illuminated Status Lantern Globe on Top of Beacon */}
-          <mesh position={[0, 0.18, 0]}>
-            <sphereGeometry args={[0.055, 16, 16]} />
-            <meshStandardMaterial
-              color="#10b981"
-              emissive="#10b981"
-              emissiveIntensity={isActiveDesk ? 1.8 : 0.8}
-            />
-          </mesh>
+          {/* Clean Soft Neutral Work Downlight */}
           <pointLight
-            position={[0, 0.2, 0]}
-            color="#10b981"
-            intensity={isActiveDesk ? 1.2 : 0.4}
-            distance={2.5}
+            position={[0, -0.18, 0]}
+            color="#ffffff"
+            intensity={isActiveDesk ? 0.9 : 0.3}
+            distance={2.2}
           />
         </group>
       </group>
@@ -1377,45 +1403,56 @@ const RealisticFloorDockDecal: React.FC<{
 
   return (
     <group position={position}>
-      {/* High-Grade Non-Slip Matte Industrial Dock Mat */}
+      {/* Heavy Industrial Vulcanized Rubber Dock Mat */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[1.36, 2.46]} />
         <meshStandardMaterial
-          color={isActive ? '#131b28' : '#0b0f17'}
-          roughness={0.92}
-          metalness={0.08}
+          color={isActive ? '#141824' : '#0e121a'}
+          roughness={0.95}
+          metalness={0.05}
         />
       </mesh>
 
-      {/* Outer High-Visibility Safety Accent Border */}
+      {/* Outer Safety Beveled Hazard Border */}
       <group position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        {/* Top & Bottom Yellow Hazard Strips */}
+        {/* Top & Bottom Industrial Safety Strips */}
         <mesh position={[0, 1.2, 0]}>
-          <planeGeometry args={[1.36, 0.05]} />
-          <meshBasicMaterial color={isActive ? '#10b981' : '#facc15'} />
+          <planeGeometry args={[1.36, 0.04]} />
+          <meshBasicMaterial color={isActive ? '#38bdf8' : '#d97706'} />
         </mesh>
         <mesh position={[0, -1.2, 0]}>
-          <planeGeometry args={[1.36, 0.05]} />
-          <meshBasicMaterial color={isActive ? '#10b981' : '#facc15'} />
+          <planeGeometry args={[1.36, 0.04]} />
+          <meshBasicMaterial color={isActive ? '#38bdf8' : '#d97706'} />
         </mesh>
         {/* Left & Right Strips */}
         <mesh position={[-0.66, 0, 0]}>
-          <planeGeometry args={[0.04, 2.36]} />
-          <meshBasicMaterial color={isActive ? '#10b981' : '#facc15'} />
+          <planeGeometry args={[0.035, 2.36]} />
+          <meshBasicMaterial color={isActive ? '#38bdf8' : '#d97706'} />
         </mesh>
         <mesh position={[0.66, 0, 0]}>
-          <planeGeometry args={[0.04, 2.36]} />
-          <meshBasicMaterial color={isActive ? '#10b981' : '#facc15'} />
+          <planeGeometry args={[0.035, 2.36]} />
+          <meshBasicMaterial color={isActive ? '#38bdf8' : '#d97706'} />
         </mesh>
       </group>
 
-      {/* Stenciled Shopping Trolley Wheel Alignment Grid */}
-      <group position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        {/* Center Stenciled Typography */}
+      {/* Stenciled Shopping Trolley Wheel Alignment Grid - Rotated to face approaching customer */}
+      <group position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, Math.PI]}>
+        {/* Forward Direction Chevrons pointing into counter */}
         <Text
-          position={[0, 0.72, 0]}
-          fontSize={0.1}
-          color={isActive ? '#34d399' : '#e2e8f0'}
+          position={[0, 0.82, 0]}
+          fontSize={0.12}
+          color={isActive ? '#38bdf8' : '#94a3b8'}
+          anchorX="center"
+          anchorY="middle"
+        >
+          ▲ ▲ ▲
+        </Text>
+
+        {/* Center Stenciled Typography facing customer correctly */}
+        <Text
+          position={[0, -0.54, 0]}
+          fontSize={0.095}
+          color={isActive ? '#f1f5f9' : '#cbd5e1'}
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.06}
@@ -1423,9 +1460,9 @@ const RealisticFloorDockDecal: React.FC<{
           {`LANE ${laneStr} • TROLLEY BAY`}
         </Text>
         <Text
-          position={[0, 0.54, 0]}
-          fontSize={0.055}
-          color={isActive ? '#10b981' : '#94a3b8'}
+          position={[0, -0.72, 0]}
+          fontSize={0.05}
+          color={isActive ? '#38bdf8' : '#64748b'}
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.08}
@@ -1433,30 +1470,19 @@ const RealisticFloorDockDecal: React.FC<{
           [ AUTO-SCAN SENSOR DOCK ]
         </Text>
 
-        {/* Trolley Wheel Alignment Corner Markings */}
+        {/* Trolley Wheel Alignment Corner Brackets */}
         {[-0.45, 0.45].map((wx, wIdx) => (
-          <group key={`wheel-mk-${wIdx}`} position={[wx, -0.2, 0]}>
+          <group key={`wheel-mk-${wx}-${wIdx}`} position={[wx, 0.1, 0]}>
             <mesh position={[0, 0.4, 0]}>
-              <planeGeometry args={[0.12, 0.03]} />
-              <meshBasicMaterial color={isActive ? '#34d399' : '#64748b'} />
+              <planeGeometry args={[0.12, 0.025]} />
+              <meshBasicMaterial color={isActive ? '#38bdf8' : '#64748b'} />
             </mesh>
             <mesh position={[0, -0.4, 0]}>
-              <planeGeometry args={[0.12, 0.03]} />
-              <meshBasicMaterial color={isActive ? '#34d399' : '#64748b'} />
+              <planeGeometry args={[0.12, 0.025]} />
+              <meshBasicMaterial color={isActive ? '#38bdf8' : '#64748b'} />
             </mesh>
           </group>
         ))}
-
-        {/* Forward Direction Arrow */}
-        <Text
-          position={[0, -0.82, 0]}
-          fontSize={0.14}
-          color={isActive ? '#34d399' : '#facc15'}
-          anchorX="center"
-          anchorY="middle"
-        >
-          ▲ ▲ ▲
-        </Text>
       </group>
     </group>
   );
