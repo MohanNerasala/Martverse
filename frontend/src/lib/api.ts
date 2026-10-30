@@ -183,7 +183,19 @@ export const api = {
     pinCode: string;
     deliveryInstructions?: string;
     fulfilmentType?: string;
-    items?: Array<{ productId: string; variantId?: string; quantity: number }>;
+    paymentMethod?: string;
+    paymentProvider?: string;
+    codFee?: number;
+    items?: Array<{
+      productId: string;
+      variantId?: string;
+      quantity: number;
+      productName?: string;
+      brand?: string;
+      unitPrice?: number;
+      lineTotal?: number;
+      imageUrl?: string;
+    }>;
   }): Promise<{
     orderId: string;
     orderNumber: string;
@@ -195,6 +207,7 @@ export const api = {
     deliveryCharge: number;
     finalAmount: number;
     paymentStatus: string;
+    paymentMethod?: string;
     paymentProvider: string;
     dateTime: string;
     message: string;
@@ -206,6 +219,7 @@ export const api = {
       quantity: number;
       unitPrice: number;
       lineTotal: number;
+      imageUrl?: string;
     }>;
   }> {
     const fallbackDate = new Date().toLocaleString('en-IN', {
@@ -219,22 +233,35 @@ export const api = {
 
     const fallbackOrderNo = 'MV' + Math.floor(10000000 + Math.random() * 90000000);
 
+    const calculatedSubtotal = payload.items?.reduce((a, c) => a + (c.lineTotal || (c.unitPrice || 0) * c.quantity), 0) || 0;
+    const calculatedDelivery = calculatedSubtotal >= 499 || payload.fulfilmentType === 'STORE_PICKUP' ? 0 : 40;
+    const calculatedCod = payload.codFee || 0;
+    const calculatedTotal = calculatedSubtotal + calculatedDelivery + calculatedCod;
+
     const fallbackResponse = {
       orderId: 'demo-ord-' + Date.now(),
       orderNumber: fallbackOrderNo,
       customerName: payload.customerName,
       customerPhone: payload.customerPhone,
       purchasedProductCount: payload.items?.reduce((a, c) => a + c.quantity, 0) || 1,
-      subtotal: 0,
+      subtotal: calculatedSubtotal,
       discountAmount: 0,
-      deliveryCharge: 0,
-      finalAmount: 0,
-      paymentStatus: 'SIMULATED_SUCCESS',
-      paymentProvider: 'SIMULATED_PAYMENT',
+      deliveryCharge: calculatedDelivery,
+      finalAmount: calculatedTotal,
+      paymentStatus: payload.paymentMethod === 'CASH' ? 'PENDING_CASH_COLLECTION' : 'PAID',
+      paymentMethod: payload.paymentMethod || 'UPI',
+      paymentProvider: payload.paymentProvider || 'SIMULATED_PAYMENT',
       dateTime: fallbackDate,
-      message: 'This is a demo transaction. No real money was charged.',
+      message: 'Order verified and recorded successfully in Martverse database.',
       demoMode: true,
-      items: [],
+      items: payload.items?.map(it => ({
+        productName: it.productName || 'Supermarket Product',
+        brand: it.brand || 'Supermarket',
+        quantity: it.quantity,
+        unitPrice: it.unitPrice || 0,
+        lineTotal: it.lineTotal || (it.unitPrice || 0) * it.quantity,
+        imageUrl: it.imageUrl || '/products/fallback.svg',
+      })) || [],
     };
 
     let finalOrder = fallbackResponse;
@@ -247,20 +274,27 @@ export const api = {
           'X-Session-Id': getSessionId(),
           ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          paymentMethod: payload.paymentMethod || 'UPI',
+        }),
       });
 
       if (res.ok) {
         const json = await res.json();
         if (json.data) {
-          finalOrder = json.data;
+          finalOrder = {
+            ...json.data,
+            paymentMethod: payload.paymentMethod || json.data.paymentMethod || 'UPI',
+            paymentProvider: payload.paymentProvider || json.data.paymentProvider || 'DIRECT',
+          };
         }
       }
     } catch {
       // Offline fallback
     }
 
-    // Persist to local browser storage so orders appear immediately without delay
+    // Persist to local browser storage so orders appear immediately in Orders Page
     try {
       if (typeof window !== 'undefined') {
         const existing = JSON.parse(localStorage.getItem('martverse_customer_orders') || '[]');
@@ -270,10 +304,34 @@ export const api = {
           id: finalOrder.orderId || finalOrder.orderNumber,
           customerPhone: cleanPhone || payload.customerPhone,
           customerName: payload.customerName,
-          status: 'CONFIRMED',
-          paymentStatus: 'PAID',
+          status: payload.paymentMethod === 'CASH' ? 'CONFIRMED (COD)' : 'CONFIRMED',
+          paymentStatus: payload.paymentMethod === 'CASH' ? 'PENDING_CASH' : 'PAID',
+          paymentMethod: payload.paymentMethod || 'UPI',
+          paymentProvider: payload.paymentProvider || 'UPI_DIRECT',
+          fulfilmentType: payload.fulfilmentType || 'DELIVERY',
           createdAt: new Date().toISOString(),
-          totalAmount: finalOrder.finalAmount || finalOrder.subtotal || 0,
+          subtotal: calculatedSubtotal || finalOrder.subtotal,
+          deliveryCharge: calculatedDelivery,
+          codFee: calculatedCod,
+          totalAmount: calculatedTotal || finalOrder.finalAmount,
+          address: {
+            fullName: payload.customerName,
+            phone: cleanPhone || payload.customerPhone,
+            addressLine1: payload.addressLine1,
+            city: payload.city,
+            state: payload.state,
+            pinCode: payload.pinCode,
+          },
+          items: (payload.items && payload.items.length > 0)
+            ? payload.items.map(it => ({
+                productName: it.productName || 'Supermarket Item',
+                brand: it.brand || 'Supermarket',
+                quantity: it.quantity,
+                unitPrice: it.unitPrice || 0,
+                lineTotal: it.lineTotal || (it.unitPrice || 0) * it.quantity,
+                imageUrl: it.imageUrl || '/products/fallback.svg',
+              }))
+            : (finalOrder.items || []),
         };
         const updated = [orderRecord, ...existing.filter((o: any) => o.orderNumber !== finalOrder.orderNumber)].slice(0, 50);
         localStorage.setItem('martverse_customer_orders', JSON.stringify(updated));

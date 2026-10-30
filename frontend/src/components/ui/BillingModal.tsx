@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useBillingStore } from '@/store/useBillingStore';
 import { useMartStore, martRuntime } from '@/store/useMartStore';
+import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import {
   Barcode,
@@ -28,6 +30,9 @@ import {
   Banknote,
   AlertCircle,
   Sparkles,
+  Star,
+  ExternalLink,
+  ShoppingBag,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '@/lib/api';
@@ -72,9 +77,9 @@ interface SavedAddress {
   name: string;
   phone: string;
   type: 'HOME' | 'WORK' | 'OTHER';
-  houseNo: string; // House / Flat / Building No. & Name
-  area: string; // Street / Locality / Area
-  landmark: string; // Landmark
+  houseNo: string;
+  area: string;
+  landmark: string;
   city: string;
   state: string;
   pinCode: string;
@@ -111,6 +116,7 @@ const INITIAL_ADDRESSES: SavedAddress[] = [
 ];
 
 export const BillingModal: React.FC = () => {
+  const router = useRouter();
   const phase = useBillingStore((state) => state.phase);
   const scannedItems = useBillingStore((state) => state.scannedItems);
   const currentScanningItem = useBillingStore((state) => state.currentScanningItem);
@@ -169,6 +175,32 @@ export const BillingModal: React.FC = () => {
 
   const [formError, setFormError] = useState<string | null>(null);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [processingStep, setProcessingStep] = useState(1);
+
+  // Customer Rating & Feedback State
+  const [starRating, setStarRating] = useState<number>(5);
+  const [hoverStar, setHoverStar] = useState<number | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>(['⚡ Fast Checkout', '🛒 3D Supermarket']);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  const ratingLabels = [
+    '',
+    'Needs Improvement',
+    'Fair Experience',
+    'Good Supermarket',
+    'Very Good!',
+    'Excellent Supermarket Experience! ⭐',
+  ];
+
+  const feedbackTagOptions = [
+    '⚡ Fast Checkout',
+    '🛒 3D Supermarket',
+    '📦 Fresh Packaging',
+    '💳 Seamless Payment',
+    '📍 Accurate Address',
+    '🛍️ Great Discounts',
+  ];
 
   useEffect(() => {
     if (authPhone) {
@@ -176,7 +208,7 @@ export const BillingModal: React.FC = () => {
     }
   }, [authPhone]);
 
-  // Revalidate with backend when phase changes
+  // Revalidate with backend
   useEffect(() => {
     if (phase === 'review' || phase === 'checkout_details' || phase === 'payment_methods') {
       revalidateCartWithBackend('DELIVERY');
@@ -188,9 +220,9 @@ export const BillingModal: React.FC = () => {
     if (phase === 'success_popup') {
       try {
         confetti({
-          particleCount: 140,
-          spread: 90,
-          origin: { y: 0.6 },
+          particleCount: 160,
+          spread: 100,
+          origin: { y: 0.55 },
         });
       } catch {}
     }
@@ -199,7 +231,6 @@ export const BillingModal: React.FC = () => {
   if (phase === 'idle') return null;
 
   // --- Exact Mathematical Calculations ---
-  // When Cash on Delivery is selected, charges increase by ₹20
   const codFee = selectedPaymentMethod === 'CASH' ? 20 : 0;
   const clientSubtotal = scannedItems.reduce((acc, it) => acc + it.price * it.quantity, 0);
   const clientMrpTotal = scannedItems.reduce((acc, it) => acc + (it.mrp || it.price) * it.quantity, 0);
@@ -242,14 +273,14 @@ export const BillingModal: React.FC = () => {
       );
     }
     if (selectedPaymentMethod === 'CASH') {
-      return true; // Valid with COD fee
+      return true;
     }
     return false;
   })();
 
   const isFormValid = isAddressValid && isCustomerValid && isPaymentValid && scannedItems.length > 0;
 
-  // Reason for button disability (to guide the user clearly)
+  // Validation Helper Prompt
   const validationHelperText = (() => {
     if (scannedItems.length === 0) return 'Trolley has no items';
     if (isAddingNewAddress) return 'Please save your address details above';
@@ -267,7 +298,6 @@ export const BillingModal: React.FC = () => {
     setIsLocating(true);
     setLocationSuccessMsg(null);
 
-    // Smooth simulated GPS detection matching BigBasket / Blinkit
     setTimeout(() => {
       setIsLocating(false);
       setLocationSuccessMsg('Location auto-detected via GPS: Indiranagar, Bengaluru');
@@ -325,7 +355,6 @@ export const BillingModal: React.FC = () => {
     setFormError(null);
     setLocationSuccessMsg(null);
 
-    // Reset Form
     setNewAddress({
       type: 'HOME',
       houseNo: '',
@@ -362,19 +391,34 @@ export const BillingModal: React.FC = () => {
     setPlayerPos([safeX, 1.5, 13.8], 0);
   };
 
-  // --- Proceed to Payment & Trigger Invoice ---
+  // --- Proceed to Payment & Trigger Real Backend / Local Storage Persistence ---
   const handleProceedToPay = async () => {
     if (!isFormValid || isButtonDisabled) return;
     setFormError(null);
     setIsButtonDisabled(true);
+    setProcessingStep(1);
     startProcessingPayment();
+
+    // Multi-step animated progress simulation
+    setTimeout(() => setProcessingStep(2), 500);
+    setTimeout(() => setProcessingStep(3), 1100);
 
     try {
       const addressToUse = activeSelectedAddress!;
+      const paymentProviderName =
+        selectedPaymentMethod === 'UPI'
+          ? `UPI (${selectedUpiApp === 'CUSTOM' ? upiId : selectedUpiApp})`
+          : selectedPaymentMethod === 'CARD'
+          ? `Card (•••• ${cardNumber.slice(-4)})`
+          : 'Cash on Delivery';
+
       const orderRes = await api.checkoutSimulated({
         customerName,
         customerPhone,
         fulfilmentType: selectedPaymentMethod === 'CASH' ? 'CASH_ON_DELIVERY' : 'ONLINE_DELIVERY',
+        paymentMethod: selectedPaymentMethod,
+        paymentProvider: paymentProviderName,
+        codFee,
         addressLine1: `${addressToUse.houseNo}, ${addressToUse.area}${
           addressToUse.landmark ? ', Near ' + addressToUse.landmark : ''
         }`,
@@ -385,26 +429,58 @@ export const BillingModal: React.FC = () => {
           productId: it.productId,
           variantId: it.variantId,
           quantity: it.quantity,
+          productName: it.productName,
+          brand: it.brand,
+          unitPrice: it.price,
+          lineTotal: it.price * it.quantity,
+          imageUrl: it.productImage,
         })),
       });
 
-      // Smooth simulated transaction processing
-      await new Promise((resolve) => setTimeout(resolve, 1400));
+      // Clear the Shopping Cart so it's fresh for next purchases
+      useCartStore.getState().clearCart();
+
+      // Small delay for smooth animation transition
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       setPaymentSuccess({
         ...orderRes,
         finalAmount: activeTotalAmount,
+        paymentMethod: selectedPaymentMethod,
+        paymentProvider: paymentProviderName,
       } as any);
     } catch (err) {
-      console.error('Simulated checkout failed:', err);
+      console.error('Checkout failed:', err);
     } finally {
       setIsButtonDisabled(false);
     }
   };
 
-  const handleContinueToExit = () => {
+  // --- Continue Shopping Action ---
+  const handleContinueShopping = () => {
     const orderNo = completedOrder?.orderNumber || 'MV' + Math.floor(10000000 + Math.random() * 90000000);
     resetBilling();
+    useCartStore.getState().clearCart();
     startExitAnimation(orderNo);
+  };
+
+  // --- View in Orders Page Action ---
+  const handleViewOrdersPage = () => {
+    resetBilling();
+    useCartStore.getState().clearCart();
+    router.push('/orders');
+  };
+
+  // --- Feedback Tag Toggle ---
+  const toggleFeedbackTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  // --- Submit Feedback ---
+  const handleSubmitFeedback = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFeedbackSubmitted(true);
   };
 
   // ==============================================================
@@ -502,150 +578,254 @@ export const BillingModal: React.FC = () => {
   }
 
   // ==============================================================
-  // STEP 4: PROCESSING PAYMENT
+  // STEP 4: PROCESSING PAYMENT ANIMATION (High-End Tactile Animation)
   // ==============================================================
   if (phase === 'processing') {
     return (
-      <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 space-y-4">
-        <div className="w-16 h-16 rounded-full border-4 border-blue-500 border-t-transparent animate-spin shadow-lg" />
-        <div className="space-y-1">
-          <h3 className="text-xl font-black text-white">
+      <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xl flex flex-col items-center justify-center text-center p-6 space-y-6 animate-in fade-in duration-300 select-none">
+        {/* Animated Biometric Radar Core */}
+        <div className="relative flex items-center justify-center">
+          <div className="w-24 h-24 rounded-full bg-blue-500/10 border border-blue-400/30 flex items-center justify-center animate-pulse shadow-[0_0_50px_rgba(59,130,246,0.35)]" />
+          <div className="absolute w-16 h-16 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+          <div className="absolute w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center shadow-md">
+            <ShieldCheck className="w-5 h-5 text-white animate-bounce" />
+          </div>
+        </div>
+
+        {/* Progress Text with Dynamic Stages */}
+        <div className="space-y-2 max-w-sm">
+          <h3 className="text-xl font-bold text-white tracking-tight">
             {selectedPaymentMethod === 'CASH'
-              ? 'Generating Cash on Delivery Token...'
-              : 'Authorizing Secure Payment...'}
+              ? 'Confirming Cash on Delivery Order...'
+              : `Authorizing Payment via ${selectedPaymentMethod}...`}
           </h3>
-          <p className="text-xs text-slate-300 max-w-sm">
-            Validating invoice with Martverse hypermarket server and generating official digital receipt.
+          <p className="text-xs text-slate-400 leading-relaxed font-mono">
+            {processingStep === 1 && 'Step 1/3: Validating items & supermarket stock...'}
+            {processingStep === 2 && 'Step 2/3: Generating secure order token & tax breakdown...'}
+            {processingStep === 3 && 'Step 3/3: Clearing RFID exit turnstiles & saving to database...'}
           </p>
         </div>
+
+        {/* Progress bar line */}
+        <div className="w-56 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div
+            className="bg-gradient-to-r from-blue-500 to-emerald-400 h-1.5 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${processingStep * 33.3}%` }}
+          />
+        </div>
+
+        <span className="text-xs font-mono font-bold text-emerald-400">
+          Payable Total: ₹{activeTotalAmount.toLocaleString('en-IN')}
+        </span>
       </div>
     );
   }
 
   // ==============================================================
-  // STEP 5: OFFICIAL TAX BILL & EXIT TURNSTILES UNLOCKED
+  // STEP 5: SUCCESSFUL COMPLETION + FEEDBACK & STARS + ACTIONS
   // ==============================================================
   if (phase === 'success_popup') {
+    const orderNo = completedOrder?.orderNumber || 'MV' + Math.floor(10000000 + Math.random() * 90000000);
+    const paymentMethodLabel =
+      selectedPaymentMethod === 'UPI'
+        ? `UPI (${selectedUpiApp === 'CUSTOM' ? upiId : selectedUpiApp})`
+        : selectedPaymentMethod === 'CARD'
+        ? `Credit/Debit Card (•••• ${cardNumber.slice(-4)})`
+        : 'Cash on Delivery (+₹20 Handling)';
+
     return (
-      <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm overflow-y-auto p-4 sm:p-8 flex items-center justify-center">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 text-slate-900">
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
+      <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-md overflow-y-auto p-4 sm:p-8 flex items-center justify-center select-none animate-in fade-in duration-300">
+        <div className="max-w-2xl w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-2xl space-y-6 text-slate-900 my-auto">
+          {/* Header Banner */}
+          <div className="flex items-center gap-4 bg-emerald-50 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
               <Check className="w-6 h-6 stroke-[3]" />
             </div>
             <div>
-              <h3 className="font-bold text-emerald-950 text-base">
+              <h2 className="text-base sm:text-lg font-bold text-emerald-950 leading-tight">
                 {selectedPaymentMethod === 'CASH'
-                  ? 'Cash on Delivery Order Confirmed!'
-                  : 'Payment Verified • Exit Turnstiles Unlocked!'}
-              </h3>
-              <p className="text-xs text-emerald-800 mt-0.5">
-                {selectedPaymentMethod === 'CASH'
-                  ? 'Keep exact cash of ₹' + activeTotalAmount + ' ready upon courier delivery.'
-                  : 'Your RFID digital barcode is cleared. You can now walk freely through the security exit turnstiles.'}
+                  ? 'Cash on Delivery Order Confirmed! 📦'
+                  : 'Order Placed & Payment Verified! 🎉'}
+              </h2>
+              <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
+                Order <strong className="font-mono">{orderNo}</strong> has been saved directly to the database.
+                RFID supermarket barriers are cleared.
               </p>
             </div>
           </div>
 
-          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3 font-mono text-xs">
+          {/* Order Details Receipt Card */}
+          <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-3.5 text-xs">
             <div className="flex justify-between items-start pb-3 border-b border-slate-200">
               <div>
-                <span className="text-[10px] text-slate-500 block uppercase font-sans font-semibold">TAX INVOICE NUMBER</span>
-                <span className="text-base font-black text-slate-900">
-                  {completedOrder?.orderNumber || 'MV' + Math.floor(10000000 + Math.random() * 90000000)}
-                </span>
+                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Order Number</span>
+                <span className="text-sm sm:text-base font-black text-slate-900 font-mono">{orderNo}</span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-slate-500 block uppercase font-sans font-semibold">
-                  {selectedPaymentMethod === 'CASH' ? 'DUE AT DOORSTEP' : 'PAID IN FULL'}
+                <span className="text-[10px] text-slate-400 uppercase font-semibold block">
+                  {selectedPaymentMethod === 'CASH' ? 'Due at Delivery' : 'Total Amount Paid'}
                 </span>
-                <span className="text-xl font-black text-emerald-700">
+                <span className="text-base sm:text-lg font-black text-slate-900 font-mono">
                   ₹{activeTotalAmount.toLocaleString('en-IN')}
                 </span>
               </div>
             </div>
 
-            <div className="space-y-1.5 text-slate-700 text-xs font-sans">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Customer:</span>
-                <span className="font-bold text-slate-900">{customerName}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-slate-600">
+              <div>
+                <span className="text-[10px] text-slate-400 block font-semibold">Payment Method</span>
+                <span className="font-bold text-slate-900">{paymentMethodLabel}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Phone:</span>
-                <span className="font-bold text-slate-900">+91 {customerPhone}</span>
+              <div>
+                <span className="text-[10px] text-slate-400 block font-semibold">Customer & Phone</span>
+                <span className="font-bold text-slate-900">{customerName} (+91 {customerPhone})</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Payment:</span>
-                <span className="font-bold text-slate-900">
-                  {selectedPaymentMethod === 'UPI'
-                    ? `UPI (${selectedUpiApp === 'CUSTOM' ? upiId : selectedUpiApp})`
-                    : selectedPaymentMethod === 'CARD'
-                    ? `Card (•••• ${cardNumber.slice(-4)})`
-                    : 'Cash on Delivery (+₹20 Handling)'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Delivery Address:</span>
-                <span className="font-bold text-slate-900 text-right max-w-xs truncate">
+              <div className="sm:col-span-2">
+                <span className="text-[10px] text-slate-400 block font-semibold">Delivery Address</span>
+                <span className="font-medium text-slate-800">
                   {activeSelectedAddress.houseNo}, {activeSelectedAddress.area}, {activeSelectedAddress.city} - {activeSelectedAddress.pinCode}
                 </span>
               </div>
             </div>
-
-            <div className="pt-3 border-t border-slate-200 divide-y divide-slate-100">
-              {scannedItems.map((item) => (
-                <div key={item.id} className="py-1.5 flex justify-between text-[11px]">
-                  <span>{item.quantity}x {item.productName}</span>
-                  <span className="font-bold">₹{item.price * item.quantity}</span>
-                </div>
-              ))}
-              {selectedPaymentMethod === 'CASH' && (
-                <div className="py-1.5 flex justify-between text-[11px] text-amber-700 font-bold">
-                  <span>Cash on Delivery Handling Fee</span>
-                  <span>+ ₹20</span>
-                </div>
-              )}
-            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleContinueToExit}
-            className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-sm shadow-md active:scale-98 cursor-pointer transition-all"
-          >
-            <span>Return to Supermarket / Exit</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          {/* Interactive Customer Feedback & 5-Star Rating Component */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 space-y-4 shadow-2xs">
+            <div className="text-center space-y-1">
+              <h3 className="text-sm font-bold text-slate-900">How was your checkout experience?</h3>
+              <p className="text-xs text-slate-500">Your feedback helps us continuously improve the 3D supermarket</p>
+            </div>
+
+            {/* 5 Clickable Stars */}
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const isFilled = (hoverStar !== null ? hoverStar : starRating) >= star;
+                  return (
+                    <button
+                      key={star}
+                      type="button"
+                      onMouseEnter={() => setHoverStar(star)}
+                      onMouseLeave={() => setHoverStar(null)}
+                      onClick={() => setStarRating(star)}
+                      className="p-1 text-slate-300 hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                      aria-label={`Rate ${star} stars`}
+                    >
+                      <Star
+                        className={`w-7 h-7 transition-colors ${
+                          isFilled
+                            ? 'fill-amber-400 text-amber-400 filter drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)]'
+                            : 'text-slate-300 fill-slate-100'
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="text-xs font-bold text-amber-600 h-4">
+                {ratingLabels[hoverStar !== null ? hoverStar : starRating]}
+              </span>
+            </div>
+
+            {/* Feedback Form / Submitted Confirmation */}
+            {!feedbackSubmitted ? (
+              <form onSubmit={handleSubmitFeedback} className="space-y-3 pt-2 border-t border-slate-100">
+                {/* Quick Feedback Tags */}
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {feedbackTagOptions.map((tag) => {
+                    const isSelected = selectedTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleFeedbackTag(tag)}
+                        className={`text-[11px] px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Comment Box */}
+                <div>
+                  <input
+                    type="text"
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    placeholder="Tell us what you liked about your shopping experience..."
+                    className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-slate-900 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="text-center">
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer active:scale-95"
+                  >
+                    Submit Feedback
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold p-3 rounded-xl text-center">
+                ✓ Thank you! Your review has been recorded.
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons: Continue Shopping & View Orders Page */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleContinueShopping}
+              className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs sm:text-sm shadow-md cursor-pointer transition-all active:scale-98"
+            >
+              <span>Continue Shopping in Mart</span>
+              <Store className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleViewOrdersPage}
+              className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs sm:text-sm shadow-2xs cursor-pointer transition-all active:scale-98"
+            >
+              <span>View in Orders Page</span>
+              <ExternalLink className="w-4 h-4 text-slate-500" />
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   // ==============================================================
-  // MAIN CHECKOUT PAGE:
-  // LEFT: Address Management (BigBasket style) + Customer + Payment Method
-  // RIGHT: Scanned Items + Live Money Calculation + Validation-Gated Pay Action
+  // MAIN CHECKOUT PAGE (Refined Luxury Top Header matching screenshot)
   // ==============================================================
   return (
     <div className="fixed inset-0 z-50 bg-slate-50 text-slate-900 overflow-y-auto select-none animate-in fade-in duration-200">
-      {/* --- Top Header --- */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3.5 shadow-2xs">
+      {/* --- Top Luxury Executive Header (matches media_1793386086551_0b6488b7.png) --- */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3.5 shadow-2xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-xs flex-shrink-0">
-              <Store className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+              <Store className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-bold text-sm sm:text-base tracking-tight text-slate-900">
-                  MARTVERSE CHECKOUT & INVOICE
+                  MARTVERSE POS BILLING
                 </h1>
-                <span className="text-[10px] bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-full font-mono">
+                <span className="text-[10px] bg-slate-900 text-cyan-400 font-bold px-2 py-0.5 rounded-full font-mono">
                   LANE 02
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium">
-                Doorstep Delivery & In-Store Express Billing
+                Official In-Store Express Checkout & Invoice
               </p>
             </div>
           </div>
@@ -654,7 +834,7 @@ export const BillingModal: React.FC = () => {
             type="button"
             onClick={handleCancelBilling}
             title="Return to Supermarket Aisle"
-            className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+            className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 border border-slate-200/80 shadow-2xs"
           >
             <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
             <span>Back to Store</span>
@@ -720,7 +900,6 @@ export const BillingModal: React.FC = () => {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-start gap-3 flex-1 min-w-0">
-                            {/* Radio Circle */}
                             <div className="mt-0.5">
                               <div
                                 className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
@@ -732,7 +911,6 @@ export const BillingModal: React.FC = () => {
                             </div>
 
                             <div className="space-y-1 min-w-0 flex-1">
-                              {/* Tag & Default Badge */}
                               <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                                   <TypeIcon className="w-3 h-3 text-slate-500" />
@@ -758,7 +936,6 @@ export const BillingModal: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Set as Default Action */}
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
                             {!addr.isDefault && (
                               <button
@@ -780,7 +957,6 @@ export const BillingModal: React.FC = () => {
               {/* View B: BigBasket Style "Add New Address" Form with GPS Autofill */}
               {isAddingNewAddress && (
                 <form onSubmit={handleSaveNewAddress} className="space-y-4 pt-1 animate-in fade-in duration-200">
-                  {/* Current Location Detector Button (BigBasket style) */}
                   <div className="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
@@ -813,7 +989,6 @@ export const BillingModal: React.FC = () => {
                     </div>
                   )}
 
-                  {/* House / Flat / Building No */}
                   <div>
                     <label className="text-[11px] font-bold text-slate-700 block mb-1">
                       House / Flat / Floor / Building Name <span className="text-rose-500">*</span>
@@ -828,7 +1003,6 @@ export const BillingModal: React.FC = () => {
                     />
                   </div>
 
-                  {/* Street / Locality / Area */}
                   <div>
                     <label className="text-[11px] font-bold text-slate-700 block mb-1">
                       Street / Locality / Area <span className="text-rose-500">*</span>
@@ -843,7 +1017,6 @@ export const BillingModal: React.FC = () => {
                     />
                   </div>
 
-                  {/* Landmark */}
                   <div>
                     <label className="text-[11px] font-bold text-slate-700 block mb-1">
                       Landmark (Optional)
@@ -857,7 +1030,6 @@ export const BillingModal: React.FC = () => {
                     />
                   </div>
 
-                  {/* City, State, Pincode */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="text-[11px] font-bold text-slate-700 block mb-1">
@@ -901,7 +1073,6 @@ export const BillingModal: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Address Type (Home / Work / Other) */}
                   <div>
                     <label className="text-[11px] font-bold text-slate-700 block mb-1.5">
                       Save Address As:
@@ -933,7 +1104,6 @@ export const BillingModal: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Set as Default Checkbox */}
                   <label className="flex items-center gap-2 cursor-pointer pt-1">
                     <input
                       type="checkbox"
@@ -944,7 +1114,6 @@ export const BillingModal: React.FC = () => {
                     <span className="text-xs text-slate-700 font-medium">Set as my default delivery address</span>
                   </label>
 
-                  {/* Form Action Buttons */}
                   <div className="flex items-center gap-2.5 pt-2 border-t border-slate-100">
                     <button
                       type="submit"
@@ -1110,7 +1279,6 @@ export const BillingModal: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Or Custom UPI ID */}
                   <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] text-slate-600 font-semibold block">
@@ -1219,7 +1387,6 @@ export const BillingModal: React.FC = () => {
                 </div>
               )}
 
-              {/* General Form Error Notice */}
               {formError && (
                 <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold p-3 rounded-xl flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
@@ -1272,7 +1439,6 @@ export const BillingModal: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Stepper & Total */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200/80">
                         <button
