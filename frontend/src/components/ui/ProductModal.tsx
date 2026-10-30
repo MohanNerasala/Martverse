@@ -95,7 +95,7 @@ export const ProductModal: React.FC = () => {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       {/* Luxury White Modal Box with Black Text */}
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-[0_25px_80px_rgba(0,0,0,0.28)] overflow-hidden flex flex-col md:flex-row relative animate-in fade-in zoom-in-95 duration-200 border border-slate-200/90">
+      <div className="bg-white rounded-3xl max-w-3xl w-full shadow-[0_25px_80px_rgba(0,0,0,0.28)] overflow-hidden flex flex-col md:flex-row relative animate-in fade-in zoom-in-95 duration-200 border border-slate-200/90">
         
         {/* Crisp Circular Close Button */}
         <button
@@ -212,23 +212,23 @@ export const ProductModal: React.FC = () => {
             )}
           </div>
 
-          {/* Perfectly Aligned Bottom Bar: Quantity Stepper & Add to Trolley CTA Button */}
-          <div className="pt-5 mt-4 border-t border-slate-100 flex items-center gap-3 w-full">
-            {/* Quantity Stepper (Pixel-perfect h-12 alignment with CTA button) */}
-            <div className="h-12 flex items-center bg-slate-100 border border-slate-200 rounded-2xl px-1.5 py-1 gap-1 shadow-inner flex-shrink-0">
+          {/* Perfectly Aligned Bottom Bar: Quantity Stepper, Wishlist & Add to Trolley CTA */}
+          <div className="pt-4 mt-4 border-t border-slate-100 flex items-center gap-2.5 w-full">
+            {/* Quantity Stepper (Pixel-perfect h-11 alignment) */}
+            <div className="h-11 flex items-center bg-slate-100 border border-slate-200 rounded-xl px-1.5 py-0.5 gap-0.5 shadow-inner flex-shrink-0">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-900 font-extrabold flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer border border-slate-200"
+                className="w-7 h-7 rounded-lg bg-white hover:bg-slate-200 text-slate-900 font-extrabold flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer border border-slate-200"
                 aria-label="Decrease quantity"
               >
                 <Minus className="w-3.5 h-3.5 text-slate-800" />
               </button>
-              <span className="w-8 text-center font-black text-sm text-slate-900 select-none">
+              <span className="w-7 text-center font-black text-xs text-slate-900 select-none">
                 {quantity}
               </span>
               <button
                 onClick={() => setQuantity(quantity + 1)}
-                className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-900 font-extrabold flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer border border-slate-200"
+                className="w-7 h-7 rounded-lg bg-white hover:bg-slate-200 text-slate-900 font-extrabold flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer border border-slate-200"
                 aria-label="Increase quantity"
               >
                 <Plus className="w-3.5 h-3.5 text-slate-800" />
@@ -246,20 +246,20 @@ export const ProductModal: React.FC = () => {
                   added ? 'success' : 'info'
                 );
               }}
-              className={`h-12 w-12 rounded-2xl flex items-center justify-center border transition-all cursor-pointer flex-shrink-0 ${
+              className={`h-11 w-11 rounded-xl flex items-center justify-center border transition-all cursor-pointer flex-shrink-0 ${
                 isFav
                   ? 'bg-rose-500/15 border-rose-500/40 text-rose-500 shadow-md shadow-rose-500/20 scale-105'
                   : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-500 hover:text-rose-500'
               }`}
               title={isFav ? 'Remove from Wishlist' : 'Save to Wishlist'}
             >
-              <Heart className={`w-5 h-5 ${isFav ? 'fill-rose-500' : ''}`} />
+              <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500' : ''}`} />
             </button>
 
-            {/* Add to Trolley CTA Button: Smooth Hover, Shimmer Beam, Perfectly Aligned */}
+            {/* Add to Trolley CTA Button: Generous room, Left label + Right amount pill, Never truncated */}
             <button
               onClick={handleAddToCart}
-              className="h-12 flex-1 relative overflow-hidden rounded-2xl flex items-center justify-center gap-2.5 px-5 text-white font-extrabold text-sm shadow-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl hover:shadow-blue-600/35 group cursor-pointer select-none"
+              className="h-11 flex-1 relative overflow-hidden rounded-xl flex items-center justify-between px-3.5 sm:px-4 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all duration-300 ease-out hover:scale-[1.01] active:scale-[0.99] hover:shadow-xl hover:shadow-blue-600/35 group cursor-pointer select-none"
               style={{
                 background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0284c7 100%)',
               }}
@@ -269,24 +269,27 @@ export const ProductModal: React.FC = () => {
                 <div
                   className="w-full h-full"
                   style={{
-                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%)',
                     animation: 'light-sweep 2s cubic-bezier(0.4, 0, 0.2, 1) infinite',
                   }}
                 />
               </div>
 
-              {/* Shopping Cart or Lock Icon */}
-              {!isAuthenticated ? (
-                <Lock className="w-4 h-4 text-white drop-shadow group-hover:scale-115 transition-transform duration-300 flex-shrink-0" />
-              ) : (
-                <ShoppingCart className="w-4 h-4 text-white drop-shadow group-hover:scale-115 group-hover:-rotate-6 transition-transform duration-300 flex-shrink-0" />
-              )}
+              {/* Action Title on Left */}
+              <div className="relative z-10 flex items-center gap-2 min-w-0">
+                {!isAuthenticated ? (
+                  <Lock className="w-4 h-4 text-white drop-shadow flex-shrink-0" />
+                ) : (
+                  <ShoppingCart className="w-4 h-4 text-white drop-shadow flex-shrink-0" />
+                )}
+                <span className="font-extrabold text-white text-xs sm:text-sm tracking-tight whitespace-nowrap">
+                  {!isAuthenticated ? 'Sign In & Add' : 'Add to Trolley'}
+                </span>
+              </div>
               
-              {/* Button text showing Item action and Total Amount */}
-              <span className="relative z-10 tracking-wide font-black text-white text-sm drop-shadow whitespace-nowrap">
-                {!isAuthenticated
-                  ? `Sign In & Add • ₹${(activePrice * quantity).toLocaleString('en-IN')}`
-                  : `Add to Trolley • ₹${(activePrice * quantity).toLocaleString('en-IN')}`}
+              {/* Crisp High-Contrast Amount Pill on Right */}
+              <span className="relative z-10 bg-white/20 backdrop-blur-xs px-2.5 py-1 rounded-lg font-black text-xs sm:text-sm text-white font-mono flex-shrink-0 border border-white/25 shadow-sm ml-2">
+                ₹{(activePrice * quantity).toLocaleString('en-IN')}
               </span>
             </button>
           </div>

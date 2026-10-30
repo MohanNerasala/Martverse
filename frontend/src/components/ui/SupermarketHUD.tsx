@@ -74,11 +74,11 @@ export const SupermarketHUD: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // Filter products sorted Alphabetically (A to Z)
+  // Filter products sorted Alphabetically (A to Z) - only computed when query exists
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
     const sorted = [...products].sort((a, b) => a.name.localeCompare(b.name));
-    if (!q) return sorted;
     return sorted.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
@@ -100,7 +100,6 @@ export const SupermarketHUD: React.FC = () => {
       if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         e.preventDefault();
         searchInputRef.current?.focus();
-        setIsSearchOpen(true);
       }
       if (e.key === 'Escape') {
         setIsSearchOpen(false);
@@ -145,10 +144,10 @@ export const SupermarketHUD: React.FC = () => {
           </div>
 
           {/* Floor Navigation Segmented Switcher (Floor 1 & Floor 2) */}
-          <nav className="flex items-center p-1 rounded-xl bg-black/40 border border-white/[0.06] backdrop-blur-md flex-shrink-0">
+          <nav className="h-10 flex items-center p-1 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-md flex-shrink-0">
             <button
               onClick={() => setActiveFloor(1)}
-              className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeFloor === 1
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold'
                   : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
@@ -161,7 +160,7 @@ export const SupermarketHUD: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveFloor(2)}
-              className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeFloor === 2
                   ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 font-bold'
                   : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
@@ -174,10 +173,10 @@ export const SupermarketHUD: React.FC = () => {
             </button>
           </nav>
 
-          {/* Search Bar with A-Z Auto-Navigation */}
-          <div ref={searchContainerRef} className="relative flex-1 max-w-[160px] xs:max-w-[190px] md:max-w-xs lg:max-w-sm">
-            <div className="relative flex items-center">
-              <Search className="w-3.5 h-3.5 text-blue-400 absolute left-2.5 sm:left-3 pointer-events-none" />
+          {/* Search Bar - Standardized h-10 height to match navbar controls */}
+          <div ref={searchContainerRef} className="relative flex-1 max-w-[160px] xs:max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md h-10">
+            <div className="relative h-10 flex items-center">
+              <Search className="w-3.5 h-3.5 text-blue-400 absolute left-3 pointer-events-none" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -186,41 +185,48 @@ export const SupermarketHUD: React.FC = () => {
                   setSearchQuery(e.target.value);
                   setIsSearchOpen(true);
                 }}
-                onFocus={() => setIsSearchOpen(true)}
-                placeholder="Search items A–Z (e.g. Maggi)..."
-                className="w-full bg-black/40 hover:bg-black/60 focus:bg-[#070b12] text-white placeholder-slate-400 text-xs rounded-xl pl-7 sm:pl-8 pr-7 py-2 border border-white/[0.08] focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/40 transition-all outline-none"
+                onFocus={() => {
+                  if (searchQuery.trim().length > 0) {
+                    setIsSearchOpen(true);
+                  }
+                }}
+                placeholder="Search items A–Z..."
+                className="w-full h-10 bg-black/40 hover:bg-black/60 focus:bg-[#070b12] text-white placeholder-slate-400 text-xs rounded-xl pl-8 sm:pl-9 pr-8 border border-white/[0.08] focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/40 transition-all outline-none"
               />
               {searchQuery ? (
                 <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchOpen(false);
+                  }}
+                  className="absolute right-2.5 text-slate-400 hover:text-white p-1 cursor-pointer"
                   title="Clear search"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               ) : (
-                <kbd className="hidden lg:inline-block absolute right-2 text-[9px] font-mono text-slate-400 bg-white/[0.06] px-1.5 py-0.5 rounded border border-white/[0.08]">
+                <kbd className="hidden lg:inline-block absolute right-2.5 text-[9px] font-mono text-slate-400 bg-white/[0.06] px-1.5 py-0.5 rounded border border-white/[0.08] pointer-events-none">
                   /
                 </kbd>
               )}
             </div>
 
-            {/* A-Z Search Dropdown */}
-            {isSearchOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#090D14]/95 backdrop-blur-2xl rounded-2xl border border-white/[0.12] shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 overflow-hidden max-h-96 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 w-72 sm:w-88 md:w-96">
-                <div className="p-3 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.02]">
+            {/* Clean Dropdown — ONLY displayed when user has typed a search query */}
+            {isSearchOpen && searchQuery.trim().length > 0 && (
+              <div className="absolute top-[calc(100%+8px)] left-0 sm:left-auto sm:right-0 w-72 sm:w-80 md:w-96 bg-[#090D14]/95 backdrop-blur-2xl rounded-2xl border border-white/[0.12] shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-2 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.02]">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-slate-300">Catalog (Alphabetical A–Z)</span>
-                    <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-1.5 py-0.2 rounded-full border border-blue-500/30">
+                    <span className="text-[11px] font-bold text-slate-300">Search Results</span>
+                    <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-1.5 py-0.5 rounded-full border border-blue-500/30">
                       {filteredProducts.length}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 hidden xs:inline">Click item to go to shelf</span>
+                  <span className="text-[10px] text-slate-400">Click to locate</span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04]">
+                <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5 divide-y divide-white/[0.04]">
                   {filteredProducts.length === 0 ? (
-                    <div className="p-6 text-center text-slate-400 text-xs">
+                    <div className="p-6 text-center text-slate-400 text-xs font-medium">
                       No items found matching &quot;{searchQuery}&quot;
                     </div>
                   ) : (
@@ -232,10 +238,11 @@ export const SupermarketHUD: React.FC = () => {
                           setSearchQuery('');
                           navigateToProduct(p);
                         }}
-                        className="w-full p-2.5 flex items-center justify-between gap-2.5 hover:bg-white/[0.06] transition-all text-left group cursor-pointer"
+                        className="w-full px-2.5 py-2 flex items-center justify-between gap-3 hover:bg-white/[0.08] transition-colors text-left group cursor-pointer rounded-xl"
                       >
+                        {/* 1. Item Image & 2. Item Name */}
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-9 h-9 rounded-lg bg-white border border-white/[0.08] overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5">
+                          <div className="w-8 h-8 rounded-lg bg-white border border-white/20 overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5 shadow-sm">
                             {p.imageUrl ? (
                               <img
                                 src={p.imageUrl}
@@ -243,31 +250,21 @@ export const SupermarketHUD: React.FC = () => {
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).src = '/products/fallback.svg';
                                 }}
-                                className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                                className="w-full h-full object-contain group-hover:scale-105 transition-transform"
                               />
                             ) : (
-                              <span className="text-sm">🛍️</span>
+                              <span className="text-xs">🛍️</span>
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <div className="font-bold text-white text-xs truncate group-hover:text-blue-300 transition-colors">
-                              {p.name}
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
-                              <span className="text-emerald-400 font-extrabold">₹{p.price}</span>
-                              {p.placement && (
-                                <span className="bg-white/[0.06] px-1.5 py-0.5 rounded text-[9px] text-slate-300 font-medium">
-                                  F{p.placement.floorNumber} • {p.placement.aisleName || `Aisle ${p.placement.aisleNumber}`}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                          <span className="font-semibold text-white text-xs truncate group-hover:text-blue-300 transition-colors">
+                            {p.name}
+                          </span>
                         </div>
 
-                        <div className="flex items-center gap-1 text-[11px] text-blue-400 font-bold group-hover:translate-x-1 transition-transform flex-shrink-0">
-                          <span>Go</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </div>
+                        {/* 3. Amount (Price in INR) */}
+                        <span className="text-xs font-bold text-emerald-400 font-mono flex-shrink-0">
+                          ₹{p.price}
+                        </span>
                       </button>
                     ))
                   )}
@@ -276,14 +273,14 @@ export const SupermarketHUD: React.FC = () => {
             )}
           </div>
 
-          {/* Action Utilities & User Area */}
-          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+          {/* Action Utilities & User Area - All standardized to h-10 */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Camera Perspective Mode (1st / 3rd Person) */}
             <button
               onClick={() =>
                 setCameraMode(cameraMode === 'third_person' ? 'first_person' : 'third_person')
               }
-              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all flex items-center gap-1.5 text-xs cursor-pointer"
               title="Toggle Camera View (1st / 3rd Person)"
             >
               {cameraMode === 'first_person' ? (
@@ -299,7 +296,7 @@ export const SupermarketHUD: React.FC = () => {
             {/* Sound Toggle */}
             <button
               onClick={toggleSound}
-              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all cursor-pointer"
+              className="h-10 w-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all flex items-center justify-center cursor-pointer"
               title={isSoundMuted ? 'Unmute Ambient Sound' : 'Mute Ambient Sound'}
             >
               {isSoundMuted ? (
@@ -309,37 +306,37 @@ export const SupermarketHUD: React.FC = () => {
               )}
             </button>
 
-            {/* Reset to Original State & Starting Position (No question mark!) */}
+            {/* Reset to Original State & Starting Position */}
             <button
               onClick={() => {
                 resetToOriginalState();
                 showToast('Position Reset', 'Returned to store entrance & original view orientation', 'info');
               }}
-              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-blue-600/20 text-slate-300 hover:text-blue-300 border border-white/[0.06] hover:border-blue-500/40 transition-all flex items-center gap-1.5 text-xs group cursor-pointer"
+              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.04] hover:bg-blue-600/20 text-slate-300 hover:text-blue-300 border border-white/[0.06] hover:border-blue-500/40 transition-all flex items-center gap-1.5 text-xs group cursor-pointer"
               title="Reset to Original State & Starting Position (Entrance)"
             >
               <RotateCcw className="w-4 h-4 text-blue-400 group-hover:-rotate-90 transition-transform duration-300" />
               <span className="hidden xl:inline font-semibold text-slate-200 group-hover:text-white">Reset</span>
             </button>
 
-            {/* Wishlist Icon Only (no text label) */}
+            {/* Wishlist Icon Only */}
             <button
               onClick={() => toggleWishlist(true)}
-              className="p-2 sm:p-2.5 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.06] hover:border-rose-500/30 transition-all relative cursor-pointer"
+              className="h-10 w-10 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.06] hover:border-rose-500/30 transition-all relative flex items-center justify-center cursor-pointer"
               title="View Saved Wishlist"
             >
               <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-rose-400 fill-rose-400' : 'text-slate-300'}`} />
               {wishlistItems.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#090D14] shadow-sm animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#090D14] shadow-sm animate-pulse">
                   {wishlistItems.length}
                 </span>
               )}
             </button>
 
-            {/* Hero Shopping Trolley Button (Cart comes BEFORE profile) */}
+            {/* Hero Shopping Trolley Button */}
             <button
               onClick={() => toggleCart(true)}
-              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/30 border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98] transition-all btn-shine cursor-pointer flex-shrink-0"
+              className="h-10 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-bold flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/30 border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98] transition-all btn-shine cursor-pointer flex-shrink-0"
               title="Open Shopping Trolley"
             >
               <div className="relative flex items-center">
@@ -356,11 +353,11 @@ export const SupermarketHUD: React.FC = () => {
               </span>
             </button>
 
-            {/* Profile Icon — tapping opens /profile page (no dropdown, no phone number shown) */}
+            {/* Profile Icon */}
             {!isAuthenticated ? (
               <button
                 onClick={() => openLoginModal()}
-                className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-tr from-blue-600/30 to-indigo-600/30 hover:from-blue-600/50 hover:to-indigo-600/50 text-blue-300 hover:text-white border border-blue-500/40 transition-all cursor-pointer shadow-sm"
+                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600/30 to-indigo-600/30 hover:from-blue-600/50 hover:to-indigo-600/50 text-blue-300 hover:text-white border border-blue-500/40 transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0"
                 title="Sign in with Indian Mobile Number (+91)"
               >
                 <LogIn className="w-4 h-4 text-blue-400" />
@@ -368,7 +365,7 @@ export const SupermarketHUD: React.FC = () => {
             ) : (
               <button
                 onClick={() => router.push('/profile')}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 ring-2 ring-white/10 hover:ring-white/20 transition-all cursor-pointer flex-shrink-0"
+                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 ring-2 ring-white/10 hover:ring-white/20 transition-all cursor-pointer flex-shrink-0"
                 title="My Profile"
               >
                 <User className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
