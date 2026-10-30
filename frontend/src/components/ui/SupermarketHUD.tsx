@@ -635,7 +635,7 @@ export const SupermarketHUD: React.FC = () => {
                 onTouchEnd={() => { martRuntime.virtualKeys.left = false; }}
                 onTouchCancel={() => { martRuntime.virtualKeys.left = false; }}
                 className="w-8.5 h-8.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.18] active:bg-white active:text-slate-950 text-white border border-white/15 hover:border-white/30 flex items-center justify-center transition-all shadow-sm active:scale-90 cursor-pointer backdrop-blur-md"
-                title="Steer Left (Left Arrow / A)"
+                title="Move Left (Left Arrow / A)"
               >
                 <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
               </button>
@@ -652,7 +652,7 @@ export const SupermarketHUD: React.FC = () => {
                 onTouchEnd={() => { martRuntime.virtualKeys.right = false; }}
                 onTouchCancel={() => { martRuntime.virtualKeys.right = false; }}
                 className="w-8.5 h-8.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.18] active:bg-white active:text-slate-950 text-white border border-white/15 hover:border-white/30 flex items-center justify-center transition-all shadow-sm active:scale-90 cursor-pointer backdrop-blur-md"
-                title="Steer Right (Right Arrow / D)"
+                title="Move Right (Right Arrow / D)"
               >
                 <ChevronRight className="w-5 h-5 stroke-[2.5]" />
               </button>

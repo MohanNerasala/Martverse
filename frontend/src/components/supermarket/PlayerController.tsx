@@ -461,29 +461,20 @@ export const PlayerController: React.FC = () => {
       yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 55, delta);
       pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 55, delta);
 
-      // Natural vehicle steering when pressing Left / Right
-      const steerSpeed = 2.4;
-      if (keys.current.left || martRuntime.virtualKeys.left) {
-        targetYawRef.current -= steerSpeed * delta;
-      }
-      if (keys.current.right || martRuntime.virtualKeys.right) {
-        targetYawRef.current += steerSpeed * delta;
-      }
-
       const speed = 12.5; // Instant, fast, professional navigation speed
       const moveVector = new THREE.Vector3();
 
-      // 1. Keyboard WASD & Arrow Keys
+      // 1. Keyboard WASD & Arrow Keys — Pure lateral strafing (NO rotation on Left/Right keys)
       if (keys.current.forward) moveVector.z += 1;
       if (keys.current.backward) moveVector.z -= 1;
-      if (keys.current.left) moveVector.x -= 0.6; // Corrected: Left moves -X
-      if (keys.current.right) moveVector.x += 0.6; // Corrected: Right moves +X
+      if (keys.current.left) moveVector.x -= 1; // Pure leftward translation
+      if (keys.current.right) moveVector.x += 1; // Pure rightward translation
 
-      // 2. On-Screen 4-Arrow Navigator (Virtual D-Pad)
+      // 2. On-Screen 4-Arrow Navigator (Virtual D-Pad) — Pure lateral strafing
       if (martRuntime.virtualKeys.forward) moveVector.z += 1;
       if (martRuntime.virtualKeys.backward) moveVector.z -= 1;
-      if (martRuntime.virtualKeys.left) moveVector.x -= 0.6;
-      if (martRuntime.virtualKeys.right) moveVector.x += 0.6;
+      if (martRuntime.virtualKeys.left) moveVector.x -= 1;
+      if (martRuntime.virtualKeys.right) moveVector.x += 1;
 
       // 3. Two-Finger Trackpad / Mouse Scroll Momentum
       moveVector.z += wheelMomentum.current.z;
