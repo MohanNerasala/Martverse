@@ -37,41 +37,82 @@ import {
 import confetti from 'canvas-confetti';
 import { api } from '@/lib/api';
 
-// --- SVGs for Payment Providers ---
-const GooglePayIcon: React.FC = () => (
-  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+// --- Real Authentic SVGs for Payment Providers (Icons Only) ---
+const GooglePayIcon: React.FC<{ className?: string }> = ({ className = 'h-5 w-auto' }) => (
+  <svg className={className} viewBox="0 0 52 20" fill="none">
+    {/* Google 'G' in Official 4 Colors */}
     <path
-      d="M23.04 12.261c0-.82-.073-1.609-.21-2.361H12v4.51h6.19c-.267 1.44-1.076 2.659-2.296 3.476v2.89h3.72c2.176-2.003 3.426-4.952 3.426-8.515z"
+      d="M10.2 10.2c0-.68-.06-1.34-.17-1.97H5.2v3.74h2.82c-.12.66-.49 1.22-.97 1.62v1.35h1.57c.92-.85 1.58-2.1 1.58-4.74z"
       fill="#4285F4"
     />
     <path
-      d="M12 23.5c3.106 0 5.71-1.03 7.613-2.79l-3.72-2.89c-1.03.69-2.348 1.1-3.893 1.1-2.994 0-5.529-2.022-6.433-4.74H1.716v2.98C3.606 20.94 8.01 23.5 12 23.5z"
+      d="M5.2 15.3c1.38 0 2.54-.46 3.39-1.24l-1.57-1.35c-.46.31-1.05.5-1.82.5-1.4 0-2.58-.95-3.01-2.22H.55v1.4c.86 1.72 2.63 2.91 4.65 2.91z"
       fill="#34A853"
     />
     <path
-      d="M5.567 14.18c-.23-.69-.362-1.43-.362-2.18s.132-1.49.362-2.18V6.84H1.716C.942 8.38.5 10.14.5 12s.442 3.62 1.216 5.16l3.851-2.98z"
+      d="M2.19 10.99c-.11-.33-.18-.68-.18-1.04 0-.36.07-.71.18-1.04V7.51H.55C.2 8.21 0 9.01 0 9.95s.2 1.74.55 2.44l1.64-1.4z"
       fill="#FBBC05"
     />
     <path
-      d="M12 4.98c1.688 0 3.204.58 4.397 1.719l3.298-3.299C17.705 1.58 15.101.5 12 .5 8.01.5 3.606 3.06 1.716 6.84l3.851 2.98C6.471 7.102 9.006 4.98 12 4.98z"
+      d="M5.2 4.59c.75 0 1.43.26 1.96.77l1.47-1.47C7.74 3.06 6.58 2.5 5.2 2.5c-2.02 0-3.79 1.19-4.65 2.91l1.64 1.4c.43-1.27 1.61-2.22 3.01-2.22z"
       fill="#EA4335"
+    />
+    {/* 'Pay' in Google Slate #5F6368 */}
+    <path
+      d="M14.8 15V6.8h2.6c1.5 0 2.6 1.1 2.6 2.6s-1.1 2.6-2.6 2.6h-1.3V15h-1.3zm1.3-4.2h1.3c.8 0 1.3-.5 1.3-1.3s-.5-1.3-1.3-1.3h-1.3v2.6z"
+      fill="#5F6368"
+    />
+    <path
+      d="M23.8 15v-.9c-.5.6-1.2 1-2 1-1.3 0-2.3-1-2.3-2.3 0-1.4 1-2.3 2.3-2.3.8 0 1.4.3 1.9.9v-.9h1.3V15h-1.2zm-.1-2.2c0-.6-.5-1.2-1.3-1.2s-1.3.5-1.3 1.2.5 1.2 1.3 1.2 1.3-.5 1.3-1.2z"
+      fill="#5F6368"
+    />
+    <path
+      d="M30.4 17.1l-1.1-3.1-2-4.8h1.3l1.4 3.5 1.4-3.5h1.3l-3.5 7.9h-1.3z"
+      fill="#5F6368"
     />
   </svg>
 );
 
-const PhonePeIcon: React.FC = () => (
-  <div className="w-6 h-6 rounded-lg bg-[#5f259f] flex items-center justify-center text-white font-black text-xs shadow-xs flex-shrink-0 select-none">
-    <span>पे</span>
-  </div>
+const PhonePeIcon: React.FC<{ className?: string }> = ({ className = 'h-6 w-auto' }) => (
+  <svg className={className} viewBox="0 0 76 76" fill="none">
+    <rect width="76" height="76" rx="18" fill="#5f259f" />
+    <path
+      d="M46.2 24H33.5c-1.4 0-2.5 1.1-2.5 2.5v25.2c0 1.4 1.1 2.5 2.5 2.5h3.6c1.4 0 2.5-1.1 2.5-2.5V44.8h6.6c6.6 0 11.2-4.7 11.2-10.4 0-5.6-4.6-10.4-11.2-10.4zm-.2 14.5h-6.4v-8.3H46c3.2 0 5.1 1.7 5.1 4.1 0 2.5-1.9 4.2-5.1 4.2z"
+      fill="white"
+    />
+    <path d="M25 32h5v5h-5z" fill="white" />
+  </svg>
 );
 
-const PaytmIcon: React.FC = () => (
-  <div className="w-7 h-5 rounded-md bg-[#002e6e] border border-[#00b9f5]/40 flex items-center justify-center text-[#00b9f5] font-black text-[9px] tracking-tight shadow-xs flex-shrink-0 select-none px-1">
-    <span>paytm</span>
-  </div>
+const PaytmIcon: React.FC<{ className?: string }> = ({ className = 'h-5 w-auto' }) => (
+  <svg className={className} viewBox="0 0 88 26" fill="none">
+    {/* Official Two-Tone Paytm Logo Wordmark */}
+    <text
+      x="0"
+      y="20"
+      fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      fontWeight="900"
+      fontSize="22"
+      fill="#002e6e"
+      letterSpacing="-0.8"
+    >
+      Pay
+    </text>
+    <text
+      x="43"
+      y="20"
+      fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      fontWeight="900"
+      fontSize="22"
+      fill="#00b9f5"
+      letterSpacing="-0.3"
+    >
+      tm
+    </text>
+  </svg>
 );
 
-// --- BigBasket Style Saved Address Interface ---
+// --- Saved Address Interface ---
 interface SavedAddress {
   id: string;
   name: string;
@@ -86,34 +127,8 @@ interface SavedAddress {
   isDefault: boolean;
 }
 
-const INITIAL_ADDRESSES: SavedAddress[] = [
-  {
-    id: 'addr-1',
-    name: 'Rahul Sharma',
-    phone: '9876543210',
-    type: 'HOME',
-    houseNo: 'Flat 402, Green Glen Heights, Tower B',
-    area: 'Outer Ring Road, Bellandur',
-    landmark: 'Near EcoSpace Tech Park',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    pinCode: '560103',
-    isDefault: true,
-  },
-  {
-    id: 'addr-2',
-    name: 'Rahul Sharma',
-    phone: '9876543210',
-    type: 'WORK',
-    houseNo: 'Building 4B, 3rd Floor, Global Tech Park',
-    area: 'Sarjapur Main Road',
-    landmark: 'Opposite Wipro Gate 02',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    pinCode: '560035',
-    isDefault: false,
-  },
-];
+// Start with empty addresses — no dummy mock addresses
+const INITIAL_ADDRESSES: SavedAddress[] = [];
 
 export const BillingModal: React.FC = () => {
   const router = useRouter();
@@ -143,9 +158,9 @@ export const BillingModal: React.FC = () => {
   const [customerName, setCustomerName] = useState('Rahul Sharma');
   const [customerPhone, setCustomerPhone] = useState(authPhone || '9876543210');
 
-  // Address Management State (BigBasket style)
-  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(INITIAL_ADDRESSES);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('addr-1');
+  // Address Management State (Clean start — no dummy addresses)
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationSuccessMsg, setLocationSuccessMsg] = useState<string | null>(null);
@@ -162,10 +177,9 @@ export const BillingModal: React.FC = () => {
     setAsDefault: false,
   });
 
-  // Payment State: UPI (PhonePe, Paytm, GPay), Card (Details), Cash on Delivery (+₹20)
+  // Payment State: UPI (PhonePe, Paytm, GPay - Icons Only), Card, Cash on Delivery (+₹20)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'UPI' | 'CARD' | 'CASH'>('UPI');
-  const [selectedUpiApp, setSelectedUpiApp] = useState<'PHONEPE' | 'PAYTM' | 'GPAY' | 'CUSTOM'>('PHONEPE');
-  const [upiId, setUpiId] = useState('rahul@okhdfcbank');
+  const [selectedUpiApp, setSelectedUpiApp] = useState<'PHONEPE' | 'PAYTM' | 'GPAY'>('PHONEPE');
 
   // Card Inputs
   const [cardNumber, setCardNumber] = useState('4532 8921 7382 4242');
@@ -208,19 +222,30 @@ export const BillingModal: React.FC = () => {
     }
   }, [authPhone]);
 
-  // Load saved addresses from backend database & sync with localStorage
+  // Load saved addresses from backend database & sync with localStorage (strips out old dummy addresses)
   useEffect(() => {
     let isMounted = true;
     const fetchSavedAddresses = async () => {
       try {
         const list = await api.getAddresses(customerPhone);
-        if (isMounted && Array.isArray(list) && list.length > 0) {
-          setSavedAddresses(list);
-          const def = list.find((a: SavedAddress) => a.isDefault);
-          if (def) setSelectedAddressId(def.id);
-          else setSelectedAddressId(list[0].id);
+        if (isMounted) {
+          const valid = (Array.isArray(list) ? list : []).filter(
+            (a: SavedAddress) => a.id !== 'addr-1' && a.id !== 'addr-2'
+          );
+          setSavedAddresses(valid);
+          if (valid.length > 0) {
+            const def = valid.find((a: SavedAddress) => a.isDefault) || valid[0];
+            setSelectedAddressId(def.id);
+          } else {
+            setSelectedAddressId('');
+          }
         }
-      } catch {}
+      } catch {
+        if (isMounted) {
+          setSavedAddresses([]);
+          setSelectedAddressId('');
+        }
+      }
     };
     fetchSavedAddresses();
     return () => {
@@ -260,16 +285,16 @@ export const BillingModal: React.FC = () => {
   const gstInclusiveAmount = (clientSubtotal * 0.05).toFixed(2);
 
   // Active address
-  const activeSelectedAddress = savedAddresses.find((a) => a.id === selectedAddressId) || savedAddresses[0];
+  const activeSelectedAddress = savedAddresses.find((a) => a.id === selectedAddressId) || (savedAddresses.length > 0 ? savedAddresses[0] : null);
 
   // --- Strict Form Validation ("all fill only it will show clickable to pay") ---
   const isAddressValid = Boolean(
     !isAddingNewAddress &&
       activeSelectedAddress &&
-      activeSelectedAddress.houseNo.trim() &&
-      activeSelectedAddress.area.trim() &&
-      activeSelectedAddress.city.trim() &&
-      activeSelectedAddress.pinCode.trim().length === 6
+      activeSelectedAddress.houseNo?.trim() &&
+      activeSelectedAddress.area?.trim() &&
+      activeSelectedAddress.city?.trim() &&
+      activeSelectedAddress.pinCode?.trim().length === 6
   );
 
   const isCustomerValid = Boolean(
@@ -278,9 +303,6 @@ export const BillingModal: React.FC = () => {
 
   const isPaymentValid = (() => {
     if (selectedPaymentMethod === 'UPI') {
-      if (selectedUpiApp === 'CUSTOM') {
-        return upiId.trim().length >= 3 && upiId.includes('@');
-      }
       return Boolean(selectedUpiApp);
     }
     if (selectedPaymentMethod === 'CARD') {
@@ -304,11 +326,11 @@ export const BillingModal: React.FC = () => {
   const validationHelperText = (() => {
     if (scannedItems.length === 0) return 'Trolley has no items';
     if (isAddingNewAddress) return 'Please save your address details above';
-    if (!isAddressValid) return 'Please add or select a delivery address';
+    if (!isAddressValid) return 'Please add and save a delivery address';
     if (!isCustomerValid) return 'Please enter your Full Name & 10-digit Mobile Number';
     if (!isPaymentValid) {
       if (selectedPaymentMethod === 'CARD') return 'Please complete card number, expiry date, and CVV';
-      if (selectedPaymentMethod === 'UPI') return 'Please select a UPI app or valid UPI ID';
+      if (selectedPaymentMethod === 'UPI') return 'Please select a payment app';
     }
     return null;
   })();
@@ -473,7 +495,7 @@ export const BillingModal: React.FC = () => {
         if (selectedUpiApp === 'PHONEPE') paymentProviderName = 'UPI (PhonePe)';
         else if (selectedUpiApp === 'PAYTM') paymentProviderName = 'UPI (Paytm)';
         else if (selectedUpiApp === 'GPAY') paymentProviderName = 'UPI (Google Pay)';
-        else paymentProviderName = `UPI (${upiId.trim() || 'Direct VPA'})`;
+        else paymentProviderName = 'UPI';
       } else if (selectedPaymentMethod === 'CARD') {
         paymentProviderName = `Card (•••• ${cardNumber.replace(/\s/g, '').slice(-4)}) - ${cardHolder}`;
       } else {
@@ -692,7 +714,7 @@ export const BillingModal: React.FC = () => {
     const orderNo = completedOrder?.orderNumber || 'MV' + Math.floor(10000000 + Math.random() * 90000000);
     const paymentMethodLabel =
       selectedPaymentMethod === 'UPI'
-        ? `UPI (${selectedUpiApp === 'CUSTOM' ? upiId : selectedUpiApp})`
+        ? `UPI (${selectedUpiApp === 'PAYTM' ? 'Paytm' : selectedUpiApp === 'GPAY' ? 'Google Pay' : 'PhonePe'})`
         : selectedPaymentMethod === 'CARD'
         ? `Credit/Debit Card (•••• ${cardNumber.slice(-4)})`
         : 'Cash on Delivery (+₹20 Handling)';
@@ -747,7 +769,9 @@ export const BillingModal: React.FC = () => {
               <div className="sm:col-span-2">
                 <span className="text-[10px] text-slate-400 block font-semibold">Delivery Address</span>
                 <span className="font-medium text-slate-800">
-                  {activeSelectedAddress.houseNo}, {activeSelectedAddress.area}, {activeSelectedAddress.city} - {activeSelectedAddress.pinCode}
+                  {activeSelectedAddress
+                    ? `${activeSelectedAddress.houseNo}, ${activeSelectedAddress.area}, ${activeSelectedAddress.city} - ${activeSelectedAddress.pinCode}`
+                    : 'Customer Delivery'}
                 </span>
               </div>
             </div>
@@ -946,7 +970,7 @@ export const BillingModal: React.FC = () => {
               </div>
 
               {/* View A: Compact Saved Addresses Grid (2 columns on screens) */}
-              {!isAddingNewAddress && (
+              {!isAddingNewAddress && savedAddresses.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {savedAddresses.map((addr) => {
                     const isSelected = selectedAddressId === addr.id;
@@ -956,10 +980,10 @@ export const BillingModal: React.FC = () => {
                       <div
                         key={addr.id}
                         onClick={() => setSelectedAddressId(addr.id)}
-                        className={`p-2.5 rounded-xl border transition-all cursor-pointer relative ${
+                        className={`p-2.5 rounded-xl border transition-all cursor-pointer relative active:scale-[0.99] ${
                           isSelected
-                            ? 'bg-blue-50/50 border-blue-600 shadow-xs ring-1 ring-blue-600/30'
-                            : 'bg-white border-slate-200 hover:border-slate-300'
+                            ? 'bg-blue-50/60 border-blue-600 shadow-xs ring-1 ring-blue-600/40'
+                            : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-1.5">
@@ -996,7 +1020,7 @@ export const BillingModal: React.FC = () => {
                             <button
                               type="button"
                               onClick={(e) => handleDeleteAddress(addr.id, e)}
-                              className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer active:scale-90"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all cursor-pointer active:scale-90"
                               title="Delete this address"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1012,12 +1036,36 @@ export const BillingModal: React.FC = () => {
                             {addr.area}{addr.landmark ? `, Near ${addr.landmark}` : ''}
                           </p>
                           <p className="text-[10px] text-slate-500 font-medium truncate">
-                            {addr.city} - <span className="font-mono font-bold text-slate-700">{addr.pinCode}</span>
+                            {addr.city}{addr.state ? `, ${addr.state}` : ''} - <span className="font-mono font-bold text-slate-700">{addr.pinCode}</span>
                           </p>
                         </div>
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* View B: No Addresses Saved Yet — Clean Initial Prompt */}
+              {!isAddingNewAddress && savedAddresses.length === 0 && (
+                <div className="p-3.5 rounded-xl border border-dashed border-blue-200 bg-blue-50/30 text-center space-y-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 mx-auto flex items-center justify-center">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">No delivery address saved</p>
+                    <p className="text-[10px] text-slate-500">Add an address to proceed with your order</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingNewAddress(true);
+                      setFormError(null);
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add Delivery Address</span>
+                  </button>
                 </div>
               )}
 
@@ -1265,65 +1313,51 @@ export const BillingModal: React.FC = () => {
                 })}
               </div>
 
-              {/* Sub-view: UPI (3 Options: PhonePe, Paytm, GPay) */}
+              {/* Sub-view: UPI (3 Real Brand Icons Only — No Names, No UPI ID Row) */}
               {selectedPaymentMethod === 'UPI' && (
-                <div className="bg-slate-50/70 rounded-xl p-2.5 border border-slate-200/80 space-y-2 animate-in fade-in duration-150">
-                  <div className="grid grid-cols-3 gap-2">
-                    {/* PhonePe Option */}
+                <div className="bg-slate-50/70 rounded-xl p-2.5 border border-slate-200/80 animate-in fade-in duration-150">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+                    {/* PhonePe Option (Real Icon Only) */}
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('PHONEPE')}
-                      className={`py-1.5 px-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      title="PhonePe"
+                      className={`h-11 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                         selectedUpiApp === 'PHONEPE'
-                          ? 'bg-purple-50/90 border-purple-600 text-purple-950 ring-1 ring-purple-600 shadow-2xs'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                          ? 'bg-purple-50/90 border-purple-600 ring-2 ring-purple-600/40 shadow-xs scale-[1.02]'
+                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 active:scale-95'
                       }`}
                     >
-                      <PhonePeIcon />
-                      <span className="text-xs font-bold">PhonePe</span>
+                      <PhonePeIcon className="h-6 w-auto" />
                     </button>
 
-                    {/* Paytm Option */}
+                    {/* Paytm Option (Real Icon Only) */}
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('PAYTM')}
-                      className={`py-1.5 px-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      title="Paytm"
+                      className={`h-11 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                         selectedUpiApp === 'PAYTM'
-                          ? 'bg-sky-50/90 border-sky-600 text-sky-950 ring-1 ring-sky-600 shadow-2xs'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                          ? 'bg-sky-50/90 border-sky-600 ring-2 ring-sky-600/40 shadow-xs scale-[1.02]'
+                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 active:scale-95'
                       }`}
                     >
-                      <PaytmIcon />
-                      <span className="text-xs font-bold">Paytm</span>
+                      <PaytmIcon className="h-5 w-auto" />
                     </button>
 
-                    {/* Google Pay Option */}
+                    {/* Google Pay Option (Real Icon Only) */}
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('GPAY')}
-                      className={`py-1.5 px-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      title="Google Pay (GPay)"
+                      className={`h-11 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                         selectedUpiApp === 'GPAY'
-                          ? 'bg-blue-50/90 border-blue-600 text-blue-950 ring-1 ring-blue-600 shadow-2xs'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                          ? 'bg-blue-50/90 border-blue-600 ring-2 ring-blue-600/40 shadow-xs scale-[1.02]'
+                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 active:scale-95'
                       }`}
                     >
-                      <GooglePayIcon />
-                      <span className="text-xs font-bold">Google Pay</span>
+                      <GooglePayIcon className="h-5 w-auto" />
                     </button>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-1 border-t border-slate-200/60">
-                    <span className="text-[10px] text-slate-500 font-semibold whitespace-nowrap">UPI ID:</span>
-                    <input
-                      type="text"
-                      value={upiId}
-                      onChange={(e) => {
-                        setUpiId(e.target.value);
-                        setSelectedUpiApp('CUSTOM');
-                      }}
-                      placeholder="rahul@okhdfcbank"
-                      className="flex-1 bg-white border border-slate-300 focus:border-blue-600 rounded-lg px-2.5 py-1 text-xs font-mono text-slate-900 outline-none"
-                    />
                   </div>
                 </div>
               )}

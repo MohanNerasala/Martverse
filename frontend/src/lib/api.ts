@@ -352,7 +352,11 @@ export const api = {
     let localAddresses: any[] = [];
     if (typeof window !== 'undefined') {
       try {
-        localAddresses = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        const raw = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        localAddresses = raw.filter((a: any) => a.id !== 'addr-1' && a.id !== 'addr-2');
+        if (raw.length !== localAddresses.length) {
+          localStorage.setItem('martverse_saved_addresses', JSON.stringify(localAddresses));
+        }
       } catch {}
     }
 
