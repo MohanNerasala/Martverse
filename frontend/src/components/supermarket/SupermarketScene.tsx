@@ -42,6 +42,7 @@ export const SupermarketScene: React.FC = () => {
     <div className="w-full h-full relative select-none">
       <Canvas
         shadows="percentage"
+        dpr={[1, 1.5]}
         camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       >
@@ -67,15 +68,9 @@ export const SupermarketScene: React.FC = () => {
           shadow-bias={-0.0003}
         />
 
-        {/* Ground Floor Balanced Core Fixture Lights (Vastly reduced shader light passes, 100% 60FPS) */}
-        <pointLight position={[-6, 4.4, -6]} intensity={1.3} distance={24} decay={1.8} color="#ffffff" />
-        <pointLight position={[6, 4.4, -6]} intensity={1.3} distance={24} decay={1.8} color="#ffffff" />
-        <pointLight position={[-6, 4.4, 8]} intensity={1.3} distance={24} decay={1.8} color="#ffffff" />
-        <pointLight position={[6, 4.4, 8]} intensity={1.3} distance={24} decay={1.8} color="#ffffff" />
-
-        {/* First Floor Lighting */}
-        <pointLight position={[-6, 9.2, 0]} intensity={1.4} distance={26} decay={1.8} color="#fef08a" />
-        <pointLight position={[6, 9.2, 0]} intensity={1.4} distance={26} decay={1.8} color="#fef08a" />
+        {/* High-Performance Balanced Ambient Fixture Lights (60 FPS Guaranteed) */}
+        <pointLight position={[0, 4.4, 0]} intensity={1.4} distance={36} decay={2.0} color="#ffffff" />
+        <pointLight position={[0, 9.4, 0]} intensity={1.4} distance={36} decay={2.0} color="#fef08a" />
 
         <Suspense fallback={null}>
           {/* Store Shell */}

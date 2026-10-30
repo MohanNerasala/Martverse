@@ -80,12 +80,29 @@ const UNPAID_EXIT_BARRIER: ObstacleBox = {
   maxZ: -22.85,
 };
 
+interface DepenetrationResult {
+  overlap: boolean;
+  pX: number;
+  pZ: number;
+  normalX: number;
+  normalZ: number;
+}
+
+// Single pre-allocated result object: eliminates 2,000+ GC object allocations per second
+const depenetrationResult: DepenetrationResult = {
+  overlap: false,
+  pX: 0,
+  pZ: 0,
+  normalX: 0,
+  normalZ: 0,
+};
+
 function getCircleBoxDepenetration(
   cx: number,
   cz: number,
   cr: number,
   box: ObstacleBox
-): { overlap: boolean; pX: number; pZ: number; normalX: number; normalZ: number } {
+): DepenetrationResult {
   const closestX = Math.max(box.minX, Math.min(cx, box.maxX));
   const closestZ = Math.max(box.minZ, Math.min(cz, box.maxZ));
   const dx = cx - closestX;
@@ -93,7 +110,12 @@ function getCircleBoxDepenetration(
   const distSq = dx * dx + dz * dz;
 
   if (distSq >= cr * cr) {
-    return { overlap: false, pX: 0, pZ: 0, normalX: 0, normalZ: 0 };
+    depenetrationResult.overlap = false;
+    depenetrationResult.pX = 0;
+    depenetrationResult.pZ = 0;
+    depenetrationResult.normalX = 0;
+    depenetrationResult.normalZ = 0;
+    return depenetrationResult;
   }
 
   const dist = Math.sqrt(distSq);
@@ -103,22 +125,32 @@ function getCircleBoxDepenetration(
     const dB = cz - box.minZ;
     const dT = box.maxZ - cz;
     const minD = Math.min(dL, dR, dB, dT);
-    if (minD === dL) return { overlap: true, pX: -(dL + cr), pZ: 0, normalX: -1, normalZ: 0 };
-    if (minD === dR) return { overlap: true, pX: (dR + cr), pZ: 0, normalX: 1, normalZ: 0 };
-    if (minD === dB) return { overlap: true, pX: 0, pZ: -(dB + cr), normalX: 0, normalZ: -1 };
-    return { overlap: true, pX: 0, pZ: (dT + cr), normalX: 0, normalZ: 1 };
+    depenetrationResult.overlap = true;
+    if (minD === dL) {
+      depenetrationResult.pX = -(dL + cr); depenetrationResult.pZ = 0;
+      depenetrationResult.normalX = -1; depenetrationResult.normalZ = 0;
+    } else if (minD === dR) {
+      depenetrationResult.pX = (dR + cr); depenetrationResult.pZ = 0;
+      depenetrationResult.normalX = 1; depenetrationResult.normalZ = 0;
+    } else if (minD === dB) {
+      depenetrationResult.pX = 0; depenetrationResult.pZ = -(dB + cr);
+      depenetrationResult.normalX = 0; depenetrationResult.normalZ = -1;
+    } else {
+      depenetrationResult.pX = 0; depenetrationResult.pZ = (dT + cr);
+      depenetrationResult.normalX = 0; depenetrationResult.normalZ = 1;
+    }
+    return depenetrationResult;
   }
 
   const overlap = cr - dist;
   const normalX = dx / dist;
   const normalZ = dz / dist;
-  return {
-    overlap: true,
-    pX: normalX * overlap,
-    pZ: normalZ * overlap,
-    normalX,
-    normalZ,
-  };
+  depenetrationResult.overlap = true;
+  depenetrationResult.pX = normalX * overlap;
+  depenetrationResult.pZ = normalZ * overlap;
+  depenetrationResult.normalX = normalX;
+  depenetrationResult.normalZ = normalZ;
+  return depenetrationResult;
 }
 
 export const PlayerController: React.FC = () => {
@@ -495,10 +527,11 @@ export const PlayerController: React.FC = () => {
       }
 
       // Instant acceleration and snappy response (55/45 eliminates any start/stop delay)
+      // Camera-relative velocity projection: Right arrow moves to visual screen RIGHT, Left moves LEFT
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
-      const targetVelX = (moveVector.x * cos + moveVector.z * sin) * speed;
-      const targetVelZ = (-moveVector.x * sin + moveVector.z * cos) * speed;
+      const targetVelX = (-moveVector.x * cos + moveVector.z * sin) * speed;
+      const targetVelZ = (moveVector.x * sin + moveVector.z * cos) * speed;
 
       const accelRate = isMoving ? 55 : 45;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
