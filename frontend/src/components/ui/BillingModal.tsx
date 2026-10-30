@@ -557,97 +557,87 @@ export const BillingModal: React.FC = () => {
   };
 
   // ==============================================================
-  // STEP 1: SCANNING PHASE — Minimalist Floating Bar Below Navbar (Right Side)
+  // STEP 1: SCANNING PHASE — Compact White Box (Item Name, Amount, Live Scan)
   // ==============================================================
   if (phase === 'scanning') {
     return (
-      <div className="fixed top-20 sm:top-22 right-3 sm:right-6 z-50 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-300 max-w-[calc(100vw-24px)] w-auto">
-        <div className="bg-slate-950/90 backdrop-blur-2xl text-white rounded-2xl px-4 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_25px_rgba(56,189,248,0.2)] border border-slate-700/80 hover:border-sky-500/50 transition-all flex items-center gap-3 select-none">
-          <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="fixed top-20 sm:top-22 right-3 sm:right-6 z-50 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-300 max-w-[calc(100vw-24px)] select-none">
+        <div
+          onClick={skipToReview}
+          className="bg-white/95 backdrop-blur-md text-slate-900 rounded-2xl p-2.5 sm:p-3 shadow-xl border border-slate-200/90 hover:border-blue-400/80 hover:shadow-2xl transition-all flex items-center gap-3 cursor-pointer group"
+          title="Click to view full bill or wait for conveyor scan"
+        >
+          {/* Live Scanner Green Pulsing Dot */}
+          <div className="flex items-center gap-1.5 flex-shrink-0 pl-0.5">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-xs" />
             </span>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black tracking-wider text-sky-400 uppercase font-mono leading-none">
-                POS SCANNER 02
+          </div>
+
+          {/* Product Thumbnail with Laser Scanning Animation */}
+          <div className="relative w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform shadow-2xs">
+            {currentScanningItem?.productImage ? (
+              <img
+                src={currentScanningItem.productImage}
+                alt={currentScanningItem.productName}
+                className="w-full h-full object-contain filter drop-shadow-xs"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/products/fallback.svg';
+                }}
+              />
+            ) : (
+              <span className="text-base">🛍️</span>
+            )}
+            {/* Animated Red Laser Scan Line */}
+            <div className="absolute inset-x-0 h-[2px] bg-red-500 shadow-[0_0_6px_#ef4444] animate-pulse pointer-events-none" style={{ top: '50%' }} />
+          </div>
+
+          {/* Item Name & Live Scanning Status */}
+          <div className="min-w-0 max-w-[190px] sm:max-w-[250px]">
+            <h4
+              className="text-xs sm:text-[13px] font-bold text-slate-900 truncate tracking-tight leading-tight group-hover:text-blue-600 transition-colors"
+              title={currentScanningItem ? currentScanningItem.productName : ''}
+            >
+              {currentScanningItem ? currentScanningItem.productName : 'Scanning item from trolley...'}
+            </h4>
+            <div className="text-[10px] sm:text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5 font-medium">
+              <span className="font-semibold text-slate-700">
+                {currentScanningItem ? `₹${currentScanningItem.price} each` : ''}
               </span>
-              <span className="text-[9px] text-emerald-400 font-bold leading-tight mt-0.5">
-                Gliding Bench
+              <span className="text-slate-300">•</span>
+              <span className="text-blue-600 font-bold font-mono text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60 truncate">
+                {totalToScan > 0
+                  ? `Scanned ${Math.min(totalToScan, currentIndex)} of ${totalToScan} units`
+                  : 'Scanning...'}
               </span>
             </div>
           </div>
 
-          <div className="h-7 w-[1px] bg-gradient-to-b from-transparent via-slate-700 to-transparent flex-shrink-0" />
+          {/* Subtle Vertical Divider */}
+          <div className="h-7 w-[1px] bg-slate-200 flex-shrink-0" />
 
-          {/* Product Thumbnail & Shimmering Title */}
-          <div className="flex items-center gap-3 min-w-0 max-w-[200px] sm:max-w-[270px]">
-            {/* The White Box with Specular Cyan Glow */}
-            <div className="w-10 h-10 scanner-white-box p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
-              {currentScanningItem?.productImage ? (
-                <img
-                  src={currentScanningItem.productImage}
-                  alt={currentScanningItem.productName}
-                  className="w-full h-full object-contain filter drop-shadow-xs"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/products/fallback.svg';
-                  }}
-                />
-              ) : (
-                <span className="text-sm">🛍️</span>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              {/* Text Passing Light Blue to White Color Shimmer Font */}
-              <div className="text-xs font-black truncate flex items-center gap-1.5">
-                <span className="truncate text-light-blue-white-shimmer text-xs sm:text-[13px] font-black tracking-tight" title={currentScanningItem ? currentScanningItem.productName : ''}>
-                  {currentScanningItem ? currentScanningItem.productName : 'Transferring item from trolley...'}
-                </span>
-                {currentUnitInfo && currentUnitInfo.totalUnits > 1 && (
-                  <span className="text-[9px] font-bold text-sky-300 bg-sky-950/90 px-1.5 py-0.2 rounded border border-sky-400/40 whitespace-nowrap flex-shrink-0">
-                    Unit {currentUnitInfo.unitIndex}/{currentUnitInfo.totalUnits}
-                  </span>
-                )}
-              </div>
-              <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
-                <span className="text-white font-bold">
-                  {currentScanningItem ? `₹${currentScanningItem.price} each` : ''}
-                </span>
-                <span className="text-slate-600">•</span>
-                <span className="text-emerald-400 font-bold truncate">
-                  {totalToScan > 0 ? `Scanned ${Math.min(totalToScan, currentIndex)} of ${totalToScan} units` : 'Scanning...'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-7 w-[1px] bg-gradient-to-b from-transparent via-slate-700 to-transparent flex-shrink-0" />
-
-          <div className="text-right flex-shrink-0">
-            <span className="text-[9px] text-slate-400 uppercase font-mono block leading-none">Amount</span>
-            <span className="text-xs sm:text-sm font-black text-emerald-400 font-mono leading-tight">
+          {/* Scanned Amount */}
+          <div className="text-right flex-shrink-0 pr-1">
+            <span className="text-[9px] text-slate-400 font-bold uppercase font-mono block leading-none">
+              Amount
+            </span>
+            <span className="text-xs sm:text-sm font-black text-emerald-600 font-mono leading-tight">
               ₹{runningTotal.toFixed(2)}
             </span>
           </div>
 
+          {/* Close / Return Button */}
           <button
             type="button"
-            onClick={skipToReview}
-            className="flex-shrink-0 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 active:scale-95 text-white font-black text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-[0_0_20px_rgba(56,189,248,0.35)] transition-all cursor-pointer"
-            title="Instant Bill: Skip conveyor scan & view bill [Space]"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCancelBilling();
+            }}
+            className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
+            title="Cancel scanning"
           >
-            <Zap className="w-3.5 h-3.5 fill-white text-white" />
-            <span className="whitespace-nowrap">Instant Bill</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCancelBilling}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer flex-shrink-0"
-            title="Return to supermarket"
-          >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
