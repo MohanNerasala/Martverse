@@ -23,9 +23,10 @@ const ConveyorItemMesh: React.FC<{
 }> = ({ item, position, rotation, isLaserActive }) => {
   const isBottle = item.modelType === 'bottle' || /oil|shampoo|liquid|wash|dishwash/i.test(item.productName);
   const isClothing = item.modelType === 'shirt' || item.modelType === 'hanger' || /shirt|polo|kurta|saree|dress|jeans|apparel/i.test(item.productName) || !!item.size;
+  const isChocolate = item.modelType === 'chocolate' || item.modelType === 'bar' || /dairy\s*milk|chocolate|kitkat/i.test(item.productName);
   const isSnack = /biscuit|bhujia|chocolate|silk|rocher|snack/i.test(item.productName);
 
-  const color = item.color || (isBottle ? '#38bdf8' : isClothing ? '#818cf8' : isSnack ? '#fbbf24' : '#34d399');
+  const color = item.color || (isBottle ? '#38bdf8' : isClothing ? '#818cf8' : isChocolate ? '#28074d' : isSnack ? '#fbbf24' : '#34d399');
 
   return (
     <group position={position} rotation={rotation}>
@@ -62,6 +63,27 @@ const ConveyorItemMesh: React.FC<{
           <mesh position={[0, 0.032, 0]}>
             <boxGeometry args={[0.13, 0.006, 0.06]} />
             <meshStandardMaterial color="#ffffff" roughness={0.4} />
+          </mesh>
+        </group>
+      ) : isChocolate ? (
+        <group>
+          {/* Chocolate Bar Packet on Scanning Conveyor */}
+          <mesh castShadow>
+            <boxGeometry args={[0.20, 0.02, 0.09]} />
+            <meshStandardMaterial color={color} roughness={0.25} metalness={0.15} />
+          </mesh>
+          <mesh position={[-0.104, 0, 0]}>
+            <boxGeometry args={[0.008, 0.018, 0.086]} />
+            <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+          </mesh>
+          <mesh position={[0.104, 0, 0]}>
+            <boxGeometry args={[0.008, 0.018, 0.086]} />
+            <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+          </mesh>
+          {/* Barcode on back/side for scanner */}
+          <mesh position={[0, 0.011, 0]}>
+            <boxGeometry args={[0.08, 0.002, 0.04]} />
+            <meshBasicMaterial color="#ffffff" />
           </mesh>
         </group>
       ) : (

@@ -44,7 +44,7 @@ export interface ProductPlacement {
   worldZ: number;
   rotationY: number;
   color?: string;
-  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger';
+  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger' | 'chocolate' | 'bar';
 }
 
 export interface Product {
@@ -108,7 +108,7 @@ export interface CartItem {
   variantName?: string;
   size?: string;
   color?: string;
-  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger';
+  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger' | 'chocolate' | 'bar';
   price: number;
   mrp: number;
   quantity: number;

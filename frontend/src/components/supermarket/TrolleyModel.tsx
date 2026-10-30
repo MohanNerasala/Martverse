@@ -23,15 +23,37 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
 
   const isBottle = item.modelType === 'bottle' || /oil|shampoo|liquid|wash|dishwash/i.test(item.productName);
   const isClothing = item.modelType === 'shirt' || item.modelType === 'hanger' || /shirt|polo|kurta|saree|dress|jeans|apparel/i.test(item.productName) || !!item.size;
+  const isChocolate = item.modelType === 'chocolate' || item.modelType === 'bar' || /dairy\s*milk|chocolate|kitkat/i.test(item.productName);
   const isSnackOrSweet = /biscuit|bhujia|chocolate|silk|rocher|snack/i.test(item.productName);
 
   const color = item.color || (isBottle
     ? '#38bdf8'
     : isClothing
     ? '#818cf8'
+    : isChocolate
+    ? '#28074d'
     : isSnackOrSweet
     ? '#fbbf24'
     : '#34d399');
+
+  if (isChocolate) {
+    return (
+      <group position={[px, py - 0.02, pz]} rotation={[0.04, index * 0.4, -0.02]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.16, 0.018, 0.08]} />
+          <meshStandardMaterial color={color} roughness={0.25} metalness={0.15} />
+        </mesh>
+        <mesh position={[-0.082, 0, 0]}>
+          <boxGeometry args={[0.005, 0.016, 0.076]} />
+          <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+        </mesh>
+        <mesh position={[0.082, 0, 0]}>
+          <boxGeometry args={[0.005, 0.016, 0.076]} />
+          <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+        </mesh>
+      </group>
+    );
+  }
 
   if (isBottle) {
     return (

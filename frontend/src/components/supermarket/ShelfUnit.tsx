@@ -5,34 +5,41 @@ import * as THREE from 'three';
 import { SupermarketAisle, Product } from '@/types';
 import { useMartStore } from '@/store/useMartStore';
 import { Text } from '@react-three/drei';
+import { dairyMilkImg } from '@/assets';
 
 // Shared texture cache to prevent duplicate fetches across shelf units
 const shelfTextureCache = new Map<string, THREE.Texture>();
 
 const ProductSmallImage: React.FC<{
-  url: string;
+  url: string | any;
   position: [number, number, number];
   scale: [number, number];
   rotation?: [number, number, number];
-}> = ({ url, position, scale, rotation }) => {
+  materialType?: 'basic' | 'standard';
+  roughness?: number;
+  metalness?: number;
+  alphaTest?: number;
+}> = ({ url, position, scale, rotation, materialType = 'basic', roughness = 0.25, metalness = 0.12, alphaTest = 0.02 }) => {
+  const resolvedUrl: string = typeof url === 'object' && url && 'src' in url ? url.src : (url || '');
+
   const [texture, setTexture] = useState<THREE.Texture | null>(() => {
-    return shelfTextureCache.get(url) || null;
+    return resolvedUrl ? (shelfTextureCache.get(resolvedUrl) || null) : null;
   });
 
   useEffect(() => {
-    if (!url) return;
-    if (shelfTextureCache.has(url)) {
-      setTexture(shelfTextureCache.get(url)!);
+    if (!resolvedUrl) return;
+    if (shelfTextureCache.has(resolvedUrl)) {
+      setTexture(shelfTextureCache.get(resolvedUrl)!);
       return;
     }
 
     const loader = new THREE.TextureLoader();
     loader.load(
-      url,
+      resolvedUrl,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
-        shelfTextureCache.set(url, tex);
+        shelfTextureCache.set(resolvedUrl, tex);
         setTexture(tex);
       },
       undefined,
@@ -41,13 +48,24 @@ const ProductSmallImage: React.FC<{
         setTexture(null);
       }
     );
-  }, [url]);
+  }, [resolvedUrl]);
 
   return (
     <mesh position={position} rotation={rotation}>
       <planeGeometry args={scale} />
       {texture ? (
-        <meshBasicMaterial map={texture} transparent toneMapped={false} />
+        materialType === 'standard' ? (
+          <meshStandardMaterial
+            map={texture}
+            transparent
+            alphaTest={alphaTest}
+            roughness={roughness}
+            metalness={metalness}
+            side={THREE.DoubleSide}
+          />
+        ) : (
+          <meshBasicMaterial map={texture} transparent alphaTest={alphaTest} toneMapped={false} />
+        )
       ) : (
         <meshBasicMaterial color="#ffffff" transparent opacity={0.7} />
       )}
@@ -184,7 +202,10 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
 
         const isHovered = hoveredProductId === prod.id;
         const color = plc.color || '#3b82f6';
-        const packagingUrl = prod.imageUrl || '/products/fallback.svg';
+        const isDairyMilk = prod.slug.includes('dairy-milk') || prod.name.toLowerCase().includes('dairy milk');
+        const packagingUrl = isDairyMilk
+          ? (dairyMilkImg?.src || '/products/sweets/cadbury-dairy-milk.png')
+          : (prod.imageUrl || '/products/fallback.svg');
 
         return (
           <group
@@ -325,6 +346,102 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                   <boxGeometry args={[0.14, 0.03, 0.11]} />
                   <meshStandardMaterial color="#ffffff" roughness={0.5} />
                 </mesh>
+              </group>
+            ) : plc.modelType === 'chocolate' || plc.modelType === 'bar' || isDairyMilk ? (
+              // Realistic 3D Chocolate Bar Package (Authentic Cadbury Dairy Milk Chocolate)
+              <group position={[0, 0, 0]}>
+                {/* Clear Acrylic Confectionery Shelf Tray directly on shelf plank */}
+                <mesh position={[0, 0.008, 0.02]} receiveShadow>
+                  <boxGeometry args={[0.31, 0.016, 0.18]} />
+                  <meshStandardMaterial
+                    color="#ffffff"
+                    transparent
+                    opacity={0.35}
+                    roughness={0.1}
+                    metalness={0.1}
+                  />
+                </mesh>
+                {/* Front Acrylic Retaining Lip (prevents chocolate bar slipping off shelf) */}
+                <mesh position={[0, 0.024, 0.108]}>
+                  <boxGeometry args={[0.31, 0.032, 0.006]} />
+                  <meshStandardMaterial
+                    color="#ffffff"
+                    transparent
+                    opacity={0.4}
+                    roughness={0.1}
+                  />
+                </mesh>
+
+                {/* 2 Stocked Chocolate Bars Behind (Realistic retail shelf depth) */}
+                {[-0.05, -0.025].map((zOffset, stackIdx) => (
+                  <group key={`choc-stack-${stackIdx}`} position={[0, 0.065, zOffset]} rotation={[-0.08, 0, 0]}>
+                    <mesh castShadow receiveShadow>
+                      <boxGeometry args={[0.26, 0.118, 0.018]} />
+                      <meshStandardMaterial
+                        color={color}
+                        roughness={0.3}
+                        metalness={0.15}
+                      />
+                    </mesh>
+                    <mesh position={[-0.134, 0, 0]}>
+                      <boxGeometry args={[0.008, 0.116, 0.004]} />
+                      <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+                    </mesh>
+                    <mesh position={[0.134, 0, 0]}>
+                      <boxGeometry args={[0.008, 0.116, 0.004]} />
+                      <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
+                    </mesh>
+                  </group>
+                ))}
+
+                {/* --- Front Featured Chocolate Bar (Leaning at -5 deg for optimal aisle visibility) --- */}
+                <group position={[0, 0.065, 0.03]} rotation={[-0.06, 0, 0]}>
+                  {/* Main Chocolate Bar Solid Slab Body (Authentic Royal Purple Wrapper with Foil Sheen) */}
+                  <mesh castShadow receiveShadow>
+                    <boxGeometry args={[0.262, 0.12, 0.022]} />
+                    <meshStandardMaterial
+                      color={color}
+                      roughness={0.25}
+                      metalness={0.14}
+                      emissive={isHovered ? color : '#000000'}
+                      emissiveIntensity={isHovered ? 0.45 : 0}
+                    />
+                  </mesh>
+
+                  {/* Left Crimped Foil Seal Tab */}
+                  <mesh position={[-0.136, 0, 0]} castShadow>
+                    <boxGeometry args={[0.01, 0.118, 0.004]} />
+                    <meshStandardMaterial color={color} roughness={0.4} metalness={0.25} />
+                  </mesh>
+
+                  {/* Right Crimped Foil Seal Tab */}
+                  <mesh position={[0.136, 0, 0]} castShadow>
+                    <boxGeometry args={[0.01, 0.118, 0.004]} />
+                    <meshStandardMaterial color={color} roughness={0.4} metalness={0.25} />
+                  </mesh>
+
+                  {/* Complete Dairy Milk High-Resolution Packaging Texture Plane */}
+                  {/* Aspect ratio 1.5 matches the 1536x1024 original image, perfectly rendering wrapper without distortion */}
+                  <ProductSmallImage
+                    url={packagingUrl}
+                    position={[0, 0, 0.012]}
+                    scale={[0.28, 0.187]}
+                    materialType="standard"
+                    roughness={0.25}
+                    metalness={0.12}
+                    alphaTest={0.02}
+                  />
+
+                  {/* Subtle Glossy Foil Reflection Sheen Strip */}
+                  <mesh position={[0, 0.03, 0.0125]}>
+                    <planeGeometry args={[0.24, 0.015]} />
+                    <meshBasicMaterial
+                      color="#ffffff"
+                      transparent
+                      opacity={isHovered ? 0.35 : 0.15}
+                    />
+                  </mesh>
+                </group>
               </group>
             ) : (
               // Standard Premium Box (Biscuits, Tea, Atta, Chocolate, etc.)

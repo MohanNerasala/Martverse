@@ -141,6 +141,22 @@ const SingleFlyArc: React.FC<{
             <meshStandardMaterial color="#ffffff" roughness={0.4} />
           </mesh>
         </group>
+      ) : anim.modelType === 'chocolate' || anim.modelType === 'bar' ? (
+        <group>
+          {/* Chocolate Bar Packet */}
+          <mesh castShadow>
+            <boxGeometry args={[0.24, 0.11, 0.022]} />
+            <meshStandardMaterial color={productColor} roughness={0.25} metalness={0.15} />
+          </mesh>
+          <mesh position={[-0.125, 0, 0]}>
+            <boxGeometry args={[0.008, 0.105, 0.004]} />
+            <meshStandardMaterial color={productColor} roughness={0.4} metalness={0.2} />
+          </mesh>
+          <mesh position={[0.125, 0, 0]}>
+            <boxGeometry args={[0.008, 0.105, 0.004]} />
+            <meshStandardMaterial color={productColor} roughness={0.4} metalness={0.2} />
+          </mesh>
+        </group>
       ) : (
         /* Box / Package (Atta, Cereals, Biscuits, Chocolates, Staples) */
         <group>
