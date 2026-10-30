@@ -70,82 +70,95 @@ export const useCartStore = create<CartStore>((set, get) => ({
     const modelType = product.placement?.modelType || 'box';
     const duration = 950; // ms for graceful 3D lift, glide, and basket drop
 
-    set((state) => ({
-      flyAnimations: [
-        ...state.flyAnimations,
-        {
-          id: animId,
-          productName: product.name,
-          startPos,
-          color,
-          modelType,
-          createdAt: Date.now(),
-          duration,
-        },
-      ],
-    }));
+    // Check if 3D scene canvas is active in the DOM
+    const has3DCanvas = typeof document !== 'undefined' && !!document.querySelector('canvas');
 
-    // Remove animation when drop finishes and play landing chime
-    setTimeout(() => {
-      get().removeFlyAnimation(animId);
+    const commitItemToCart = () => {
+      set((state) => {
+        const existingIndex = state.items.findIndex(
+          (it) => it.productId === product.id && it.variantId === variant?.id
+        );
+
+        const unitPrice = variant ? variant.price : product.price;
+        const unitMrp = variant ? variant.mrp : product.mrp;
+
+        let newItems = [...state.items];
+        if (existingIndex > -1) {
+          const item = newItems[existingIndex];
+          const newQty = item.quantity + quantity;
+          newItems[existingIndex] = {
+            ...item,
+            quantity: newQty,
+            subtotal: newQty * unitPrice,
+          };
+        } else {
+          const newItem: CartItem = {
+            id: 'item-' + Math.random().toString(36).substring(2, 9),
+            productId: product.id,
+            productName: product.name,
+            productSlug: product.slug,
+            productImage: product.imageUrl,
+            brand: product.brand,
+            unit: product.unit,
+            variantId: variant?.id,
+            variantName: variant?.name,
+            size: variant?.size,
+            color: color,
+            modelType: modelType,
+            price: unitPrice,
+            mrp: unitMrp,
+            quantity,
+            subtotal: quantity * unitPrice,
+          };
+          newItems.push(newItem);
+        }
+
+        const totalItems = newItems.reduce((acc, it) => acc + it.quantity, 0);
+        const subtotal = newItems.reduce((acc, it) => acc + it.subtotal, 0);
+        const mrpTotal = newItems.reduce((acc, it) => acc + it.mrp * it.quantity, 0);
+        const discountTotal = Math.max(0, mrpTotal - subtotal);
+        // In-store 3D supermarket trolley total matches exact item costs (no delivery surcharge while browsing)
+        const totalAmount = subtotal;
+
+        return {
+          items: newItems,
+          totalItems,
+          subtotal,
+          discountTotal,
+          totalAmount,
+          isPaid: false, // Adding new items resets paid status
+        };
+      });
+    };
+
+    if (has3DCanvas) {
+      // 1. Queue parabolic flying projectile in the 3D air
+      set((state) => ({
+        flyAnimations: [
+          ...state.flyAnimations,
+          {
+            id: animId,
+            productName: product.name,
+            startPos,
+            color,
+            modelType,
+            createdAt: Date.now(),
+            duration,
+          },
+        ],
+      }));
+
+      // 2. Only show item inside trolley basket AFTER drop finishes into the basket!
+      setTimeout(() => {
+        get().removeFlyAnimation(animId);
+        sounds.playScanBeep();
+        commitItemToCart();
+      }, duration);
+    } else {
+      // Direct instant commit when outside 3D store view (e.g. wishlist/orders page)
       sounds.playScanBeep();
-    }, duration + 30);
-
-    set((state) => {
-      const existingIndex = state.items.findIndex(
-        (it) => it.productId === product.id && it.variantId === variant?.id
-      );
-
-      const unitPrice = variant ? variant.price : product.price;
-      const unitMrp = variant ? variant.mrp : product.mrp;
-
-      let newItems = [...state.items];
-      if (existingIndex > -1) {
-        const item = newItems[existingIndex];
-        const newQty = item.quantity + quantity;
-        newItems[existingIndex] = {
-          ...item,
-          quantity: newQty,
-          subtotal: newQty * unitPrice,
-        };
-      } else {
-        const newItem: CartItem = {
-          id: 'item-' + Math.random().toString(36).substring(2, 9),
-          productId: product.id,
-          productName: product.name,
-          productSlug: product.slug,
-          productImage: product.imageUrl,
-          brand: product.brand,
-          unit: product.unit,
-          variantId: variant?.id,
-          variantName: variant?.name,
-          size: variant?.size,
-          color: color,
-          modelType: modelType,
-          price: unitPrice,
-          mrp: unitMrp,
-          quantity,
-          subtotal: quantity * unitPrice,
-        };
-        newItems.push(newItem);
-      }
-
-      const totalItems = newItems.reduce((acc, it) => acc + it.quantity, 0);
-      const subtotal = newItems.reduce((acc, it) => acc + it.subtotal, 0);
-      const mrpTotal = newItems.reduce((acc, it) => acc + it.mrp * it.quantity, 0);
-      const discountTotal = Math.max(0, mrpTotal - subtotal);
-      // In-store 3D supermarket trolley total matches exact item costs (no delivery surcharge while browsing)
-      const totalAmount = subtotal;
-
-      return {
-        items: newItems,
-        totalItems,
-        subtotal,
-        discountTotal,
-        totalAmount,
-        isPaid: false, // Adding new items resets paid status
-      };
-    });
+      commitItemToCart();
+    }
   },
 
   updateQuantity: (itemId, quantity) => {

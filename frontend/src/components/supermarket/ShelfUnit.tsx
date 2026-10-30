@@ -155,7 +155,7 @@ interface ShelfUnitProps {
   floorYOffset: number;
 }
 
-export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOffset }) => {
+const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOffset }) => {
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
   const activeFloor = useMartStore((state) => state.activeFloor);
@@ -644,3 +644,5 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
     </group>
   );
 };
+
+export const ShelfUnit = React.memo(ShelfUnitComponent);

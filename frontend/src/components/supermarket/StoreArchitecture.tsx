@@ -4,10 +4,10 @@ import React from 'react';
 import { Text } from '@react-three/drei';
 
 interface StoreArchitectureProps {
-  activeFloor: number;
+  activeFloor?: number;
 }
 
-export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloor }) => {
+const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
   return (
     <group>
       {/* ==============================================================
@@ -475,3 +475,5 @@ export const StoreArchitecture: React.FC<StoreArchitectureProps> = ({ activeFloo
     </group>
   );
 };
+
+export const StoreArchitecture = React.memo(StoreArchitectureComponent);

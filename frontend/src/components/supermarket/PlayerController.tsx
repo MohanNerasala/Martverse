@@ -16,6 +16,107 @@ interface KeyState {
   interact: boolean;
 }
 
+interface ObstacleBox {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+}
+
+const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
+  // Outer Store Perimeter Walls
+  { minX: -22.0, maxX: -17.2, minZ: -27.0, maxZ: 27.0 },  // Left Wall
+  { minX: 17.2, maxX: 22.0, minZ: -27.0, maxZ: 27.0 },   // Right Wall
+  { minX: -22.0, maxX: 22.0, minZ: 24.6, maxZ: 28.0 },   // Back Wall
+  { minX: -22.0, maxX: -3.8, minZ: -28.0, maxZ: -24.8 }, // Front Entrance Wall (Left of door)
+  { minX: 3.8, maxX: 22.0, minZ: -28.0, maxZ: -24.8 },  // Front Entrance Wall (Right of door)
+  { minX: -3.8, maxX: 3.8, minZ: -28.0, maxZ: -25.8 },  // Front Doorway Backstop
+
+  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 0.85, z from -11.8 to 11.8
+  { minX: -10.85, maxX: -9.15, minZ: -11.8, maxZ: 11.8 },
+  { minX: -5.85, maxX: -4.15, minZ: -11.8, maxZ: 11.8 },
+  { minX: -0.85, maxX: 0.85, minZ: -11.8, maxZ: 11.8 },
+  { minX: 4.15, maxX: 5.85, minZ: -11.8, maxZ: 11.8 },
+  { minX: 9.15, maxX: 10.85, minZ: -11.8, maxZ: 11.8 },
+
+  // Billing Counter Desks at [-3.8, 0, 3.8]
+  { minX: -4.45, maxX: -3.15, minZ: 16.5, maxZ: 19.5 },
+  { minX: -0.65, maxX: 0.65, minZ: 16.5, maxZ: 19.5 },
+  { minX: 3.15, maxX: 4.45, minZ: 16.5, maxZ: 19.5 },
+
+  // Escalator Outer Barrier Balustrade (Separating Aisle 5 from Escalator Well)
+  { minX: 13.0, maxX: 13.5, minZ: -7.0, maxZ: 5.0 },
+
+  // Exit Turnstile Gate (At z = -23.0)
+  { minX: -1.95, maxX: -1.65, minZ: -23.25, maxZ: -22.75 },
+  { minX: 1.65, maxX: 1.95, minZ: -23.25, maxZ: -22.75 },
+  { minX: -0.22, maxX: 0.22, minZ: -23.25, maxZ: -22.75 },
+];
+
+const STATIC_OBSTACLES_FLOOR2: ObstacleBox[] = [
+  // Outer Store Perimeter Walls
+  { minX: -22.0, maxX: -17.2, minZ: -27.0, maxZ: 27.0 },  // Left Wall
+  { minX: 17.2, maxX: 22.0, minZ: -27.0, maxZ: 27.0 },   // Right Wall
+  { minX: -22.0, maxX: 22.0, minZ: 24.6, maxZ: 28.0 },   // Back Wall
+  { minX: -22.0, maxX: 22.0, minZ: -28.0, maxZ: -24.8 }, // Front Wall
+
+  // Shelves Floor 2: [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5]
+  { minX: -11.85, maxX: -10.15, minZ: -11.8, maxZ: 11.8 },
+  { minX: -7.35, maxX: -5.65, minZ: -11.8, maxZ: 11.8 },
+  { minX: -2.85, maxX: -1.15, minZ: -11.8, maxZ: 11.8 },
+  { minX: 1.65, maxX: 3.35, minZ: -11.8, maxZ: 11.8 },
+  { minX: 6.15, maxX: 7.85, minZ: -11.8, maxZ: 11.8 },
+  { minX: 10.65, maxX: 12.35, minZ: -11.8, maxZ: 11.8 },
+
+  // Floor 2 Escalator void opening guardrails
+  { minX: 13.0, maxX: 13.4, minZ: -6.5, maxZ: 5.2 },
+  { minX: 13.0, maxX: 16.5, minZ: -6.7, maxZ: -6.3 },
+];
+
+const UNPAID_EXIT_BARRIER: ObstacleBox = {
+  minX: -1.75,
+  maxX: 1.75,
+  minZ: -23.15,
+  maxZ: -22.85,
+};
+
+function getCircleBoxDepenetration(
+  cx: number,
+  cz: number,
+  cr: number,
+  box: ObstacleBox
+): { overlap: boolean; pX: number; pZ: number } {
+  const closestX = Math.max(box.minX, Math.min(cx, box.maxX));
+  const closestZ = Math.max(box.minZ, Math.min(cz, box.maxZ));
+  const dx = cx - closestX;
+  const dz = cz - closestZ;
+  const distSq = dx * dx + dz * dz;
+
+  if (distSq >= cr * cr) {
+    return { overlap: false, pX: 0, pZ: 0 };
+  }
+
+  const dist = Math.sqrt(distSq);
+  if (dist < 0.0001) {
+    const dL = cx - box.minX;
+    const dR = box.maxX - cx;
+    const dB = cz - box.minZ;
+    const dT = box.maxZ - cz;
+    const minD = Math.min(dL, dR, dB, dT);
+    if (minD === dL) return { overlap: true, pX: -(dL + cr), pZ: 0 };
+    if (minD === dR) return { overlap: true, pX: (dR + cr), pZ: 0 };
+    if (minD === dB) return { overlap: true, pX: 0, pZ: -(dB + cr) };
+    return { overlap: true, pX: 0, pZ: (dT + cr) };
+  }
+
+  const overlap = cr - dist;
+  return {
+    overlap: true,
+    pX: (dx / dist) * overlap,
+    pZ: (dz / dist) * overlap,
+  };
+}
+
 export const PlayerController: React.FC = () => {
   const { camera } = useThree();
   const keys = useRef<KeyState>({
@@ -403,197 +504,94 @@ export const PlayerController: React.FC = () => {
       const currentFloor = posRef.current.y > 4.5 ? 2 : 1;
 
       // -------------------------------------------------------------
-      // AAA Buttery-Smooth Continuous Collision Slide & Depenetration Resolver
+      // AAA Buttery-Smooth Zero-Lag Collision Slide Resolver
       // -------------------------------------------------------------
-      interface ObstacleBox {
-        minX: number;
-        maxX: number;
-        minZ: number;
-        maxZ: number;
-      }
+      // Exclude escalator moving ramp & landing zones so movement between floors is 100% free
+      const onRampCorridor =
+        posRef.current.x >= 13.8 &&
+        posRef.current.x <= 15.6 &&
+        posRef.current.z >= -9.5 &&
+        posRef.current.z <= 7.5;
 
-      // 1. Physical obstacle bounds for active floor
-      const getObstacles = (floor: number): ObstacleBox[] => {
-        const boxes: ObstacleBox[] = [];
+      if (onRampCorridor) {
+        posRef.current.x += worldDX;
+        posRef.current.z += worldDZ;
+      } else {
+        const boxes = currentFloor === 1 ? STATIC_OBSTACLES_FLOOR1 : STATIC_OBSTACLES_FLOOR2;
+        const sinYaw = Math.sin(yawRef.current);
+        const cosYaw = Math.cos(yawRef.current);
+        const cartDist = 0.85;
 
-        // Outer Store Perimeter Walls
-        boxes.push(
-          { minX: -22.0, maxX: -17.2, minZ: -27.0, maxZ: 27.0 },  // Left Wall
-          { minX: 17.2, maxX: 22.0, minZ: -27.0, maxZ: 27.0 },   // Right Wall
-          { minX: -22.0, maxX: 22.0, minZ: 24.6, maxZ: 28.0 },   // Back Wall
-          { minX: -22.0, maxX: -3.8, minZ: -28.0, maxZ: -24.8 }, // Front Entrance Wall (Left of door)
-          { minX: 3.8, maxX: 22.0, minZ: -28.0, maxZ: -24.8 },  // Front Entrance Wall (Right of door)
-          { minX: -3.8, maxX: 3.8, minZ: -28.0, maxZ: -25.8 }   // Front Doorway Backstop
-        );
-
-        // Physical Shelves (Calibrated half-width 0.82m for smooth passage with 0 edge catching)
-        const aisleXs = floor === 1
-          ? [-10, -5, 0, 5, 10]
-          : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
-        const halfW = 0.82;
-        for (const ax of aisleXs) {
-          boxes.push({
-            minX: ax - halfW,
-            maxX: ax + halfW,
-            minZ: -12.0,
-            maxZ: 12.0,
-          });
-        }
-
-        if (floor === 1) {
-          // Billing Counter Desks (width 1.3m, depth 3.2m at [-3.8, 0, 3.8])
-          for (const cx of [-3.8, 0, 3.8]) {
-            boxes.push({
-              minX: cx - 0.65,
-              maxX: cx + 0.65,
-              minZ: 16.5,
-              maxZ: 19.5,
-            });
-          }
-
-          // Escalator Outer Barrier Balustrade (Separating Aisle 5 from Escalator Well)
-          boxes.push({
-            minX: 13.0,
-            maxX: 13.5,
-            minZ: -7.0,
-            maxZ: 5.0,
-          });
-
-          // Exit Turnstile Gate (At z = -23.0)
-          boxes.push(
-            { minX: -1.95, maxX: -1.65, minZ: -23.25, maxZ: -22.75 }, // Left RFID Pedestal
-            { minX: 1.65, maxX: 1.95, minZ: -23.25, maxZ: -22.75 },  // Right RFID Pedestal
-            { minX: -0.22, maxX: 0.22, minZ: -23.25, maxZ: -22.75 }   // Center Turnstile Island
-          );
-
-          // If cart has unpaid items, close the swing barrier across the gate
-          if (cartItems.length > 0 && !isPaid) {
-            boxes.push({
-              minX: -1.75,
-              maxX: 1.75,
-              minZ: -23.15,
-              maxZ: -22.85,
-            });
-          }
-        } else {
-          // Floor 2 Escalator void opening guardrails
-          boxes.push(
-            { minX: 13.0, maxX: 13.4, minZ: -6.5, maxZ: 5.2 },
-            { minX: 13.0, maxX: 16.5, minZ: -6.7, maxZ: -6.3 }
-          );
-        }
-
-        return boxes;
-      };
-
-      // 2. Resolve continuous collision sliding & depenetration
-      const resolveContinuousSlide = (
-        targetX: number,
-        targetZ: number,
-        yaw: number,
-        floor: number
-      ): { x: number; z: number } => {
-        // Exclude escalator moving ramp & landing zones so movement between floors is 100% free
-        const onRampCorridor = targetX >= 13.8 && targetX <= 15.6 && targetZ >= -9.5 && targetZ <= 7.5;
-        if (onRampCorridor) {
-          return { x: targetX, z: targetZ };
-        }
-
-        const boxes = getObstacles(floor);
-        let curX = targetX;
-        let curZ = targetZ;
-
-        // Perform 3 gentle relaxation passes to glide around corners and along shelf edges
-        for (let iter = 0; iter < 3; iter++) {
-          const sin = Math.sin(yaw);
-          const cos = Math.cos(yaw);
-          const rightX = Math.cos(yaw);
-          const rightZ = -Math.sin(yaw);
-
-          // 5 calibrated test circles representing player + trolley assembly
-          const circles = [
-            { x: curX, z: curZ, r: 0.22 },
-            { x: curX + sin * 0.95, z: curZ + cos * 0.95, r: 0.26 },
-            { x: curX + sin * 1.30, z: curZ + cos * 1.30, r: 0.20 },
-            { x: curX + sin * 1.25 - rightX * 0.24, z: curZ + cos * 1.25 - rightZ * 0.24, r: 0.12 },
-            { x: curX + sin * 1.25 + rightX * 0.24, z: curZ + cos * 1.25 + rightZ * 0.24, r: 0.12 },
-          ];
-
-          let pushX = 0;
-          let pushZ = 0;
-          let anyOverlap = false;
-
-          for (const c of circles) {
-            for (const box of boxes) {
-              const closestX = Math.max(box.minX, Math.min(c.x, box.maxX));
-              const closestZ = Math.max(box.minZ, Math.min(c.z, box.maxZ));
-              const dx = c.x - closestX;
-              const dz = c.z - closestZ;
-              const distSq = dx * dx + dz * dz;
-
-              if (distSq < c.r * c.r) {
-                anyOverlap = true;
-                const dist = Math.sqrt(distSq);
-                let pX = 0;
-                let pZ = 0;
-
-                if (dist < 0.0001) {
-                  // Center inside box: shallowest escape
-                  const dL = c.x - box.minX;
-                  const dR = box.maxX - c.x;
-                  const dB = c.z - box.minZ;
-                  const dT = box.maxZ - c.z;
-                  const minD = Math.min(dL, dR, dB, dT);
-                  if (minD === dL) pX = -(dL + c.r);
-                  else if (minD === dR) pX = (dR + c.r);
-                  else if (minD === dB) pZ = -(dB + c.r);
-                  else pZ = (dT + c.r);
-                } else {
-                  const overlap = c.r - dist;
-                  pX = (dx / dist) * overlap;
-                  pZ = (dz / dist) * overlap;
-                }
-
-                if (Math.abs(pX) > Math.abs(pushX)) pushX = pX;
-                if (Math.abs(pZ) > Math.abs(pushZ)) pushZ = pZ;
-              }
+        // Decoupled X-Axis Move & Slide (glides along walls with zero sticking)
+        let newX = posRef.current.x + worldDX;
+        let blockedX = false;
+        if (Math.abs(worldDX) > 0.00001) {
+          // Check player circle
+          for (let i = 0; i < boxes.length; i++) {
+            const res = getCircleBoxDepenetration(newX, posRef.current.z, 0.28, boxes[i]);
+            if (res.overlap) {
+              newX += res.pX;
+              blockedX = true;
             }
           }
-
-          if (!anyOverlap) break;
-
-          curX += pushX;
-          curZ += pushZ;
+          // Check trolley circle
+          for (let i = 0; i < boxes.length; i++) {
+            const tx = newX + sinYaw * cartDist;
+            const tz = posRef.current.z + cosYaw * cartDist;
+            const res = getCircleBoxDepenetration(tx, tz, 0.34, boxes[i]);
+            if (res.overlap) {
+              newX += res.pX;
+              blockedX = true;
+            }
+          }
+          if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
+            const res = getCircleBoxDepenetration(newX, posRef.current.z, 0.28, UNPAID_EXIT_BARRIER);
+            if (res.overlap) { newX += res.pX; blockedX = true; }
+            const tx = newX + sinYaw * cartDist;
+            const tz = posRef.current.z + cosYaw * cartDist;
+            const resT = getCircleBoxDepenetration(tx, tz, 0.34, UNPAID_EXIT_BARRIER);
+            if (resT.overlap) { newX += resT.pX; blockedX = true; }
+          }
         }
 
-        return { x: curX, z: curZ };
-      };
-
-      // 3. Apply proposed movement with continuous sliding
-      if (Math.abs(worldDX) > 0.0001 || Math.abs(worldDZ) > 0.0001) {
-        const proposedX = posRef.current.x + worldDX;
-        const proposedZ = posRef.current.z + worldDZ;
-        const resolved = resolveContinuousSlide(proposedX, proposedZ, yawRef.current, currentFloor);
-
-        const actualDX = resolved.x - posRef.current.x;
-        const actualDZ = resolved.z - posRef.current.z;
-
-        posRef.current.x = resolved.x;
-        posRef.current.z = resolved.z;
-
-        // If movement was restricted along an axis, smoothly damp only that blocked axis,
-        // allowing the free tangential axis to continue gliding with full speed!
-        if (Math.abs(worldDX) > 0.001 && Math.abs(actualDX) < Math.abs(worldDX) * 0.2) {
-          velocityRef.current.x *= 0.5;
+        // Decoupled Z-Axis Move & Slide (with newX already safely clamped)
+        let newZ = posRef.current.z + worldDZ;
+        let blockedZ = false;
+        if (Math.abs(worldDZ) > 0.00001) {
+          // Check player circle
+          for (let i = 0; i < boxes.length; i++) {
+            const res = getCircleBoxDepenetration(newX, newZ, 0.28, boxes[i]);
+            if (res.overlap) {
+              newZ += res.pZ;
+              blockedZ = true;
+            }
+          }
+          // Check trolley circle
+          for (let i = 0; i < boxes.length; i++) {
+            const tx = newX + sinYaw * cartDist;
+            const tz = newZ + cosYaw * cartDist;
+            const res = getCircleBoxDepenetration(tx, tz, 0.34, boxes[i]);
+            if (res.overlap) {
+              newZ += res.pZ;
+              blockedZ = true;
+            }
+          }
+          if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
+            const res = getCircleBoxDepenetration(newX, newZ, 0.28, UNPAID_EXIT_BARRIER);
+            if (res.overlap) { newZ += res.pZ; blockedZ = true; }
+            const tx = newX + sinYaw * cartDist;
+            const tz = newZ + cosYaw * cartDist;
+            const resT = getCircleBoxDepenetration(tx, tz, 0.34, UNPAID_EXIT_BARRIER);
+            if (resT.overlap) { newZ += resT.pZ; blockedZ = true; }
+          }
         }
-        if (Math.abs(worldDZ) > 0.001 && Math.abs(actualDZ) < Math.abs(worldDZ) * 0.2) {
-          velocityRef.current.z *= 0.5;
-        }
-      } else {
-        // Prevent getting stuck when turning while standing against an edge
-        const standing = resolveContinuousSlide(posRef.current.x, posRef.current.z, yawRef.current, currentFloor);
-        posRef.current.x = standing.x;
-        posRef.current.z = standing.z;
+
+        posRef.current.x = newX;
+        posRef.current.z = newZ;
+
+        // Dampen ONLY the blocked axis so the player effortlessly glides along walls!
+        if (blockedX) velocityRef.current.x = 0;
+        if (blockedZ) velocityRef.current.z = 0;
       }
 
       // Store outer boundaries safety clamp

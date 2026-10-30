@@ -15,7 +15,6 @@ import { api } from '@/lib/api';
 export const SupermarketScene: React.FC = () => {
   const floors = useMartStore((state) => state.floors);
   const products = useMartStore((state) => state.products);
-  const activeFloor = useMartStore((state) => state.activeFloor);
   const setFloors = useMartStore((state) => state.setFloors);
   const setProducts = useMartStore((state) => state.setProducts);
 
@@ -89,7 +88,7 @@ export const SupermarketScene: React.FC = () => {
 
         <Suspense fallback={null}>
           {/* Store Shell */}
-          <StoreArchitecture activeFloor={activeFloor} />
+          <StoreArchitecture />
 
           {/* Ground Floor Aisles (Aisles 1 - 5) */}
           {groundFloor?.aisles.map((aisle) => (

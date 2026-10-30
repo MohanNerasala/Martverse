@@ -267,17 +267,12 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     // Shortest-path circular yaw dampening towards player direction
     currentYaw.current += diffYaw * (1 - Math.exp(-22 * delta));
 
-    // Strict final containment pass on currentPos so the cart NEVER clips even mid-lerp
+    // Strict final containment pass on currentPos so the cart NEVER clips perimeter walls
     if (isOnEscalatorRamp) {
       currentPos.current.x = 14.70;
     } else {
       currentPos.current.x = THREE.MathUtils.clamp(currentPos.current.x, -16.8 + cartHalfW, 16.8 - cartHalfW);
       currentPos.current.z = THREE.MathUtils.clamp(currentPos.current.z, -24.2 + cartHalfD, 24.2 - cartHalfD);
-      if (currentFloor === 1 && currentPos.current.z >= -7.4 && currentPos.current.z <= 5.4) {
-        if (currentPos.current.x < 13.8) {
-          currentPos.current.x = Math.min(currentPos.current.x, 13.2 - cartHalfW);
-        }
-      }
     }
 
     trolleyRef.current.position.copy(currentPos.current);
