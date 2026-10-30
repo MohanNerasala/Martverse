@@ -422,6 +422,26 @@ export const BillingModal: React.FC = () => {
     await api.setDefaultAddress(id, customerPhone);
   };
 
+  // --- Delete Address Handler ---
+  const handleDeleteAddress = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = savedAddresses.filter((a) => a.id !== id);
+    setSavedAddresses(updated);
+
+    if (updated.length === 0) {
+      setSelectedAddressId('');
+      setIsAddingNewAddress(true);
+    } else if (selectedAddressId === id) {
+      const nextActive = updated.find((a) => a.isDefault) || updated[0];
+      if (nextActive) {
+        nextActive.isDefault = true;
+        setSelectedAddressId(nextActive.id);
+      }
+    }
+
+    await api.deleteAddress(id);
+  };
+
   // --- Cancel Billing & Return to 3D Store ---
   const handleCancelBilling = () => {
     resetBilling();
@@ -861,27 +881,27 @@ export const BillingModal: React.FC = () => {
   }
 
   // ==============================================================
-  // MAIN CHECKOUT PAGE (Refined Luxury Top Header matching screenshot)
+  // MAIN CHECKOUT PAGE (Single-Page Viewport Layout — No Scroll Needed)
   // ==============================================================
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50 text-slate-900 overflow-y-auto select-none animate-in fade-in duration-200">
-      {/* --- Top Luxury Executive Header (matches media_1793386086551_0b6488b7.png) --- */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3.5 shadow-2xs">
+    <div className="fixed inset-0 z-50 bg-slate-50 text-slate-900 overflow-y-auto xl:overflow-hidden select-none flex flex-col animate-in fade-in duration-200">
+      {/* --- Top Compact Executive Header --- */}
+      <header className="flex-shrink-0 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-6 py-2 shadow-2xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
-              <Store className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+              <Store className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-sm sm:text-base tracking-tight text-slate-900">
+                <h1 className="font-bold text-xs sm:text-sm tracking-tight text-slate-900">
                   MARTVERSE POS BILLING
                 </h1>
-                <span className="text-[10px] bg-slate-900 text-cyan-400 font-bold px-2 py-0.5 rounded-full font-mono">
+                <span className="text-[9px] bg-slate-900 text-cyan-400 font-bold px-1.5 py-0.5 rounded-full font-mono">
                   LANE 02
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">
+              <p className="text-[10px] text-slate-500 font-medium leading-none">
                 Official In-Store Express Checkout & Invoice
               </p>
             </div>
@@ -891,33 +911,33 @@ export const BillingModal: React.FC = () => {
             type="button"
             onClick={handleCancelBilling}
             title="Return to Supermarket Aisle"
-            className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 border border-slate-200/80 shadow-2xs"
+            className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 border border-slate-200/80 shadow-2xs"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+            <RotateCcw className="w-3 h-3 text-slate-500" />
             <span>Back to Store</span>
           </button>
         </div>
       </header>
 
-      {/* --- Main Two-Column Layout --- */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+      {/* --- Main Two-Column Layout (High-Density, Fits in 1 Viewport) --- */}
+      <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-2 sm:py-3 flex-1 flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
           {/* ============================================================== */}
-          {/* LEFT COLUMN: Address Management + Customer Details + Payment */}
+          {/* LEFT COLUMN: Address (With Delete) + Contact + Payment         */}
           {/* ============================================================== */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* 1. DELIVERY ADDRESS SECTION (BigBasket Style) */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                    <MapPin className="w-4 h-4" />
+          <div className="lg:col-span-7 space-y-2.5">
+            {/* 1. DELIVERY ADDRESS SECTION (Compact BigBasket Style) */}
+            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-3 sm:p-3.5 space-y-2">
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                    <MapPin className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+                    <h2 className="font-bold text-slate-900 text-xs sm:text-sm">
                       1. Delivery Address
                     </h2>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[10px] text-slate-500 leading-none">
                       Select delivery location or add another address
                     </p>
                   </div>
@@ -930,17 +950,17 @@ export const BillingModal: React.FC = () => {
                       setIsAddingNewAddress(true);
                       setFormError(null);
                     }}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-0.5 rounded-md transition-colors cursor-pointer flex items-center gap-1 border border-blue-200"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add New Address</span>
+                    <Plus className="w-3 h-3" />
+                    <span>Add Address</span>
                   </button>
                 )}
               </div>
 
-              {/* View A: Saved Addresses List */}
+              {/* View A: Compact Saved Addresses Grid (2 columns on screens) */}
               {!isAddingNewAddress && (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {savedAddresses.map((addr) => {
                     const isSelected = selectedAddressId === addr.id;
                     const TypeIcon = addr.type === 'HOME' ? Home : addr.type === 'WORK' ? Building : MapPin;
@@ -949,61 +969,64 @@ export const BillingModal: React.FC = () => {
                       <div
                         key={addr.id}
                         onClick={() => setSelectedAddressId(addr.id)}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                        className={`p-2.5 rounded-xl border transition-all cursor-pointer relative ${
                           isSelected
-                            ? 'bg-blue-50/40 border-blue-600 shadow-xs'
+                            ? 'bg-blue-50/50 border-blue-600 shadow-xs ring-1 ring-blue-600/30'
                             : 'bg-white border-slate-200 hover:border-slate-300'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-3 flex-1 min-w-0">
-                            <div className="mt-0.5">
-                              <div
-                                className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                                  isSelected ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'
-                                }`}
-                              >
-                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                              </div>
+                        <div className="flex items-start justify-between gap-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <div
+                              className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center flex-shrink-0 transition-all ${
+                                isSelected ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'
+                              }`}
+                            >
+                              {isSelected && <div className="w-1 h-1 rounded-full bg-white" />}
                             </div>
-
-                            <div className="space-y-1 min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
-                                  <TypeIcon className="w-3 h-3 text-slate-500" />
-                                  {addr.type}
-                                </span>
-                                {addr.isDefault && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    DEFAULT
-                                  </span>
-                                )}
-                              </div>
-
-                              <p className="text-xs font-bold text-slate-900 leading-snug">
-                                {addr.houseNo}
-                              </p>
-                              <p className="text-xs text-slate-600 leading-snug">
-                                {addr.area}
-                                {addr.landmark ? `, Near ${addr.landmark}` : ''}
-                              </p>
-                              <p className="text-xs text-slate-500 font-medium">
-                                {addr.city}, {addr.state} - <span className="font-mono font-bold text-slate-700">{addr.pinCode}</span>
-                              </p>
-                            </div>
+                            <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                              <TypeIcon className="w-2.5 h-2.5 text-slate-500" />
+                              {addr.type}
+                            </span>
+                            {addr.isDefault && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                DEFAULT
+                              </span>
+                            )}
                           </div>
 
-                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <div className="flex items-center gap-1 flex-shrink-0">
                             {!addr.isDefault && (
                               <button
                                 type="button"
                                 onClick={(e) => handleSetDefaultAddress(addr.id, e)}
-                                className="text-[11px] text-slate-500 hover:text-slate-800 hover:underline font-semibold cursor-pointer"
+                                className="text-[10px] text-blue-600 hover:text-blue-800 font-semibold cursor-pointer hover:underline px-1 py-0.5 rounded"
+                                title="Set as default address"
                               >
-                                Set as Default
+                                Set Default
                               </button>
                             )}
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteAddress(addr.id, e)}
+                              className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer active:scale-90"
+                              title="Delete this address"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
+                        </div>
+
+                        <div className="mt-1 space-y-0.5 pl-5">
+                          <p className="text-xs font-bold text-slate-900 truncate">
+                            {addr.houseNo}
+                          </p>
+                          <p className="text-[11px] text-slate-600 truncate leading-tight">
+                            {addr.area}{addr.landmark ? `, Near ${addr.landmark}` : ''}
+                          </p>
+                          <p className="text-[10px] text-slate-500 font-medium truncate">
+                            {addr.city} - <span className="font-mono font-bold text-slate-700">{addr.pinCode}</span>
+                          </p>
                         </div>
                       </div>
                     );
@@ -1011,223 +1034,195 @@ export const BillingModal: React.FC = () => {
                 </div>
               )}
 
-              {/* View B: BigBasket Style "Add New Address" Form with GPS Autofill */}
+              {/* View B: Compact "Add New Address" Form */}
               {isAddingNewAddress && (
-                <form onSubmit={handleSaveNewAddress} className="space-y-4 pt-1 animate-in fade-in duration-200">
-                  <div className="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <form onSubmit={handleSaveNewAddress} className="space-y-2.5 pt-1 animate-in fade-in duration-150">
+                  <div className="bg-blue-50/60 border border-blue-200/80 rounded-xl p-2.5 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
-                        <Navigation className={`w-4 h-4 ${isLocating ? 'animate-spin' : ''}`} />
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-slate-900 block leading-tight">
-                          Auto-Detect Current Location
-                        </span>
-                        <span className="text-[11px] text-slate-500">
-                          Tap to auto-fill building, street, area, and pincode
-                        </span>
-                      </div>
+                      <Navigation className={`w-3.5 h-3.5 text-blue-600 ${isLocating ? 'animate-spin' : ''}`} />
+                      <span className="text-xs font-bold text-slate-900">
+                        Auto-detect Location via GPS
+                      </span>
                     </div>
 
                     <button
                       type="button"
                       onClick={handleUseCurrentLocation}
                       disabled={isLocating}
-                      className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap self-start sm:self-auto"
+                      className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[11px] font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap"
                     >
                       {isLocating ? 'Locating...' : 'Use Current Location'}
                     </button>
                   </div>
 
                   {locationSuccessMsg && (
-                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold p-2.5 rounded-xl flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold p-2 rounded-lg flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                       <span>{locationSuccessMsg}</span>
                     </div>
                   )}
 
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                      House / Flat / Floor / Building Name <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newAddress.houseNo}
-                      onChange={(e) => setNewAddress({ ...newAddress, houseNo: e.target.value })}
-                      placeholder="e.g. Flat 402, Tower B, Green Meadows"
-                      className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                      Street / Locality / Area <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newAddress.area}
-                      onChange={(e) => setNewAddress({ ...newAddress, area: e.target.value })}
-                      placeholder="e.g. 12th Main Road, HAL 2nd Stage, Indiranagar"
-                      className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                      Landmark (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={newAddress.landmark}
-                      onChange={(e) => setNewAddress({ ...newAddress, landmark: e.target.value })}
-                      placeholder="e.g. Near Metro Station / BDA Complex"
-                      className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                        City <span className="text-rose-500">*</span>
+                      <label className="text-[10px] font-bold text-slate-700 block mb-0.5">
+                        House / Flat / Building <span className="text-rose-500">*</span>
                       </label>
+                      <input
+                        type="text"
+                        required
+                        value={newAddress.houseNo}
+                        onChange={(e) => setNewAddress({ ...newAddress, houseNo: e.target.value })}
+                        placeholder="e.g. Flat 402, Tower B"
+                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-semibold outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-700 block mb-0.5">
+                        Street / Area / Locality <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={newAddress.area}
+                        onChange={(e) => setNewAddress({ ...newAddress, area: e.target.value })}
+                        placeholder="e.g. Bellandur, Outer Ring Road"
+                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-semibold outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-700 block mb-0.5">Landmark</label>
+                      <input
+                        type="text"
+                        value={newAddress.landmark}
+                        onChange={(e) => setNewAddress({ ...newAddress, landmark: e.target.value })}
+                        placeholder="Near EcoSpace"
+                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-lg px-2 py-1.5 text-xs text-slate-900 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-700 block mb-0.5">City <span className="text-rose-500">*</span></label>
                       <input
                         type="text"
                         required
                         value={newAddress.city}
                         onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all"
+                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-lg px-2 py-1.5 text-xs text-slate-900 outline-none"
                       />
                     </div>
-
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                        State <span className="text-rose-500">*</span>
-                      </label>
+                      <label className="text-[10px] font-bold text-slate-700 block mb-0.5">State <span className="text-rose-500">*</span></label>
                       <input
                         type="text"
                         required
                         value={newAddress.state}
                         onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all"
+                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-lg px-2 py-1.5 text-xs text-slate-900 outline-none"
                       />
                     </div>
-
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                        Pincode <span className="text-rose-500">*</span>
-                      </label>
+                      <label className="text-[10px] font-bold text-slate-700 block mb-0.5">Pincode <span className="text-rose-500">*</span></label>
                       <input
                         type="text"
                         required
                         maxLength={6}
                         value={newAddress.pinCode}
                         onChange={(e) => setNewAddress({ ...newAddress, pinCode: e.target.value.replace(/\D/g, '') })}
-                        placeholder="560038"
-                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-mono font-bold outline-none transition-all"
+                        placeholder="560103"
+                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-slate-900 outline-none"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1.5">
-                      Save Address As:
-                    </label>
-                    <div className="grid grid-cols-3 gap-2.5">
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-1.5">
                       {[
-                        { type: 'HOME', label: 'Home', icon: Home },
-                        { type: 'WORK', label: 'Work', icon: Building },
-                        { type: 'OTHER', label: 'Other', icon: MapPin },
-                      ].map((item) => {
-                        const Icon = item.icon;
-                        const isSelected = newAddress.type === item.type;
-                        return (
-                          <button
-                            key={item.type}
-                            type="button"
-                            onClick={() => setNewAddress({ ...newAddress, type: item.type as any })}
-                            className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                              isSelected
-                                ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                            }`}
-                          >
-                            <Icon className="w-3.5 h-3.5" />
-                            <span>{item.label}</span>
-                          </button>
-                        );
-                      })}
+                        { type: 'HOME', label: 'Home' },
+                        { type: 'WORK', label: 'Work' },
+                        { type: 'OTHER', label: 'Other' },
+                      ].map((item) => (
+                        <button
+                          key={item.type}
+                          type="button"
+                          onClick={() => setNewAddress({ ...newAddress, type: item.type as any })}
+                          className={`py-1 px-2.5 rounded-lg border text-[11px] font-bold cursor-pointer transition-all ${
+                            newAddress.type === item.type
+                              ? 'bg-slate-900 text-white border-slate-900'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
                     </div>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newAddress.setAsDefault}
+                        onChange={(e) => setNewAddress({ ...newAddress, setAsDefault: e.target.checked })}
+                        className="w-3.5 h-3.5 rounded text-blue-600 border-slate-300"
+                      />
+                      <span className="text-[11px] text-slate-700 font-medium">Set Default</span>
+                    </label>
                   </div>
 
-                  <label className="flex items-center gap-2 cursor-pointer pt-1">
-                    <input
-                      type="checkbox"
-                      checked={newAddress.setAsDefault}
-                      onChange={(e) => setNewAddress({ ...newAddress, setAsDefault: e.target.checked })}
-                      className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <span className="text-xs text-slate-700 font-medium">Set as my default delivery address</span>
-                  </label>
-
-                  <div className="flex items-center gap-2.5 pt-2 border-t border-slate-100">
+                  <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
                     <button
                       type="submit"
-                      className="flex-1 bg-slate-900 hover:bg-black text-white text-xs font-bold py-2.5 rounded-xl transition-all cursor-pointer active:scale-98 shadow-xs"
+                      className="flex-1 bg-slate-900 hover:bg-black text-white text-xs font-bold py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-98"
                     >
-                      Save Address
+                      Save & Select Address
                     </button>
-                    {savedAddresses.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsAddingNewAddress(false);
-                          setFormError(null);
-                        }}
-                        className="px-4 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-xl transition-all cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingNewAddress(false);
+                        setFormError(null);
+                      }}
+                      className="px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </form>
               )}
             </div>
 
-            {/* 2. CUSTOMER CONTACT DETAILS */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-3">
-              <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-                  <User className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+            {/* 2. CUSTOMER CONTACT DETAILS (Compact) */}
+            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-2.5 sm:p-3 space-y-1.5">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                    <User className="w-3 h-3" />
+                  </div>
+                  <h2 className="font-bold text-slate-900 text-xs sm:text-sm">
                     2. Customer Contact
                   </h2>
-                  <p className="text-[11px] text-slate-500">
-                    For delivery tracking and invoice delivery
-                  </p>
                 </div>
+                <span className="text-[10px] text-slate-400">For SMS invoice & delivery tracking</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Full Name</label>
+                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Full Name</label>
                   <input
                     type="text"
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="e.g. Rahul Sharma"
-                    className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all"
+                    placeholder="Rahul Sharma"
+                    className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-semibold outline-none transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Mobile Number</label>
-                  <div className="flex items-center bg-slate-50 border border-slate-300 focus-within:bg-white focus-within:border-blue-600 rounded-xl px-3 py-2.5 transition-all">
-                    <span className="text-xs font-bold text-slate-400 mr-2">+91</span>
+                  <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Mobile Number</label>
+                  <div className="flex items-center bg-slate-50 border border-slate-300 focus-within:bg-white focus-within:border-blue-600 rounded-lg px-2.5 py-1.5 transition-all">
+                    <span className="text-[11px] font-bold text-slate-400 mr-1.5">+91</span>
                     <input
                       type="tel"
                       maxLength={10}
@@ -1242,24 +1237,22 @@ export const BillingModal: React.FC = () => {
               </div>
             </div>
 
-            {/* 3. PAYMENT METHOD (UPI [PhonePe, Paytm, GPay], Card [Details], Cash on Delivery [+₹20]) */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                  <CreditCard className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+            {/* 3. PAYMENT METHOD (Compact Tabs: UPI, Card, Cash on Delivery) */}
+            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-2.5 sm:p-3.5 space-y-2">
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                    <CreditCard className="w-3 h-3" />
+                  </div>
+                  <h2 className="font-bold text-slate-900 text-xs sm:text-sm">
                     3. Payment Method
                   </h2>
-                  <p className="text-[11px] text-slate-500">
-                    Choose UPI, Credit/Debit Card, or Cash on Delivery
-                  </p>
                 </div>
+                <span className="text-[10px] text-slate-400">Instant verification</span>
               </div>
 
               {/* 3 Payment Methods Tabs */}
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-3 gap-2">
                 {[
                   { id: 'UPI', label: 'UPI', icon: QrCode },
                   { id: 'CARD', label: 'Card', icon: CreditCard },
@@ -1272,14 +1265,14 @@ export const BillingModal: React.FC = () => {
                       key={pm.id}
                       type="button"
                       onClick={() => setSelectedPaymentMethod(pm.id as any)}
-                      className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs ring-1 ring-slate-900'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                       }`}
                     >
-                      <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
-                      <span className="text-center">{pm.label}</span>
+                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
+                      <span>{pm.label}</span>
                     </button>
                   );
                 })}
@@ -1287,19 +1280,15 @@ export const BillingModal: React.FC = () => {
 
               {/* Sub-view: UPI (3 Options: PhonePe, Paytm, GPay) */}
               {selectedPaymentMethod === 'UPI' && (
-                <div className="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/80 space-y-3.5 animate-in fade-in duration-200">
-                  <span className="text-xs font-bold text-slate-800 block">
-                    Select UPI App:
-                  </span>
-
-                  <div className="grid grid-cols-3 gap-2.5">
+                <div className="bg-slate-50/70 rounded-xl p-2.5 border border-slate-200/80 space-y-2 animate-in fade-in duration-150">
+                  <div className="grid grid-cols-3 gap-2">
                     {/* PhonePe Option */}
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('PHONEPE')}
-                      className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      className={`py-1.5 px-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                         selectedUpiApp === 'PHONEPE'
-                          ? 'bg-purple-50/80 border-purple-600 text-purple-950 shadow-2xs ring-1 ring-purple-600'
+                          ? 'bg-purple-50/90 border-purple-600 text-purple-950 ring-1 ring-purple-600 shadow-2xs'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
@@ -1311,9 +1300,9 @@ export const BillingModal: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('PAYTM')}
-                      className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      className={`py-1.5 px-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                         selectedUpiApp === 'PAYTM'
-                          ? 'bg-sky-50/80 border-sky-600 text-sky-950 shadow-2xs ring-1 ring-sky-600'
+                          ? 'bg-sky-50/90 border-sky-600 text-sky-950 ring-1 ring-sky-600 shadow-2xs'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
@@ -1325,9 +1314,9 @@ export const BillingModal: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('GPAY')}
-                      className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      className={`py-1.5 px-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                         selectedUpiApp === 'GPAY'
-                          ? 'bg-blue-50/80 border-blue-600 text-blue-950 shadow-2xs ring-1 ring-blue-600'
+                          ? 'bg-blue-50/90 border-blue-600 text-blue-950 ring-1 ring-blue-600 shadow-2xs'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
@@ -1336,67 +1325,55 @@ export const BillingModal: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] text-slate-600 font-semibold block">
-                        Or enter UPI ID / VPA
-                      </label>
-                      <span className="text-[10px] text-slate-400">e.g. yourname@okhdfcbank</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={upiId}
-                        onChange={(e) => {
-                          setUpiId(e.target.value);
-                          setSelectedUpiApp('CUSTOM');
-                        }}
-                        placeholder="username@okhdfcbank"
-                        className="flex-1 bg-white border border-slate-300 focus:border-blue-600 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 outline-none"
-                      />
-                    </div>
+                  <div className="flex items-center gap-2 pt-1 border-t border-slate-200/60">
+                    <span className="text-[10px] text-slate-500 font-semibold whitespace-nowrap">UPI ID:</span>
+                    <input
+                      type="text"
+                      value={upiId}
+                      onChange={(e) => {
+                        setUpiId(e.target.value);
+                        setSelectedUpiApp('CUSTOM');
+                      }}
+                      placeholder="rahul@okhdfcbank"
+                      className="flex-1 bg-white border border-slate-300 focus:border-blue-600 rounded-lg px-2.5 py-1 text-xs font-mono text-slate-900 outline-none"
+                    />
                   </div>
                 </div>
               )}
 
               {/* Sub-view: Card (Details input) */}
               {selectedPaymentMethod === 'CARD' && (
-                <div className="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/80 space-y-3 animate-in fade-in duration-200">
-                  <div>
-                    <label className="text-[11px] text-slate-700 font-bold block mb-1">
-                      Card Number
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={19}
-                      value={cardNumber}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, '').replace(/(\d{4})/g, '$1 ').trim();
-                        setCardNumber(v);
-                      }}
-                      placeholder="1234 5678 9012 3456"
-                      className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] text-slate-700 font-bold block mb-1">
-                      Name on Card
-                    </label>
-                    <input
-                      type="text"
-                      value={cardHolder}
-                      onChange={(e) => setCardHolder(e.target.value)}
-                      placeholder="Cardholder Name"
-                      className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 outline-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-50/70 rounded-xl p-2.5 border border-slate-200/80 space-y-2 animate-in fade-in duration-150">
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[11px] text-slate-700 font-bold block mb-1">
-                        Expiry Date (MM/YY)
-                      </label>
+                      <label className="text-[10px] text-slate-700 font-bold block mb-0.5">Card Number</label>
+                      <input
+                        type="text"
+                        maxLength={19}
+                        value={cardNumber}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, '').replace(/(\d{4})/g, '$1 ').trim();
+                          setCardNumber(v);
+                        }}
+                        placeholder="1234 5678 9012 3456"
+                        className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-slate-900 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-700 font-bold block mb-0.5">Name on Card</label>
+                      <input
+                        type="text"
+                        value={cardHolder}
+                        onChange={(e) => setCardHolder(e.target.value)}
+                        placeholder="Rahul Sharma"
+                        className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-900 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-slate-700 font-bold block mb-0.5">Expiry Date</label>
                       <input
                         type="text"
                         maxLength={5}
@@ -1406,47 +1383,44 @@ export const BillingModal: React.FC = () => {
                           if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2, 4);
                           setCardExpiry(v);
                         }}
-                        placeholder="MM/YY"
-                        className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-slate-900 outline-none"
+                        placeholder="12/28"
+                        className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-slate-900 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] text-slate-700 font-bold block mb-1">
-                        CVV
-                      </label>
+                      <label className="text-[10px] text-slate-700 font-bold block mb-0.5">CVV</label>
                       <input
                         type="password"
                         maxLength={4}
                         value={cardCvv}
                         onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
                         placeholder="•••"
-                        className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-slate-900 outline-none"
+                        className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-slate-900 outline-none"
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Sub-view: Cash on Delivery (+₹20 charges increase) */}
+              {/* Sub-view: Cash on Delivery (+₹20 charges) */}
               {selectedPaymentMethod === 'CASH' && (
-                <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 space-y-2 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
-                    <Banknote className="w-4 h-4 text-amber-700 flex-shrink-0" />
-                    <span>Cash on Delivery Selected</span>
+                <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-2.5 space-y-1 text-xs animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between text-amber-900 font-bold">
+                    <span className="flex items-center gap-1.5">
+                      <Banknote className="w-3.5 h-3.5 text-amber-700" />
+                      Cash on Delivery
+                    </span>
+                    <span className="font-mono text-amber-950">+ ₹20 COD Fee</span>
                   </div>
-                  <p className="text-xs text-amber-800 leading-relaxed">
-                    Physical cash will be collected at your doorstep upon order arrival.
+                  <p className="text-[11px] text-amber-800">
+                    Pay cash at doorstep upon delivery. Verification fee applied.
                   </p>
-                  <div className="bg-white/80 border border-amber-300/60 rounded-xl p-2.5 flex items-center justify-between text-xs font-bold text-amber-900">
-                    <span>COD Handling Fee (Increased by ₹20):</span>
-                    <span className="font-mono text-amber-950">+ ₹20</span>
-                  </div>
                 </div>
               )}
 
               {formError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold p-3 rounded-xl flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold p-2.5 rounded-lg flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-rose-600" />
                   <span>{formError}</span>
                 </div>
               )}
@@ -1456,27 +1430,27 @@ export const BillingModal: React.FC = () => {
           {/* ============================================================== */}
           {/* RIGHT COLUMN: Scanned Items + Live Bill Calculations + Pay Button */}
           {/* ============================================================== */}
-          <div className="lg:col-span-5 sticky top-20 space-y-4">
-            {/* Scanned Items Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 space-y-3">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Barcode className="w-4 h-4 text-blue-600" />
-                  <h3 className="font-bold text-slate-900 text-sm">
+          <div className="lg:col-span-5 space-y-2.5">
+            {/* Scanned Items Card (Compact) */}
+            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-3 sm:p-3.5 space-y-1.5">
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                <div className="flex items-center gap-1.5">
+                  <Barcode className="w-3.5 h-3.5 text-blue-600" />
+                  <h3 className="font-bold text-slate-900 text-xs sm:text-sm">
                     Scanned Items ({scannedItems.length})
                   </h3>
                 </div>
-                <span className="text-[11px] font-mono font-bold text-slate-500">
+                <span className="text-[10px] font-mono font-bold text-slate-500">
                   {scannedItems.reduce((acc, it) => acc + it.quantity, 0)} units
                 </span>
               </div>
 
-              {/* Scrollable Scanned Items List */}
-              <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 pr-1 space-y-1">
+              {/* Scrollable Scanned Items List with compact rows */}
+              <div className="max-h-36 sm:max-h-40 overflow-y-auto divide-y divide-slate-100 pr-1 space-y-0.5">
                 {scannedItems.map((item) => (
-                  <div key={item.id} className="py-2.5 flex items-center justify-between gap-2.5 text-xs">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center p-1 flex-shrink-0">
+                  <div key={item.id} className="py-1.5 flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center p-0.5 flex-shrink-0">
                         <img
                           src={item.productImage || '/products/fallback.svg'}
                           alt={item.productName}
@@ -1487,7 +1461,7 @@ export const BillingModal: React.FC = () => {
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="font-semibold text-slate-900 truncate block text-xs" title={item.productName}>
+                        <span className="font-semibold text-slate-900 truncate block text-[11px]" title={item.productName}>
                           {item.productName}
                         </span>
                         <span className="text-[10px] text-slate-500 font-mono">
@@ -1496,38 +1470,38 @@ export const BillingModal: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200/80">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex items-center bg-slate-100 rounded-md p-0.5 border border-slate-200/80">
                         <button
                           type="button"
                           onClick={() => updateScannedItemQuantity(item.id, item.quantity - 1)}
-                          className="w-5 h-5 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-black transition-all cursor-pointer active:scale-90"
+                          className="w-4 h-4 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-black transition-all cursor-pointer active:scale-90"
                         >
-                          <Minus className="w-2.5 h-2.5" />
+                          <Minus className="w-2 h-2" />
                         </button>
-                        <span className="w-5 text-center font-mono font-bold text-slate-900 text-xs">
+                        <span className="w-4 text-center font-mono font-bold text-slate-900 text-[11px]">
                           {item.quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => updateScannedItemQuantity(item.id, item.quantity + 1)}
-                          className="w-5 h-5 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-black transition-all cursor-pointer active:scale-90"
+                          className="w-4 h-4 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-black transition-all cursor-pointer active:scale-90"
                         >
-                          <Plus className="w-2.5 h-2.5" />
+                          <Plus className="w-2 h-2" />
                         </button>
                       </div>
 
-                      <span className="font-mono font-bold text-slate-900 text-xs w-14 text-right">
+                      <span className="font-mono font-bold text-slate-900 text-xs w-12 text-right">
                         ₹{item.price * item.quantity}
                       </span>
 
                       <button
                         type="button"
                         onClick={() => removeScannedItem(item.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors cursor-pointer"
+                        className="text-slate-400 hover:text-rose-600 p-0.5 rounded transition-colors cursor-pointer"
                         title="Remove item"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -1535,23 +1509,23 @@ export const BillingModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Bill Summary & Calculations */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Receipt className="w-4 h-4 text-emerald-600" />
-                  <h3 className="font-bold text-slate-900 text-sm tracking-tight">
+            {/* Bill Summary & Calculations (Compact) */}
+            <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-3 sm:p-3.5 space-y-2">
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                <div className="flex items-center gap-1.5">
+                  <Receipt className="w-3.5 h-3.5 text-emerald-600" />
+                  <h3 className="font-bold text-slate-900 text-xs sm:text-sm tracking-tight">
                     Order Summary
                   </h3>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <span className="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                   Exact Calculation
                 </span>
               </div>
 
               {/* Itemized Calculation Summary */}
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between text-slate-600 font-normal">
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between text-slate-600">
                   <span>Items Subtotal:</span>
                   <span className="text-slate-900 font-semibold font-mono">
                     ₹{clientSubtotal.toLocaleString('en-IN')}
@@ -1559,7 +1533,7 @@ export const BillingModal: React.FC = () => {
                 </div>
 
                 {clientDiscount > 0 && (
-                  <div className="flex justify-between text-slate-600 font-normal">
+                  <div className="flex justify-between text-slate-600">
                     <span>Savings on MRP:</span>
                     <span className="font-mono text-emerald-700 font-semibold">
                       - ₹{clientDiscount.toLocaleString('en-IN')}
@@ -1567,13 +1541,13 @@ export const BillingModal: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between text-slate-600 font-normal">
+                <div className="flex justify-between text-slate-600">
                   <span>Delivery Charges:</span>
                   <span className="font-semibold text-slate-900">
                     {clientDelivery === 0 ? (
-                      <span className="flex items-center gap-1.5">
-                        <span className="line-through text-slate-400 font-normal text-[11px]">₹40</span>
-                        <span>FREE</span>
+                      <span className="flex items-center gap-1">
+                        <span className="line-through text-slate-400 text-[10px]">₹40</span>
+                        <span className="text-emerald-600 font-bold text-[11px]">FREE</span>
                       </span>
                     ) : (
                       `₹${clientDelivery}`
@@ -1581,60 +1555,60 @@ export const BillingModal: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex justify-between text-slate-500 font-normal">
+                <div className="flex justify-between text-slate-500 text-[11px]">
                   <span>Taxes (GST 5% Included in MRP):</span>
-                  <span className="font-mono text-slate-600 font-medium">
+                  <span className="font-mono text-slate-600">
                     ₹{gstInclusiveAmount} (Included)
                   </span>
                 </div>
 
-                {/* COD Handling Fee (ONLY when Cash on Delivery is selected) */}
+                {/* COD Handling Fee */}
                 {selectedPaymentMethod === 'CASH' && (
-                  <div className="flex justify-between text-amber-900 bg-amber-50/80 px-2.5 py-1.5 rounded-xl border border-amber-200">
-                    <span className="font-bold flex items-center gap-1.5">
-                      <Banknote className="w-3.5 h-3.5 text-amber-700" />
-                      Cash on Delivery Handling:
+                  <div className="flex justify-between text-amber-900 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200 font-bold text-[11px]">
+                    <span className="flex items-center gap-1">
+                      <Banknote className="w-3 h-3 text-amber-700" />
+                      COD Handling:
                     </span>
-                    <span className="font-mono font-bold">+ ₹20</span>
+                    <span className="font-mono">+ ₹20</span>
                   </div>
                 )}
 
                 {/* Grand Total Row */}
-                <div className="pt-3 border-t border-slate-200 flex items-baseline justify-between">
+                <div className="pt-2 border-t border-slate-200 flex items-baseline justify-between">
                   <div>
-                    <span className="text-sm font-bold text-slate-900 block leading-tight">TOTAL PAYABLE AMOUNT</span>
+                    <span className="text-xs font-bold text-slate-900 block leading-tight">TOTAL PAYABLE AMOUNT</span>
                     <span className="text-[10px] text-slate-400">
-                      {selectedPaymentMethod === 'CASH' ? 'Includes ₹20 COD handling charge' : 'Inclusive of all applicable taxes'}
+                      {selectedPaymentMethod === 'CASH' ? 'Includes ₹20 COD fee' : 'Inclusive of all applicable taxes'}
                     </span>
                   </div>
-                  <div className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                  <div className="text-xl font-black text-slate-900 font-mono tracking-tight">
                     ₹{activeTotalAmount.toLocaleString('en-IN')}
                   </div>
                 </div>
               </div>
 
-              {/* Validation Warning Notice if not all fields are filled */}
+              {/* Validation Warning Notice */}
               {!isFormValid && validationHelperText && (
-                <div className="bg-amber-50/90 border border-amber-200 text-amber-900 text-xs font-medium p-2.5 rounded-xl flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <div className="bg-amber-50/90 border border-amber-200 text-amber-900 text-[11px] font-medium p-2 rounded-lg flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                   <span>{validationHelperText}</span>
                 </div>
               )}
 
-              {/* Primary Action Button ("all fill only it will show clickable to pay") */}
+              {/* Primary Action Pay Button */}
               <button
                 type="button"
                 onClick={handleProceedToPay}
                 disabled={!isFormValid || isButtonDisabled}
-                className={`w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-wider transition-all duration-200 ${
+                className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
                   isFormValid && !isButtonDisabled
-                    ? 'bg-slate-900 hover:bg-black text-white shadow-lg cursor-pointer active:scale-98'
+                    ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 text-white shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 cursor-pointer active:scale-98'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                 }`}
               >
                 {isButtonDisabled ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     <span>Processing Payment...</span>
                   </div>
                 ) : (
@@ -1648,18 +1622,6 @@ export const BillingModal: React.FC = () => {
                   </>
                 )}
               </button>
-
-              {/* Trust Badges */}
-              <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                  <span>100% Safe & Encrypted Payment</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                  <span>Instant digital tax invoice generation</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>

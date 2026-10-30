@@ -491,6 +491,24 @@ export const api = {
     }
   },
 
+  async deleteAddress(id: string): Promise<void> {
+    if (id && !id.startsWith('addr-')) {
+      try {
+        await fetchWithFallback(`/addresses/${id}`, {
+          method: 'DELETE',
+        }, null);
+      } catch {}
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const existing: any[] = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        const updated = existing.filter((a) => a.id !== id);
+        localStorage.setItem('martverse_saved_addresses', JSON.stringify(updated));
+      } catch {}
+    }
+  },
+
   // Auth helper
   async login(email: string, password: string): Promise<{ user: User; token: string } | null> {
     try {
