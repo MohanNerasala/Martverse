@@ -498,10 +498,10 @@ export const PlayerController: React.FC = () => {
       }
     } else {
       // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 55, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 55, delta);
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 65, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 65, delta);
 
-      const speed = 12.2; // Brisk, snappy cruising speed (quick, smooth, zero sluggish drag)
+      const speed = 15.0; // Fast, responsive, ultra-smooth cruising speed
       staticMoveVector.set(0, 0, 0);
 
       // 1. Keyboard WASD & Arrow Keys — Full 8-direction continuous motion (Straight, Back, Left, Right, Cross)
@@ -541,7 +541,7 @@ export const PlayerController: React.FC = () => {
       const targetVelX = (-staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
       const targetVelZ = (staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 32 : 28;
+      const accelRate = isMoving ? 44 : 36;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 

@@ -412,10 +412,10 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
           metalness={0.1}
         />
       </mesh>
-      {/* Chrome Rim Around Basket Floor */}
-      <mesh position={[0, 0.51, 0.05]}>
-        <boxGeometry args={[0.655, 0.015, 0.875]} />
-        <meshStandardMaterial color="#ffffff" metalness={0.5} roughness={0.2} wireframe />
+      {/* Solid Chrome Base Plate Under Basket Floor (Zero diagonal cross lines) */}
+      <mesh position={[0, 0.498, 0.05]}>
+        <boxGeometry args={[0.655, 0.010, 0.875]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.25} />
       </mesh>
 
       {/* 4 Vertical Corner Struts with Glowing Neon Strips */}
