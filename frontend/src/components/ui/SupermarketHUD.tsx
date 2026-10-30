@@ -409,9 +409,10 @@ export const SupermarketHUD: React.FC = () => {
 
       {/* ============================================================== */}
       {/* --- Escalator Options: Clean White Card with High-End Styling --- */}
+      {/* Positioned comfortably below navbar toasts to prevent overlapping */}
       {/* ============================================================== */}
       {(promptText?.includes('Escalator') || promptText?.includes('Ride to')) && (
-        <div className="fixed top-20 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-slate-200/90 text-slate-900 max-w-xs w-full transition-all">
+        <div className="fixed top-36 sm:top-40 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-slate-200/90 text-slate-900 max-w-xs w-full transition-all">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">

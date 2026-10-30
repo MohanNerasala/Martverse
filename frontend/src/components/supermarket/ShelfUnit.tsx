@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { SupermarketAisle, Product } from '@/types';
 import { useMartStore } from '@/store/useMartStore';
@@ -93,7 +93,7 @@ interface ShelfUnitProps {
 export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOffset }) => {
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
-  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
+  const [hoveredSlotKey, setHoveredSlotKey] = useState<string | null>(null);
 
   const aisleProducts = products.filter(
     (p) => p.placement && p.placement.aisleNumber === aisle.aisleNumber
@@ -103,6 +103,76 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
   const centerX = (aisle.startX + aisle.endX) / 2;
   const centerZ = (aisle.startZ + aisle.endZ) / 2;
   const centerY = floorYOffset + aisle.shelfHeight / 2;
+
+  // ─────────────────────────────────────────────────────────────
+  // 6 DISTINCT BLOCKS DEFINED BY UPRIGHT SUPPORT POLES
+  // Total shelf length = 24m, divided into exactly 6 blocks of 4m each.
+  // 7 poles at: [-12, -8, -4, 0, 4, 8, 12]
+  // ─────────────────────────────────────────────────────────────
+  const BLOCK_COUNT = 6;
+  const blockWidth = length / BLOCK_COUNT; // 4.0m
+
+  const blockCenters = useMemo(() => {
+    return Array.from(
+      { length: BLOCK_COUNT },
+      (_, b) => -length / 2 + (b + 0.5) * blockWidth
+    ); // [-10, -6, -2, 2, 6, 10]
+  }, [length, blockWidth]);
+
+  // Inside each block (between one pole and the next pole), exactly 3 items are shown
+  // Offsets from block center: -1.15m, 0m, +1.15m (0.85m margin to the poles on either side)
+  const itemOffsets = [-1.15, 0, 1.15];
+
+  // Height for products sitting directly on the middle shelf tier (shelf tier 2 at height 1.3m)
+  // Shelf plank yRel = 1.3 - aisle.shelfHeight / 2 = -0.1m. Top surface = -0.1 + 0.02 = -0.08m
+  const shelfTierY = 1.3 - aisle.shelfHeight / 2 + 0.02;
+
+  // Generate 6 blocks x 3 items = 18 item display positions for both LEFT and RIGHT shelf faces
+  const displaySlots = useMemo(() => {
+    if (!aisleProducts || aisleProducts.length === 0) return [];
+
+    const slots: Array<{
+      key: string;
+      product: Product;
+      side: 'LEFT' | 'RIGHT';
+      blockIdx: number;
+      slotIdx: number;
+      relX: number;
+      relY: number;
+      relZ: number;
+      rotationY: number;
+    }> = [];
+
+    const sides: Array<{ side: 'LEFT' | 'RIGHT'; relX: number; rotationY: number }> = [
+      { side: 'LEFT', relX: -0.45, rotationY: -Math.PI / 2 },
+      { side: 'RIGHT', relX: 0.45, rotationY: Math.PI / 2 },
+    ];
+
+    sides.forEach((s) => {
+      for (let b = 0; b < BLOCK_COUNT; b++) {
+        for (let k = 0; k < 3; k++) {
+          const zRel = blockCenters[b] + itemOffsets[k];
+          // Cycle through aisleProducts evenly so each block has 3 distinct, beautiful items
+          const prodIdx = (b * 3 + k + (s.side === 'RIGHT' ? 2 : 0)) % aisleProducts.length;
+          const product = aisleProducts[prodIdx];
+
+          slots.push({
+            key: `${s.side}-b${b}-s${k}-${product.id}`,
+            product,
+            side: s.side,
+            blockIdx: b,
+            slotIdx: k,
+            relX: s.relX,
+            relY: shelfTierY,
+            relZ: zRel,
+            rotationY: s.rotationY,
+          });
+        }
+      }
+    });
+
+    return slots;
+  }, [aisleProducts, blockCenters, shelfTierY]);
 
   return (
     <group position={[centerX, centerY, centerZ]}>
@@ -189,29 +259,42 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
         );
       })}
 
-      {/* Upright Metal Support Posts along length (Polished Chrome) */}
-      {[-length / 2, -length / 4, 0, length / 4, length / 2].map((zPos, pIdx) => (
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* UPRIGHT SUPPORT POLES: 7 poles defining exactly 6 distinct blocks */}
+      {/* Positions: [-12, -8, -4, 0, 4, 8, 12] across 24m shelf length */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {[-length / 2, -length / 3, -length / 6, 0, length / 6, length / 3, length / 2].map((zPos, pIdx) => (
         <group key={`post-${pIdx}`} position={[0, 0, zPos]}>
-          <mesh position={[-0.86, 0, 0]} castShadow>
+          {/* Left Support Pole (Crisp dark industrial metal finish) */}
+          <mesh position={[-0.86, 0, 0]} castShadow receiveShadow>
             <boxGeometry args={[0.05, aisle.shelfHeight, 0.05]} />
-            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+            <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
           </mesh>
-          <mesh position={[0.86, 0, 0]} castShadow>
+          {/* Right Support Pole (Crisp dark industrial metal finish) */}
+          <mesh position={[0.86, 0, 0]} castShadow receiveShadow>
             <boxGeometry args={[0.05, aisle.shelfHeight, 0.05]} />
-            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+            <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
           </mesh>
         </group>
       ))}
 
-      {/* --- Products on this Aisle Shelves --- */}
-      {aisleProducts.map((prod) => {
-        const plc = prod.placement!;
-        // Relative coordinates from aisle center
-        const relX = plc.worldX - centerX;
-        const relY = plc.worldY - (floorYOffset + aisle.shelfHeight / 2);
-        const relZ = plc.worldZ - centerZ;
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 6 BLOCKS × 3 ITEMS PER BLOCK (POLE TO POLE PERFECTION) */}
+      {/* Exactly 3 items placed evenly between every single pair of poles */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {displaySlots.map((slot) => {
+        const prod = slot.product;
+        const plc = prod.placement || {
+          color: '#3b82f6',
+          modelType: 'box',
+        };
+        const relX = slot.relX;
+        const relY = slot.relY;
+        const relZ = slot.relZ;
+        const finalRotationY = slot.rotationY;
+        const slotKey = slot.key;
 
-        const isHovered = hoveredProductId === prod.id;
+        const isHovered = hoveredSlotKey === slotKey;
         const color = plc.color || '#3b82f6';
         const isSweetsAisle = aisle.aisleNumber === 2;
         const isDairyMilk = prod.slug.includes('dairy-milk') ||
@@ -222,25 +305,21 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
           ? '/products/sweets/DairyMilk.png'
           : (prod.imageUrl || '/products/fallback.svg');
 
-        // Automatic orientation: Left shelf faces West (-X), Right shelf faces East (+X)
-        const autoRotationY = plc.shelfSide === 'RIGHT' || relX > 0 ? Math.PI / 2 : -Math.PI / 2;
-        const finalRotationY = plc.rotationY !== undefined ? plc.rotationY : autoRotationY;
-
         return (
           <group
-            key={prod.id}
-            position={[relX, relY + (isHovered ? 0.05 : 0), relZ]}
-            scale={isHovered ? [1.05, 1.05, 1.05] : [1, 1, 1]}
+            key={slotKey}
+            position={[relX, relY + (isHovered ? 0.04 : 0), relZ]}
+            scale={isHovered ? [1.04, 1.04, 1.04] : [1, 1, 1]}
             rotation={[0, finalRotationY, 0]}
             onPointerOver={(e) => {
               e.stopPropagation();
-              setHoveredProductId(prod.id);
+              setHoveredSlotKey(slotKey);
               setHoveredProduct(prod);
               document.body.style.cursor = 'pointer';
             }}
             onPointerOut={(e) => {
               e.stopPropagation();
-              setHoveredProductId(null);
+              setHoveredSlotKey(null);
               setHoveredProduct(null);
               document.body.style.cursor = 'default';
             }}
@@ -251,9 +330,9 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
           >
             {/* Hover Floating Instruction Tag */}
             {isHovered && (
-              <group position={[0, isDairyMilk ? 0.45 : 0.52, 0]}>
+              <group position={[0, isDairyMilk ? 0.44 : 0.50, 0]}>
                 <mesh position={[0, 0, 0]}>
-                  <boxGeometry args={[0.42, 0.09, 0.02]} />
+                  <boxGeometry args={[0.48, 0.09, 0.02]} />
                   <meshBasicMaterial color="#1d4ed8" />
                 </mesh>
                 <Text
@@ -263,7 +342,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                   anchorX="center"
                   anchorY="middle"
                 >
-                  {isDairyMilk ? 'Cadbury Dairy Milk • ₹40' : 'Click to View Big'}
+                  {isDairyMilk ? 'Cadbury Dairy Milk • ₹40' : `${prod.name.slice(0, 20)} • ₹${prod.price}`}
                 </Text>
               </group>
             )}
@@ -298,64 +377,36 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
                   <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
                 </mesh>
                 {/* Printed Wrap-around Brand Label Band */}
-                <mesh position={[0, 0.12, 0]}>
-                  <cylinderGeometry args={[0.082, 0.082, 0.16, 18]} />
-                  <meshStandardMaterial color="#ffffff" roughness={0.3} />
+                <mesh position={[0, 0.12, 0.086]}>
+                  <planeGeometry args={[0.13, 0.14]} />
+                  <meshBasicMaterial color="#ffffff" toneMapped={false} />
                 </mesh>
-                {/* Real Product Packaging Label */}
+                {/* Real Product Artwork on Bottle Label */}
                 <ProductSmallImage
                   url={packagingUrl}
-                  position={[0, 0.12, 0.086]}
-                  scale={[0.15, 0.18]}
-                />
-              </group>
-            ) : plc.modelType === 'bag' ? (
-              <group position={[0, 0, 0]}>
-                {/* Artisan Paper / Fabric Bag Body */}
-                <mesh castShadow position={[0, 0.2, 0]}>
-                  <boxGeometry args={[0.28, 0.4, 0.16]} />
-                  <meshStandardMaterial
-                    color={color}
-                    roughness={0.85}
-                    emissive={isHovered ? color : '#000000'}
-                    emissiveIntensity={isHovered ? 0.3 : 0}
-                  />
-                </mesh>
-                {/* Stitched / Rolled Top Seal */}
-                <mesh position={[0, 0.41, 0]} rotation={[0, 0, Math.PI / 2]}>
-                  <cylinderGeometry args={[0.016, 0.016, 0.28, 12]} />
-                  <meshStandardMaterial color="#e2e8f0" roughness={0.9} />
-                </mesh>
-                {/* Front White Backer Plate */}
-                <mesh position={[0, 0.2, 0.082]}>
-                  <boxGeometry args={[0.24, 0.32, 0.005]} />
-                  <meshBasicMaterial color="#ffffff" />
-                </mesh>
-                {/* Real Product Packaging Image on Bag */}
-                <ProductSmallImage
-                  url={packagingUrl}
-                  position={[0, 0.2, 0.086]}
-                  scale={[0.23, 0.30]}
+                  position={[0, 0.12, 0.088]}
+                  scale={[0.12, 0.13]}
                 />
               </group>
             ) : plc.modelType === 'shirt' || plc.modelType === 'hanger' ? (
               <group position={[0, 0, 0]}>
                 {/* Polished Chrome Hanger Hook */}
-                <mesh position={[0, 0.42, 0]}>
-                  <torusGeometry args={[0.045, 0.01, 8, 16, Math.PI]} />
+                <mesh position={[0, 0.44, 0]}>
+                  <cylinderGeometry args={[0.008, 0.008, 0.1, 10]} />
                   <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
                 </mesh>
                 {/* Dark Hanger Bar */}
-                <mesh position={[0, 0.36, 0]}>
-                  <boxGeometry args={[0.34, 0.018, 0.024]} />
-                  <meshStandardMaterial color="#334155" metalness={0.6} roughness={0.3} />
+                <mesh position={[0, 0.38, 0]}>
+                  <boxGeometry args={[0.42, 0.02, 0.02]} />
+                  <meshStandardMaterial color="#1e293b" roughness={0.5} />
                 </mesh>
-                {/* Draped Garment Body */}
-                <mesh castShadow position={[0, 0.16, 0]}>
-                  <boxGeometry args={[0.32, 0.4, 0.1]} />
+                {/* Realistic Folded Garment Body */}
+                <mesh castShadow position={[0, 0.18, 0]}>
+                  <boxGeometry args={[0.36, 0.36, 0.09]} />
                   <meshStandardMaterial
                     color={color}
-                    roughness={0.88}
+                    roughness={0.7}
+                    metalness={0.05}
                     emissive={isHovered ? color : '#000000'}
                     emissiveIntensity={isHovered ? 0.3 : 0}
                   />
@@ -498,7 +549,7 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
               </group>
             )}
 
-            {/* Shelf Edge ESL (Electronic Shelf Label) Tag */}
+            {/* Shelf Edge ESL (Electronic Shelf Label) Tag mounted directly on blue LED rail */}
             <group position={[0, -0.01, 0.44]}>
               {/* Sleek Digital ESL Casing */}
               <mesh>
@@ -538,8 +589,8 @@ export const ShelfUnit: React.FC<ShelfUnitProps> = ({ aisle, products, floorYOff
               {/* Real Small Product Thumbnail or Barcode on Tag */}
               <ProductSmallImage
                 url={packagingUrl}
-                position={[0.1, 0, 0.016]}
-                scale={[0.08, 0.08]}
+                position={[0.09, 0, 0.015]}
+                scale={[0.07, 0.07]}
               />
             </group>
           </group>
