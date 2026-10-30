@@ -108,36 +108,59 @@ export default function CartPage() {
 
       {/* Floating Confirmation Toast */}
       {toast && (
-        <div className="pointer-events-auto fixed top-20 right-4 sm:right-6 md:right-8 z-50 animate-in slide-in-from-top-2 fade-in duration-200 ease-out">
+        <div className="pointer-events-auto fixed top-24 sm:top-28 right-4 sm:right-6 md:right-8 z-50 animate-in slide-in-from-top-3 fade-in duration-250 ease-out">
           <div
-            className={`relative overflow-hidden px-3.5 py-2.5 rounded-2xl border flex items-center gap-2.5 max-w-[280px] sm:max-w-[320px] bg-white/95 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.16),0_2px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all ${
+            className={`relative overflow-hidden px-3.5 py-2.5 rounded-2xl border flex items-center gap-3 max-w-[310px] sm:max-w-[350px] bg-white/95 backdrop-blur-2xl shadow-[0_16px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] transition-all ${
               toast.type === 'success'
                 ? 'border-emerald-300/90'
                 : toast.type === 'warning'
                 ? 'border-amber-300/90'
-                : 'border-blue-300/90'
+                : 'border-sky-300/90'
             }`}
           >
-            <div
-              className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
-                toast.type === 'success'
-                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/90'
-                  : toast.type === 'warning'
-                  ? 'bg-amber-50 text-amber-600 border border-amber-200/90'
-                  : 'bg-blue-50 text-blue-600 border border-blue-200/90'
-              }`}
-            >
-              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-              {toast.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600" />}
-              {toast.type === 'info' && <Info className="w-4 h-4 text-blue-600" />}
-            </div>
+            {toast.imageUrl ? (
+              <div className="relative w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-center p-1 flex-shrink-0 overflow-hidden shadow-xs">
+                <img
+                  src={toast.imageUrl}
+                  alt={toast.title}
+                  className="w-full h-full object-contain drop-shadow-xs"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-xs">
+                  <CheckCircle2 className="w-2.5 h-2.5 stroke-[3]" />
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
+                  toast.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/90'
+                    : toast.type === 'warning'
+                    ? 'bg-amber-50 text-amber-600 border border-amber-200/90'
+                    : 'bg-sky-50 text-sky-600 border border-sky-200/90'
+                }`}
+              >
+                {toast.type === 'success' && <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 stroke-[2.5]" />}
+                {toast.type === 'warning' && <AlertTriangle className="w-4.5 h-4.5 text-amber-600 stroke-[2.5]" />}
+                {toast.type === 'info' && <Info className="w-4.5 h-4.5 text-sky-600 stroke-[2.5]" />}
+              </div>
+            )}
 
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-black text-slate-900 leading-tight tracking-tight">
-                {toast.title}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black text-slate-900 leading-tight tracking-tight">
+                  {toast.title}
+                </span>
+                {toast.type === 'success' && (
+                  <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/80 leading-none">
+                    In Trolley
+                  </span>
+                )}
               </div>
               {toast.subtitle && (
-                <div className="text-[11px] text-slate-500 font-medium truncate mt-0.5 leading-tight">
+                <div className="text-[11px] text-slate-600 font-semibold truncate mt-0.5 leading-tight">
                   {toast.subtitle}
                 </div>
               )}
@@ -154,10 +177,10 @@ export default function CartPage() {
             <div
               className={`absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full ${
                 toast.type === 'success'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                  ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-400'
                   : toast.type === 'warning'
                   ? 'bg-gradient-to-r from-amber-500 to-orange-400'
-                  : 'bg-gradient-to-r from-blue-500 to-indigo-500'
+                  : 'bg-gradient-to-r from-sky-500 to-indigo-500'
               }`}
             />
           </div>

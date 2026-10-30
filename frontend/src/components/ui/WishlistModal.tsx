@@ -38,7 +38,7 @@ export const WishlistModal: React.FC = () => {
 
   const handleAddToCart = (product: Product) => {
     addItem(product, 1);
-    showToast('Added to Trolley', `${product.name} placed into your shopping cart`, 'success');
+    showToast('Added to Trolley!', `${product.name} placed into your shopping cart`, 'success', product.imageUrl);
   };
 
   return (

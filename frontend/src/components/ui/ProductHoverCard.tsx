@@ -47,7 +47,8 @@ export const ProductHoverCard: React.FC = () => {
     showToast(
       'Added to Trolley!',
       `1x ${hoveredProduct.name} • ₹${activePrice}`,
-      'success'
+      'success',
+      hoveredProduct.imageUrl
     );
   };
 

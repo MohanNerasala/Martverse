@@ -86,7 +86,8 @@ export const ProductModal: React.FC = () => {
     showToast(
       'Added to Trolley!',
       `${quantity}x ${selectedProduct.name}${variantDesc} • ₹${(activePrice * quantity).toLocaleString('en-IN')}`,
-      'success'
+      'success',
+      selectedProduct.imageUrl
     );
 
     closeProductModal();

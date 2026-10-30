@@ -27,7 +27,7 @@ interface MartStore {
   unpaidExitAlertOpen: boolean;
 
   // Toast Notification
-  toast: { id: string; title: string; subtitle?: string; type: 'success' | 'warning' | 'info' } | null;
+  toast: { id: string; title: string; subtitle?: string; type: 'success' | 'warning' | 'info'; imageUrl?: string } | null;
 
   hasMovedTrolley: boolean;
   setHasMovedTrolley: (hasMoved: boolean) => void;
@@ -47,7 +47,7 @@ interface MartStore {
   startExitAnimation: (orderNumber: string) => void;
   finishExitAnimation: () => void;
   closeFinalCompletedPopup: () => void;
-  showToast: (title: string, subtitle?: string, type?: 'success' | 'warning' | 'info') => void;
+  showToast: (title: string, subtitle?: string, type?: 'success' | 'warning' | 'info', imageUrl?: string) => void;
   hideToast: () => void;
   openUnpaidExitAlert: () => void;
   closeUnpaidExitAlert: () => void;
@@ -155,9 +155,9 @@ export const useMartStore = create<MartStore>((set) => ({
     });
   },
 
-  showToast: (title, subtitle, type = 'success') => {
+  showToast: (title, subtitle, type = 'success', imageUrl) => {
     const id = 'toast-' + Math.random().toString(36).substring(2, 9);
-    set({ toast: { id, title, subtitle, type } });
+    set({ toast: { id, title, subtitle, type, imageUrl } });
     setTimeout(() => {
       // Auto-hide after 3.5 seconds if current toast is the same
       set((state) => (state.toast?.id === id ? { toast: null } : {}));
