@@ -163,6 +163,7 @@ export const PlayerController: React.FC = () => {
   const prevMouse = useRef({ x: 0, y: 0 });
   const lastSyncTime = useRef(0);
   const lastProximityCheck = useRef(0);
+  const camDistRef = useRef(3.0);
   const resetPending = useRef(false);
   const proximityCache = useRef<{
     nearBilling: boolean;
@@ -292,8 +293,8 @@ export const PlayerController: React.FC = () => {
 
       if (!isDragging.current) return;
 
-      targetYawRef.current -= dx * 0.0032;
-      targetPitchRef.current = Math.max(-0.55, Math.min(0.55, targetPitchRef.current - dy * 0.0028));
+      targetYawRef.current -= dx * 0.0068;
+      targetPitchRef.current = Math.max(-0.55, Math.min(0.55, targetPitchRef.current - dy * 0.0042));
 
       // Escalator yaw containment: prevent turning sideways and shoving trolley into glass balustrade
       const onRamp =
@@ -457,31 +458,40 @@ export const PlayerController: React.FC = () => {
       }
     } else {
       // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 45, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 45, delta);
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 55, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 55, delta);
 
-      const speed = 11.2; // Snappy, responsive walking speed with buttery smoothness
+      // Natural vehicle steering when pressing Left / Right
+      const steerSpeed = 2.4;
+      if (keys.current.left || martRuntime.virtualKeys.left) {
+        targetYawRef.current -= steerSpeed * delta;
+      }
+      if (keys.current.right || martRuntime.virtualKeys.right) {
+        targetYawRef.current += steerSpeed * delta;
+      }
+
+      const speed = 12.5; // Instant, fast, professional navigation speed
       const moveVector = new THREE.Vector3();
 
       // 1. Keyboard WASD & Arrow Keys
       if (keys.current.forward) moveVector.z += 1;
       if (keys.current.backward) moveVector.z -= 1;
-      if (keys.current.left) moveVector.x += 1;
-      if (keys.current.right) moveVector.x -= 1;
+      if (keys.current.left) moveVector.x -= 0.6; // Corrected: Left moves -X
+      if (keys.current.right) moveVector.x += 0.6; // Corrected: Right moves +X
 
       // 2. On-Screen 4-Arrow Navigator (Virtual D-Pad)
       if (martRuntime.virtualKeys.forward) moveVector.z += 1;
       if (martRuntime.virtualKeys.backward) moveVector.z -= 1;
-      if (martRuntime.virtualKeys.left) moveVector.x += 1;
-      if (martRuntime.virtualKeys.right) moveVector.x -= 1;
+      if (martRuntime.virtualKeys.left) moveVector.x -= 0.6;
+      if (martRuntime.virtualKeys.right) moveVector.x += 0.6;
 
       // 3. Two-Finger Trackpad / Mouse Scroll Momentum
       moveVector.z += wheelMomentum.current.z;
       moveVector.x += wheelMomentum.current.x;
 
       // Smoothly damp wheel momentum
-      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 10, delta);
-      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 10, delta);
+      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 12, delta);
+      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 12, delta);
 
       const isMoving = moveVector.lengthSq() > 0.001;
       if (isMoving) {
@@ -493,13 +503,13 @@ export const PlayerController: React.FC = () => {
         }
       }
 
-      // Smooth acceleration and deceleration for instant, fluid movement
+      // Instant acceleration and snappy response (55/45 eliminates any start/stop delay)
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
       const targetVelX = (moveVector.x * cos + moveVector.z * sin) * speed;
       const targetVelZ = (-moveVector.x * sin + moveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 30 : 32;
+      const accelRate = isMoving ? 55 : 45;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -509,9 +519,10 @@ export const PlayerController: React.FC = () => {
       const currentFloor = posRef.current.y > 4.5 ? 2 : 1;
 
       // -------------------------------------------------------------
-      // AAA Buttery-Smooth Tangent-Projected Collision Slide Resolver
+      // AAA Buttery-Smooth Unified Character Capsule Sliding
+      // Single continuous convex capsule encompasses player body + trolley
+      // Eliminates internal two-body friction, edge snapping, and corner chatter
       // -------------------------------------------------------------
-      // Exclude escalator moving ramp & landing zones so movement between floors is 100% free
       const onRampCorridor =
         posRef.current.x >= 13.8 &&
         posRef.current.x <= 15.6 &&
@@ -525,35 +536,21 @@ export const PlayerController: React.FC = () => {
         const boxes = currentFloor === 1 ? STATIC_OBSTACLES_FLOOR1 : STATIC_OBSTACLES_FLOOR2;
         const sinYaw = Math.sin(yawRef.current);
         const cosYaw = Math.cos(yawRef.current);
-        const cartDist = 0.80;
-        const cartRadius = 0.30;
-        const playerRadius = 0.28;
 
         let nextX = posRef.current.x + worldDX;
         let nextZ = posRef.current.z + worldDZ;
 
-        // 2-pass iterative relaxation for 100% impenetrable, ultra-smooth sliding
+        // Front trolley bumper center: 0.45m in front of player, radius 0.44m
+        const cartCenterDist = 0.45;
+        const cartRadius = 0.44;
+
         for (let iter = 0; iter < 2; iter++) {
-          // Pass 1: Player character body
-          for (let i = 0; i < boxes.length; i++) {
-            const res = getCircleBoxDepenetration(nextX, nextZ, playerRadius, boxes[i]);
-            if (res.overlap) {
-              nextX += res.pX;
-              nextZ += res.pZ;
-              // Project velocity along collision surface tangent (preserves 100% sliding speed)
-              const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;
-              if (vn < 0) {
-                velocityRef.current.x -= vn * res.normalX;
-                velocityRef.current.z -= vn * res.normalZ;
-              }
-            }
-          }
+          // Pass 1: Front capsule (Trolley body & bumper)
+          const cx = nextX + sinYaw * cartCenterDist;
+          const cz = nextZ + cosYaw * cartCenterDist;
 
-          // Pass 2: Trolley body in front of player
-          const tx = nextX + sinYaw * cartDist;
-          const tz = nextZ + cosYaw * cartDist;
           for (let i = 0; i < boxes.length; i++) {
-            const res = getCircleBoxDepenetration(tx, tz, cartRadius, boxes[i]);
+            const res = getCircleBoxDepenetration(cx, cz, cartRadius, boxes[i]);
             if (res.overlap) {
               nextX += res.pX;
               nextZ += res.pZ;
@@ -565,9 +562,9 @@ export const PlayerController: React.FC = () => {
             }
           }
 
-          // Unpaid exit barrier check
-          if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
-            const resP = getCircleBoxDepenetration(nextX, nextZ, playerRadius, UNPAID_EXIT_BARRIER);
+          // Pass 2: Rear capsule (Player body)
+          for (let i = 0; i < boxes.length; i++) {
+            const resP = getCircleBoxDepenetration(nextX, nextZ, 0.28, boxes[i]);
             if (resP.overlap) {
               nextX += resP.pX;
               nextZ += resP.pZ;
@@ -577,16 +574,20 @@ export const PlayerController: React.FC = () => {
                 velocityRef.current.z -= vn * resP.normalZ;
               }
             }
-            const curTx = nextX + sinYaw * cartDist;
-            const curTz = nextZ + cosYaw * cartDist;
-            const resT = getCircleBoxDepenetration(curTx, curTz, cartRadius, UNPAID_EXIT_BARRIER);
-            if (resT.overlap) {
-              nextX += resT.pX;
-              nextZ += resT.pZ;
-              const vn = velocityRef.current.x * resT.normalX + velocityRef.current.z * resT.normalZ;
+          }
+
+          // Unpaid exit barrier check
+          if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
+            const curCx = nextX + sinYaw * cartCenterDist;
+            const curCz = nextZ + cosYaw * cartCenterDist;
+            const resExit = getCircleBoxDepenetration(curCx, curCz, cartRadius, UNPAID_EXIT_BARRIER);
+            if (resExit.overlap) {
+              nextX += resExit.pX;
+              nextZ += resExit.pZ;
+              const vn = velocityRef.current.x * resExit.normalX + velocityRef.current.z * resExit.normalZ;
               if (vn < 0) {
-                velocityRef.current.x -= vn * resT.normalX;
-                velocityRef.current.z -= vn * resT.normalZ;
+                velocityRef.current.x -= vn * resExit.normalX;
+                velocityRef.current.z -= vn * resExit.normalZ;
               }
             }
           }
@@ -686,15 +687,20 @@ export const PlayerController: React.FC = () => {
     martRuntime.playerPos[2] = posRef.current.z;
     martRuntime.playerYaw = yawRef.current;
 
-    // Throttled Zustand state synchronization to eliminate 60FPS React reconciliation lag
+    // Background state sync: Only syncs when player is stationary to preserve 100% 60FPS WebGL performance while moving
     const now = performance.now();
-    const isMovingFast = Math.abs(velocityRef.current.x) > 0.05 || Math.abs(velocityRef.current.z) > 0.05;
-    if (now - lastSyncTime.current > (isMovingFast ? 350 : 150)) {
+    const isStationary = Math.abs(velocityRef.current.x) < 0.05 && Math.abs(velocityRef.current.z) < 0.05;
+    if (isStationary && now - lastSyncTime.current > 500) {
       lastSyncTime.current = now;
-      useMartStore.setState({
-        playerPos: [posRef.current.x, posRef.current.y, posRef.current.z],
-        playerYaw: yawRef.current,
-      });
+      if (
+        Math.abs(useMartStore.getState().playerPos[0] - posRef.current.x) > 0.05 ||
+        Math.abs(useMartStore.getState().playerPos[2] - posRef.current.z) > 0.05
+      ) {
+        useMartStore.setState({
+          playerPos: [posRef.current.x, posRef.current.y, posRef.current.z],
+          playerYaw: yawRef.current,
+        });
+      }
     }
 
     // Proximity checks for HUD prompt
@@ -797,9 +803,11 @@ export const PlayerController: React.FC = () => {
         if (dZ > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dZ - 0.25));
       }
 
-      const targetCamX = posRef.current.x + rayDirX * effectiveCamDist;
+      camDistRef.current = THREE.MathUtils.damp(camDistRef.current, effectiveCamDist, 18, delta);
+
+      const targetCamX = posRef.current.x + rayDirX * camDistRef.current;
       const targetCamY = posRef.current.y + camHeight;
-      const targetCamZ = posRef.current.z + rayDirZ * effectiveCamDist;
+      const targetCamZ = posRef.current.z + rayDirZ * camDistRef.current;
 
       const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.3;
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
