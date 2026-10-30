@@ -46,18 +46,26 @@ public class AddressController {
     @Operation(summary = "Set address as default")
     public ResponseEntity<ApiResponse<AddressDto.AddressResponse>> setDefaultAddress(
             @AuthenticationPrincipal User user,
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestParam(required = false) String phone) {
         UUID userId = user != null ? user.getId() : null;
+        UUID addressUuid;
+        try {
+            addressUuid = UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(ApiResponse.success("Address set as default", null));
+        }
         return ResponseEntity.ok(ApiResponse.success("Address set as default",
-                addressService.setDefaultAddress(userId, id, phone)));
+                addressService.setDefaultAddress(userId, addressUuid, phone)));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete saved address")
     public ResponseEntity<ApiResponse<Void>> deleteAddress(
-            @PathVariable UUID id) {
-        addressService.deleteAddress(id);
+            @PathVariable String id) {
+        try {
+            addressService.deleteAddress(UUID.fromString(id));
+        } catch (IllegalArgumentException ignored) {}
         return ResponseEntity.ok(ApiResponse.success("Address deleted successfully", null));
     }
 }

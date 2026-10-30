@@ -147,8 +147,21 @@ public class AddressService {
 
     @Transactional
     public void deleteAddress(UUID addressId) {
-        if (addressRepository.existsById(addressId)) {
-            addressRepository.deleteById(addressId);
+        if (addressId == null) return;
+        try {
+            if (addressRepository.existsById(addressId)) {
+                addressRepository.deleteById(addressId);
+            }
+        } catch (Exception e) {
+            log.warn("Address {} cannot be physically deleted due to past order references; soft-deactivating", addressId);
+            addressRepository.findById(addressId).ifPresent(addr -> {
+                addr.setIsDefault(false);
+                String currentPhone = addr.getPhone() != null ? addr.getPhone() : "";
+                if (!currentPhone.startsWith("DEL_")) {
+                    addr.setPhone("DEL_" + currentPhone);
+                }
+                addressRepository.save(addr);
+            });
         }
     }
 

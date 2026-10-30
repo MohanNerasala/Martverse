@@ -233,9 +233,16 @@ public class SimulatedPaymentService {
             PaymentMethod pMethod = PaymentMethod.UPI;
             try {
                 if (request.getPaymentMethod() != null) {
-                    pMethod = PaymentMethod.valueOf(request.getPaymentMethod().toUpperCase());
+                    String pm = request.getPaymentMethod().trim().toUpperCase();
+                    if ("COD".equals(pm) || "CASH".equals(pm) || "CASH_ON_DELIVERY".equals(pm)) {
+                        pMethod = PaymentMethod.CASH_ON_DELIVERY;
+                    } else {
+                        pMethod = PaymentMethod.valueOf(pm);
+                    }
                 }
             } catch (Exception ignored) {}
+
+            boolean isCash = (pMethod == PaymentMethod.CASH || pMethod == PaymentMethod.CASH_ON_DELIVERY);
 
             String provider = request.getPaymentProvider();
             if (provider == null || provider.isBlank()) {
@@ -252,12 +259,14 @@ public class SimulatedPaymentService {
                     .providerPaymentId(txnId)
                     .amount(finalAmount)
                     .currency("INR")
-                    .status(pMethod == PaymentMethod.CASH ? PaymentStatus.PENDING : PaymentStatus.SIMULATED_SUCCESS)
+                    .status(isCash ? PaymentStatus.PENDING : PaymentStatus.SIMULATED_SUCCESS)
                     .testMode(true)
-                    .paidAt(pMethod == PaymentMethod.CASH ? null : LocalDateTime.now())
+                    .paidAt(isCash ? null : LocalDateTime.now())
                     .failureReason(null)
                     .build();
-            paymentRepository.save(payment);
+            payment = paymentRepository.save(payment);
+            order.getPayments().add(payment);
+            orderRepository.save(order);
 
             // 9. Clear Cart in database if it exists
             clearUserOrSessionCart(userId, sessionId);
@@ -278,7 +287,7 @@ public class SimulatedPaymentService {
                     .discountAmount(BigDecimal.ZERO)
                     .deliveryCharge(deliveryCharge)
                     .finalAmount(finalAmount)
-                    .paymentStatus(pMethod == PaymentMethod.CASH ? "PENDING_CASH" : PaymentStatus.SIMULATED_SUCCESS.name())
+                    .paymentStatus(isCash ? "PENDING_CASH" : PaymentStatus.SIMULATED_SUCCESS.name())
                     .paymentMethod(pMethod.name())
                     .paymentProvider(provider)
                     .transactionId(txnId)

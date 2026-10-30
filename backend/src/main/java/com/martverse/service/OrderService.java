@@ -269,10 +269,12 @@ public class OrderService {
         List<OrderDto.OrderItemResponse> items = order.getOrderItems().stream()
                 .map(item -> OrderDto.OrderItemResponse.builder()
                         .id(item.getId().toString())
-                        .productId(item.getProduct().getId().toString())
+                        .productId(item.getProduct() != null ? item.getProduct().getId().toString() : null)
                         .productName(item.getProductName())
                         .productSku(item.getProductSku())
                         .variantInfo(item.getVariantInfo())
+                        .brand(item.getProduct() != null ? item.getProduct().getBrand() : null)
+                        .imageUrl(item.getProduct() != null ? item.getProduct().getImageUrl() : null)
                         .unitPrice(item.getUnitPrice())
                         .quantity(item.getQuantity())
                         .discountAmount(item.getDiscountAmount())
@@ -281,16 +283,23 @@ public class OrderService {
                 .collect(Collectors.toList());
 
         OrderDto.PaymentInfo paymentInfo = null;
+        String pMethod = null;
+        String pStatus = null;
+        String pProvider = null;
         if (!order.getPayments().isEmpty()) {
             Payment payment = order.getPayments().get(0);
+            pMethod = payment.getPaymentMethod() != null ? payment.getPaymentMethod().name() : "UPI";
+            pStatus = payment.getStatus() != null ? payment.getStatus().name() : "COMPLETED";
+            pProvider = payment.getPaymentProvider();
             paymentInfo = OrderDto.PaymentInfo.builder()
                     .id(payment.getId().toString())
-                    .provider(payment.getPaymentProvider())
+                    .paymentMethod(pMethod)
+                    .provider(pProvider)
                     .providerOrderId(payment.getProviderOrderId())
                     .providerPaymentId(payment.getProviderPaymentId())
                     .amount(payment.getAmount())
                     .currency(payment.getCurrency())
-                    .status(payment.getStatus().name())
+                    .status(pStatus)
                     .testMode(payment.getTestMode())
                     .build();
         }
@@ -313,6 +322,9 @@ public class OrderService {
                 .id(order.getId().toString())
                 .orderNumber(order.getOrderNumber())
                 .status(order.getStatus().name())
+                .paymentMethod(pMethod)
+                .paymentStatus(pStatus)
+                .paymentProvider(pProvider)
                 .subtotal(order.getSubtotal())
                 .taxAmount(order.getTaxAmount())
                 .deliveryCharge(order.getDeliveryCharge())

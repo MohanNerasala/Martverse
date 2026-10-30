@@ -32,18 +32,29 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderDto.OrderResponse>> createOrder(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody OrderDto.CreateOrderRequest request) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Authentication required to create cart-based order"));
+        }
         OrderDto.OrderResponse response = orderService.createOrder(user.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Order created", response));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get order by ID")
+    @Operation(summary = "Get order by ID or order number")
     public ResponseEntity<ApiResponse<OrderDto.OrderResponse>> getOrder(
             @AuthenticationPrincipal User user,
             @PathVariable String id) {
+        UUID orderUuid;
+        try {
+            orderUuid = UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(ApiResponse.success(
+                    orderService.getOrderByNumber(id)));
+        }
         return ResponseEntity.ok(ApiResponse.success(
-                orderService.getOrder(UUID.fromString(id), user != null ? user.getId() : null)));
+                orderService.getOrder(orderUuid, user != null ? user.getId() : null)));
     }
 
     @GetMapping("/number/{orderNumber}")

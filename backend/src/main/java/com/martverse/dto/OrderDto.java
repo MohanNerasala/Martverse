@@ -44,9 +44,13 @@ public class OrderDto {
         private String id;
         private String orderNumber;
         private String status;
+        private String paymentStatus;
+        private String paymentMethod;
+        private String paymentProvider;
         private BigDecimal subtotal;
         private BigDecimal taxAmount;
         private BigDecimal deliveryCharge;
+        private BigDecimal codFee;
         private BigDecimal discountAmount;
         private BigDecimal totalAmount;
         private String fulfilmentType;
@@ -63,6 +67,8 @@ public class OrderDto {
         private String productName;
         private String productSku;
         private String variantInfo;
+        private String brand;
+        private String imageUrl;
         private BigDecimal unitPrice;
         private int quantity;
         private BigDecimal discountAmount;
@@ -72,6 +78,7 @@ public class OrderDto {
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class PaymentInfo {
         private String id;
+        private String paymentMethod;
         private String provider;
         private String providerOrderId;
         private String providerPaymentId;
