@@ -63,6 +63,7 @@ interface MartStore {
 export const martRuntime = {
   playerPos: [0, 1.5, -20] as [number, number, number],
   playerYaw: 0,
+  billingCooldownUntil: 0,
   virtualKeys: {
     forward: false,
     backward: false,

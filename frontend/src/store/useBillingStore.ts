@@ -53,6 +53,7 @@ export type BillingPhase =
   | 'scanning'
   | 'review'
   | 'checkout_details'
+  | 'payment_methods'
   | 'processing'
   | 'success_popup';
 
@@ -81,6 +82,8 @@ interface BillingStore {
   revalidateCartWithBackend: (fulfilmentType?: string) => Promise<BackendQuote | null>;
   proceedToCheckoutDetails: () => void;
   backToReview: () => void;
+  proceedToPaymentMethods: () => void;
+  backToCheckoutDetails: () => void;
   startProcessingPayment: () => void;
   setPaymentSuccess: (summary: CompletedOrderSummary) => void;
   cancelBilling: () => void;
@@ -303,6 +306,14 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
   backToReview: () => {
     set({ phase: 'review' });
+  },
+
+  proceedToPaymentMethods: () => {
+    set({ phase: 'payment_methods' });
+  },
+
+  backToCheckoutDetails: () => {
+    set({ phase: 'checkout_details' });
   },
 
   startProcessingPayment: () => {

@@ -644,7 +644,13 @@ export const PlayerController: React.FC = () => {
           (posRef.current.x >= 1.1 && posRef.current.x <= 2.7)      // Box 3 (Left of Bench 3)
         );
 
-      if (inCheckoutQueueBox && cartItems.length > 0 && !isPaid && billingPhase === 'idle') {
+      if (
+        inCheckoutQueueBox &&
+        cartItems.length > 0 &&
+        !isPaid &&
+        billingPhase === 'idle' &&
+        Date.now() > martRuntime.billingCooldownUntil
+      ) {
         startCheckout(cartItems);
       }
     }
@@ -710,6 +716,13 @@ export const PlayerController: React.FC = () => {
       // Fixed floor height
       const targetFloorY = activeFloor === 2 ? 6.5 : 1.5;
       posRef.current.y = THREE.MathUtils.damp(posRef.current.y, targetFloorY, 8, delta);
+
+      // Floor height synchronization outside escalator ramp
+      const physicalFloor = posRef.current.y > 3.8 ? 2 : 1;
+      if (activeFloor !== physicalFloor) {
+        setActiveFloor(physicalFloor);
+        proximityCache.current.prompt = null;
+      }
     }
 
     // High-frequency zero-rerender runtime update
@@ -775,7 +788,7 @@ export const PlayerController: React.FC = () => {
         targetPos = [nearbyProd.placement.worldX, nearbyProd.placement.worldY, nearbyProd.placement.worldZ];
       }
     } else {
-      prompt = proximityCache.current.prompt;
+      prompt = proximityCache.current.prompt?.startsWith('Press [E] or Click to Inspect') ? proximityCache.current.prompt : null;
     }
 
     // Cached proximity update to eliminate unnecessary Zustand dispatches
@@ -791,14 +804,14 @@ export const PlayerController: React.FC = () => {
     // Camera positioning based on cameraMode (No auto zoom during billing per user request)
     if (cameraMode === 'billing') {
       const camDist = 3.2;
-      const camHeight = 2.0;
-      const targetCamX = posRef.current.x - Math.sin(yawRef.current) * camDist;
+      const camHeight = 1.9;
+      const targetCamX = posRef.current.x - Math.sin(yawRef.current) * camDist - 0.35;
       const targetCamZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
       const targetCamY = posRef.current.y + camHeight;
       camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 10, delta);
       camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 10, delta);
       camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 10, delta);
-      camera.lookAt(posRef.current.x, posRef.current.y + 0.4, posRef.current.z + 2.0);
+      camera.lookAt(posRef.current.x + 0.85, posRef.current.y + 0.35, posRef.current.z + 1.2);
     } else if (cameraMode === 'exit') {
       // Exit gate cinematic view
       camera.position.set(0, 2.2, -18.5);

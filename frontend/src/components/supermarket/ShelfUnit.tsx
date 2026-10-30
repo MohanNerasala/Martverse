@@ -398,9 +398,10 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 6 BLOCKS × 3 ITEMS PER BLOCK (POLE TO POLE PERFECTION) */}
-      {/* Kept mounted in GPU memory; visibility & raycasting disabled on inactive floors */}
+      {/* Mounted only on the active floor — strictly eliminates cross-floor raycasting & boosts FPS */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <group visible={isFloorActive} raycast={isFloorActive ? undefined : () => null}>
+      {isFloorActive && (
+        <group>
         {displaySlots.map((slot) => {
         const prod = slot.product;
         const plc = prod.placement || {
@@ -652,7 +653,8 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
           </group>
         );
       })}
-      </group>
+        </group>
+      )}
     </group>
   );
 };

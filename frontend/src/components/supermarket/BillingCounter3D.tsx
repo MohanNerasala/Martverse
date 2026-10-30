@@ -157,18 +157,18 @@ const ConveyorAnimation3D: React.FC<{
       lastTimeRef.current = Date.now();
       finishedRef.current = false;
 
-      // Initialize all items with staggered start times (2.2s gap between products for smooth, clear pacing)
+      // Initialize all items with staggered start times (2.6s gap for smooth, clear, visible pacing)
       const initialized = unitItems.map((it, idx) => ({
         id: `${it.id}-${idx}`,
         item: it,
         index: idx,
-        startTime: idx * 2.2,
-        pos: [activeDeskX - 1.9, 0.75, 17.0] as [number, number, number],
+        startTime: idx * 2.6,
+        pos: [activeDeskX - 1.9, 0.72, -1.0] as [number, number, number],
         rot: [0, 0, 0] as [number, number, number],
         stage: 'fly' as const,
         landSoundPlayed: false,
         scanSoundPlayed: false,
-        priceTagY: 0,
+        priceTagY: 1.15,
         priceTagOpacity: 0,
       }));
 
@@ -187,20 +187,18 @@ const ConveyorAnimation3D: React.FC<{
     let allDone = true;
     let anyStateChanged = false;
 
-    // Source Trolley position (in customer passage lane to the LEFT of active desk)
+    // Source Trolley position (in customer passage lane relative to BillingCounter3D origin at Z=18)
     const playerX = martRuntime.playerPos[0];
-    const trolleyX = playerX < activeDeskX
-      ? Math.min(activeDeskX - 1.2, Math.max(activeDeskX - 2.5, playerX))
-      : activeDeskX - 1.9;
-    const trolleyZ = martRuntime.playerPos[2] > 14 && martRuntime.playerPos[2] < 20
-      ? martRuntime.playerPos[2]
-      : 17.0;
+    const playerZ = martRuntime.playerPos[2];
 
-    // Conveyor Bench target coordinates on the countertop
-    const beltX = activeDeskX - 0.20;
-    const beltDropZ = 16.8; // Landing spot on the black rubber belt
-    const scannerZ = 18.3; // Barcode optical window
-    const bagZ = 19.1; // Green shopping bag packing station
+    const trolleyX = activeDeskX - 1.9;
+    const trolleyZ = (playerZ > 14 && playerZ < 21 ? playerZ : 17.0) - 18.0; // around -1.0 relative to counter
+
+    // Conveyor Bench target coordinates on the countertop (relative to counter origin at Z=18)
+    const beltX = activeDeskX - 0.15;
+    const beltDropZ = -0.90; // Landing spot on the black rubber conveyor belt
+    const scannerZ = 0.30;   // Barcode optical laser aperture
+    const bagZ = 1.10;       // Green shopping bag packing station
 
     const updated = activeItems.map((p) => {
       if (p.stage === 'done') {
@@ -215,12 +213,12 @@ const ConveyorAnimation3D: React.FC<{
         return p;
       }
 
-      // Slower, smooth and clear animation pacing (3.2 seconds total per item)
-      const totalItemDuration = 3.2;
+      // Smooth, slow and clear animation pacing (3.6 seconds total per item)
+      const totalItemDuration = 3.6;
       const progress = Math.min(1, Math.max(0, t / totalItemDuration));
 
       let curX = trolleyX;
-      let curY = 0.75;
+      let curY = 0.72;
       let curZ = trolleyZ;
       let rotX = 0;
       let rotY = p.index * 0.4;
@@ -232,25 +230,25 @@ const ConveyorAnimation3D: React.FC<{
       let priceOp = p.priceTagOpacity;
 
       // ==============================================================
-      // 1. FLIGHT & PARABOLIC DROP DIRECTLY ONTO THE BENCH BLACK BELT (0% - 35%)
+      // 1. FLIGHT & PARABOLIC DROP DIRECTLY ONTO THE BENCH BLACK BELT (0% - 32%)
       // ==============================================================
-      if (progress < 0.35) {
+      if (progress < 0.32) {
         curStage = 'fly';
-        const u = progress / 0.35;
+        const u = progress / 0.32;
         const ease = u * u * (3 - 2 * u); // Smooth cubic ease-in-out
 
         curX = THREE.MathUtils.lerp(trolleyX, beltX, ease);
         curZ = THREE.MathUtils.lerp(trolleyZ, beltDropZ, ease);
         // Smooth parabolic arc rising from trolley basket and dropping down onto the bench belt
-        curY = THREE.MathUtils.lerp(0.75, 1.08, ease) + Math.sin(u * Math.PI) * 0.55;
+        curY = THREE.MathUtils.lerp(0.72, 1.08, ease) + Math.sin(u * Math.PI) * 0.55;
 
-        rotX = Math.sin(u * Math.PI) * 0.35;
+        rotX = Math.sin(u * Math.PI) * 0.4;
         rotZ = (1 - u) * 0.35;
       }
       // ==============================================================
-      // 2. LANDING BOUNCE & GLIDING FORWARD IN A STRAIGHT LINE (35% - 66%)
+      // 2. LANDING BOUNCE & GLIDING FORWARD IN A STRAIGHT LINE (32% - 68%)
       // ==============================================================
-      else if (progress < 0.66) {
+      else if (progress < 0.68) {
         curStage = 'convey';
         if (!landSound) {
           landSound = true;
@@ -258,21 +256,21 @@ const ConveyorAnimation3D: React.FC<{
           anyStateChanged = true;
         }
 
-        const u = (progress - 0.35) / 0.31;
+        const u = (progress - 0.32) / 0.36;
         curX = beltX;
         curZ = THREE.MathUtils.lerp(beltDropZ, scannerZ, u);
 
         // Soft landing damping bounce on the black rubber belt
-        const bounce = Math.exp(-u * 6) * Math.sin(u * 12) * 0.035;
+        const bounce = Math.exp(-u * 6) * Math.sin(u * 12) * 0.04;
         curY = 1.08 + Math.max(0, bounce);
 
         rotX = 0;
         rotZ = 0;
       }
       // ==============================================================
-      // 3. LASER BARCODE SCANNING & ADD AMOUNT (66% - 82%)
+      // 3. LASER BARCODE SCANNING & ADD AMOUNT (68% - 84%)
       // ==============================================================
-      else if (progress < 0.82) {
+      else if (progress < 0.84) {
         curStage = 'scan';
         curX = beltX;
         curZ = scannerZ;
@@ -281,26 +279,27 @@ const ConveyorAnimation3D: React.FC<{
         if (!scanSound) {
           scanSound = true;
           sounds.playScanBeep();
-          // Update live cumulative total in store
+          // Update live cumulative total and item in store
           useBillingStore.setState((prev) => ({
             runningTotal: prev.runningTotal + p.item.price,
             currentIndex: Math.min(prev.totalToScan, p.index + 1),
+            currentScanningItem: p.item,
           }));
-          priceY = 1.28;
+          priceY = 1.25;
           priceOp = 1.0;
           anyStateChanged = true;
         }
 
         // Float holographic +₹XX price tag upwards
-        priceY += delta * 0.45;
+        priceY += delta * 0.4;
         priceOp = Math.max(0, priceOp - delta * 1.5);
       }
       // ==============================================================
-      // 4. MOVE TO GREEN BAG & PACK INSIDE (82% - 100%)
+      // 4. MOVE TO GREEN BAG & PACK INSIDE (84% - 100%)
       // ==============================================================
       else {
         curStage = 'pack';
-        const u = (progress - 0.82) / 0.18;
+        const u = (progress - 0.84) / 0.16;
         const ease = u * u * (3 - 2 * u);
 
         curX = beltX;
@@ -309,15 +308,16 @@ const ConveyorAnimation3D: React.FC<{
         // Arch over the bag rim and drop inside
         if (u < 0.5) {
           curY = THREE.MathUtils.lerp(1.08, 1.25, u * 2);
-          rotX = u * 0.5;
+          rotX = u * 0.6;
         } else {
           curY = THREE.MathUtils.lerp(1.25, 1.10, (u - 0.5) * 2);
-          rotX = 0.5 - (u - 0.5) * 0.3;
+          rotX = 0.6 - (u - 0.5) * 0.4;
         }
 
         if (progress >= 0.98) {
           curStage = 'done';
           onBagBump();
+          sounds.playPickSound();
         }
       }
 
