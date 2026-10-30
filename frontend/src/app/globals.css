@@ -251,25 +251,11 @@ input:focus, select:focus, textarea:focus {
   animation: sheen-sweep 2.5s infinite;
 }
 
-/* Light Blue to Passing White Shimmer Text for Navbar Brand */
-@keyframes text-light-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
+/* Clean Static Brand Text for Navbar Brand (no moving light/shimmer) */
 .text-passing-shimmer {
-  background: linear-gradient(90deg, #0284c7 0%, #38bdf8 30%, #ffffff 50%, #38bdf8 70%, #0284c7 100%);
-  background-size: 250% auto;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: text-light-flow 3.5s ease infinite;
 }
 
 @keyframes logo-jewel-pulse {

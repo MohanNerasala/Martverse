@@ -166,7 +166,7 @@ export const SupermarketHUD: React.FC = () => {
             </button>
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-passing-shimmer font-black tracking-tight text-sm sm:text-base leading-none">
+                <span className="font-black tracking-tight text-sm sm:text-base leading-none bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
                   MARTVERSE
                 </span>
                 <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded-full border border-sky-200/90 shadow-xs">
