@@ -74,18 +74,39 @@ export const SupermarketHUD: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // Filter products sorted Alphabetically (A to Z) - only computed when query exists
+  // Filter products by starting letters or word-start in name/brand only
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
-    const sorted = [...products].sort((a, b) => a.name.localeCompare(b.name));
-    return sorted.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.brand?.toLowerCase().includes(q) ||
-        p.category?.name?.toLowerCase().includes(q) ||
-        p.placement?.aisleName?.toLowerCase().includes(q)
-    );
+
+    return products
+      .filter((p) => {
+        const nameLower = p.name.toLowerCase();
+        const brandLower = p.brand?.toLowerCase() || '';
+
+        // Match if product name starts with search query
+        if (nameLower.startsWith(q)) return true;
+
+        // Match if any individual word in the product name starts with search query (e.g. "Haldiram's ...", "Head & Shoulders")
+        const nameWords = nameLower.split(/\s+/);
+        if (nameWords.some((w) => w.startsWith(q))) return true;
+
+        // Match if brand name starts with search query
+        if (brandLower.startsWith(q)) return true;
+        const brandWords = brandLower.split(/\s+/);
+        if (brandWords.some((w) => w.startsWith(q))) return true;
+
+        return false;
+      })
+      .sort((a, b) => {
+        const aName = a.name.toLowerCase();
+        const bName = b.name.toLowerCase();
+        const aStarts = aName.startsWith(q);
+        const bStarts = bName.startsWith(q);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return a.name.localeCompare(b.name);
+      });
   }, [products, searchQuery]);
 
   // Handle click outside to close search dropdown
@@ -120,16 +141,16 @@ export const SupermarketHUD: React.FC = () => {
       {/* --- Top Unified Floating Executive Command Navbar --- */}
       {/* ============================================================== */}
       <header className="w-full max-w-7xl mx-auto pointer-events-auto">
-        <div className="glass-panel rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.65)] border border-white/[0.08]">
+        <div className="rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 bg-[#0a101f]/90 backdrop-blur-2xl border border-white/[0.14] shadow-[0_16px_50px_rgba(0,0,0,0.7),0_0_0_1px_rgba(59,130,246,0.18),inset_0_1px_0_0_rgba(255,255,255,0.22)]">
           
           {/* Brand Identity: Gradient text blue to white */}
           <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25 ring-1 ring-white/20">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30 ring-1 ring-white/25">
               <Store className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-black tracking-wider text-sm sm:text-base leading-none bg-gradient-to-r from-blue-400 via-sky-200 to-white bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(56,189,248,0.35)]">
+                <span className="font-black tracking-wider text-sm sm:text-base leading-none bg-gradient-to-r from-blue-400 via-sky-200 to-white bg-clip-text text-transparent drop-shadow-[0_0_14px_rgba(56,189,248,0.45)]">
                   MART<span className="text-white">VERSE</span>
                 </span>
                 <span className="hidden md:inline-flex items-center gap-1 text-[9px] bg-emerald-500/15 text-emerald-400 font-bold px-1.5 py-0.5 rounded-full border border-emerald-500/30">
@@ -144,13 +165,13 @@ export const SupermarketHUD: React.FC = () => {
           </div>
 
           {/* Floor Navigation Segmented Switcher (Floor 1 & Floor 2) */}
-          <nav className="h-10 flex items-center p-1 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-md flex-shrink-0">
+          <nav className="h-10 flex items-center p-1 rounded-xl bg-white/[0.06] border border-white/[0.1] backdrop-blur-md flex-shrink-0">
             <button
               onClick={() => setActiveFloor(1)}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeFloor === 1
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/35 font-bold ring-1 ring-white/20'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
               }`}
               title="Ground Floor: Groceries & Staples"
             >
@@ -162,8 +183,8 @@ export const SupermarketHUD: React.FC = () => {
               onClick={() => setActiveFloor(2)}
               className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeFloor === 2
-                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 font-bold'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/35 font-bold ring-1 ring-white/20'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
               }`}
               title="First Floor: Fashion Studio & Apparel"
             >
@@ -173,7 +194,7 @@ export const SupermarketHUD: React.FC = () => {
             </button>
           </nav>
 
-          {/* Search Bar - Standardized h-10 height to match navbar controls */}
+          {/* Search Bar - Standardized h-10 height, No slash, clean placeholder */}
           <div ref={searchContainerRef} className="relative flex-1 max-w-[160px] xs:max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md h-10">
             <div className="relative h-10 flex items-center">
               <Search className="w-3.5 h-3.5 text-blue-400 absolute left-3 pointer-events-none" />
@@ -190,33 +211,29 @@ export const SupermarketHUD: React.FC = () => {
                     setIsSearchOpen(true);
                   }
                 }}
-                placeholder="Search items A–Z..."
-                className="w-full h-10 bg-black/40 hover:bg-black/60 focus:bg-[#070b12] text-white placeholder-slate-400 text-xs rounded-xl pl-8 sm:pl-9 pr-8 border border-white/[0.08] focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/40 transition-all outline-none"
+                placeholder="Search items..."
+                className="w-full h-10 bg-white/[0.05] hover:bg-white/[0.08] focus:bg-[#070d18] text-white placeholder-slate-400 text-xs rounded-xl pl-8 sm:pl-9 pr-8 border border-white/[0.1] focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40 transition-all outline-none shadow-inner"
               />
-              {searchQuery ? (
+              {searchQuery && (
                 <button
                   onClick={() => {
                     setSearchQuery('');
                     setIsSearchOpen(false);
                   }}
-                  className="absolute right-2.5 text-slate-400 hover:text-white p-1 cursor-pointer"
+                  className="absolute right-2.5 text-slate-400 hover:text-white p-1 cursor-pointer transition-colors"
                   title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-              ) : (
-                <kbd className="hidden lg:inline-block absolute right-2.5 text-[9px] font-mono text-slate-400 bg-white/[0.06] px-1.5 py-0.5 rounded border border-white/[0.08] pointer-events-none">
-                  /
-                </kbd>
               )}
             </div>
 
             {/* Clean Dropdown — ONLY displayed when user has typed a search query */}
             {isSearchOpen && searchQuery.trim().length > 0 && (
-              <div className="absolute top-[calc(100%+8px)] left-0 sm:left-auto sm:right-0 w-72 sm:w-80 md:w-96 bg-[#090D14]/95 backdrop-blur-2xl rounded-2xl border border-white/[0.12] shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-3 py-2 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.02]">
+              <div className="absolute top-[calc(100%+8px)] left-0 sm:left-auto sm:right-0 w-72 sm:w-80 md:w-96 bg-[#0a101f]/98 backdrop-blur-2xl rounded-2xl border border-white/[0.14] shadow-[0_24px_60px_rgba(0,0,0,0.85),0_0_0_1px_rgba(59,130,246,0.15)] z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-2 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.03]">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-slate-300">Search Results</span>
+                    <span className="text-[11px] font-bold text-slate-200">Matching Items</span>
                     <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-1.5 py-0.5 rounded-full border border-blue-500/30">
                       {filteredProducts.length}
                     </span>
@@ -227,7 +244,7 @@ export const SupermarketHUD: React.FC = () => {
                 <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5 divide-y divide-white/[0.04]">
                   {filteredProducts.length === 0 ? (
                     <div className="p-6 text-center text-slate-400 text-xs font-medium">
-                      No items found matching &quot;{searchQuery}&quot;
+                      No items found starting with &quot;{searchQuery}&quot;
                     </div>
                   ) : (
                     filteredProducts.map((p) => (
@@ -273,14 +290,14 @@ export const SupermarketHUD: React.FC = () => {
             )}
           </div>
 
-          {/* Action Utilities & User Area - All standardized to h-10 */}
+          {/* Action Utilities & User Area - All standardized to h-10 with premium obsidian glass styling */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Camera Perspective Mode (1st / 3rd Person) */}
             <button
               onClick={() =>
                 setCameraMode(cameraMode === 'third_person' ? 'first_person' : 'third_person')
               }
-              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.1] hover:border-white/[0.2] transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer shadow-sm"
               title="Toggle Camera View (1st / 3rd Person)"
             >
               {cameraMode === 'first_person' ? (
@@ -296,7 +313,7 @@ export const SupermarketHUD: React.FC = () => {
             {/* Sound Toggle */}
             <button
               onClick={toggleSound}
-              className="h-10 w-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] transition-all flex items-center justify-center cursor-pointer"
+              className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.1] hover:border-white/[0.2] transition-all flex items-center justify-center cursor-pointer shadow-sm"
               title={isSoundMuted ? 'Unmute Ambient Sound' : 'Mute Ambient Sound'}
             >
               {isSoundMuted ? (
@@ -312,7 +329,7 @@ export const SupermarketHUD: React.FC = () => {
                 resetToOriginalState();
                 showToast('Position Reset', 'Returned to store entrance & original view orientation', 'info');
               }}
-              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.04] hover:bg-blue-600/20 text-slate-300 hover:text-blue-300 border border-white/[0.06] hover:border-blue-500/40 transition-all flex items-center gap-1.5 text-xs group cursor-pointer"
+              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.05] hover:bg-blue-600/20 text-slate-200 hover:text-blue-300 border border-white/[0.1] hover:border-blue-500/40 transition-all flex items-center gap-1.5 text-xs font-medium group cursor-pointer shadow-sm"
               title="Reset to Original State & Starting Position (Entrance)"
             >
               <RotateCcw className="w-4 h-4 text-blue-400 group-hover:-rotate-90 transition-transform duration-300" />
@@ -322,7 +339,7 @@ export const SupermarketHUD: React.FC = () => {
             {/* Wishlist Icon Only */}
             <button
               onClick={() => toggleWishlist(true)}
-              className="h-10 w-10 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/[0.06] hover:border-rose-500/30 transition-all relative flex items-center justify-center cursor-pointer"
+              className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-rose-500/20 text-slate-200 hover:text-rose-300 border border-white/[0.1] hover:border-rose-500/40 transition-all relative flex items-center justify-center cursor-pointer shadow-sm"
               title="View Saved Wishlist"
             >
               <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-rose-400 fill-rose-400' : 'text-slate-300'}`} />
@@ -336,7 +353,7 @@ export const SupermarketHUD: React.FC = () => {
             {/* Hero Shopping Trolley Button */}
             <button
               onClick={() => toggleCart(true)}
-              className="h-10 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-bold flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/30 border border-blue-400/30 hover:scale-[1.02] active:scale-[0.98] transition-all btn-shine cursor-pointer flex-shrink-0"
+              className="h-10 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/35 border border-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all btn-shine cursor-pointer flex-shrink-0"
               title="Open Shopping Trolley"
             >
               <div className="relative flex items-center">
@@ -365,7 +382,7 @@ export const SupermarketHUD: React.FC = () => {
             ) : (
               <button
                 onClick={() => router.push('/profile')}
-                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 ring-2 ring-white/10 hover:ring-white/20 transition-all cursor-pointer flex-shrink-0"
+                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 ring-2 ring-white/20 hover:ring-white/40 transition-all cursor-pointer flex-shrink-0"
                 title="My Profile"
               >
                 <User className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
