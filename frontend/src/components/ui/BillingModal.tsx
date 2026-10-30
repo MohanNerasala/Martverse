@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   X,
   CreditCard,
-  Truck,
   Store,
   User,
   ShieldCheck,
@@ -524,7 +523,7 @@ export const BillingModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* CARD 2: Customer & Fulfilment Details */}
+              {/* CARD 2: Customer Details */}
               <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
                 <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
                   <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
@@ -532,51 +531,12 @@ export const BillingModal: React.FC = () => {
                   </div>
                   <div>
                     <h2 className="font-black text-slate-900 text-sm sm:text-base">
-                      Customer & Delivery Preference
+                      Customer Details
                     </h2>
                     <p className="text-[11px] text-slate-500">
-                      Choose store pickup or express doorstep delivery
+                      Enter contact details for in-store checkout & invoice
                     </p>
                   </div>
-                </div>
-
-                {/* Fulfilment Selector */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setFulfilmentType('STORE_PICKUP')}
-                    className={`py-3 px-3.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                      fulfilmentType === 'STORE_PICKUP'
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Store className="w-4 h-4" />
-                      <span>Store Self-Pickup</span>
-                    </div>
-                    <span className={`text-[10px] ${fulfilmentType === 'STORE_PICKUP' ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                      FREE • Counter 02
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFulfilmentType('DELIVERY')}
-                    className={`py-3 px-3.5 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                      fulfilmentType === 'DELIVERY'
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Truck className="w-4 h-4" />
-                      <span>Express Home Delivery</span>
-                    </div>
-                    <span className={`text-[10px] ${fulfilmentType === 'DELIVERY' ? 'text-emerald-400' : 'text-slate-500'}`}>
-                      {clientSubtotal >= 499 ? 'FREE above ₹499' : '₹40 Delivery Fee'}
-                    </span>
-                  </button>
                 </div>
 
                 {/* Name & Phone Inputs */}
