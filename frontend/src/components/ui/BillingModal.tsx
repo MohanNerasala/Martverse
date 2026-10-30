@@ -191,13 +191,13 @@ export const BillingModal: React.FC = () => {
   };
 
   // ==============================================================
-  // STEP 1: SCANNING PHASE — Minimalist Floating Top Pill Bar
-  // User can watch 3D items drop from trolley to bench & scanner unobstructed!
+  // STEP 1: SCANNING PHASE — Minimalist Floating Bar Below Navbar (Right Side)
+  // Best look below top executive navbar on right side: item details & Instant Bill
   // ==============================================================
   if (phase === 'scanning') {
     return (
-      <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto animate-in slide-in-from-top-4 fade-in duration-300 w-full max-w-xl px-4">
-        <div className="bg-slate-900/95 backdrop-blur-2xl text-white rounded-2xl px-4 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-700/80 flex items-center justify-between gap-3">
+      <div className="fixed top-20 sm:top-22 right-3 sm:right-6 z-50 pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-300 max-w-[calc(100vw-24px)] w-auto">
+        <div className="bg-slate-900/95 backdrop-blur-2xl text-white rounded-2xl px-3.5 sm:px-4 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.55)] border border-slate-700/80 flex items-center gap-2.5 sm:gap-3 select-none">
           {/* Scanner Beacon */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="relative flex h-2.5 w-2.5">
@@ -214,11 +214,11 @@ export const BillingModal: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-6 w-[1px] bg-slate-800" />
+          <div className="h-6 w-[1px] bg-slate-800 flex-shrink-0" />
 
           {/* Currently Scanning Item Details */}
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner">
+          <div className="flex items-center gap-2.5 min-w-0 max-w-[190px] sm:max-w-[250px]">
+            <div className="w-8.5 h-8.5 rounded-lg bg-white/10 border border-white/20 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner">
               {currentScanningItem?.productImage ? (
                 <img
                   src={currentScanningItem.productImage}
@@ -234,9 +234,9 @@ export const BillingModal: React.FC = () => {
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-xs font-black text-white truncate flex items-center gap-1.5">
-                <span>{currentScanningItem ? currentScanningItem.productName : 'Transferring item from trolley...'}</span>
+                <span className="truncate">{currentScanningItem ? currentScanningItem.productName : 'Transferring item from trolley...'}</span>
                 {currentUnitInfo && currentUnitInfo.totalUnits > 1 && (
-                  <span className="text-[10px] font-bold text-sky-400 bg-sky-950/80 px-1.5 py-0.5 rounded border border-sky-500/30 whitespace-nowrap">
+                  <span className="text-[9px] font-bold text-sky-400 bg-sky-950/80 px-1.5 py-0.2 rounded border border-sky-500/30 whitespace-nowrap flex-shrink-0">
                     Unit {currentUnitInfo.unitIndex}/{currentUnitInfo.totalUnits}
                   </span>
                 )}
@@ -244,45 +244,43 @@ export const BillingModal: React.FC = () => {
               <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
                 <span className="text-white font-bold">{currentScanningItem ? `₹${currentScanningItem.price} each` : ''}</span>
                 <span className="text-slate-600">•</span>
-                <span className="text-emerald-400 font-bold">
+                <span className="text-emerald-400 font-bold truncate">
                   {totalToScan > 0 ? `Scanned ${Math.min(totalToScan, currentIndex)} of ${totalToScan} units` : 'Scanning...'}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="h-6 w-[1px] bg-slate-800" />
+          <div className="h-6 w-[1px] bg-slate-800 flex-shrink-0" />
 
-          {/* Running Total & Skip Action */}
-          <div className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="text-right">
-              <span className="text-[9px] text-slate-400 uppercase font-mono block leading-none">Amount</span>
-              <span className="text-xs font-black text-emerald-400 font-mono leading-tight">
-                ₹{runningTotal.toFixed(2)}
-              </span>
-            </div>
-
-            {/* Skip Scanning Button ("show there only option like skip") */}
-            <button
-              type="button"
-              onClick={skipToReview}
-              className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black text-xs px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
-              title="Skip 3D conveyor scan & view bill [Space]"
-            >
-              <Zap className="w-3.5 h-3.5 fill-white" />
-              <span>Skip</span>
-            </button>
-
-            {/* Return / Cancel */}
-            <button
-              type="button"
-              onClick={handleCancelBilling}
-              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Return to supermarket"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          {/* Running Total & Instant Bill Action */}
+          <div className="text-right flex-shrink-0">
+            <span className="text-[9px] text-slate-400 uppercase font-mono block leading-none">Amount</span>
+            <span className="text-xs sm:text-sm font-black text-emerald-400 font-mono leading-tight">
+              ₹{runningTotal.toFixed(2)}
+            </span>
           </div>
+
+          {/* Instant Bill Action Button */}
+          <button
+            type="button"
+            onClick={skipToReview}
+            className="flex-shrink-0 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black text-xs px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+            title="Instant Bill: Skip conveyor scan & view bill [Space]"
+          >
+            <Zap className="w-3.5 h-3.5 fill-white text-white" />
+            <span className="whitespace-nowrap">Instant Bill</span>
+          </button>
+
+          {/* Return / Cancel */}
+          <button
+            type="button"
+            onClick={handleCancelBilling}
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer flex-shrink-0"
+            title="Return to supermarket"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
     );
