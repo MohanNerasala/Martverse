@@ -97,7 +97,11 @@ export const useMartStore = create<MartStore>((set) => ({
     martRuntime.playerPos[1] = playerPos[1];
     martRuntime.playerPos[2] = playerPos[2];
     if (yaw !== undefined) martRuntime.playerYaw = yaw;
-    set((state) => ({ playerPos, playerYaw: yaw !== undefined ? yaw : state.playerYaw }));
+    set((state) => ({
+      playerPos,
+      playerYaw: yaw !== undefined ? yaw : state.playerYaw,
+      teleportTrigger: state.teleportTrigger + 1,
+    }));
   },
   setSelectedProduct: (selectedProduct) => set({ selectedProduct }),
   setHoveredProduct: (hoveredProduct) => set({ hoveredProduct }),

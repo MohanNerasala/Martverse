@@ -228,8 +228,8 @@ export const PlayerController: React.FC = () => {
 
     // Check Escalator Entrance (Floor 1 entrance at z ~ -8, Floor 2 entrance at z ~ 6)
     const isFloor2 = posRef.current.y > 4.5 || activeFloor === 2;
-    const nearEscalatorGround = !isFloor2 && Math.abs(px - 14.7) < 2.0 && pz >= -9.5 && pz <= -6.8;
-    const nearEscalatorFloor2 = isFloor2 && Math.abs(px - 14.7) < 2.0 && pz >= 5.0 && pz <= 7.8;
+    const nearEscalatorGround = !isFloor2 && Math.abs(px - 14.7) < 2.2 && pz >= -10.5 && pz <= -6.8;
+    const nearEscalatorFloor2 = isFloor2 && Math.abs(px - 14.7) < 2.2 && pz >= 5.0 && pz <= 8.5;
 
     if (nearEscalatorGround) {
       posRef.current.x = 14.7;
@@ -593,8 +593,9 @@ export const PlayerController: React.FC = () => {
 
         // When reaching Ground Floor landing
         if (posRef.current.z <= -7.4) {
-          posRef.current.z = -8.2;
+          posRef.current.z = -9.2;
           posRef.current.y = 1.5;
+          yawRef.current = 0; // Turn around to face forward in front of the escalator!
           setActiveFloor(1);
           sounds.playPickSound();
           showToast('Ground Floor Reached', 'Welcome back to Groceries & Billing!', 'success');
@@ -640,8 +641,8 @@ export const PlayerController: React.FC = () => {
 
     const nearBilling = Math.abs(pz - 17.5) < 4.0 && Math.abs(px) < 7.8;
     const nearExit = Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5;
-    const nearEscalatorGround = activeFloor === 1 && Math.abs(px - 14.7) < 2.0 && pz >= -9.5 && pz <= -6.8;
-    const nearEscalatorFloor2 = activeFloor === 2 && Math.abs(px - 14.7) < 2.0 && pz >= 5.0 && pz <= 7.8;
+    const nearEscalatorGround = activeFloor === 1 && Math.abs(px - 14.7) < 2.2 && pz >= -10.5 && pz <= -6.8;
+    const nearEscalatorFloor2 = activeFloor === 2 && Math.abs(px - 14.7) < 2.2 && pz >= 5.0 && pz <= 8.5;
 
     let prompt: string | null = null;
     let targetPos: [number, number, number] | null = null;

@@ -23,6 +23,7 @@ import {
   ShieldAlert,
   Store,
   ArrowRight,
+  ArrowUpDown,
   User,
   LogIn,
   Heart,
@@ -382,10 +383,10 @@ export const SupermarketHUD: React.FC = () => {
       {/* ============================================================== */}
       <div className="flex justify-center">
         {promptText && (
-          <div className="pointer-events-auto glass-card px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 border border-blue-500/40 text-white animate-bounce">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping" />
+          <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md px-5 py-2.5 rounded-full shadow-xl flex items-center gap-3 border border-slate-700/80 text-white transition-all">
+            <span className="w-2 h-2 rounded-full bg-blue-400" />
             <span className="text-xs sm:text-sm font-semibold tracking-wide">{promptText}</span>
-            <kbd className="bg-blue-950/80 border border-blue-500/50 text-blue-300 text-xs font-mono font-bold px-2 py-0.5 rounded-md shadow-inner">
+            <kbd className="bg-white/10 border border-white/20 text-white text-xs font-mono font-bold px-2 py-0.5 rounded-md shadow-inner">
               E
             </kbd>
           </div>
@@ -393,70 +394,101 @@ export const SupermarketHUD: React.FC = () => {
       </div>
 
       {/* ============================================================== */}
-      {/* --- Escalator Options: White Board with Black Text --- */}
+      {/* --- Escalator Options: Clean White Card with High-End Styling --- */}
       {/* ============================================================== */}
       {(promptText?.includes('Escalator') || promptText?.includes('Ride to')) && (
-        <div className="fixed top-24 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-xl rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.25)] border border-slate-200 text-slate-900 max-w-xs w-full animate-in slide-in-from-right-4 duration-300">
-          <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs border border-blue-200">
-                ↕
+        <div className="fixed top-20 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-slate-200/90 text-slate-900 max-w-xs w-full transition-all">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">
+                <ArrowUpDown className="w-4 h-4" />
               </div>
-              <span className="font-extrabold text-xs text-slate-900 tracking-tight">
-                ESCALATOR NAVIGATION
-              </span>
+              <div>
+                <span className="font-extrabold text-xs text-slate-900 tracking-tight block">
+                  Store Escalator & Floors
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  {activeFloor === 2 ? 'Currently on Floor 2' : 'Currently on Ground Floor'}
+                </span>
+              </div>
             </div>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              Auto-Glide
+            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+              Walkway
             </span>
           </div>
 
           <div className="space-y-2 text-left">
             {/* Option 1: 2nd Floor (Fashion Studio & Apparel) */}
             <button
+              type="button"
               onClick={() => {
                 setPlayerPos([14.7, 6.5, 6.2], 0);
                 setActiveFloor(2);
                 showToast('2nd Floor Reached', 'Exploring Fashion Studio & Apparel', 'success');
               }}
-              className="w-full text-left p-2.5 rounded-xl border border-slate-200 hover:border-purple-500 bg-slate-50/60 hover:bg-purple-50/70 transition-all duration-200 group flex items-center justify-between cursor-pointer"
+              className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
+                activeFloor === 2
+                  ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-400/30'
+                  : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 hover:shadow-sm'
+              }`}
             >
               <div className="space-y-0.5">
-                <div className="text-xs font-black text-slate-900 group-hover:text-purple-700 flex items-center gap-1.5">
-                  <span>↑ Option 1: 2nd Floor</span>
-                  <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.2 rounded">L2</span>
+                <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
+                  <span>↑ 2nd Floor • Fashion Studio</span>
+                  {activeFloor === 2 ? (
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full">Current</span>
+                  ) : (
+                    <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">L2</span>
+                  )}
                 </div>
-                <div className="text-[11px] text-slate-600 font-medium">
-                  Fashion Studio, Kurtas & Denim
+                <div className="text-[11px] text-slate-500 font-medium">
+                  Kurtas, Ethnic, Western & Denim
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className={`w-4 h-4 transition-transform duration-200 ${
+                activeFloor === 2
+                  ? 'text-blue-600'
+                  : 'text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1'
+              }`} />
             </button>
 
             {/* Option 2: Ground Floor (Groceries, Staples & POS) */}
             <button
+              type="button"
               onClick={() => {
-                setPlayerPos([14.7, 1.5, -8.0], Math.PI);
+                setPlayerPos([14.7, 1.5, -9.2], 0);
                 setActiveFloor(1);
                 showToast('Ground Floor Reached', 'Exploring Daily Groceries & POS Billing', 'success');
               }}
-              className="w-full text-left p-2.5 rounded-xl border border-slate-200 hover:border-blue-500 bg-slate-50/60 hover:bg-blue-50/70 transition-all duration-200 group flex items-center justify-between cursor-pointer"
+              className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
+                activeFloor === 1
+                  ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-400/30'
+                  : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 hover:shadow-sm'
+              }`}
             >
               <div className="space-y-0.5">
-                <div className="text-xs font-black text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
-                  <span>↓ Option 2: Ground Floor</span>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.2 rounded">L1</span>
+                <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
+                  <span>↓ Ground Floor • Groceries & POS</span>
+                  {activeFloor === 1 ? (
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full">Current</span>
+                  ) : (
+                    <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">L1</span>
+                  )}
                 </div>
-                <div className="text-[11px] text-slate-600 font-medium">
-                  Groceries, Staples & POS Billing
+                <div className="text-[11px] text-slate-500 font-medium">
+                  Groceries, Snacks & Billing Counters
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className={`w-4 h-4 transition-transform duration-200 ${
+                activeFloor === 1
+                  ? 'text-blue-600'
+                  : 'text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1'
+              }`} />
             </button>
           </div>
           
-          <div className="text-[10px] text-slate-500 text-center mt-2 pt-2 border-t border-slate-100">
-            Step onto the ramp to glide automatically
+          <div className="text-[10px] text-slate-400 font-medium text-center mt-2.5 pt-2 border-t border-slate-100">
+            Walk onto moving ramp or click a floor to glide
           </div>
         </div>
       )}
@@ -532,40 +564,40 @@ export const SupermarketHUD: React.FC = () => {
       {/* --- Floating Confirmation Toast --- */}
       {/* ============================================================== */}
       {toast && (
-        <div className="pointer-events-auto fixed top-20 right-6 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
+        <div className="pointer-events-auto fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
           <div
-            className={`px-4 py-3 rounded-2xl shadow-2xl border flex items-center gap-3 max-w-sm backdrop-blur-xl ${
+            className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 max-w-sm backdrop-blur-xl ${
               toast.type === 'success'
-                ? 'bg-[#0B0F17]/95 border-emerald-500/40 text-white'
+                ? 'bg-white/95 border-emerald-300/80 text-slate-900 shadow-emerald-500/10'
                 : toast.type === 'warning'
-                ? 'bg-[#0B0F17]/95 border-amber-500/40 text-white'
-                : 'bg-[#0B0F17]/95 border-blue-500/40 text-white'
+                ? 'bg-white/95 border-amber-300/80 text-slate-900 shadow-amber-500/10'
+                : 'bg-white/95 border-blue-300/80 text-slate-900 shadow-blue-500/10'
             }`}
           >
             <div
-              className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
                 toast.type === 'success'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                   : toast.type === 'warning'
-                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                  : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                  ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                  : 'bg-blue-50 text-blue-600 border border-blue-200'
               }`}
             >
-              {toast.type === 'success' && <CheckCircle2 className="w-5 h-5" />}
-              {toast.type === 'warning' && <AlertTriangle className="w-5 h-5" />}
-              {toast.type === 'info' && <Info className="w-5 h-5" />}
+              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
+              {toast.type === 'warning' && <AlertTriangle className="w-4 h-4" />}
+              {toast.type === 'info' && <Info className="w-4 h-4" />}
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-black text-white">{toast.title}</div>
+              <div className="text-xs font-bold text-slate-900">{toast.title}</div>
               {toast.subtitle && (
-                <div className="text-[11px] text-slate-300 truncate mt-0.5">{toast.subtitle}</div>
+                <div className="text-[11px] text-slate-500 truncate mt-0.5">{toast.subtitle}</div>
               )}
             </div>
 
             <button
               onClick={hideToast}
-              className="text-slate-400 hover:text-white p-1 rounded-lg"
+              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
