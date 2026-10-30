@@ -284,11 +284,8 @@ export default function ProfilePage() {
               </Link>
 
               {/* Saved Wishlist Card */}
-              <button
-                onClick={() => {
-                  useWishlistStore.getState().toggleWishlist(true);
-                  router.push('/');
-                }}
+              <Link
+                href="/wishlist"
                 className="bg-white rounded-3xl border border-slate-200/90 p-6 hover:border-rose-400 hover:shadow-md transition-all text-left group shadow-sm flex items-center justify-between gap-4 cursor-pointer"
               >
                 <div className="flex items-center gap-4">
@@ -312,7 +309,7 @@ export default function ProfilePage() {
                 <div className="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-rose-600 text-slate-400 group-hover:text-white flex items-center justify-center transition-all shrink-0">
                   <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
                 </div>
-              </button>
+              </Link>
 
               {/* Store Experience Settings Card */}
               <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-4">

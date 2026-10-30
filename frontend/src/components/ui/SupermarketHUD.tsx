@@ -336,9 +336,9 @@ export const SupermarketHUD: React.FC = () => {
               <span className="hidden xl:inline font-semibold text-slate-200 group-hover:text-white">Reset</span>
             </button>
 
-            {/* Wishlist Icon Only */}
+            {/* Wishlist Icon Only — Routes directly to dedicated /wishlist page */}
             <button
-              onClick={() => toggleWishlist(true)}
+              onClick={() => router.push('/wishlist')}
               className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-rose-500/20 text-slate-200 hover:text-rose-300 border border-white/[0.1] hover:border-rose-500/40 transition-all relative flex items-center justify-center cursor-pointer shadow-sm"
               title="View Saved Wishlist"
             >
