@@ -195,74 +195,6 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
       desiredX = 14.70;
       const isAscending = Math.cos(actualYaw) >= -0.2;
       actualYaw = isAscending ? 0 : Math.PI;
-    } else {
-      // Escalator side structure on Floor 1: impenetrable barrier from aisle 5 side (x < 13.5)
-      if (currentFloor === 1 && desiredZ >= -7.4 && desiredZ <= 5.4) {
-        if (actualPos[0] < 13.8) {
-          desiredX = Math.min(desiredX, 13.2 - cartHalfW);
-        }
-      }
-
-      // Floor 2 Atrium Opening Guardrails
-      if (currentFloor === 2) {
-        // Left side glass guardrail (x = 13.2, z between -6.6 and 5.4)
-        if (desiredZ >= -6.6 - cartHalfD && desiredZ <= 5.4 + cartHalfD && actualPos[0] < 13.5) {
-          desiredX = Math.min(desiredX, 13.2 - cartHalfW);
-        }
-        // South back glass guardrail (z = -6.5, x between 13.2 and 16.5)
-        if (desiredX >= 13.2 - cartHalfW && desiredX <= 16.5 + cartHalfW && actualPos[2] < -6.3) {
-          desiredZ = Math.min(desiredZ, -6.6 - cartHalfD);
-        }
-      }
-
-      // 3. Physical Shelf Rows Obstacle Clamping
-      const aisleXs =
-        currentFloor === 1
-          ? [-10, -5, 0, 5, 10]
-          : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
-
-      for (const ax of aisleXs) {
-        const boxMinX = ax - 0.95 - cartHalfW;
-        const boxMaxX = ax + 0.95 + cartHalfW;
-        const boxMinZ = -12.4 - cartHalfD;
-        const boxMaxZ = 12.4 + cartHalfD;
-
-        if (desiredX > boxMinX && desiredX < boxMaxX && desiredZ > boxMinZ && desiredZ < boxMaxZ) {
-          const dLeft = desiredX - boxMinX;
-          const dRight = boxMaxX - desiredX;
-          const dBack = desiredZ - boxMinZ;
-          const dFront = boxMaxZ - desiredZ;
-          const minD = Math.min(dLeft, dRight, dBack, dFront);
-
-          if (minD === dBack) desiredZ = boxMinZ;
-          else if (minD === dFront) desiredZ = boxMaxZ;
-          else if (minD === dLeft) desiredX = boxMinX;
-          else desiredX = boxMaxX;
-        }
-      }
-
-      // 4. Floor 1 Billing Counters Zone (Spacious 3.8m spacing between desks)
-      if (currentFloor === 1) {
-        for (const cx of [-3.8, 0, 3.8]) {
-          const deskMinX = cx - 0.68 - cartHalfW;
-          const deskMaxX = cx + 0.68 + cartHalfW;
-          const deskMinZ = 16.4 - cartHalfD;
-          const deskMaxZ = 19.6 + cartHalfD;
-
-          if (desiredX > deskMinX && desiredX < deskMaxX && desiredZ > deskMinZ && desiredZ < deskMaxZ) {
-            const dLeft = desiredX - deskMinX;
-            const dRight = deskMaxX - desiredX;
-            const dBack = desiredZ - deskMinZ;
-            const dFront = deskMaxZ - desiredZ;
-            const minD = Math.min(dLeft, dRight, dBack, dFront);
-
-            if (minD === dBack) desiredZ = deskMinZ;
-            else if (minD === dFront) desiredZ = deskMaxZ;
-            else if (minD === dLeft) desiredX = deskMinX;
-            else desiredX = deskMaxX;
-          }
-        }
-      }
     }
 
     // Fast teleport recovery (e.g. floor change or reset)
@@ -285,12 +217,12 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 10, delta);
 
     // Smooth lerp movement with responsive dampening (rate 12/14 for silky smooth motion)
-    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 12, delta);
-    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 14, delta);
-    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 12, delta);
+    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 22, delta);
+    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 18, delta);
+    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 22, delta);
 
     // Smooth yaw rotation towards player direction
-    currentYaw.current = THREE.MathUtils.damp(currentYaw.current, actualYaw, 14, delta);
+    currentYaw.current = THREE.MathUtils.damp(currentYaw.current, actualYaw, 20, delta);
 
     // Strict final containment pass on currentPos so the cart NEVER clips even mid-lerp
     if (isOnEscalatorRamp) {

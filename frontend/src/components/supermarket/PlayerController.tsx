@@ -263,7 +263,9 @@ export const PlayerController: React.FC = () => {
     }
   };
 
-  useFrame((_, delta) => {
+  useFrame((_, rawDelta) => {
+    // Clamp delta to prevent collision tunneling or physics oscillation during frame spikes
+    const delta = Math.min(rawDelta, 0.04);
     const isAutoNavigatingToExit = useMartStore.getState().isAutoNavigatingToExit;
     const finishExitAnimation = useMartStore.getState().finishExitAnimation;
 
@@ -440,101 +442,32 @@ export const PlayerController: React.FC = () => {
         const canMoveZ = !checkObstacle(posRef.current.x, posRef.current.z + worldDZ, currentFloor, yawRef.current);
 
         if (canMoveX && canMoveZ) {
-          // Both axes free: verify combined step doesn't hit a corner
+          // Both axes free: verify combined diagonal step doesn't hit a corner
           if (!checkObstacle(posRef.current.x + worldDX, posRef.current.z + worldDZ, currentFloor, yawRef.current)) {
             posRef.current.x += worldDX;
             posRef.current.z += worldDZ;
           } else {
-            // Slide along dominant motion axis
+            // Smoothly slide along dominant motion axis
             if (Math.abs(worldDX) > Math.abs(worldDZ)) {
               posRef.current.x += worldDX;
+              velocityRef.current.z = 0;
             } else {
               posRef.current.z += worldDZ;
+              velocityRef.current.x = 0;
             }
           }
         } else if (canMoveX) {
+          // Smooth wall sliding along X axis: cancel blocked Z momentum
           posRef.current.x += worldDX;
+          velocityRef.current.z = 0;
         } else if (canMoveZ) {
+          // Smooth aisle gliding along Z axis: cancel blocked X momentum
           posRef.current.z += worldDZ;
-        }
-      }
-
-      // Safety Separation: prevent trolley or player from ever getting stuck inside shelves or edges
-      const isEscalatorWalkway =
-        Math.abs(posRef.current.x - 14.7) < 0.6 &&
-        posRef.current.z >= -7.6 &&
-        posRef.current.z <= 6.0;
-
-      if (!isEscalatorWalkway) {
-        const aisleXs =
-          currentFloor === 1
-            ? [-10, -5, 0, 5, 10]
-            : [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5];
-
-        const sin = Math.sin(yawRef.current);
-        const cos = Math.cos(yawRef.current);
-        const tfX = posRef.current.x + sin * 1.45;
-        const tfZ = posRef.current.z + cos * 1.45;
-
-        for (const ax of aisleXs) {
-          const minX = ax - 0.95;
-          const maxX = ax + 0.95;
-          const minZ = -12.4;
-          const maxZ = 12.4;
-
-          // Trolley front clearance push-out
-          const rCart = 0.46;
-          const expMinX = minX - rCart;
-          const expMaxX = maxX + rCart;
-          const expMinZ = minZ - rCart;
-          const expMaxZ = maxZ + rCart;
-
-          if (tfX > expMinX && tfX < expMaxX && tfZ > expMinZ && tfZ < expMaxZ) {
-            const dLeft = tfX - expMinX;
-            const dRight = expMaxX - tfX;
-            const dBack = tfZ - expMinZ;
-            const dFront = expMaxZ - tfZ;
-            const minD = Math.min(dLeft, dRight, dBack, dFront);
-
-            if (minD === dBack) posRef.current.z -= (tfZ - expMinZ);
-            else if (minD === dFront) posRef.current.z += (expMaxZ - tfZ);
-            else if (minD === dLeft) posRef.current.x -= (tfX - expMinX);
-            else posRef.current.x += (expMaxX - tfX);
-          }
-
-          // Player cylinder clearance push-out
-          const rP = 0.38;
-          const pMinX = minX - rP;
-          const pMaxX = maxX + rP;
-          const pMinZ = minZ - rP;
-          const pMaxZ = maxZ + rP;
-          if (
-            posRef.current.x > pMinX &&
-            posRef.current.x < pMaxX &&
-            posRef.current.z > pMinZ &&
-            posRef.current.z < pMaxZ
-          ) {
-            const dLeft = posRef.current.x - pMinX;
-            const dRight = pMaxX - posRef.current.x;
-            const dBack = posRef.current.z - pMinZ;
-            const dFront = pMaxZ - posRef.current.z;
-            const minD = Math.min(dLeft, dRight, dBack, dFront);
-
-            if (minD === dBack) posRef.current.z = pMinZ;
-            else if (minD === dFront) posRef.current.z = pMaxZ;
-            else if (minD === dLeft) posRef.current.x = pMinX;
-            else posRef.current.x = pMaxX;
-          }
-        }
-
-        // Escalator outer side wall push-out on Floor 1: only push someone trying to walk into side from aisle 5
-        if (currentFloor === 1 && posRef.current.z >= -7.4 && posRef.current.z <= 5.4) {
-          if (posRef.current.x > 12.8 && posRef.current.x < 13.6) {
-            posRef.current.x = 12.8;
-          }
-          if (tfX > 12.8 && tfX < 13.6) {
-            posRef.current.x -= (tfX - 12.8);
-          }
+          velocityRef.current.x = 0;
+        } else {
+          // Blocked on both axes: zero velocity to prevent momentum accumulation
+          velocityRef.current.x = 0;
+          velocityRef.current.z = 0;
         }
       }
 
