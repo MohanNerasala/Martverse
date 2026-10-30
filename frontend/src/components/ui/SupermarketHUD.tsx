@@ -141,11 +141,11 @@ export const SupermarketHUD: React.FC = () => {
       {/* --- Top Unified Floating Executive Command Navbar --- */}
       {/* ============================================================== */}
       <header className="w-full max-w-7xl mx-auto pointer-events-auto">
-        <div className="rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 bg-[#0a101f]/90 backdrop-blur-2xl border border-white/[0.14] shadow-[0_16px_50px_rgba(0,0,0,0.7),0_0_0_1px_rgba(59,130,246,0.18),inset_0_1px_0_0_rgba(255,255,255,0.22)]">
+        <div className="rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 bg-[#0a101f]/92 backdrop-blur-2xl border border-white/[0.14] shadow-[0_16px_50px_rgba(0,0,0,0.7),0_0_32px_rgba(56,189,248,0.18),0_0_0_1px_rgba(59,130,246,0.22),inset_0_1px_0_0_rgba(255,255,255,0.22)]">
           
           {/* Brand Identity: Gradient text blue to white */}
           <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30 ring-1 ring-white/25">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/35 ring-1 ring-white/25">
               <Store className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
             </div>
             <div>
@@ -153,7 +153,7 @@ export const SupermarketHUD: React.FC = () => {
                 <span className="font-black tracking-wider text-sm sm:text-base leading-none bg-gradient-to-r from-blue-400 via-sky-200 to-white bg-clip-text text-transparent drop-shadow-[0_0_14px_rgba(56,189,248,0.45)]">
                   MART<span className="text-white">VERSE</span>
                 </span>
-                <span className="hidden md:inline-flex items-center gap-1 text-[9px] bg-emerald-500/15 text-emerald-400 font-bold px-1.5 py-0.5 rounded-full border border-emerald-500/30">
+                <span className="hidden md:inline-flex items-center gap-1 text-[9px] bg-emerald-500/15 text-emerald-400 font-bold px-1.5 py-0.5 rounded-full border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.25)]">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   3D LIVE
                 </span>
@@ -165,13 +165,13 @@ export const SupermarketHUD: React.FC = () => {
           </div>
 
           {/* Floor Navigation Segmented Switcher (Floor 1 & Floor 2) */}
-          <nav className="h-10 flex items-center p-1 rounded-xl bg-white/[0.06] border border-white/[0.1] backdrop-blur-md flex-shrink-0">
+          <nav className="h-10 flex items-center p-1 rounded-xl bg-white/[0.06] border border-white/[0.1] backdrop-blur-md flex-shrink-0 shadow-inner">
             <button
               onClick={() => setActiveFloor(1)}
-              className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                 activeFloor === 1
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/35 font-bold ring-1 ring-white/20'
-                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/35 shadow-[0_0_16px_rgba(59,130,246,0.45)] font-bold ring-1 ring-white/20'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
               }`}
               title="Ground Floor: Groceries & Staples"
             >
@@ -181,10 +181,10 @@ export const SupermarketHUD: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveFloor(2)}
-              className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                 activeFloor === 2
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/35 font-bold ring-1 ring-white/20'
-                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/35 shadow-[0_0_16px_rgba(168,85,247,0.45)] font-bold ring-1 ring-white/20'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
               }`}
               title="First Floor: Fashion Studio & Apparel"
             >
@@ -212,7 +212,7 @@ export const SupermarketHUD: React.FC = () => {
                   }
                 }}
                 placeholder="Search items..."
-                className="w-full h-10 bg-white/[0.05] hover:bg-white/[0.08] focus:bg-[#070d18] text-white placeholder-slate-400 text-xs rounded-xl pl-8 sm:pl-9 pr-8 border border-white/[0.1] focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40 transition-all outline-none shadow-inner"
+                className="w-full h-10 bg-white/[0.05] hover:bg-white/[0.08] focus:bg-[#070d18] text-white placeholder-slate-400 text-xs rounded-xl pl-8 sm:pl-9 pr-8 border border-white/[0.1] focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(56,189,248,0.35)] transition-all outline-none shadow-inner"
               />
               {searchQuery && (
                 <button
@@ -220,7 +220,7 @@ export const SupermarketHUD: React.FC = () => {
                     setSearchQuery('');
                     setIsSearchOpen(false);
                   }}
-                  className="absolute right-2.5 text-slate-400 hover:text-white p-1 cursor-pointer transition-colors"
+                  className="absolute right-2.5 text-slate-400 hover:text-white p-1 cursor-pointer transition-colors active:scale-95"
                   title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -297,11 +297,11 @@ export const SupermarketHUD: React.FC = () => {
               onClick={() =>
                 setCameraMode(cameraMode === 'third_person' ? 'first_person' : 'third_person')
               }
-              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.1] hover:border-white/[0.2] transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer shadow-sm"
+              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.1] hover:border-cyan-400/30 hover:shadow-[0_0_14px_rgba(56,189,248,0.25)] transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer shadow-sm active:scale-95"
               title="Toggle Camera View (1st / 3rd Person)"
             >
               {cameraMode === 'first_person' ? (
-                <Eye className="w-4 h-4 text-blue-400" />
+                <Eye className="w-4 h-4 text-cyan-400" />
               ) : (
                 <Camera className="w-4 h-4 text-slate-300" />
               )}
@@ -313,7 +313,7 @@ export const SupermarketHUD: React.FC = () => {
             {/* Sound Toggle */}
             <button
               onClick={toggleSound}
-              className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.1] hover:border-white/[0.2] transition-all flex items-center justify-center cursor-pointer shadow-sm"
+              className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.1] hover:border-white/[0.2] transition-all flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
               title={isSoundMuted ? 'Unmute Ambient Sound' : 'Mute Ambient Sound'}
             >
               {isSoundMuted ? (
@@ -329,20 +329,20 @@ export const SupermarketHUD: React.FC = () => {
                 resetToOriginalState();
                 showToast('Position Reset', 'Returned to store entrance & original view orientation', 'info');
               }}
-              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.05] hover:bg-blue-600/20 text-slate-200 hover:text-blue-300 border border-white/[0.1] hover:border-blue-500/40 transition-all flex items-center gap-1.5 text-xs font-medium group cursor-pointer shadow-sm"
+              className="h-10 px-2.5 sm:px-3 rounded-xl bg-white/[0.05] hover:bg-blue-600/20 text-slate-200 hover:text-cyan-300 border border-white/[0.1] hover:border-cyan-500/40 hover:shadow-[0_0_16px_rgba(56,189,248,0.3)] transition-all flex items-center gap-1.5 text-xs font-medium group cursor-pointer shadow-sm active:scale-95"
               title="Reset to Original State & Starting Position (Entrance)"
             >
-              <RotateCcw className="w-4 h-4 text-blue-400 group-hover:-rotate-90 transition-transform duration-300" />
+              <RotateCcw className="w-4 h-4 text-cyan-400 group-hover:-rotate-90 transition-transform duration-300" />
               <span className="hidden xl:inline font-semibold text-slate-200 group-hover:text-white">Reset</span>
             </button>
 
             {/* Wishlist Icon Only — Routes directly to dedicated /wishlist page */}
             <button
               onClick={() => router.push('/wishlist')}
-              className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-rose-500/20 text-slate-200 hover:text-rose-300 border border-white/[0.1] hover:border-rose-500/40 transition-all relative flex items-center justify-center cursor-pointer shadow-sm"
+              className="h-10 w-10 rounded-xl bg-white/[0.05] hover:bg-rose-500/20 text-slate-200 hover:text-rose-300 border border-white/[0.1] hover:border-rose-500/40 hover:shadow-[0_0_16px_rgba(244,63,94,0.35)] transition-all relative flex items-center justify-center cursor-pointer shadow-sm active:scale-95"
               title="View Saved Wishlist"
             >
-              <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-rose-400 fill-rose-400' : 'text-slate-300'}`} />
+              <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-rose-400 fill-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'text-slate-300'}`} />
               {wishlistItems.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#090D14] shadow-sm animate-pulse">
                   {wishlistItems.length}
@@ -353,13 +353,13 @@ export const SupermarketHUD: React.FC = () => {
             {/* Hero Shopping Trolley Button */}
             <button
               onClick={() => toggleCart(true)}
-              className="h-10 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/35 border border-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all btn-shine cursor-pointer flex-shrink-0"
+              className="h-10 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-blue-600/35 hover:shadow-[0_0_24px_rgba(56,189,248,0.5)] border border-white/20 hover:scale-[1.02] active:scale-[0.97] transition-all btn-shine cursor-pointer flex-shrink-0"
               title="Open Shopping Trolley"
             >
               <div className="relative flex items-center">
                 <ShoppingCart className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-2.5 -right-2.5 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#090D14] shadow-sm">
+                  <span className="absolute -top-2.5 -right-2.5 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#090D14] shadow-sm shadow-rose-500/50">
                     {totalItems}
                   </span>
                 )}
@@ -374,15 +374,15 @@ export const SupermarketHUD: React.FC = () => {
             {!isAuthenticated ? (
               <button
                 onClick={() => openLoginModal()}
-                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600/30 to-indigo-600/30 hover:from-blue-600/50 hover:to-indigo-600/50 text-blue-300 hover:text-white border border-blue-500/40 transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0"
+                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600/30 to-indigo-600/30 hover:from-blue-600/50 hover:to-indigo-600/50 text-blue-300 hover:text-white border border-blue-500/40 hover:shadow-[0_0_16px_rgba(59,130,246,0.35)] transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0 active:scale-95"
                 title="Sign in with Indian Mobile Number (+91)"
               >
-                <LogIn className="w-4 h-4 text-blue-400" />
+                <LogIn className="w-4 h-4 text-cyan-400" />
               </button>
             ) : (
               <button
                 onClick={() => router.push('/profile')}
-                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 ring-2 ring-white/20 hover:ring-white/40 transition-all cursor-pointer flex-shrink-0"
+                className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 hover:shadow-[0_0_20px_rgba(56,189,248,0.45)] ring-2 ring-white/20 hover:ring-white/40 transition-all cursor-pointer flex-shrink-0 active:scale-95"
                 title="My Profile"
               >
                 <User className="w-4 h-4 sm:w-4.5 sm:h-4.5" />

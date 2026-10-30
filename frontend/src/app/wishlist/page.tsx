@@ -353,7 +353,7 @@ export default function WishlistPage() {
                     {/* Move to Trolley CTA Button */}
                     <button
                       onClick={(e) => handleMoveToTrolley(product, e)}
-                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs shadow-sm hover:shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs shadow-sm hover:shadow-[0_0_16px_rgba(56,189,248,0.35)] transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
                       title="Move this item to your 3D shopping trolley"
                     >
                       <ShoppingCart className="w-3.5 h-3.5 text-white" />

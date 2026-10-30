@@ -7,6 +7,11 @@
   --font-mono: 'JetBrains Mono', monospace;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
@@ -16,13 +21,35 @@ body {
   letter-spacing: -0.011em;
 }
 
+/* Tactile Smooth Click & Tap Micro-Interactions */
+button, [role="button"], a, input[type="submit"], input[type="button"], .clickable-smooth {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.2s ease,
+              border-color 0.2s ease,
+              color 0.2s ease,
+              opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active:not(:disabled),
+[role="button"]:active:not(:disabled),
+.clickable-smooth:active {
+  transform: scale(0.965);
+}
+
+button:disabled, [role="button"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 /* Glassmorphism Design Tokens */
 .glass-panel {
   background: rgba(13, 17, 24, 0.78);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.65), 0 0 24px -4px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-card {
@@ -30,7 +57,7 @@ body {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8), 0 0 32px -6px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .glass-pill {
@@ -40,7 +67,47 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* Custom Scrollbars */
+/* Universal Glowing Accent Tokens */
+.glow-subtle-cyan {
+  box-shadow: 0 0 25px -4px rgba(56, 189, 248, 0.35), 0 0 10px -2px rgba(56, 189, 248, 0.2);
+}
+
+.glow-subtle-blue {
+  box-shadow: 0 0 28px -4px rgba(59, 130, 246, 0.4), 0 0 12px -2px rgba(59, 130, 246, 0.22);
+}
+
+.glow-subtle-emerald {
+  box-shadow: 0 0 28px -4px rgba(16, 185, 129, 0.4), 0 0 10px -2px rgba(16, 185, 129, 0.22);
+}
+
+.glow-subtle-rose {
+  box-shadow: 0 0 28px -4px rgba(244, 63, 94, 0.4), 0 0 10px -2px rgba(244, 63, 94, 0.22);
+}
+
+.glow-border-cyan {
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 18px -2px rgba(56, 189, 248, 0.35);
+}
+
+.glow-card-luxury {
+  background: linear-gradient(180deg, rgba(20, 26, 38, 0.88) 0%, rgba(10, 14, 22, 0.96) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 35px -5px rgba(56, 189, 248, 0.16),
+              0 25px 60px -12px rgba(0, 0, 0, 0.8),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Smooth input focus glow */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22), 0 0 20px -2px rgba(56, 189, 248, 0.35) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom Scrollbars with Glow */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -51,12 +118,14 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 9999px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(56, 189, 248, 0.55);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
 }
 
 /* Specular Button Highlights */

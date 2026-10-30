@@ -588,7 +588,7 @@ export default function CartPage() {
                 {/* Checkout CTA Button */}
                 <button
                   onClick={handleProceedToCheckout}
-                  className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all text-sm cursor-pointer"
+                  className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg shadow-blue-500/25 hover:shadow-[0_0_28px_rgba(56,189,248,0.45)] active:scale-[0.98] transition-all text-sm cursor-pointer"
                 >
                   <span>{isAuthenticated ? 'Proceed to POS Checkout' : 'Sign In & Checkout'}</span>
                   <ArrowRight className="w-4 h-4" />

@@ -259,7 +259,7 @@ export const ProductModal: React.FC = () => {
             {/* Add to Trolley CTA Button: Generous room, Left label + Right amount pill, Never truncated */}
             <button
               onClick={handleAddToCart}
-              className="h-11 flex-1 relative overflow-hidden rounded-xl flex items-center justify-between px-3.5 sm:px-4 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all duration-300 ease-out hover:scale-[1.01] active:scale-[0.99] hover:shadow-xl hover:shadow-blue-600/35 group cursor-pointer select-none"
+              className="h-11 flex-1 relative overflow-hidden rounded-xl flex items-center justify-between px-3.5 sm:px-4 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all duration-300 ease-out hover:scale-[1.01] active:scale-[0.99] hover:shadow-xl hover:shadow-blue-600/35 hover:shadow-[0_0_24px_rgba(56,189,248,0.45)] group cursor-pointer select-none"
               style={{
                 background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0284c7 100%)',
               }}

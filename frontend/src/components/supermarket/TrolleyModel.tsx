@@ -135,14 +135,30 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const currentYaw = useRef(initialYaw);
   const basketBump = useRef(0);
 
+  // Wheel physics & rotation tracking
+  const prevTrolleyPos = useRef(new THREE.Vector3().copy(currentPos.current));
+  const prevYaw = useRef(initialYaw);
+  const wheelRollRef = useRef(0);
+  const casterSwivelRef = useRef(0);
+  const frontLeftWheelRef = useRef<THREE.Group>(null);
+  const frontRightWheelRef = useRef<THREE.Group>(null);
+  const rearLeftWheelRef = useRef<THREE.Group>(null);
+  const rearRightWheelRef = useRef<THREE.Group>(null);
+  const frontLeftCasterRef = useRef<THREE.Group>(null);
+  const frontRightCasterRef = useRef<THREE.Group>(null);
+
   // Instant snap on reset to original entrance position
   useEffect(() => {
     if (resetTrigger === 0) return;
     currentPos.current.set(0, 0, -19.05);
+    prevTrolleyPos.current.set(0, 0, -19.05);
     currentYaw.current = 0;
+    prevYaw.current = 0;
+    wheelRollRef.current = 0;
+    casterSwivelRef.current = 0;
     if (trolleyRef.current) {
       trolleyRef.current.position.set(0, 0, -19.05);
-      trolleyRef.current.rotation.y = Math.PI;
+      trolleyRef.current.rotation.set(0, Math.PI, 0);
     }
   }, [resetTrigger]);
 
@@ -154,10 +170,12 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     const offsetX = Math.sin(actualYaw) * 0.95;
     const offsetZ = Math.cos(actualYaw) * 0.95;
     currentPos.current.set(actualPos[0] + offsetX, actualPos[1] - 1.5, actualPos[2] + offsetZ);
+    prevTrolleyPos.current.copy(currentPos.current);
     currentYaw.current = actualYaw;
+    prevYaw.current = actualYaw;
     if (trolleyRef.current) {
       trolleyRef.current.position.copy(currentPos.current);
-      trolleyRef.current.rotation.y = actualYaw + Math.PI;
+      trolleyRef.current.rotation.set(0, actualYaw + Math.PI, 0);
     }
   }, [teleportTrigger]);
 
@@ -216,13 +234,38 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     }
     basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 10, delta);
 
-    // Smooth lerp movement with responsive dampening (rate 12/14 for silky smooth motion)
+    // Smooth lerp movement with responsive dampening (rate 22 for silky smooth motion)
     currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 22, delta);
     currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, desiredY - basketBump.current, 18, delta);
     currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 22, delta);
 
-    // Smooth yaw rotation towards player direction
-    currentYaw.current = THREE.MathUtils.damp(currentYaw.current, actualYaw, 20, delta);
+    // Calculate forward motion direction relative to trolley heading
+    const prevP = prevTrolleyPos.current;
+    const currP = currentPos.current;
+    const dx = currP.x - prevP.x;
+    const dz = currP.z - prevP.z;
+
+    // Project displacement onto cart forward vector (-sin(yaw), -cos(yaw))
+    const fwdX = -Math.sin(currentYaw.current);
+    const fwdZ = -Math.cos(currentYaw.current);
+    const forwardStep = dx * fwdX + dz * fwdZ;
+
+    // Wheel radius = 0.07m
+    wheelRollRef.current += forwardStep / 0.07;
+    prevTrolleyPos.current.copy(currP);
+
+    // Dynamic front caster swivel based on turning angular velocity
+    let diffYaw = actualYaw - currentYaw.current;
+    while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
+    while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
+
+    const turningRate = delta > 0.0001 ? (currentYaw.current - prevYaw.current) / delta : 0;
+    prevYaw.current = currentYaw.current;
+    const targetSwivel = THREE.MathUtils.clamp(-turningRate * 0.15, -0.55, 0.55);
+    casterSwivelRef.current = THREE.MathUtils.damp(casterSwivelRef.current, targetSwivel, 14, delta);
+
+    // Shortest-path circular yaw dampening towards player direction
+    currentYaw.current += diffYaw * (1 - Math.exp(-22 * delta));
 
     // Strict final containment pass on currentPos so the cart NEVER clips even mid-lerp
     if (isOnEscalatorRamp) {
@@ -239,6 +282,19 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
 
     trolleyRef.current.position.copy(currentPos.current);
     trolleyRef.current.rotation.y = currentYaw.current + Math.PI;
+
+    // Subtle realistic inertial banking on turns
+    const rollTilt = THREE.MathUtils.clamp(-turningRate * 0.02, -0.04, 0.04);
+    trolleyRef.current.rotation.z = THREE.MathUtils.damp(trolleyRef.current.rotation.z, rollTilt, 12, delta);
+
+    // Update wheel rotations
+    if (frontLeftWheelRef.current) frontLeftWheelRef.current.rotation.x = wheelRollRef.current;
+    if (frontRightWheelRef.current) frontRightWheelRef.current.rotation.x = wheelRollRef.current;
+    if (rearLeftWheelRef.current) rearLeftWheelRef.current.rotation.x = wheelRollRef.current;
+    if (rearRightWheelRef.current) rearRightWheelRef.current.rotation.x = wheelRollRef.current;
+
+    if (frontLeftCasterRef.current) frontLeftCasterRef.current.rotation.y = casterSwivelRef.current;
+    if (frontRightCasterRef.current) frontRightCasterRef.current.rotation.y = casterSwivelRef.current;
   });
 
   // Calculate items to display inside the basket (capped at 16 for performance)
@@ -255,8 +311,20 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
 
   return (
     <group ref={trolleyRef} scale={[1.18, 1.18, 1.18]}>
-      {/* Soft Under-Cart Icy Blue Ambient Light */}
-      <pointLight position={[0, 0.3, 0]} color="#38bdf8" intensity={0.35} distance={1.4} decay={2} />
+      {/* Soft Under-Cart Luminous Glow & Point Light */}
+      <pointLight position={[0, 0.25, 0]} color="#38bdf8" intensity={0.5} distance={1.8} decay={2} />
+
+      {/* Subtle Cyan/Sapphire Ambient Ground Glow Decal */}
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.0, 1.35]} />
+        <meshBasicMaterial
+          color="#38bdf8"
+          transparent
+          opacity={0.16}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
 
       {/* --- Trolley Base Chassis (Polished Mirror Chrome) --- */}
       <mesh position={[0, 0.15, 0]} castShadow>
@@ -264,24 +332,82 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
         <meshStandardMaterial color="#f1f5f9" metalness={0.95} roughness={0.15} />
       </mesh>
 
-      {/* 4 Wheels with Chrome Brackets */}
-      {[
-        [-0.32, 0.08, -0.4],
-        [0.32, 0.08, -0.4],
-        [-0.32, 0.08, 0.4],
-        [0.32, 0.08, 0.4],
-      ].map(([x, y, z], idx) => (
-        <group key={`wheel-${idx}`} position={[x, y, z]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
-            <meshStandardMaterial color="#1e293b" roughness={0.7} />
-          </mesh>
+      {/* 4 Realistic Rolling Wheels with Swivel Front Casters */}
+      {/* Front Left Caster & Rolling Wheel */}
+      <group position={[-0.32, 0.08, -0.4]}>
+        <group ref={frontLeftCasterRef}>
           <mesh position={[0, 0.06, 0]}>
             <boxGeometry args={[0.04, 0.08, 0.06]} />
             <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
           </mesh>
+          <group ref={frontLeftWheelRef}>
+            <mesh castShadow rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.7} />
+            </mesh>
+            <mesh rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.03, 0.03, 0.054, 12]} />
+              <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+            </mesh>
+          </group>
         </group>
-      ))}
+      </group>
+
+      {/* Front Right Caster & Rolling Wheel */}
+      <group position={[0.32, 0.08, -0.4]}>
+        <group ref={frontRightCasterRef}>
+          <mesh position={[0, 0.06, 0]}>
+            <boxGeometry args={[0.04, 0.08, 0.06]} />
+            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+          </mesh>
+          <group ref={frontRightWheelRef}>
+            <mesh castShadow rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.7} />
+            </mesh>
+            <mesh rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.03, 0.03, 0.054, 12]} />
+              <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+            </mesh>
+          </group>
+        </group>
+      </group>
+
+      {/* Rear Left Rolling Wheel */}
+      <group position={[-0.32, 0.08, 0.4]}>
+        <mesh position={[0, 0.06, 0]}>
+          <boxGeometry args={[0.04, 0.08, 0.06]} />
+          <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+        </mesh>
+        <group ref={rearLeftWheelRef}>
+          <mesh castShadow rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.7} />
+          </mesh>
+          <mesh rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.03, 0.03, 0.054, 12]} />
+            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+          </mesh>
+        </group>
+      </group>
+
+      {/* Rear Right Rolling Wheel */}
+      <group position={[0.32, 0.08, 0.4]}>
+        <mesh position={[0, 0.06, 0]}>
+          <boxGeometry args={[0.04, 0.08, 0.06]} />
+          <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+        </mesh>
+        <group ref={rearRightWheelRef}>
+          <mesh castShadow rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.7} />
+          </mesh>
+          <mesh rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.03, 0.03, 0.054, 12]} />
+            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+          </mesh>
+        </group>
+      </group>
 
       {/* Upright Support Struts (Mirror Chrome) */}
       <mesh position={[-0.3, 0.55, 0.45]} rotation={[0.15, 0, 0]} castShadow>

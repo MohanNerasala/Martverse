@@ -330,7 +330,7 @@ export const CartDrawer: React.FC = () => {
 
               <button
                 onClick={handleProceedToBilling}
-                className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all text-sm cursor-pointer border border-blue-400/30"
+                className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 hover:shadow-[0_0_24px_rgba(56,189,248,0.45)] active:scale-[0.98] transition-all text-sm cursor-pointer border border-blue-400/30"
               >
                 <CreditCard className="w-4 h-4" />
                 <span>Go to Billing Counter</span>

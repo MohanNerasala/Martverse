@@ -49,6 +49,9 @@ export const PlayerController: React.FC = () => {
   const velocityRef = useRef({ x: 0, z: 0 });
   const yawRef = useRef(0);
   const pitchRef = useRef(0);
+  const targetYawRef = useRef(0);
+  const targetPitchRef = useRef(0);
+  const currentLookTarget = useRef(new THREE.Vector3(0, 1.85, -17.7));
   const isDragging = useRef(false);
   const prevMouse = useRef({ x: 0, y: 0 });
   const lastSyncTime = useRef(0);
@@ -66,6 +69,9 @@ export const PlayerController: React.FC = () => {
     velocityRef.current = { x: 0, z: 0 };
     yawRef.current = 0;
     pitchRef.current = 0;
+    targetYawRef.current = 0;
+    targetPitchRef.current = 0;
+    currentLookTarget.current.set(0, 1.85, -17.7);
     martRuntime.playerPos[0] = 0;
     martRuntime.playerPos[1] = 1.5;
     martRuntime.playerPos[2] = -20;
@@ -80,6 +86,13 @@ export const PlayerController: React.FC = () => {
     velocityRef.current = { x: 0, z: 0 };
     yawRef.current = martRuntime.playerYaw ?? 0;
     pitchRef.current = 0;
+    targetYawRef.current = martRuntime.playerYaw ?? 0;
+    targetPitchRef.current = 0;
+    currentLookTarget.current.set(
+      martRuntime.playerPos[0] + Math.sin(yawRef.current) * 2.3,
+      martRuntime.playerPos[1] + 0.35,
+      martRuntime.playerPos[2] + Math.cos(yawRef.current) * 2.3
+    );
     resetPending.current = true;
   }, [teleportTrigger]);
 
@@ -162,8 +175,8 @@ export const PlayerController: React.FC = () => {
       const dy = e.clientY - prevMouse.current.y;
       prevMouse.current = { x: e.clientX, y: e.clientY };
 
-      yawRef.current -= dx * 0.0035;
-      pitchRef.current = Math.max(-0.6, Math.min(0.6, pitchRef.current - dy * 0.003));
+      targetYawRef.current -= dx * 0.0032;
+      targetPitchRef.current = Math.max(-0.55, Math.min(0.55, targetPitchRef.current - dy * 0.0028));
 
       // Escalator yaw containment: prevent turning sideways and shoving trolley into glass balustrade
       const onRamp =
@@ -172,11 +185,11 @@ export const PlayerController: React.FC = () => {
         posRef.current.z <= 7.0;
 
       if (onRamp) {
-        const isAscending = Math.cos(yawRef.current) >= -0.2;
+        const isAscending = Math.cos(targetYawRef.current) >= -0.2;
         if (isAscending) {
-          yawRef.current = THREE.MathUtils.clamp(yawRef.current, -0.4, 0.4);
+          targetYawRef.current = THREE.MathUtils.clamp(targetYawRef.current, -0.4, 0.4);
         } else {
-          yawRef.current = THREE.MathUtils.clamp(yawRef.current, Math.PI - 0.4, Math.PI + 0.4);
+          targetYawRef.current = THREE.MathUtils.clamp(targetYawRef.current, Math.PI - 0.4, Math.PI + 0.4);
         }
       }
     };
@@ -235,6 +248,7 @@ export const PlayerController: React.FC = () => {
       posRef.current.x = 14.7;
       posRef.current.z = -7.0;
       yawRef.current = 0; // face forward up the ramp
+      targetYawRef.current = 0;
       showToast('Escalator Moving Walkway', 'Gliding to 2nd Floor (Fashion Studio)...', 'info');
       sounds.playPickSound();
       return;
@@ -244,6 +258,7 @@ export const PlayerController: React.FC = () => {
       posRef.current.x = 14.7;
       posRef.current.z = 5.0;
       yawRef.current = Math.PI; // face down the ramp
+      targetYawRef.current = Math.PI;
       showToast('Escalator Moving Walkway', 'Gliding to Ground Floor (Groceries)...', 'info');
       sounds.playPickSound();
       return;
@@ -275,12 +290,17 @@ export const PlayerController: React.FC = () => {
       posRef.current.z = THREE.MathUtils.damp(posRef.current.z, -22.5, 3.5, delta);
       posRef.current.y = THREE.MathUtils.damp(posRef.current.y, 1.5, 6, delta);
       yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 6, delta);
+      targetYawRef.current = Math.PI;
 
       // Once reached the exit sensor gate
       if (posRef.current.z <= -21.6) {
         finishExitAnimation();
       }
     } else {
+      // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 28, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 28, delta);
+
       const speed = 7.5; // m/s walking speed
       const moveVector = new THREE.Vector3();
 
@@ -289,21 +309,23 @@ export const PlayerController: React.FC = () => {
       if (keys.current.left) moveVector.x += 1;
       if (keys.current.right) moveVector.x -= 1;
 
-      if (moveVector.lengthSq() > 0) {
+      const isMoving = moveVector.lengthSq() > 0;
+      if (isMoving) {
         if (!hasMovedTrolley) {
           setHasMovedTrolley(true);
         }
         moveVector.normalize();
       }
 
-      // Smooth acceleration and deceleration (rate 16 for responsive fluid motion without snapping)
+      // Smooth acceleration and deceleration (rate 15/18 for responsive fluid motion without snapping)
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
       const targetVelX = (moveVector.x * cos + moveVector.z * sin) * speed;
       const targetVelZ = (-moveVector.x * sin + moveVector.z * cos) * speed;
 
-      velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, 16, delta);
-      velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, 16, delta);
+      const accelRate = isMoving ? 15 : 18;
+      velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
+      velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
       const worldDX = velocityRef.current.x * delta;
       const worldDZ = velocityRef.current.z * delta;
@@ -508,6 +530,7 @@ export const PlayerController: React.FC = () => {
 
       if (isAscending) {
         posRef.current.z += (2.4 + forwardInput) * delta;
+        targetYawRef.current = 0;
         yawRef.current = THREE.MathUtils.clamp(yawRef.current, -0.4, 0.4);
         yawRef.current = THREE.MathUtils.damp(yawRef.current, 0, 8, delta);
 
@@ -515,12 +538,14 @@ export const PlayerController: React.FC = () => {
         if (posRef.current.z >= 5.4) {
           posRef.current.z = 5.9;
           posRef.current.y = 6.5;
+          targetYawRef.current = 0;
           setActiveFloor(2);
           sounds.playPickSound();
           showToast('2nd Floor Reached', 'Welcome to Fashion Studio & Apparel!', 'success');
         }
       } else {
         posRef.current.z -= (2.4 + forwardInput) * delta;
+        targetYawRef.current = Math.PI;
         yawRef.current = THREE.MathUtils.clamp(yawRef.current, Math.PI - 0.4, Math.PI + 0.4);
         yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 8, delta);
 
@@ -529,6 +554,7 @@ export const PlayerController: React.FC = () => {
           posRef.current.z = -9.2;
           posRef.current.y = 1.5;
           yawRef.current = 0; // Turn around to face forward in front of the escalator!
+          targetYawRef.current = 0;
           setActiveFloor(1);
           sounds.playPickSound();
           showToast('Ground Floor Reached', 'Welcome back to Groceries & Billing!', 'success');
@@ -651,20 +677,26 @@ export const PlayerController: React.FC = () => {
       targetCamZ = Math.max(-25.2, Math.min(25.2, targetCamZ));
       targetCamY = Math.max(0.4, targetCamY);
 
-      if (resetPending.current) {
-        resetPending.current = false;
-        camera.position.set(targetCamX, targetCamY, targetCamZ);
-      } else {
-        // Smooth camera dampening for butter-smooth gliding motion without viewport stutter
-        camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 22, delta);
-        camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 22, delta);
-        camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 22, delta);
-      }
-
       const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.3;
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
       const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.3;
-      camera.lookAt(lookTargetX, lookTargetY, lookTargetZ);
+
+      if (resetPending.current) {
+        resetPending.current = false;
+        camera.position.set(targetCamX, targetCamY, targetCamZ);
+        currentLookTarget.current.set(lookTargetX, lookTargetY, lookTargetZ);
+      } else {
+        // Synchronized camera position and lookAt dampening for butter-smooth gliding motion without viewport stutter or wobble
+        camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 22, delta);
+        camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 22, delta);
+        camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 22, delta);
+
+        currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, lookTargetX, 22, delta);
+        currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, lookTargetY, 22, delta);
+        currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, lookTargetZ, 22, delta);
+      }
+
+      camera.lookAt(currentLookTarget.current.x, currentLookTarget.current.y, currentLookTarget.current.z);
     }
   });
 
