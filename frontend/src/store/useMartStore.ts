@@ -81,7 +81,7 @@ export const useMartStore = create<MartStore>((set) => ({
   hoveredProduct: null,
   isProductModalOpen: false,
   isMinimapOpen: false,
-  isNavigatorOpen: true, // On-screen 4-arrow navigator visible by default
+  isNavigatorOpen: false, // Hidden by default - only shows when user taps 'Arrows'
   isSoundMuted: false,
   cameraMode: 'third_person',
   nearBillingCounter: false,

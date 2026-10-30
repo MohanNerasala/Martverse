@@ -33,6 +33,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Navigation,
+  Move,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { ProductHoverCard } from '@/components/ui/ProductHoverCard';
@@ -79,6 +80,7 @@ export const SupermarketHUD: React.FC = () => {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNavLegendVisible, setIsNavLegendVisible] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -320,16 +322,19 @@ export const SupermarketHUD: React.FC = () => {
 
             {/* On-Screen 4-Arrow Navigator Toggle */}
             <button
-              onClick={() => toggleNavigator()}
-              className={`h-10 px-2.5 sm:px-3 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer shadow-sm active:scale-95 backdrop-blur-xl ${
+              onClick={() => {
+                if (!isNavigatorOpen) setIsNavLegendVisible(true);
+                toggleNavigator();
+              }}
+              className={`h-10 px-2.5 sm:px-3 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer shadow-sm active:scale-95 backdrop-blur-xl ${
                 isNavigatorOpen
                   ? 'bg-white text-slate-950 font-bold border-white shadow-md'
                   : 'bg-white/[0.06] hover:bg-white/[0.12] text-white/85 hover:text-white border border-white/[0.12]'
               }`}
               title={isNavigatorOpen ? 'Hide On-Screen 4-Arrow Navigator' : 'Show On-Screen 4-Arrow Navigator'}
             >
-              <Compass className={`w-4 h-4 ${isNavigatorOpen ? 'text-slate-950' : 'text-white/80'}`} />
-              <span className="hidden xl:inline font-medium">Arrows</span>
+              <Move className={`w-4 h-4 ${isNavigatorOpen ? 'text-slate-950' : 'text-white/80'}`} />
+              <span className="inline font-semibold">Arrows</span>
             </button>
 
             {/* Sound Toggle */}
@@ -559,16 +564,16 @@ export const SupermarketHUD: React.FC = () => {
       </div>
 
       {/* ============================================================== */}
-      {/* --- Bottom: 4-Arrow On-Screen Navigator & Legend --- */}
+      {/* --- Bottom: 4-Arrow On-Screen Navigator & Legend (Only Shown When User Taps "Arrows") --- */}
       {/* ============================================================== */}
-      <footer className="flex items-end justify-between pointer-events-none gap-4">
-        {/* On-Screen 4-Arrow Navigator (Compact Frosted Glass D-Pad) */}
-        {isNavigatorOpen ? (
-          <div className="pointer-events-auto bg-slate-950/65 backdrop-blur-2xl border border-white/20 p-2.5 rounded-3xl shadow-[0_16px_40px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.25)] flex flex-col items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200 select-none">
+      {isNavigatorOpen && (
+        <footer className="flex items-end justify-between pointer-events-none gap-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          {/* On-Screen 4-Arrow Navigator (Compact Frosted Glass D-Pad) */}
+          <div className="pointer-events-auto bg-slate-950/65 backdrop-blur-2xl border border-white/20 p-2.5 rounded-3xl shadow-[0_16px_40px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.25)] flex flex-col items-center gap-1.5 select-none">
             {/* Header: Title & Close */}
             <div className="w-full flex items-center justify-between px-1 pb-1 border-b border-white/10">
               <div className="flex items-center gap-1.5 text-[10px] font-black tracking-wider text-white/80 uppercase">
-                <Navigation className="w-3 h-3 text-white/70" />
+                <Move className="w-3 h-3 text-white/70" />
                 <span>NAVIGATOR</span>
               </div>
               <button
@@ -651,51 +656,53 @@ export const SupermarketHUD: React.FC = () => {
               Keys • Arrows • 2-Finger Scroll
             </div>
           </div>
-        ) : (
-          <button
-            onClick={() => toggleNavigator(true)}
-            className="pointer-events-auto bg-slate-950/60 hover:bg-slate-950/80 backdrop-blur-2xl border border-white/20 px-3.5 py-2 rounded-2xl shadow-lg text-white/85 hover:text-white flex items-center gap-2 text-xs font-semibold cursor-pointer active:scale-95 transition-all"
-            title="Open 4-Arrow On-Screen Navigator"
-          >
-            <Compass className="w-4 h-4 text-white" />
-            <span>Show 4 Arrows</span>
-          </button>
-        )}
 
-        {/* Navigation Legend */}
-        <div className="pointer-events-auto bg-slate-950/60 backdrop-blur-2xl p-3.5 rounded-2xl text-xs text-white/80 shadow-2xl space-y-2 hidden md:block max-w-xs border border-white/15">
-          <div className="font-bold text-white text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-white/60">
-            <Compass className="w-3.5 h-3.5 text-white/80" />
-            <span>Store Navigation (3 Options)</span>
-          </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
-            <div className="flex items-center gap-1.5">
-              <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
-                Keys
-              </span>
-              <span>Arrows / WASD</span>
+          {/* Navigation Legend (Only shows when Arrows is active, and can be dismissed) */}
+          {isNavLegendVisible && (
+            <div className="pointer-events-auto bg-slate-950/65 backdrop-blur-2xl border border-white/20 p-3.5 rounded-2xl text-xs text-white/80 shadow-[0_16px_40px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.25)] space-y-2 hidden md:block max-w-xs animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-bold text-white text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-white/70">
+                  <Move className="w-3.5 h-3.5 text-white/80" />
+                  <span>Store Navigation (3 Options)</span>
+                </div>
+                <button
+                  onClick={() => setIsNavLegendVisible(false)}
+                  className="text-white/40 hover:text-white p-0.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Close Guide"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
+                    Keys
+                  </span>
+                  <span>Arrows / WASD</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
+                    Screen
+                  </span>
+                  <span>4-Arrow D-Pad</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
+                    Mouse
+                  </span>
+                  <span>2-Finger Scroll</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
+                    Look
+                  </span>
+                  <span>Drag to Pan</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
-                Screen
-              </span>
-              <span>4-Arrow D-Pad</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
-                Mouse
-              </span>
-              <span>2-Finger Scroll</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="bg-white/10 text-white font-mono font-bold px-1.5 py-0.5 rounded border border-white/15">
-                Look
-              </span>
-              <span>Drag to Pan</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+          )}
+        </footer>
+      )}
 
       {/* ============================================================== */}
       {/* --- Floating Confirmation Toast (Positioned Top-Right Below Navbar) --- */}
