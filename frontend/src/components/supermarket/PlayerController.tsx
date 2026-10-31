@@ -365,11 +365,11 @@ export const PlayerController: React.FC = () => {
       // Two-finger trackpad swipe or mouse wheel roll:
       // deltaY < 0 is rolling up / swiping up -> move forward (+Z)
       // deltaY > 0 is rolling down / swiping down -> move backward (-Z)
-      // deltaX < 0 is swiping left -> move left (+X)
-      // deltaX > 0 is swiping right -> move right (-X)
+      // deltaX < 0 is swiping left -> move left
+      // deltaX > 0 is swiping right -> move right
       const factor = 0.0075;
       wheelMomentum.current.z -= e.deltaY * factor;
-      wheelMomentum.current.x -= e.deltaX * factor;
+      wheelMomentum.current.x += e.deltaX * factor;
 
       wheelMomentum.current.z = THREE.MathUtils.clamp(wheelMomentum.current.z, -1.2, 1.2);
       wheelMomentum.current.x = THREE.MathUtils.clamp(wheelMomentum.current.x, -1.2, 1.2);
@@ -536,11 +536,11 @@ export const PlayerController: React.FC = () => {
 
       // Camera-relative velocity projection:
       // Forward vector F = (sin(yaw), 0, cos(yaw))
-      // Right vector R = (cos(yaw), 0, -sin(yaw))
+      // Right vector R = (-cos(yaw), 0, sin(yaw))
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
-      const targetVelX = (staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
-      const targetVelZ = (-staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
+      const targetVelX = (-staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
+      const targetVelZ = (staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
 
       const accelRate = isMoving ? 72 : 55;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
