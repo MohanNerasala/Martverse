@@ -498,10 +498,10 @@ export const PlayerController: React.FC = () => {
       }
     } else {
       // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 65, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 65, delta);
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 75, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 75, delta);
 
-      const speed = 15.0; // Fast, responsive, ultra-smooth cruising speed
+      const speed = 16.5; // Fast, responsive, ultra-smooth cruising speed with instant reaction
       staticMoveVector.set(0, 0, 0);
 
       // 1. Keyboard WASD & Arrow Keys — Full 8-direction continuous motion (Straight, Back, Left, Right, Cross)
@@ -521,8 +521,8 @@ export const PlayerController: React.FC = () => {
       staticMoveVector.x += wheelMomentum.current.x;
 
       // Smoothly damp wheel momentum
-      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 12, delta);
-      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 12, delta);
+      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 16, delta);
+      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 16, delta);
 
       const isMoving = staticMoveVector.lengthSq() > 0.001;
       if (isMoving) {
@@ -534,14 +534,15 @@ export const PlayerController: React.FC = () => {
         }
       }
 
-      // Smooth analog physical momentum curve (rate 32/28 accelerates briskly & brakes cleanly without drag)
-      // Camera-relative velocity projection: Right arrow moves to visual screen RIGHT, Left moves LEFT
+      // Camera-relative velocity projection:
+      // Forward vector F = (sin(yaw), 0, cos(yaw))
+      // Right vector R = (cos(yaw), 0, -sin(yaw))
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
-      const targetVelX = (-staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
-      const targetVelZ = (staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
+      const targetVelX = (staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
+      const targetVelZ = (-staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 44 : 36;
+      const accelRate = isMoving ? 72 : 55;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -552,8 +553,8 @@ export const PlayerController: React.FC = () => {
 
       // -------------------------------------------------------------
       // AAA Buttery-Smooth Unified Character Capsule Sliding
-      // Single continuous convex capsule encompasses player body + trolley
-      // Eliminates internal two-body friction, edge snapping, and corner chatter
+      // 3 overlapping convex spheres: Front Bumper, Cart Center, Player Body
+      // Eliminates internal friction, edge catching, corner snags, and collision chatter
       // -------------------------------------------------------------
       const onRampCorridor =
         posRef.current.x >= 13.8 &&
@@ -572,49 +573,43 @@ export const PlayerController: React.FC = () => {
         let nextX = posRef.current.x + worldDX;
         let nextZ = posRef.current.z + worldDZ;
 
-        // Front trolley bumper center: 0.45m in front of player, radius 0.42m
-        const cartCenterDist = 0.45;
-        const cartRadius = 0.42;
+        // 3-Sphere continuous capsule covering the entire trolley and player footprint
+        const spheres = [
+          { dist: 1.15, radius: 0.42 }, // Front bumper and basket nose
+          { dist: 0.65, radius: 0.40 }, // Mid basket chassis and wheels
+          { dist: 0.05, radius: 0.28 }, // Rear handle and player body
+        ];
 
         for (let iter = 0; iter < 2; iter++) {
-          // Pass 1: Front capsule (Trolley body & bumper)
-          let cx = nextX + sinYaw * cartCenterDist;
-          let cz = nextZ + cosYaw * cartCenterDist;
+          for (let s = 0; s < spheres.length; s++) {
+            const sp = spheres[s];
+            let sx = nextX + sinYaw * sp.dist;
+            let sz = nextZ + cosYaw * sp.dist;
 
-          for (let i = 0; i < boxes.length; i++) {
-            const res = getCircleBoxDepenetration(cx, cz, cartRadius, boxes[i]);
-            if (res.overlap) {
-              nextX += res.pX;
-              nextZ += res.pZ;
-              cx = nextX + sinYaw * cartCenterDist;
-              cz = nextZ + cosYaw * cartCenterDist;
-              const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;
-              if (vn < 0) {
-                velocityRef.current.x -= vn * res.normalX;
-                velocityRef.current.z -= vn * res.normalZ;
-              }
-            }
-          }
+            for (let i = 0; i < boxes.length; i++) {
+              const res = getCircleBoxDepenetration(sx, sz, sp.radius, boxes[i]);
+              if (res.overlap) {
+                nextX += res.pX;
+                nextZ += res.pZ;
+                sx = nextX + sinYaw * sp.dist;
+                sz = nextZ + cosYaw * sp.dist;
 
-          // Pass 2: Rear capsule (Player body)
-          for (let i = 0; i < boxes.length; i++) {
-            const resP = getCircleBoxDepenetration(nextX, nextZ, 0.26, boxes[i]);
-            if (resP.overlap) {
-              nextX += resP.pX;
-              nextZ += resP.pZ;
-              const vn = velocityRef.current.x * resP.normalX + velocityRef.current.z * resP.normalZ;
-              if (vn < 0) {
-                velocityRef.current.x -= vn * resP.normalX;
-                velocityRef.current.z -= vn * resP.normalZ;
+                // Slide smoothly along obstacle surface: deflect only velocity penetrating into obstacle
+                const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;
+                if (vn < 0) {
+                  velocityRef.current.x -= vn * res.normalX;
+                  velocityRef.current.z -= vn * res.normalZ;
+                }
               }
             }
           }
 
           // Unpaid exit barrier check
           if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
-            let curCx = nextX + sinYaw * cartCenterDist;
-            let curCz = nextZ + cosYaw * cartCenterDist;
-            const resExit = getCircleBoxDepenetration(curCx, curCz, cartRadius, UNPAID_EXIT_BARRIER);
+            const frontSp = spheres[0];
+            let fx = nextX + sinYaw * frontSp.dist;
+            let fz = nextZ + cosYaw * frontSp.dist;
+            const resExit = getCircleBoxDepenetration(fx, fz, frontSp.radius, UNPAID_EXIT_BARRIER);
             if (resExit.overlap) {
               nextX += resExit.pX;
               nextZ += resExit.pZ;
@@ -848,7 +843,7 @@ export const PlayerController: React.FC = () => {
         if (dZ > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dZ - 0.25));
       }
 
-      camDistRef.current = THREE.MathUtils.damp(camDistRef.current, effectiveCamDist, 18, delta);
+      camDistRef.current = THREE.MathUtils.damp(camDistRef.current, effectiveCamDist, 22, delta);
 
       const targetCamX = posRef.current.x + rayDirX * camDistRef.current;
       const targetCamY = posRef.current.y + camHeight;
@@ -858,8 +853,15 @@ export const PlayerController: React.FC = () => {
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
       const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.3;
 
-      camera.position.set(targetCamX, targetCamY, targetCamZ);
-      currentLookTarget.current.set(lookTargetX, lookTargetY, lookTargetZ);
+      // Ultra-smooth high-frequency camera and look-target interpolation
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 60, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 60, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 60, delta);
+
+      currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, lookTargetX, 60, delta);
+      currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, lookTargetY, 60, delta);
+      currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, lookTargetZ, 60, delta);
+
       camera.lookAt(currentLookTarget.current);
     }
   });
