@@ -194,8 +194,6 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
 
-  const [isHovered, setIsHovered] = useState(false);
-
   const prod = slot.product;
   const plc = prod.placement || {
     color: '#3b82f6',
@@ -210,26 +208,25 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
     : (prod.imageUrl || '/products/fallback.svg');
 
   const animGroupRef = useRef<THREE.Group>(null);
+  const mainMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  const eslMatRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  // Pure imperative hover tracking (0 React re-renders on hover, pure 60-120 FPS hardware acceleration)
+  const isHoveredRef = useRef(false);
   const currentScale = useRef(1.0);
   const currentLift = useRef(0.0);
   const currentForward = useRef(0.0);
   const isResting = useRef(true);
 
-  useEffect(() => {
-    if (isHovered) {
-      isResting.current = false;
-    }
-  }, [isHovered]);
-
   useFrame((_, delta) => {
     if (!animGroupRef.current) return;
-    if (!isHovered && isResting.current) return;
+    if (!isHoveredRef.current && isResting.current) return;
 
-    const targetScale = isHovered ? 1.24 : 1.0;
-    const targetLift = isHovered ? 0.07 : 0.0;
-    const targetForward = isHovered ? 0.08 : 0.0;
+    const targetScale = isHoveredRef.current ? 1.22 : 1.0;
+    const targetLift = isHoveredRef.current ? 0.06 : 0.0;
+    const targetForward = isHoveredRef.current ? 0.08 : 0.0;
 
-    if (!isHovered && Math.abs(currentScale.current - 1.0) < 0.003 && Math.abs(currentLift.current) < 0.003) {
+    if (!isHoveredRef.current && Math.abs(currentScale.current - 1.0) < 0.003 && Math.abs(currentLift.current) < 0.003) {
       currentScale.current = 1.0;
       currentLift.current = 0.0;
       currentForward.current = 0.0;
@@ -239,9 +236,9 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
       return;
     }
 
-    currentScale.current = THREE.MathUtils.damp(currentScale.current, targetScale, 18, delta);
-    currentLift.current = THREE.MathUtils.damp(currentLift.current, targetLift, 18, delta);
-    currentForward.current = THREE.MathUtils.damp(currentForward.current, targetForward, 18, delta);
+    currentScale.current = THREE.MathUtils.damp(currentScale.current, targetScale, 20, delta);
+    currentLift.current = THREE.MathUtils.damp(currentLift.current, targetLift, 20, delta);
+    currentForward.current = THREE.MathUtils.damp(currentForward.current, targetForward, 20, delta);
 
     animGroupRef.current.scale.set(currentScale.current, currentScale.current, currentScale.current);
     animGroupRef.current.position.set(0, currentLift.current, currentForward.current);
@@ -252,7 +249,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
       position={[slot.relX, slot.relY, slot.relZ]}
       rotation={[0, slot.rotationY, 0]}
     >
-      {/* Invisible Interaction Hitbox */}
+      {/* Invisible Interaction Hitbox - Exclusively raycasted; absorbs all cursor pointer events */}
       <mesh
         visible={false}
         position={[0, 0.18, 0.08]}
@@ -260,15 +257,29 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
         scale={[isDairyMilk ? 0.72 : 0.60, 0.46, 0.42]}
         onPointerOver={(e) => {
           e.stopPropagation();
-          setIsHovered(true);
-          setHoveredProduct(prod);
+          isHoveredRef.current = true;
+          isResting.current = false;
+          if (mainMatRef.current) {
+            mainMatRef.current.emissive.set(isDairyMilk ? '#6b21a8' : color);
+            mainMatRef.current.emissiveIntensity = 0.35;
+          }
+          if (eslMatRef.current) {
+            eslMatRef.current.color.set('#047857');
+          }
           document.body.style.cursor = 'pointer';
+          setHoveredProduct(prod);
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
-          setIsHovered(false);
-          setHoveredProduct(null);
+          isHoveredRef.current = false;
+          if (mainMatRef.current) {
+            mainMatRef.current.emissiveIntensity = 0;
+          }
+          if (eslMatRef.current) {
+            eslMatRef.current.color.set('#0f172a');
+          }
           document.body.style.cursor = 'default';
+          setHoveredProduct(null);
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -276,48 +287,29 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
         }}
       />
 
-      {/* Smoothly Animated Product Group */}
-      <group ref={animGroupRef}>
-        {/* Hover Floating Instruction Tag */}
-        {isHovered && (
-          <group position={[0, isDairyMilk ? 0.38 : 0.48, 0]}>
-            <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[0.56, 0.09, 0.02]}>
-              <meshBasicMaterial color="#1d4ed8" />
-            </mesh>
-            <Text
-              position={[0, 0, 0.015]}
-              fontSize={0.040}
-              color="#ffffff"
-              anchorX="center"
-              anchorY="middle"
-            >
-              {prod.name.length > 20 ? `${prod.name.slice(0, 19)}…` : prod.name} • ₹{prod.price}
-            </Text>
-          </group>
-        )}
-
+      {/* Smoothly Animated Product Group (raycast={() => null} ignores internal mesh traversal) */}
+      <group ref={animGroupRef} raycast={() => null}>
         {/* 3D Product Mesh based on modelType */}
         {plc.modelType === 'bottle' ? (
-          <group position={[0, 0, 0]}>
+          <group position={[0, 0, 0]} raycast={() => null}>
             {/* Cylindrical Main Bottle Body */}
-            <mesh position={[0, 0.12, 0]} geometry={sharedGeometries.cyl14} scale={[0.082, 0.24, 0.082]}>
+            <mesh position={[0, 0.12, 0]} geometry={sharedGeometries.cyl14} scale={[0.082, 0.24, 0.082]} raycast={() => null}>
               <meshStandardMaterial
+                ref={mainMatRef}
                 color={color}
                 roughness={0.15}
                 metalness={0.1}
-                emissive={isHovered ? color : '#000000'}
-                emissiveIntensity={isHovered ? 0.35 : 0}
               />
             </mesh>
             {/* Tapered Bottle Shoulder */}
-            <mesh position={[0, 0.27, 0]} geometry={sharedGeometries.cyl14} scale={[0.06, 0.06, 0.06]}>
+            <mesh position={[0, 0.27, 0]} geometry={sharedGeometries.cyl14} scale={[0.06, 0.06, 0.06]} raycast={() => null}>
               <meshStandardMaterial color={color} roughness={0.15} metalness={0.1} />
             </mesh>
             {/* Bottle Neck & Cap */}
-            <mesh position={[0, 0.34, 0]} geometry={sharedGeometries.cyl12} scale={[0.034, 0.06, 0.034]}>
+            <mesh position={[0, 0.34, 0]} geometry={sharedGeometries.cyl12} scale={[0.034, 0.06, 0.034]} raycast={() => null}>
               <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
             </mesh>
-            {/* Product Artwork on Bottle Label (Offset slightly forward to eliminate any z-fighting) */}
+            {/* Product Artwork on Bottle Label */}
             <ProductSmallImage
               url={packagingUrl}
               position={[0, 0.12, 0.088]}
@@ -325,35 +317,33 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
             />
           </group>
         ) : plc.modelType === 'shirt' || plc.modelType === 'hanger' ? (
-          <group position={[0, 0, 0]}>
+          <group position={[0, 0, 0]} raycast={() => null}>
             {/* Polished Chrome Hanger Hook */}
-            <mesh position={[0, 0.44, 0]} geometry={sharedGeometries.cyl8} scale={[0.008, 0.1, 0.008]}>
+            <mesh position={[0, 0.44, 0]} geometry={sharedGeometries.cyl8} scale={[0.008, 0.1, 0.008]} raycast={() => null}>
               <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
             </mesh>
             {/* Dark Hanger Bar */}
-            <mesh position={[0, 0.38, 0]} geometry={sharedGeometries.box} scale={[0.42, 0.02, 0.02]}>
+            <mesh position={[0, 0.38, 0]} geometry={sharedGeometries.box} scale={[0.42, 0.02, 0.02]} raycast={() => null}>
               <meshStandardMaterial color="#1e293b" roughness={0.5} />
             </mesh>
             {/* Realistic Folded Garment Body */}
-            <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.36, 0.36, 0.09]}>
+            <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.36, 0.36, 0.09]} raycast={() => null}>
               <meshStandardMaterial
+                ref={mainMatRef}
                 color={color}
                 roughness={0.7}
                 metalness={0.05}
-                emissive={isHovered ? color : '#000000'}
-                emissiveIntensity={isHovered ? 0.3 : 0}
               />
             </mesh>
             {/* Clean Inner Collar Trim */}
-            <mesh position={[0, 0.34, 0]} geometry={sharedGeometries.box} scale={[0.14, 0.03, 0.11]}>
+            <mesh position={[0, 0.34, 0]} geometry={sharedGeometries.box} scale={[0.14, 0.03, 0.11]} raycast={() => null}>
               <meshStandardMaterial color="#ffffff" roughness={0.5} />
             </mesh>
           </group>
         ) : plc.modelType === 'chocolate' || plc.modelType === 'bar' || isDairyMilk ? (
-          // Realistic Big-Size 3D Chocolate Bar Package (Authentic Cadbury Dairy Milk Packaging)
-          <group position={[0, 0, 0]}>
+          <group position={[0, 0, 0]} raycast={() => null}>
             {/* Clear Acrylic Confectionery Shelf Tray directly on shelf plank */}
-            <mesh position={[0, 0.008, 0.02]} geometry={sharedGeometries.box} scale={[0.70, 0.016, 0.16]}>
+            <mesh position={[0, 0.008, 0.02]} geometry={sharedGeometries.box} scale={[0.70, 0.016, 0.16]} raycast={() => null}>
               <meshStandardMaterial
                 color="#ffffff"
                 transparent
@@ -363,7 +353,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
               />
             </mesh>
             {/* Front Acrylic Retaining Lip */}
-            <mesh position={[0, 0.026, 0.095]} geometry={sharedGeometries.box} scale={[0.70, 0.036, 0.006]}>
+            <mesh position={[0, 0.026, 0.095]} geometry={sharedGeometries.box} scale={[0.70, 0.036, 0.006]} raycast={() => null}>
               <meshStandardMaterial
                 color="#ffffff"
                 transparent
@@ -373,19 +363,18 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
             </mesh>
 
             {/* Front Featured Chocolate Bar */}
-            <group position={[0, 0.155, 0.02]} rotation={[-0.04, 0, 0]}>
+            <group position={[0, 0.155, 0.02]} rotation={[-0.04, 0, 0]} raycast={() => null}>
               {/* Slim 3D Chocolate Packaging Body */}
-              <mesh geometry={sharedGeometries.box} scale={[0.65, 0.296, 0.022]}>
+              <mesh geometry={sharedGeometries.box} scale={[0.65, 0.296, 0.022]} raycast={() => null}>
                 <meshStandardMaterial
+                  ref={mainMatRef}
                   color="#4a044e"
                   roughness={0.3}
                   metalness={0.1}
-                  emissive={isHovered ? '#6b21a8' : '#000000'}
-                  emissiveIntensity={isHovered ? 0.3 : 0}
                 />
               </mesh>
 
-              {/* Complete Cadbury Dairy Milk High-Resolution Packaging Artwork Plane (Offset for crystal clarity) */}
+              {/* Complete Cadbury Dairy Milk High-Resolution Packaging Artwork Plane */}
               <ProductSmallImage
                 url={packagingUrl}
                 position={[0, 0, 0.016]}
@@ -395,36 +384,35 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
               />
 
               {/* Subtle Glossy Foil Reflection Sheen Strip */}
-              <mesh position={[0, 0.06, 0.018]} geometry={sharedGeometries.plane} scale={[0.62, 0.03, 1]}>
+              <mesh position={[0, 0.06, 0.018]} geometry={sharedGeometries.plane} scale={[0.62, 0.03, 1]} raycast={() => null}>
                 <meshBasicMaterial
                   color="#ffffff"
                   transparent
-                  opacity={isHovered ? 0.3 : 0.12}
+                  opacity={0.16}
                 />
               </mesh>
             </group>
           </group>
         ) : (
           // Standard Premium Box (Biscuits, Tea, Atta, Snacks, etc.)
-          <group position={[0, 0, 0]}>
+          <group position={[0, 0, 0]} raycast={() => null}>
             {/* Premium Carton Box Body */}
-            <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.36, 0.18]}>
+            <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.36, 0.18]} raycast={() => null}>
               <meshStandardMaterial
+                ref={mainMatRef}
                 color={color}
                 roughness={0.3}
                 metalness={0.05}
-                emissive={isHovered ? color : '#000000'}
-                emissiveIntensity={isHovered ? 0.35 : 0}
               />
             </mesh>
-            {/* Real Product Image on Carton Face (Clean front surface, no depth-fighting) */}
+            {/* Real Product Image on Carton Face */}
             <ProductSmallImage
               url={packagingUrl}
               position={[0, 0.18, 0.096]}
               scale={[0.25, 0.34]}
             />
             {/* Top Fold Seal Flap */}
-            <mesh position={[0, 0.363, 0]} geometry={sharedGeometries.box} scale={[0.23, 0.008, 0.14]}>
+            <mesh position={[0, 0.363, 0]} geometry={sharedGeometries.box} scale={[0.23, 0.008, 0.14]} raycast={() => null}>
               <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
             </mesh>
           </group>
@@ -432,17 +420,18 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
       </group>
 
       {/* Shelf Edge ESL (Electronic Shelf Label) Tag mounted directly on blue LED rail */}
-      <group position={[0, -0.01, 0.44]}>
+      <group position={[0, -0.01, 0.44]} raycast={() => null}>
         {/* Sleek Digital ESL Casing */}
-        <mesh geometry={sharedGeometries.box} scale={[0.32, 0.12, 0.018]}>
+        <mesh geometry={sharedGeometries.box} scale={[0.32, 0.12, 0.018]} raycast={() => null}>
           <meshStandardMaterial
-            color={isHovered ? '#047857' : '#0f172a'}
+            ref={eslMatRef}
+            color="#0f172a"
             roughness={0.4}
             metalness={0.2}
           />
         </mesh>
         {/* High-Resolution Digital E-Ink Display Face */}
-        <mesh position={[0, 0, 0.012]} geometry={sharedGeometries.plane} scale={[0.30, 0.10, 1]}>
+        <mesh position={[0, 0, 0.012]} geometry={sharedGeometries.plane} scale={[0.30, 0.10, 1]} raycast={() => null}>
           <meshBasicMaterial map={eslTexture} toneMapped={false} />
         </mesh>
       </group>
@@ -610,24 +599,24 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   return (
     <group position={[centerX, centerY, centerZ]}>
       {/* Overhead Aisle Hanging Signboard */}
-      <group position={[0, aisle.shelfHeight / 2 + 1.2, 0]}>
+      <group position={[0, aisle.shelfHeight / 2 + 1.2, 0]} raycast={() => null}>
         {/* Signboard background */}
-        <mesh geometry={sharedGeometries.box} scale={[2.8, 0.7, 0.08]}>
+        <mesh geometry={sharedGeometries.box} scale={[2.8, 0.7, 0.08]} raycast={() => null}>
           <meshStandardMaterial color="#0369a1" metalness={0.4} roughness={0.2} />
         </mesh>
         {/* Cyan/Blue glow header strip */}
-        <mesh position={[0, 0.28, 0.05]} geometry={sharedGeometries.box} scale={[2.7, 0.08, 0.02]}>
+        <mesh position={[0, 0.28, 0.05]} geometry={sharedGeometries.box} scale={[2.7, 0.08, 0.02]} raycast={() => null}>
           <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
         </mesh>
         {/* Soft Aisle Downlight Glow Strip */}
-        <mesh position={[0, -0.32, 0]} geometry={sharedGeometries.box} scale={[2.4, 0.04, 0.06]}>
+        <mesh position={[0, -0.32, 0]} geometry={sharedGeometries.box} scale={[2.4, 0.04, 0.06]} raycast={() => null}>
           <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.8} />
         </mesh>
         {/* Hanging metal chains */}
-        <mesh position={[-1.1, 0.8, 0]} geometry={sharedGeometries.cyl8} scale={[0.015, 1.2, 0.015]}>
+        <mesh position={[-1.1, 0.8, 0]} geometry={sharedGeometries.cyl8} scale={[0.015, 1.2, 0.015]} raycast={() => null}>
           <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
         </mesh>
-        <mesh position={[1.1, 0.8, 0]} geometry={sharedGeometries.cyl8} scale={[0.015, 1.2, 0.015]}>
+        <mesh position={[1.1, 0.8, 0]} geometry={sharedGeometries.cyl8} scale={[0.015, 1.2, 0.015]} raycast={() => null}>
           <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
         </mesh>
         {/* 3D Signboard Text */}
@@ -655,76 +644,78 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
         </Text>
       </group>
 
-      {/* Central Shelving Rack */}
-      {/* Central Back Divider Wall */}
-      <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[0.08, aisle.shelfHeight, length]}>
-        <meshStandardMaterial color="#ffffff" metalness={0.1} roughness={0.3} />
-      </mesh>
+      {/* Central Shelving Rack - Raycast bypassed to keep hover 60+ FPS responsive */}
+      <group raycast={() => null}>
+        {/* Central Back Divider Wall */}
+        <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[0.08, aisle.shelfHeight, length]}>
+          <meshStandardMaterial color="#ffffff" metalness={0.1} roughness={0.3} />
+        </mesh>
 
-      {/* 3 Horizontal Shelves for LEFT and RIGHT sides */}
-      {[0.5, 1.3, 2.1].map((shelfH, sIdx) => {
-        const yRel = shelfH - aisle.shelfHeight / 2;
-        return (
-          <group key={`shelf-tier-${sIdx}`} position={[0, yRel, 0]}>
-            {/* Left Shelf Plank */}
-            <mesh position={[-0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]}>
-              <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
-            </mesh>
-            {/* Left Under-Shelf Linear LED Glow Strip */}
-            <mesh position={[-0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]}>
-              <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.75} roughness={0.1} />
-            </mesh>
-            {/* Left Price Tag Rail */}
-            <mesh position={[-0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]}>
-              <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.55} />
-            </mesh>
-            {/* Left Slim Cyan Neon Accent Edge Line */}
-            <mesh position={[-0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]}>
-              <meshBasicMaterial color="#38bdf8" />
-            </mesh>
+        {/* 3 Horizontal Shelves for LEFT and RIGHT sides */}
+        {[0.5, 1.3, 2.1].map((shelfH, sIdx) => {
+          const yRel = shelfH - aisle.shelfHeight / 2;
+          return (
+            <group key={`shelf-tier-${sIdx}`} position={[0, yRel, 0]}>
+              {/* Left Shelf Plank */}
+              <mesh position={[-0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]}>
+                <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
+              </mesh>
+              {/* Left Under-Shelf Linear LED Glow Strip */}
+              <mesh position={[-0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]}>
+                <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.75} roughness={0.1} />
+              </mesh>
+              {/* Left Price Tag Rail */}
+              <mesh position={[-0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]}>
+                <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.55} />
+              </mesh>
+              {/* Left Slim Cyan Neon Accent Edge Line */}
+              <mesh position={[-0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]}>
+                <meshBasicMaterial color="#38bdf8" />
+              </mesh>
 
-            {/* Right Shelf Plank */}
-            <mesh position={[0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]}>
-              <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
-            </mesh>
-            {/* Right Under-Shelf Linear LED Glow Strip */}
-            <mesh position={[0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]}>
-              <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.75} roughness={0.1} />
-            </mesh>
-            {/* Right Price Tag Rail */}
-            <mesh position={[0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]}>
-              <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.55} />
-            </mesh>
-            {/* Right Slim Cyan Neon Accent Edge Line */}
-            <mesh position={[0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]}>
-              <meshBasicMaterial color="#38bdf8" />
-            </mesh>
+              {/* Right Shelf Plank */}
+              <mesh position={[0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]}>
+                <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
+              </mesh>
+              {/* Right Under-Shelf Linear LED Glow Strip */}
+              <mesh position={[0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]}>
+                <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.75} roughness={0.1} />
+              </mesh>
+              {/* Right Price Tag Rail */}
+              <mesh position={[0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]}>
+                <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.55} />
+              </mesh>
+              {/* Right Slim Cyan Neon Accent Edge Line */}
+              <mesh position={[0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]}>
+                <meshBasicMaterial color="#38bdf8" />
+              </mesh>
+            </group>
+          );
+        })}
+
+        {/* Upright Support Poles */}
+        {[-length / 2, -length / 3, -length / 6, 0, length / 6, length / 3, length / 2].map((zPos, pIdx) => (
+          <group key={`post-${pIdx}`} position={[0, 0, zPos]}>
+            <group position={[-0.86, 0, 0]}>
+              <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]}>
+                <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
+              </mesh>
+              <mesh position={[-0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]}>
+                <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
+              </mesh>
+            </group>
+
+            <group position={[0.86, 0, 0]}>
+              <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]}>
+                <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
+              </mesh>
+              <mesh position={[0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]}>
+                <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
+              </mesh>
+            </group>
           </group>
-        );
-      })}
-
-      {/* Upright Support Poles */}
-      {[-length / 2, -length / 3, -length / 6, 0, length / 6, length / 3, length / 2].map((zPos, pIdx) => (
-        <group key={`post-${pIdx}`} position={[0, 0, zPos]}>
-          <group position={[-0.86, 0, 0]}>
-            <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]}>
-              <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
-            </mesh>
-            <mesh position={[-0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]}>
-              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
-            </mesh>
-          </group>
-
-          <group position={[0.86, 0, 0]}>
-            <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]}>
-              <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
-            </mesh>
-            <mesh position={[0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]}>
-              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
-            </mesh>
-          </group>
-        </group>
-      ))}
+        ))}
+      </group>
 
       {/* 6 Blocks x 3 Items per Block */}
       <group>

@@ -86,6 +86,7 @@ export const SupermarketScene: React.FC = () => {
       <Canvas
         dpr={[1, 2]}
         camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
+        raycaster={{ near: 0.1, far: 45 }}
         gl={{
           antialias: true,
           alpha: false,

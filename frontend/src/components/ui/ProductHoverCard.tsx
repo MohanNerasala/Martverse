@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMartStore } from '@/store/useMartStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { Product } from '@/types';
 import { ShoppingCart, Eye } from 'lucide-react';
 
 export const ProductHoverCard: React.FC = () => {
@@ -15,24 +16,34 @@ export const ProductHoverCard: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const openLoginModal = useAuthStore((state) => state.openLoginModal);
 
+  // Keep last known product for smooth hardware-accelerated CSS fade transition
+  const [activeProd, setActiveProd] = useState<Product | null>(null);
+
+  useEffect(() => {
+    if (hoveredProduct) {
+      setActiveProd(hoveredProduct);
+    }
+  }, [hoveredProduct]);
+
   // Floor guard: strictly filter by active floor to prevent cross-floor product display
-  if (!hoveredProduct) return null;
-  const prodFloor =
-    hoveredProduct.placement?.floorNumber ??
-    (hoveredProduct.placement?.aisleNumber
-      ? hoveredProduct.placement.aisleNumber <= 5
-        ? 1
-        : 2
-      : null);
-  if (prodFloor !== null && prodFloor !== activeFloor) return null;
+  const isFloorMatching =
+    hoveredProduct?.placement?.floorNumber == null ||
+    (hoveredProduct?.placement?.floorNumber ??
+      (hoveredProduct?.placement?.aisleNumber ? (hoveredProduct.placement.aisleNumber <= 5 ? 1 : 2) : 1)) ===
+      activeFloor;
 
-  const activePrice = hoveredProduct.price;
-  const activeMrp = hoveredProduct.mrp || hoveredProduct.price;
+  const isVisible = Boolean(hoveredProduct && isFloorMatching);
+  const displayProd = hoveredProduct || activeProd;
+
+  if (!displayProd) return null;
+
+  const activePrice = displayProd.price;
+  const activeMrp = displayProd.mrp || displayProd.price;
   const hasDiscount = activeMrp > activePrice;
-  const packageSize = hoveredProduct.unit || 'Standard Pack';
-  const categoryName = hoveredProduct.category?.name || 'Sweets & Confectionery';
+  const packageSize = displayProd.unit || 'Standard Pack';
+  const categoryName = displayProd.category?.name || 'Sweets & Confectionery';
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
       showToast(
@@ -45,30 +56,34 @@ export const ProductHoverCard: React.FC = () => {
     }
 
     let startPos: [number, number, number] | undefined = undefined;
-    if (hoveredProduct.placement) {
+    if (displayProd.placement) {
       startPos = [
-        hoveredProduct.placement.worldX,
-        hoveredProduct.placement.worldY + 0.25,
-        hoveredProduct.placement.worldZ,
+        displayProd.placement.worldX,
+        displayProd.placement.worldY + 0.25,
+        displayProd.placement.worldZ,
       ];
     }
 
-    addItem(hoveredProduct, 1, undefined, startPos);
+    addItem(displayProd, 1, undefined, startPos);
   };
 
   return (
     <div
-      onClick={() => openProductModal(hoveredProduct)}
-      className="fixed bottom-6 right-6 z-40 w-84 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] p-4 text-slate-900 transition-all duration-300 ease-out cursor-pointer hover:border-blue-400 hover:shadow-2xl animate-in fade-in slide-in-from-bottom-2 select-none group"
+      onClick={() => openProductModal(displayProd)}
+      className={`fixed bottom-6 right-6 z-40 w-84 bg-white border border-slate-200/90 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] p-4 text-slate-900 transition-all duration-200 ease-out cursor-pointer hover:border-blue-400 hover:shadow-2xl select-none group will-change-[transform,opacity] ${
+        isVisible
+          ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
+          : 'opacity-0 translate-y-3 scale-95 pointer-events-none'
+      }`}
       role="tooltip"
-      aria-label={`Product preview: ${hoveredProduct.name}`}
+      aria-label={`Product preview: ${displayProd.name}`}
     >
       <div className="flex gap-3.5 items-start">
         {/* Product Image */}
         <div className="w-22 h-22 shrink-0 bg-slate-50 rounded-xl p-1.5 flex items-center justify-center border border-slate-100 overflow-hidden shadow-inner">
           <img
-            src={hoveredProduct.imageUrl || '/products/fallback.svg'}
-            alt={hoveredProduct.name}
+            src={displayProd.imageUrl || '/products/fallback.svg'}
+            alt={displayProd.name}
             onError={(e) => {
               (e.target as HTMLImageElement).src = '/products/fallback.svg';
             }}
@@ -80,7 +95,7 @@ export const ProductHoverCard: React.FC = () => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-100">
-              {hoveredProduct.brand}
+              {displayProd.brand}
             </span>
             <span className="text-[10px] font-medium text-slate-500 truncate">
               {categoryName}
@@ -88,7 +103,7 @@ export const ProductHoverCard: React.FC = () => {
           </div>
 
           <h4 className="text-xs font-black text-slate-900 line-clamp-1 leading-snug">
-            {hoveredProduct.name}
+            {displayProd.name}
           </h4>
 
           <div className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -123,7 +138,7 @@ export const ProductHoverCard: React.FC = () => {
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            openProductModal(hoveredProduct);
+            openProductModal(displayProd);
           }}
           className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold p-2 rounded-xl transition-all cursor-pointer"
           title="View product details"
