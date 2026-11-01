@@ -22,6 +22,18 @@ let isBackendOffline = false;
 let lastBackendCheck = 0;
 let cachedBackendProducts: Product[] = [];
 
+if (typeof window !== 'undefined') {
+  try {
+    const saved = localStorage.getItem('martverse_products_cache');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cachedBackendProducts = parsed;
+      }
+    }
+  } catch {}
+}
+
 async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fallback: T): Promise<T> {
   const now = Date.now();
   // Circuit breaker: brief 2s backoff if backend proved unreachable recently

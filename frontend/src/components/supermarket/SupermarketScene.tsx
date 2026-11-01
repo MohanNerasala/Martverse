@@ -18,10 +18,14 @@ export const SupermarketScene: React.FC = () => {
   const setFloors = useMartStore((state) => state.setFloors);
   const setProducts = useMartStore((state) => state.setProducts);
 
-  // Fetch live layout and products from backend on mount and poll for backend reconnection
+  // Fetch live layout and products from backend on mount and poll only if offline
   useEffect(() => {
     let isCancelled = false;
+    let isFetching = false;
+
     async function loadData() {
+      if (isFetching) return;
+      isFetching = true;
       try {
         const [floorsData, productsData] = await Promise.all([
           api.getFloors(),
@@ -30,17 +34,31 @@ export const SupermarketScene: React.FC = () => {
         if (!isCancelled) {
           if (floorsData && floorsData.length > 0) setFloors(floorsData);
           if (productsData && productsData.length > 0) {
-            setProducts(productsData);
+            const currentProds = useMartStore.getState().products;
+            // Only update store if products changed or wasn't set, avoiding heavy Three.js re-renders!
+            if (currentProds.length !== productsData.length || currentProds[0]?.id !== productsData[0]?.id) {
+              setProducts(productsData);
+            }
           }
         }
       } catch {
         // Keep existing loaded state on transient network blip
+      } finally {
+        isFetching = false;
       }
     }
     loadData();
 
-    // Check backend connection every 3s so starting backend in terminal populates shelves immediately
-    const timer = setInterval(loadData, 3000);
+    // Check backend connection:
+    // If products are loaded, keep polling dormant (zero lag & zero FPS drops).
+    // If products are empty (backend was offline), poll every 3s until loaded.
+    const timer = setInterval(() => {
+      const hasProducts = useMartStore.getState().products.length > 0;
+      if (!hasProducts) {
+        loadData();
+      }
+    }, 3000);
+
     return () => {
       isCancelled = true;
       clearInterval(timer);

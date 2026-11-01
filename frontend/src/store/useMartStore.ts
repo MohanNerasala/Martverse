@@ -72,9 +72,22 @@ export const martRuntime = {
   },
 };
 
+function getInitialProducts(): Product[] {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('martverse_products_cache');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+  }
+  return [];
+}
+
 export const useMartStore = create<MartStore>((set) => ({
   floors: MOCK_FLOORS,
-  products: [], // Starts empty — real collection loaded from Spring Boot backend on port 8080
+  products: getInitialProducts(), // Instant 0ms load from persistent cache if available
   activeFloor: 1,
   playerPos: [0, 1.5, -20], // Spawn at Entrance
   playerYaw: 0,
@@ -100,7 +113,14 @@ export const useMartStore = create<MartStore>((set) => ({
   setHasMovedTrolley: (hasMovedTrolley) => set({ hasMovedTrolley }),
 
   setFloors: (floors) => set({ floors }),
-  setProducts: (products) => set({ products }),
+  setProducts: (products) => {
+    if (typeof window !== 'undefined' && products && products.length > 0) {
+      try {
+        localStorage.setItem('martverse_products_cache', JSON.stringify(products));
+      } catch {}
+    }
+    set({ products });
+  },
   setActiveFloor: (floorNumber) => set({ activeFloor: floorNumber, hoveredProduct: null }),
   setPlayerPos: (playerPos, yaw) => {
     martRuntime.playerPos[0] = playerPos[0];
