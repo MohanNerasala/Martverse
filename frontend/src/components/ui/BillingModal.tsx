@@ -227,12 +227,13 @@ export const BillingModal: React.FC = () => {
     };
   }, [customerPhone]);
 
-  // Revalidate with backend
+  // Redirect to dedicated standalone /checkout page when review or checkout phase begins
   useEffect(() => {
     if (phase === 'review' || phase === 'checkout_details' || phase === 'payment_methods') {
       revalidateCartWithBackend('DELIVERY');
+      router.push('/checkout');
     }
-  }, [phase, revalidateCartWithBackend]);
+  }, [phase, router, revalidateCartWithBackend]);
 
   // Trigger celebration confetti on payment success
   useEffect(() => {
@@ -609,10 +610,13 @@ export const BillingModal: React.FC = () => {
 
           {/* 4. Two Options: Instant Checkout and OK */}
           <div className="w-full space-y-1.5 mt-3 pt-2.5 border-t border-slate-100">
-            {/* Option 1: Instant Checkout */}
+            {/* Option 1: Instant Checkout (Direct to standalone /checkout page) */}
             <button
               type="button"
-              onClick={skipToReview}
+              onClick={() => {
+                skipToReview();
+                router.push('/checkout');
+              }}
               className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Zap className="w-3.5 h-3.5 fill-current" />
@@ -865,7 +869,7 @@ export const BillingModal: React.FC = () => {
   // MAIN CHECKOUT PAGE (Single-Page Viewport Layout — No Scroll Needed)
   // ==============================================================
   return (
-    <div className="fixed inset-0 z-50 bg-[#f8fafc] text-slate-900 overflow-y-auto xl:overflow-hidden select-none flex flex-col animate-in fade-in duration-200 relative">
+    <div className="fixed inset-0 z-[9999] w-screen h-screen min-h-screen bg-[#f8fafc] text-slate-900 overflow-y-auto select-none flex flex-col animate-in fade-in duration-200">
       {/* Subtle ambient luxury backdrop glows — 100% opaque to canvas behind */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none -z-10" />

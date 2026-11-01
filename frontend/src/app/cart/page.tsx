@@ -98,8 +98,8 @@ export default function CartPage() {
       openLoginModal('Please sign in to proceed with your shopping checkout.');
       return;
     }
-    // Navigate back to 3D supermarket and open POS billing counter
-    router.push('/?checkout=true');
+    // Navigate directly to dedicated separate Checkout Page
+    router.push('/checkout');
   };
 
   return (

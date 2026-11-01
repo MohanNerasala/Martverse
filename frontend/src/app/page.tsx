@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { SupermarketHUD } from '@/components/ui/SupermarketHUD';
 import { useMartStore } from '@/store/useMartStore';
 import { useCartStore } from '@/store/useCartStore';
@@ -43,6 +44,7 @@ const SupermarketScene = dynamic(
 );
 
 export default function Home() {
+  const router = useRouter();
   const [hasEnteredStore, setHasEnteredStore] = useState(false);
 
   React.useEffect(() => {
@@ -70,12 +72,8 @@ export default function Home() {
 
       const params = new URLSearchParams(window.location.search);
       if (params.get('checkout')) {
-        setHasEnteredStore(true);
-        setTimeout(() => {
-          useMartStore.getState().setPlayerPos([0, 1.5, 15], 0);
-          useMartStore.getState().setCameraMode('billing');
-          useBillingStore.getState().startCheckout(useCartStore.getState().items);
-        }, 600);
+        router.push('/checkout');
+        return;
       }
 
       if (params.get('modal')) {
