@@ -37,78 +37,52 @@ import {
 import confetti from 'canvas-confetti';
 import { api } from '@/lib/api';
 
-// --- Real Authentic SVGs for Payment Providers (Icons Only) ---
-const GooglePayIcon: React.FC<{ className?: string }> = ({ className = 'h-5 w-auto' }) => (
-  <svg className={className} viewBox="0 0 52 20" fill="none">
-    {/* Google 'G' in Official 4 Colors */}
-    <path
-      d="M10.2 10.2c0-.68-.06-1.34-.17-1.97H5.2v3.74h2.82c-.12.66-.49 1.22-.97 1.62v1.35h1.57c.92-.85 1.58-2.1 1.58-4.74z"
-      fill="#4285F4"
-    />
-    <path
-      d="M5.2 15.3c1.38 0 2.54-.46 3.39-1.24l-1.57-1.35c-.46.31-1.05.5-1.82.5-1.4 0-2.58-.95-3.01-2.22H.55v1.4c.86 1.72 2.63 2.91 4.65 2.91z"
-      fill="#34A853"
-    />
-    <path
-      d="M2.19 10.99c-.11-.33-.18-.68-.18-1.04 0-.36.07-.71.18-1.04V7.51H.55C.2 8.21 0 9.01 0 9.95s.2 1.74.55 2.44l1.64-1.4z"
-      fill="#FBBC05"
-    />
-    <path
-      d="M5.2 4.59c.75 0 1.43.26 1.96.77l1.47-1.47C7.74 3.06 6.58 2.5 5.2 2.5c-2.02 0-3.79 1.19-4.65 2.91l1.64 1.4c.43-1.27 1.61-2.22 3.01-2.22z"
-      fill="#EA4335"
-    />
-    {/* 'Pay' in Google Slate #5F6368 */}
-    <path
-      d="M14.8 15V6.8h2.6c1.5 0 2.6 1.1 2.6 2.6s-1.1 2.6-2.6 2.6h-1.3V15h-1.3zm1.3-4.2h1.3c.8 0 1.3-.5 1.3-1.3s-.5-1.3-1.3-1.3h-1.3v2.6z"
-      fill="#5F6368"
-    />
-    <path
-      d="M23.8 15v-.9c-.5.6-1.2 1-2 1-1.3 0-2.3-1-2.3-2.3 0-1.4 1-2.3 2.3-2.3.8 0 1.4.3 1.9.9v-.9h1.3V15h-1.2zm-.1-2.2c0-.6-.5-1.2-1.3-1.2s-1.3.5-1.3 1.2.5 1.2 1.3 1.2 1.3-.5 1.3-1.2z"
-      fill="#5F6368"
-    />
-    <path
-      d="M30.4 17.1l-1.1-3.1-2-4.8h1.3l1.4 3.5 1.4-3.5h1.3l-3.5 7.9h-1.3z"
-      fill="#5F6368"
-    />
+// --- Real Authentic SVGs for Payment Providers (Official Logos & Icons) ---
+const GooglePayIcon: React.FC<{ className?: string }> = ({ className = 'h-5.5 w-auto' }) => (
+  <svg className={className} viewBox="0 0 62 22" fill="none">
+    {/* Official Google 4-Color 'G' Logo */}
+    <g transform="translate(1, 1)">
+      <path d="M19.6 10.2c0-.7-.06-1.4-.18-2H10v3.9h5.4c-.2 1.3-.9 2.4-2 3.1v2.6h3.2c1.9-1.8 3-4.4 3-7.6z" fill="#4285F4" />
+      <path d="M10 20c2.7 0 5-1 6.6-2.6l-3.2-2.6c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.2H1.1v2.6C2.8 17.6 6.1 20 10 20z" fill="#34A853" />
+      <path d="M4.4 11.6c-.2-.6-.3-1.4-.3-2.1s.1-1.4.3-2.1V4.8H1.1C.4 6.2 0 7.8 0 9.5s.4 3.3 1.1 4.7l3.3-2.6z" fill="#FBBC05" />
+      <path d="M10 4c1.5 0 2.8.5 3.8 1.5l2.9-2.9C15 1 12.7 0 10 0 6.1 0 2.8 2.4 1.1 5.8l3.3 2.6C5.2 6 7.4 4 10 4z" fill="#EA4335" />
+    </g>
+    {/* Official 'Pay' in Google Slate #3C4043 */}
+    <g transform="translate(26, 3)" fill="#3C4043">
+      <path d="M1.8 15V2h4.2c2.2 0 3.8 1.6 3.8 3.8s-1.6 3.8-3.8 3.8H4v5.4H1.8zm2.2-7.2h2c1 0 1.8-.8 1.8-1.8s-.8-1.8-1.8-1.8H4v3.6z" />
+      <path d="M14.5 15.2c-1 0-1.8-.4-2.4-1.1v.9h-2.1V6.5h2.1v.9c.6-.7 1.4-1.1 2.4-1.1 1.8 0 3.2 1.6 3.2 4.4 0 2.8-1.4 4.5-3.2 4.5zm-.4-2c1 0 1.8-.9 1.8-2.4s-.8-2.4-1.8-2.4-1.8.9-1.8 2.4.8 2.4 1.8 2.4z" />
+      <path d="M22.5 18.2l-1.4-3.5-3-7.7h2.2l1.8 5.2 1.8-5.2h2.2l-4.2 11.2h-2.2v-.2z" />
+    </g>
   </svg>
 );
 
-const PhonePeIcon: React.FC<{ className?: string }> = ({ className = 'h-6 w-auto' }) => (
-  <svg className={className} viewBox="0 0 76 76" fill="none">
-    <rect width="76" height="76" rx="18" fill="#5f259f" />
-    <path
-      d="M46.2 24H33.5c-1.4 0-2.5 1.1-2.5 2.5v25.2c0 1.4 1.1 2.5 2.5 2.5h3.6c1.4 0 2.5-1.1 2.5-2.5V44.8h6.6c6.6 0 11.2-4.7 11.2-10.4 0-5.6-4.6-10.4-11.2-10.4zm-.2 14.5h-6.4v-8.3H46c3.2 0 5.1 1.7 5.1 4.1 0 2.5-1.9 4.2-5.1 4.2z"
-      fill="white"
-    />
-    <path d="M25 32h5v5h-5z" fill="white" />
+const PhonePeIcon: React.FC<{ className?: string }> = ({ className = 'h-7 w-auto' }) => (
+  <svg className={className} viewBox="0 0 40 40" fill="none">
+    {/* Official PhonePe Deep Purple Squircle */}
+    <rect width="40" height="40" rx="10" fill="#5F259F" />
+    {/* Authentic Official Devanagari 'पे' (Pe) Glyph in Crisp White */}
+    <g fill="#FFFFFF">
+      {/* Shirorekha (Top Horizontal Headline) */}
+      <rect x="9.5" y="11.5" width="20" height="3.2" rx="1" />
+      {/* Vertical Main Stem */}
+      <rect x="22.2" y="11.5" width="3.4" height="19.5" rx="1" />
+      {/* 'प' Left Loop */}
+      <path d="M13.5 14v6.2c0 3.8 2.8 6.5 6.6 6.5h2.1V23.5h-2c-2 0-3.3-1.3-3.3-3.3V14h-3.4z" />
+      {/* 'े' (Matra) Top Slanted Loop */}
+      <path d="M22.5 12.2c-.8-2.6-2.5-4.6-4.8-5.4-1.8-.6-3.2-.2-3.8.9-.6 1.1-.3 2.5 1 3.5 1.4 1.1 3.2 1.4 4.8 1.4l2.8-.4zm-3-2.6c-.7-.5-.9-1.2-.6-1.7.3-.5.9-.6 1.8-.3 1.2.4 2.2 1.5 2.6 2.8-1.5 0-2.8-.2-3.8-.8z" />
+    </g>
   </svg>
 );
 
-const PaytmIcon: React.FC<{ className?: string }> = ({ className = 'h-5 w-auto' }) => (
-  <svg className={className} viewBox="0 0 88 26" fill="none">
-    {/* Official Two-Tone Paytm Logo Wordmark */}
-    <text
-      x="0"
-      y="20"
-      fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-      fontWeight="900"
-      fontSize="22"
-      fill="#002e6e"
-      letterSpacing="-0.8"
-    >
-      Pay
-    </text>
-    <text
-      x="43"
-      y="20"
-      fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-      fontWeight="900"
-      fontSize="22"
-      fill="#00b9f5"
-      letterSpacing="-0.3"
-    >
-      tm
-    </text>
+const PaytmIcon: React.FC<{ className?: string }> = ({ className = 'h-5.5 w-auto' }) => (
+  <svg className={className} viewBox="0 0 82 22" fill="none">
+    {/* Authentic Paytm Wordmark: Navy 'Pay' + Cyan 'tm' */}
+    <path d="M4 3.5h5.5c3.5 0 6 2.2 6 5.5s-2.5 5.5-6 5.5H7.5V20H4V3.5zm3.5 8h1.8c1.8 0 2.8-1 2.8-2.5s-1-2.5-2.8-2.5H7.5v5z" fill="#002970" />
+    <path d="M23.5 15.5c0 1.5-.8 2.5-2.2 2.5-1.2 0-1.8-.7-1.8-1.8 0-1.5 1.2-2.2 3-2.4l1-.1v1.8zm0-3.2c-2 0-5.5.5-5.5 3.8 0 2.5 1.8 3.8 3.8 3.8 1.8 0 3-.8 3.6-1.8V20h3.2v-8c0-3-2-4.2-4.8-4.2-2.8 0-4.5 1.4-4.8 3.2l2.8.6c.2-.8 1-1.4 2.2-1.4 1.4 0 2.2.8 2.2 2v.8h-2.7z" fill="#002970" />
+    <path d="M30.5 8l3.2 8.5 3.2-8.5h3.6l-5.2 12.5c-1.2 3-2.8 4.2-5.5 4.2-.8 0-1.8-.2-2.2-.4l.8-2.5c.3.2 1 .3 1.5.3 1.4 0 2.2-.7 2.8-2.2l.4-.9-4.8-11h3.6v-.5z" fill="#002970" />
+    {/* tm in #00BAF2 */}
+    <path d="M44.5 4.5h7.2V7H48v13h-3.2V7h-2.8V4.5z" fill="#00BAF2" />
+    <path d="M53.5 8h3v1.8c.8-1.3 2.2-2 3.8-2 1.8 0 3 .8 3.6 2.1.8-1.3 2.2-2.1 3.8-2.1 2.8 0 4.2 1.8 4.2 4.8V20h-3.2v-6.8c0-1.5-.6-2.2-1.8-2.2-1.2 0-2 .8-2 2.4V20h-3.2v-6.8c0-1.5-.6-2.2-1.8-2.2-1.2 0-2 .8-2 2.4V20h-3.2V8z" fill="#00BAF2" />
   </svg>
 );
 
@@ -891,24 +865,29 @@ export const BillingModal: React.FC = () => {
   // MAIN CHECKOUT PAGE (Single-Page Viewport Layout — No Scroll Needed)
   // ==============================================================
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-100/90 via-slate-50 to-blue-50/40 text-slate-900 overflow-y-auto xl:overflow-hidden select-none flex flex-col animate-in fade-in duration-200">
-      {/* --- Top Luxury Executive Header (Rich Dark Theme with Shimmering Light Blue to White Title) --- */}
-      <header className="flex-shrink-0 bg-slate-950/95 backdrop-blur-xl border-b border-slate-800/90 px-4 sm:px-6 py-2.5 shadow-[0_4px_25px_rgba(0,0,0,0.3)]">
+    <div className="fixed inset-0 z-50 bg-[#f8fafc] text-slate-900 overflow-y-auto xl:overflow-hidden select-none flex flex-col animate-in fade-in duration-200 relative">
+      {/* Subtle ambient luxury backdrop glows — 100% opaque to canvas behind */}
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      {/* --- Top Glassy Luxury Executive Header (Glassmorphic Hero-Style Navbar) --- */}
+      <header className="flex-shrink-0 sticky top-0 z-30 bg-slate-950/85 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-6 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.35)] flex-shrink-0">
-              <Store className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 text-white flex items-center justify-center shadow-[0_0_20px_rgba(56,189,248,0.45)] border border-white/20 flex-shrink-0 transform hover:scale-105 transition-transform">
+              <Store className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xs sm:text-sm tracking-tight font-black uppercase text-light-blue-white-shimmer font-sans">
-                  MARTVERSE POS BILLING
+                <h1 className="text-sm sm:text-base tracking-tight font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-200 to-white font-sans drop-shadow-sm">
+                  MARTVERSE EXPRESS BILLING
                 </h1>
-                <span className="text-[9px] bg-sky-950/90 border border-sky-400/40 text-sky-300 font-bold px-2 py-0.5 rounded-full font-mono shadow-[0_0_10px_rgba(56,189,248,0.25)]">
+                <span className="text-[10px] bg-sky-950/90 border border-sky-400/50 text-sky-300 font-extrabold px-2.5 py-0.5 rounded-full font-mono shadow-[0_0_12px_rgba(56,189,248,0.35)] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
                   LANE 02
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium leading-none mt-0.5">
+              <p className="text-[11px] text-slate-300 font-medium leading-none mt-1">
                 Official In-Store Express Checkout & Invoice
               </p>
             </div>
@@ -918,9 +897,9 @@ export const BillingModal: React.FC = () => {
             type="button"
             onClick={handleCancelBilling}
             title="Return to Supermarket Aisle"
-            className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 border border-slate-700/80 hover:border-slate-500 shadow-xs"
+            className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-2 transition-all duration-200 cursor-pointer active:scale-95 border border-white/15 hover:border-white/30 backdrop-blur-md shadow-sm"
           >
-            <RotateCcw className="w-3 h-3 text-slate-400" />
+            <RotateCcw className="w-3.5 h-3.5 text-sky-300" />
             <span>Back to Store</span>
           </button>
         </div>
@@ -934,7 +913,7 @@ export const BillingModal: React.FC = () => {
           {/* ============================================================== */}
           <div className="lg:col-span-7 space-y-2.5">
             {/* 1. DELIVERY ADDRESS SECTION (Compact BigBasket Style) */}
-            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-3 sm:p-3.5 space-y-2">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-3 sm:p-3.5 space-y-2">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
@@ -1224,7 +1203,7 @@ export const BillingModal: React.FC = () => {
             </div>
 
             {/* 2. CUSTOMER CONTACT DETAILS (Compact) */}
-            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-2.5 sm:p-3 space-y-1.5">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-2.5 sm:p-3 space-y-1.5">
               <div className="flex items-center justify-between pb-1 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
@@ -1269,7 +1248,7 @@ export const BillingModal: React.FC = () => {
             </div>
 
             {/* 3. PAYMENT METHOD (Compact Tabs: UPI, Card, Cash on Delivery) */}
-            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-2.5 sm:p-3.5 space-y-2">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-2.5 sm:p-3.5 space-y-2">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
@@ -1309,50 +1288,51 @@ export const BillingModal: React.FC = () => {
                 })}
               </div>
 
-              {/* Sub-view: UPI (3 Real Brand Icons Only — No Names, No UPI ID Row) */}
+              {/* Sub-view: UPI (3 Real Brand Icons Only — Official Logos) */}
               {selectedPaymentMethod === 'UPI' && (
                 <div className="bg-slate-50/70 rounded-xl p-2.5 border border-slate-200/80 animate-in fade-in duration-150">
                   <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                    {/* PhonePe Option (Real Icon Only) */}
+                    {/* PhonePe Option (Real Icon + Brand) */}
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('PHONEPE')}
                       title="PhonePe"
-                      className={`h-11 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                      className={`h-11 rounded-xl border flex items-center justify-center gap-2 px-2 sm:px-3 transition-all duration-200 cursor-pointer active:scale-95 ${
                         selectedUpiApp === 'PHONEPE'
-                          ? 'bg-purple-50/90 border-purple-600 ring-2 ring-purple-600/40 shadow-xs scale-[1.02]'
-                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 active:scale-95'
+                          ? 'bg-purple-50/90 border-[#5F259F] ring-2 ring-[#5F259F]/30 shadow-xs scale-[1.02]'
+                          : 'bg-white border-slate-200 hover:border-[#5F259F]/40 hover:bg-purple-50/30'
                       }`}
                     >
-                      <PhonePeIcon className="h-6 w-auto" />
+                      <PhonePeIcon className="h-6.5 w-auto" />
+                      <span className="text-xs font-extrabold text-[#5F259F] tracking-tight">PhonePe</span>
                     </button>
 
-                    {/* Paytm Option (Real Icon Only) */}
+                    {/* Paytm Option (Authentic Wordmark) */}
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('PAYTM')}
                       title="Paytm"
-                      className={`h-11 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                      className={`h-11 rounded-xl border flex items-center justify-center px-2 sm:px-3 transition-all duration-200 cursor-pointer active:scale-95 ${
                         selectedUpiApp === 'PAYTM'
-                          ? 'bg-sky-50/90 border-sky-600 ring-2 ring-sky-600/40 shadow-xs scale-[1.02]'
-                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 active:scale-95'
+                          ? 'bg-sky-50/90 border-[#00BAF2] ring-2 ring-[#00BAF2]/30 shadow-xs scale-[1.02]'
+                          : 'bg-white border-slate-200 hover:border-[#00BAF2]/40 hover:bg-sky-50/30'
                       }`}
                     >
-                      <PaytmIcon className="h-5 w-auto" />
+                      <PaytmIcon className="h-5.5 w-auto" />
                     </button>
 
-                    {/* Google Pay Option (Real Icon Only) */}
+                    {/* Google Pay Option (Official 4-Color G + Pay) */}
                     <button
                       type="button"
                       onClick={() => setSelectedUpiApp('GPAY')}
-                      title="Google Pay (GPay)"
-                      className={`h-11 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                      title="Google Pay"
+                      className={`h-11 rounded-xl border flex items-center justify-center px-2 sm:px-3 transition-all duration-200 cursor-pointer active:scale-95 ${
                         selectedUpiApp === 'GPAY'
-                          ? 'bg-blue-50/90 border-blue-600 ring-2 ring-blue-600/40 shadow-xs scale-[1.02]'
-                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 active:scale-95'
+                          ? 'bg-blue-50/90 border-blue-600 ring-2 ring-blue-600/30 shadow-xs scale-[1.02]'
+                          : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50/30'
                       }`}
                     >
-                      <GooglePayIcon className="h-5 w-auto" />
+                      <GooglePayIcon className="h-5.5 w-auto" />
                     </button>
                   </div>
                 </div>
@@ -1449,7 +1429,7 @@ export const BillingModal: React.FC = () => {
           {/* ============================================================== */}
           <div className="lg:col-span-5 space-y-2.5">
             {/* Scanned Items Card (Compact) */}
-            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-3 sm:p-3.5 space-y-1.5">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-3 sm:p-3.5 space-y-1.5">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-1.5">
                   <Barcode className="w-3.5 h-3.5 text-blue-600" />
@@ -1488,23 +1468,23 @@ export const BillingModal: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <div className="flex items-center bg-slate-100 rounded-md p-0.5 border border-slate-200/80">
+                      <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200/80">
                         <button
                           type="button"
                           onClick={() => updateScannedItemQuantity(item.id, item.quantity - 1)}
-                          className="w-4 h-4 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-black transition-all cursor-pointer active:scale-90"
+                          className="w-5 h-5 rounded-md flex items-center justify-center text-slate-600 hover:bg-white hover:text-black hover:shadow-2xs transition-all cursor-pointer active:scale-90"
                         >
-                          <Minus className="w-2 h-2" />
+                          <Minus className="w-2.5 h-2.5" />
                         </button>
-                        <span className="w-4 text-center font-mono font-bold text-slate-900 text-[11px]">
+                        <span className="w-5 text-center font-mono font-bold text-slate-900 text-[11px]">
                           {item.quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => updateScannedItemQuantity(item.id, item.quantity + 1)}
-                          className="w-4 h-4 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-black transition-all cursor-pointer active:scale-90"
+                          className="w-5 h-5 rounded-md flex items-center justify-center text-slate-600 hover:bg-white hover:text-black hover:shadow-2xs transition-all cursor-pointer active:scale-90"
                         >
-                          <Plus className="w-2 h-2" />
+                          <Plus className="w-2.5 h-2.5" />
                         </button>
                       </div>
 
@@ -1515,10 +1495,10 @@ export const BillingModal: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => removeScannedItem(item.id)}
-                        className="text-slate-400 hover:text-rose-600 p-0.5 rounded transition-colors cursor-pointer"
+                        className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1 rounded-md transition-all cursor-pointer active:scale-90"
                         title="Remove item"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -1527,7 +1507,7 @@ export const BillingModal: React.FC = () => {
             </div>
 
             {/* Bill Summary & Calculations (Compact) */}
-            <div className="bg-white/95 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow p-3 sm:p-3.5 space-y-2">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-3 sm:p-3.5 space-y-2">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-1.5">
                   <Receipt className="w-3.5 h-3.5 text-emerald-600" />
@@ -1617,9 +1597,9 @@ export const BillingModal: React.FC = () => {
                 type="button"
                 onClick={handleProceedToPay}
                 disabled={!isFormValid || isButtonDisabled}
-                className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 select-none ${
+                className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider transition-all duration-300 select-none ${
                   isFormValid && !isButtonDisabled
-                    ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 text-white shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 cursor-pointer active:scale-98'
+                    ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-700 hover:via-indigo-700 hover:to-sky-700 text-white shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/35 hover:scale-[1.01] cursor-pointer active:scale-98'
                     : 'bg-slate-100 text-slate-400 border border-slate-200/90 cursor-not-allowed opacity-75 shadow-none'
                 }`}
               >
