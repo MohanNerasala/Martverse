@@ -318,61 +318,43 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         </header>
 
         {/* ============================================================== */}
-        {/* CENTER HERO DISPLAY: Perfect Screen Center Cinematic Showcase  */}
+        {/* CENTER DISPLAY: Two Floating Pure Lines (No Box) Light Blue Pass */}
         {/* ============================================================== */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center text-center pointer-events-none w-full max-w-xl px-5">
-          <div className="relative w-full px-8 py-8 sm:px-12 sm:py-10 rounded-[2.5rem] bg-black/55 backdrop-blur-2xl border border-white/20 shadow-[0_30px_70px_rgba(0,0,0,0.7)] flex flex-col items-center">
-            {/* Ambient Backlight Glow */}
-            <div className="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-r from-blue-500/20 via-cyan-400/25 to-emerald-400/20 blur-2xl -z-10 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center text-center pointer-events-none w-full max-w-4xl px-6">
+          {/* Big Line 1: MARTVERSE with Light Blue to White Passing Shimmer */}
+          <h1 className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tight uppercase select-none leading-none drop-shadow-[0_15px_40px_rgba(0,0,0,0.95)]">
+            <span className="animate-light-blue-pass inline-block">
+              MARTVERSE
+            </span>
+          </h1>
 
-            {/* Category Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-black uppercase tracking-widest text-cyan-300 shadow-sm mb-3">
-              <Store className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Virtual 3D Supermarket</span>
+          {/* Line 2: Elegant Content Line with Light Blue to White Passing Wave */}
+          <p className="mt-3 sm:mt-5 text-sm sm:text-2xl md:text-3xl font-bold tracking-widest uppercase select-none drop-shadow-[0_8px_30px_rgba(0,0,0,0.95)]">
+            <span className="animate-light-blue-subpass inline-block">
+              Virtual 3D Supermarket • Scroll to Enter
+            </span>
+          </p>
+
+          {/* Minimalist Scroll Cue & Slender Progress Line (Zero Box, Pure Floating) */}
+          <div className="mt-6 flex flex-col items-center gap-2 opacity-90 drop-shadow-[0_4px_15px_rgba(0,0,0,0.9)]">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold tracking-widest uppercase text-sky-200">
+              <Mouse className="w-3.5 h-3.5 text-sky-300 animate-pulse" />
+              <span>Scroll to Explore</span>
+              <ChevronDown className="w-3.5 h-3.5 text-sky-300 animate-bounce" />
             </div>
 
-            {/* Big Line 1: MARTVERSE */}
-            <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)] uppercase select-none leading-none">
-              MART<span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">VERSE</span>
-            </h1>
-
-            {/* Line 2: Content Subtitle */}
-            <p className="mt-3 text-xs sm:text-sm text-slate-200/90 font-medium tracking-wide max-w-md drop-shadow">
-              India&apos;s first immersive 3D hypermarket — walk the aisles, pick fresh groceries &amp; experience seamless shopping.
-            </p>
-
-            {/* 2 Small Healthy / Fresh Tags */}
-            <div className="flex flex-wrap items-center justify-center gap-2.5 mt-5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 backdrop-blur-xl text-emerald-300 text-xs font-bold tracking-wide shadow-lg shadow-emerald-950/40">
-                <span className="text-sm">🥬</span>
-                <span>100% Farm Fresh &amp; Healthy Living</span>
-              </div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 backdrop-blur-xl text-cyan-300 text-xs font-bold tracking-wide shadow-lg shadow-cyan-950/40">
-                <span className="text-sm">✨</span>
-                <span>Interactive 3D Walk &amp; Shop</span>
-              </div>
+            {/* Slender 2px Glowing Track */}
+            <div className="w-40 sm:w-56 h-1 rounded-full bg-white/20 overflow-hidden shadow-inner mt-0.5">
+              <div
+                ref={progressBarRef}
+                className="h-full rounded-full bg-gradient-to-r from-sky-400 via-white to-sky-300 shadow-sm shadow-sky-300/80 transition-all duration-75"
+                style={{ width: '2%' }}
+              />
             </div>
 
-            {/* Minimalist Scroll Cue & Frame Progress */}
-            <div className="mt-6 flex flex-col items-center gap-2 w-full max-w-xs">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-xs font-semibold tracking-wider uppercase shadow-md animate-pulse">
-                <Mouse className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Scroll Down to Enter</span>
-                <ChevronDown className="w-3.5 h-3.5 text-cyan-400 animate-bounce" />
-              </div>
-
-              <div className="w-full h-1.5 rounded-full bg-white/15 overflow-hidden border border-white/20 mt-1">
-                <div
-                  ref={progressBarRef}
-                  className="h-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 shadow-sm shadow-cyan-400/80 transition-all duration-75"
-                  style={{ width: '2%' }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between w-full text-[11px] font-mono text-slate-300/80 px-1">
-                <span ref={frameCounterRef}>FRAME 001 / {TOTAL_FRAMES}</span>
-                <span ref={percentTextRef}>0%</span>
-              </div>
+            <div className="flex items-center justify-between w-40 sm:w-56 text-[10px] font-mono font-bold text-sky-200/80 px-1">
+              <span ref={frameCounterRef}>FRAME 001 / {TOTAL_FRAMES}</span>
+              <span ref={percentTextRef}>0%</span>
             </div>
           </div>
         </div>
