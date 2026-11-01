@@ -6,3 +6,4 @@ echo ========================================================
 cd /d "%~dp0backend"
 mvn spring-boot:run
 pause
+

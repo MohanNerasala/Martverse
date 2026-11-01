@@ -29,15 +29,35 @@ public class ProductService {
     private final ProductVariantRepository variantRepository;
     private final InventoryRepository inventoryRepository;
 
+    private volatile List<ProductDto.ProductResponse> cachedProductsList = null;
+    private volatile long lastCacheTime = 0;
+    private static final long CACHE_DURATION_MS = 120_000; // 2 minutes
+
+    public void invalidateProductCache() {
+        this.cachedProductsList = null;
+        this.lastCacheTime = 0;
+    }
+
     public ProductDto.PagedResponse<ProductDto.ProductResponse> getAllProducts(Pageable pageable) {
         Page<Product> page = productRepository.findByActiveTrue(pageable);
         return toPagedResponse(page);
     }
 
     public List<ProductDto.ProductResponse> getAllActiveProductsList() {
-        return productRepository.findAllActiveWithCategory().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        if (cachedProductsList != null && (System.currentTimeMillis() - lastCacheTime) < CACHE_DURATION_MS) {
+            return cachedProductsList;
+        }
+        synchronized (this) {
+            if (cachedProductsList != null && (System.currentTimeMillis() - lastCacheTime) < CACHE_DURATION_MS) {
+                return cachedProductsList;
+            }
+            List<ProductDto.ProductResponse> result = productRepository.findAllActiveWithCategory().stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+            cachedProductsList = result;
+            lastCacheTime = System.currentTimeMillis();
+            return result;
+        }
     }
 
     public ProductDto.ProductResponse getProductById(String id) {

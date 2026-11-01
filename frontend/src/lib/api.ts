@@ -41,7 +41,7 @@ async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fall
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout for WAN pooler
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout for WAN pooler
     const res = await fetch(`${API_BASE}${url}`, {
       ...options,
       headers,
@@ -72,8 +72,8 @@ export const api = {
   async checkBackendHealth(): Promise<boolean> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const res = await fetch(`${API_BASE}/products/all`, { signal: controller.signal });
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`${API_BASE}/categories`, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
         isBackendOffline = false;
@@ -88,7 +88,7 @@ export const api = {
   async getProducts(): Promise<Product[]> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s generous window for remote DB
       const res = await fetch(`${API_BASE}/products/all`, {
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
