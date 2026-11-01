@@ -237,10 +237,8 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     }
     basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 12, delta);
 
-    // Ultra-smooth zero-lag follow: Cart firmly locked to player hands with silky 75Hz interpolation
-    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 75, delta);
-    currentPos.current.y = desiredY - basketBump.current;
-    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 75, delta);
+    // Instant zero-lag follow: Cart firmly locked to player hands at all times
+    currentPos.current.set(desiredX, desiredY - basketBump.current, desiredZ);
 
     // Calculate forward motion direction relative to trolley heading
     const prevP = prevTrolleyPos.current;
@@ -272,9 +270,8 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     trolleyRef.current.position.copy(currentPos.current);
     trolleyRef.current.rotation.y = actualYaw + Math.PI;
 
-    // Subtle realistic inertial banking on turns
-    const rollTilt = THREE.MathUtils.clamp(-turningRate * 0.02, -0.04, 0.04);
-    trolleyRef.current.rotation.z = THREE.MathUtils.damp(trolleyRef.current.rotation.z, rollTilt, 16, delta);
+    // Keep trolley completely level and stable on the floor (no tilt/dimension distortions)
+    trolleyRef.current.rotation.z = 0;
 
     // Update wheel rotations
     if (frontLeftWheelRef.current) frontLeftWheelRef.current.rotation.x = wheelRollRef.current;

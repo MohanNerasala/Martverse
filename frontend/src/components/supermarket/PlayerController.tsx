@@ -497,51 +497,35 @@ export const PlayerController: React.FC = () => {
         finishExitAnimation();
       }
     } else {
+      // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation (only mouse-look modifies target angles)
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 75, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 75, delta);
+
+      const speed = 14.5; // Fast, responsive, ultra-smooth movement speed
+      staticMoveVector.set(0, 0, 0);
+
       const isLeft = keys.current.left || martRuntime.virtualKeys.left;
       const isRight = keys.current.right || martRuntime.virtualKeys.right;
       const isForward = keys.current.forward || martRuntime.virtualKeys.forward;
       const isBackward = keys.current.backward || martRuntime.virtualKeys.backward;
 
-      // Escalator yaw containment: prevent turning sideways on moving ramp
-      const onRamp =
-        Math.abs(posRef.current.x - 14.7) < 1.4 &&
-        posRef.current.z >= -9.0 &&
-        posRef.current.z <= 7.0;
-
-      if (!onRamp) {
-        // High-precision agile steering: smoothly rotates trolley and camera heading into the turn
-        const turnSpeed = (isForward || isBackward) ? 3.0 : 2.5; // rad/s (snappy, ultra-responsive)
-        if (isLeft) {
-          targetYawRef.current += turnSpeed * delta;
-        }
-        if (isRight) {
-          targetYawRef.current -= turnSpeed * delta;
-        }
-      }
-
-      // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 65, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 65, delta);
-
-      staticMoveVector.set(0, 0, 0);
-
-      // 1. Forward & Backward motion
+      // 1. Forward & Backward motion (Up / Down Arrows)
       if (isForward) staticMoveVector.z += 1;
       if (isBackward) staticMoveVector.z -= 1;
 
-      // 2. Lateral side-step & quick lane adjustments (Left & Right)
-      if (isLeft) staticMoveVector.x -= 0.85;
-      if (isRight) staticMoveVector.x += 0.85;
+      // 2. Lateral side motion (Left Arrow -> Left side, Right Arrow -> Right side)
+      if (isLeft) staticMoveVector.x -= 1;
+      if (isRight) staticMoveVector.x += 1;
 
       // 3. Two-Finger Trackpad / Mouse Scroll Momentum
       staticMoveVector.z += wheelMomentum.current.z;
       staticMoveVector.x += wheelMomentum.current.x;
 
       // Smoothly damp wheel momentum
-      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 20, delta);
-      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 20, delta);
+      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 16, delta);
+      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 16, delta);
 
-      const isMoving = staticMoveVector.lengthSq() > 0.001 || isLeft || isRight;
+      const isMoving = staticMoveVector.lengthSq() > 0.001;
       if (isMoving) {
         if (!hasMovedTrolley) {
           setHasMovedTrolley(true);
@@ -551,19 +535,16 @@ export const PlayerController: React.FC = () => {
         }
       }
 
-      // Dedicated forward and lateral agility speeds: fast traversal with fully controlled lane shifts
-      const forwardSpeed = 11.5;
-      const lateralSpeed = 8.5;
-
       // Camera-relative velocity projection:
       // Forward vector F = (sin(yaw), 0, cos(yaw))
       // Right vector R = (-cos(yaw), 0, sin(yaw))
+      // Pressing Left Arrow moves Left Side, Pressing Right Arrow moves Right Side without rotating perspective
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
-      const targetVelX = -staticMoveVector.x * cos * lateralSpeed + staticMoveVector.z * sin * forwardSpeed;
-      const targetVelZ = staticMoveVector.x * sin * lateralSpeed + staticMoveVector.z * cos * forwardSpeed;
+      const targetVelX = (-staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
+      const targetVelZ = (staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 85 : 65; // Instant 1-frame acceleration, crisp butter-smooth stop
+      const accelRate = isMoving ? 75 : 55;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
