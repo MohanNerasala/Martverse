@@ -29,6 +29,9 @@ interface MartStore {
   // Toast Notification
   toast: { id: string; title: string; subtitle?: string; type: 'success' | 'warning' | 'info'; imageUrl?: string } | null;
 
+  hasEnteredStore: boolean;
+  setHasEnteredStore: (entered: boolean) => void;
+
   hasMovedTrolley: boolean;
   setHasMovedTrolley: (hasMoved: boolean) => void;
 
@@ -97,6 +100,9 @@ export const useMartStore = create<MartStore>((set) => ({
   completedOrderNumber: null,
   unpaidExitAlertOpen: false,
   toast: null,
+
+  hasEnteredStore: false,
+  setHasEnteredStore: (hasEnteredStore) => set({ hasEnteredStore }),
 
   setHasMovedTrolley: (hasMovedTrolley) => set({ hasMovedTrolley }),
 

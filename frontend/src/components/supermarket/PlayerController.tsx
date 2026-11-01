@@ -171,6 +171,7 @@ export const PlayerController: React.FC = () => {
   const activeFloor = useMartStore((state) => state.activeFloor);
   const cameraMode = useMartStore((state) => state.cameraMode);
   const products = useMartStore((state) => state.products);
+  const hasEnteredStore = useMartStore((state) => state.hasEnteredStore);
   const setActiveFloor = useMartStore((state) => state.setActiveFloor);
   const setProximity = useMartStore((state) => state.setProximity);
   const openProductModal = useMartStore((state) => state.openProductModal);
@@ -204,6 +205,30 @@ export const PlayerController: React.FC = () => {
     nearExit: boolean;
     prompt: string | null;
   }>({ nearBilling: false, nearExit: false, prompt: null });
+
+  // Strict trolley freeze & position lock at entrance during cinematic intro
+  useEffect(() => {
+    posRef.current.set(0, 1.5, -20);
+    velocityRef.current = { x: 0, z: 0 };
+    wheelMomentum.current = { x: 0, z: 0 };
+    yawRef.current = 0;
+    pitchRef.current = 0;
+    targetYawRef.current = 0;
+    targetPitchRef.current = 0;
+    currentLookTarget.current.set(0, 1.85, -17.7);
+    martRuntime.playerPos[0] = 0;
+    martRuntime.playerPos[1] = 1.5;
+    martRuntime.playerPos[2] = -20;
+    martRuntime.playerYaw = 0;
+    keys.current = {
+      forward: false,
+      backward: false,
+      left: false,
+      right: false,
+      interact: false,
+      sprint: false,
+    };
+  }, [hasEnteredStore]);
 
   // Handle Reset to Original State & Starting Position (Entrance)
   useEffect(() => {
@@ -242,7 +267,8 @@ export const PlayerController: React.FC = () => {
   // Keyboard events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't capture keys if typing in an input field
+      // Do not capture any keys if cinematic intro is active or typing in input
+      if (!useMartStore.getState().hasEnteredStore) return;
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
 
       switch (e.code) {
@@ -280,6 +306,7 @@ export const PlayerController: React.FC = () => {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (!useMartStore.getState().hasEnteredStore) return;
       switch (e.code) {
         case 'KeyW':
         case 'ArrowUp':
@@ -308,6 +335,7 @@ export const PlayerController: React.FC = () => {
     };
 
     const handleMouseDown = (e: MouseEvent) => {
+      if (!useMartStore.getState().hasEnteredStore) return;
       if (e.button === 0) {
         isDragging.current = true;
         prevMouse.current = { x: e.clientX, y: e.clientY };
@@ -318,6 +346,7 @@ export const PlayerController: React.FC = () => {
     };
 
     const handleMouseMove = (e: MouseEvent) => {
+      if (!useMartStore.getState().hasEnteredStore) return;
       const dx = e.clientX - prevMouse.current.x;
       const dy = e.clientY - prevMouse.current.y;
       prevMouse.current = { x: e.clientX, y: e.clientY };
@@ -355,11 +384,14 @@ export const PlayerController: React.FC = () => {
     };
 
     const handleMouseUp = (e: MouseEvent) => {
+      if (!useMartStore.getState().hasEnteredStore) return;
       if (e.button === 0) isDragging.current = false;
       if (e.button === 2) isRightDragging.current = false;
     };
 
     const handleWheel = (e: WheelEvent) => {
+      // Trolley NEVER moves from wheel while cinematic intro is active
+      if (!useMartStore.getState().hasEnteredStore) return;
       const target = e.target as HTMLElement;
       if (
         target?.closest('.overflow-y-auto') ||
@@ -490,6 +522,22 @@ export const PlayerController: React.FC = () => {
   };
 
   useFrame((_, rawDelta) => {
+    // If the cinematic intro is playing, keep the trolley 100% frozen at the entrance
+    if (!useMartStore.getState().hasEnteredStore) {
+      posRef.current.set(0, 1.5, -20);
+      velocityRef.current.x = 0;
+      velocityRef.current.z = 0;
+      wheelMomentum.current.x = 0;
+      wheelMomentum.current.z = 0;
+      martRuntime.playerPos[0] = 0;
+      martRuntime.playerPos[1] = 1.5;
+      martRuntime.playerPos[2] = -20;
+      martRuntime.playerYaw = 0;
+      camera.position.set(0, 3.45, -23.0);
+      camera.lookAt(0, 1.85, -17.7);
+      return;
+    }
+
     // Clamp delta to prevent collision tunneling or physics oscillation during frame spikes
     const delta = Math.min(rawDelta, 0.04);
     const isAutoNavigatingToExit = useMartStore.getState().isAutoNavigatingToExit;

@@ -46,7 +46,8 @@ const SupermarketScene = dynamic(
 
 export default function Home() {
   const router = useRouter();
-  const [hasEnteredStore, setHasEnteredStore] = useState(false);
+  const hasEnteredStore = useMartStore((state) => state.hasEnteredStore);
+  const setHasEnteredStore = useMartStore((state) => state.setHasEnteredStore);
 
   const handleIntroComplete = React.useCallback(() => {
     sessionStorage.setItem('martverse_entered', 'true');
@@ -58,7 +59,7 @@ export default function Home() {
         useAuthStore.getState().openLoginModal();
       }, 700);
     }
-  }, []);
+  }, [setHasEnteredStore]);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {

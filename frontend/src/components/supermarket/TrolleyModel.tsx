@@ -126,6 +126,7 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const items = useCartStore((state) => state.items);
   const resetTrigger = useMartStore((state) => state.resetTrigger);
   const teleportTrigger = useMartStore((state) => state.teleportTrigger);
+  const hasEnteredStore = useMartStore((state) => state.hasEnteredStore);
 
   const initialPos = targetPos || martRuntime.playerPos;
   const initialYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
@@ -151,6 +152,20 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const rearRightWheelRef = useRef<THREE.Group>(null);
   const frontLeftCasterRef = useRef<THREE.Group>(null);
   const frontRightCasterRef = useRef<THREE.Group>(null);
+
+  // Snap to entrance position on store entry or intro reset
+  useEffect(() => {
+    currentPos.current.set(0, 0, -19.05);
+    prevTrolleyPos.current.set(0, 0, -19.05);
+    currentYaw.current = 0;
+    prevYaw.current = 0;
+    wheelRollRef.current = 0;
+    casterSwivelRef.current = 0;
+    if (trolleyRef.current) {
+      trolleyRef.current.position.set(0, 0, -19.05);
+      trolleyRef.current.rotation.set(0, Math.PI, 0);
+    }
+  }, [hasEnteredStore]);
 
   // Instant snap on reset to original entrance position
   useEffect(() => {
@@ -186,6 +201,19 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
 
   useFrame((_, delta) => {
     if (!trolleyRef.current) return;
+
+    // Keep trolley completely stationary at the entrance while cinematic intro is active
+    if (!useMartStore.getState().hasEnteredStore) {
+      currentPos.current.set(0, 0, -19.05);
+      prevTrolleyPos.current.set(0, 0, -19.05);
+      currentYaw.current = 0;
+      prevYaw.current = 0;
+      wheelRollRef.current = 0;
+      casterSwivelRef.current = 0;
+      trolleyRef.current.position.set(0, 0, -19.05);
+      trolleyRef.current.rotation.set(0, Math.PI, 0);
+      return;
+    }
 
     const actualPos = targetPos || martRuntime.playerPos;
     let actualYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;

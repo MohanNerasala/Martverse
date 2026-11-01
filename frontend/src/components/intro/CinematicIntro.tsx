@@ -215,6 +215,10 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     // Wheel listener: active on entire screen
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      e.stopPropagation();
+      if (typeof (e as any).stopImmediatePropagation === 'function') {
+        (e as any).stopImmediatePropagation();
+      }
       // Sensitivity factor: ~4.5 frames per notch
       const delta = (e.deltaY / 100) * 4.5;
       advanceFrames(delta);
@@ -231,6 +235,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     };
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
+        e.stopPropagation();
         const currentY = e.touches[0].clientY;
         const diff = touchStartY - currentY;
         touchStartY = currentY;
@@ -243,13 +248,20 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     // Keyboard navigation: Down/PageDown/Right advances, Up/PageUp/Left reverses, Esc skips
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
         triggerCompletion();
       } else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopPropagation();
         advanceFrames(8);
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
         advanceFrames(-8);
       } else if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
+        e.stopPropagation();
         advanceFrames(14);
       }
     };
