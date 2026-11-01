@@ -112,33 +112,35 @@ button:disabled, [role="button"]:disabled {
 .animate-light-blue-pass {
   background: linear-gradient(
     115deg,
-    #38bdf8 10%,
-    #7dd3fc 30%,
+    #38bdf8 5%,
+    #93c5fd 25%,
     #ffffff 50%,
-    #7dd3fc 70%,
-    #38bdf8 90%
+    #93c5fd 75%,
+    #38bdf8 95%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: lightBlueToWhitePass 3.5s linear infinite;
+  filter: drop-shadow(0px 10px 40px rgba(0, 0, 0, 0.95)) drop-shadow(0px 0px 30px rgba(56, 189, 248, 0.55));
+}
+
+.animate-light-blue-subpass {
+  background: linear-gradient(
+    115deg,
+    #7dd3fc 10%,
+    #bae6fd 30%,
+    #ffffff 50%,
+    #bae6fd 70%,
+    #7dd3fc 90%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: lightBlueToWhitePass 4s linear infinite;
-}
-
-.animate-light-blue-subpass {
-  background: linear-gradient(
-    115deg,
-    #bae6fd 15%,
-    #e0f2fe 35%,
-    #ffffff 50%,
-    #bae6fd 70%,
-    #7dd3fc 85%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: lightBlueToWhitePass 5s linear infinite;
+  filter: drop-shadow(0px 6px 25px rgba(0, 0, 0, 0.95)) drop-shadow(0px 0px 18px rgba(56, 189, 248, 0.4));
 }
 
 /* Smooth input focus glow */

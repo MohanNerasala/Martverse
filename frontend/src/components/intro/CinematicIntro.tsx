@@ -320,39 +320,46 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         {/* ============================================================== */}
         {/* CENTER DISPLAY: Two Floating Pure Lines (No Box) Light Blue Pass */}
         {/* ============================================================== */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center text-center pointer-events-none w-full max-w-4xl px-6">
-          {/* Big Line 1: MARTVERSE with Light Blue to White Passing Shimmer */}
-          <h1 className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tight uppercase select-none leading-none drop-shadow-[0_15px_40px_rgba(0,0,0,0.95)]">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center text-center pointer-events-none w-full max-w-7xl px-4">
+          {/* Big Line 1: Grand Hero MARTVERSE with Light Blue to White Passing Shimmer */}
+          <h1
+            className="font-black tracking-tight uppercase select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.98)]"
+            style={{ fontSize: 'clamp(5rem, 14vw, 12.5rem)', lineHeight: 0.9 }}
+          >
             <span className="animate-light-blue-pass inline-block">
               MARTVERSE
             </span>
           </h1>
 
           {/* Line 2: Elegant Content Line with Light Blue to White Passing Wave */}
-          <p className="mt-3 sm:mt-5 text-sm sm:text-2xl md:text-3xl font-bold tracking-widest uppercase select-none drop-shadow-[0_8px_30px_rgba(0,0,0,0.95)]">
+          <p
+            className="mt-3 sm:mt-6 font-extrabold uppercase select-none drop-shadow-[0_10px_35px_rgba(0,0,0,0.98)]"
+            style={{ fontSize: 'clamp(1rem, 2.5vw, 2.3rem)', letterSpacing: '0.15em' }}
+          >
             <span className="animate-light-blue-subpass inline-block">
               Virtual 3D Supermarket • Scroll to Enter
             </span>
           </p>
 
-          {/* Minimalist Scroll Cue & Slender Progress Line (Zero Box, Pure Floating) */}
-          <div className="mt-6 flex flex-col items-center gap-2 opacity-90 drop-shadow-[0_4px_15px_rgba(0,0,0,0.9)]">
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold tracking-widest uppercase text-sky-200">
+          {/* Minimalist Floating Scroll Cue & Progress Line (Spaced, Zero Overlap) */}
+          <div className="mt-8 flex flex-col items-center gap-2.5 opacity-95 drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/35 backdrop-blur-md border border-white/10 text-xs sm:text-sm font-bold tracking-widest uppercase text-sky-200">
               <Mouse className="w-3.5 h-3.5 text-sky-300 animate-pulse" />
               <span>Scroll to Explore</span>
               <ChevronDown className="w-3.5 h-3.5 text-sky-300 animate-bounce" />
             </div>
 
-            {/* Slender 2px Glowing Track */}
-            <div className="w-40 sm:w-56 h-1 rounded-full bg-white/20 overflow-hidden shadow-inner mt-0.5">
+            {/* Glowing Slender Progress Bar */}
+            <div className="w-60 sm:w-72 h-1.5 rounded-full bg-white/20 overflow-hidden shadow-inner mt-1">
               <div
                 ref={progressBarRef}
-                className="h-full rounded-full bg-gradient-to-r from-sky-400 via-white to-sky-300 shadow-sm shadow-sky-300/80 transition-all duration-75"
+                className="h-full rounded-full bg-gradient-to-r from-sky-400 via-white to-sky-300 shadow-md shadow-sky-300/90 transition-all duration-75"
                 style={{ width: '2%' }}
               />
             </div>
 
-            <div className="flex items-center justify-between w-40 sm:w-56 text-[10px] font-mono font-bold text-sky-200/80 px-1">
+            {/* Frame Counter & Percentage (Clear Spacing, Zero Overlap) */}
+            <div className="flex items-center justify-between w-60 sm:w-72 text-xs font-mono font-bold text-sky-200/90 px-1">
               <span ref={frameCounterRef}>FRAME 001 / {TOTAL_FRAMES}</span>
               <span ref={percentTextRef}>0%</span>
             </div>
