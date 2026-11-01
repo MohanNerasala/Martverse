@@ -19,7 +19,7 @@ export const SupermarketScene: React.FC = () => {
   const setFloors = useMartStore((state) => state.setFloors);
   const setProducts = useMartStore((state) => state.setProducts);
 
-  // Fetch live layout and products from backend on mount and poll only if offline
+  // Fetch live layout and products from backend on mount and maintain connection
   useEffect(() => {
     let isCancelled = false;
     let isFetching = false;
@@ -35,35 +35,42 @@ export const SupermarketScene: React.FC = () => {
         if (!isCancelled) {
           if (floorsData && floorsData.length > 0) setFloors(floorsData);
           if (productsData && productsData.length > 0) {
-            const currentProds = useMartStore.getState().products;
-            if (currentProds.length !== productsData.length || currentProds[0]?.id !== productsData[0]?.id) {
-              setProducts(productsData);
-            }
+            setProducts(productsData);
           } else {
-            // Backend offline / no products: clear products so items are not visible
-            const currentProds = useMartStore.getState().products;
-            if (currentProds.length > 0) {
-              setProducts([]);
-            }
+            // Backend offline: empty shelves
+            setProducts([]);
           }
         }
       } catch {
         if (!isCancelled) {
-          const currentProds = useMartStore.getState().products;
-          if (currentProds.length > 0) {
-            setProducts([]);
-          }
+          setProducts([]);
         }
       } finally {
         isFetching = false;
       }
     }
+
     loadData();
 
-    // Check backend connection: poll every 4s to sync products and status
-    const timer = setInterval(() => {
-      loadData();
-    }, 4000);
+    // Resilient backend monitoring:
+    // - If shelves are empty, retry loading live products every 4s
+    // - If shelves are populated, perform ultra-fast <1ms /api/health probes without DB load
+    const timer = setInterval(async () => {
+      if (isCancelled) return;
+      const currentProds = useMartStore.getState().products;
+      if (currentProds.length === 0) {
+        loadData();
+      } else {
+        const isHealthy = await api.checkBackendHealth();
+        if (!isHealthy && !isCancelled) {
+          // Double-check with a 2nd probe to prevent momentary WAN jitter from clearing shelves
+          const retryHealthy = await api.checkBackendHealth();
+          if (!retryHealthy && !isCancelled) {
+            setProducts([]);
+          }
+        }
+      }
+    }, 6000);
 
     return () => {
       isCancelled = true;

@@ -48,18 +48,19 @@ export const useCartStore = create<CartStore>((set, get) => ({
   },
 
   addItem: async (product, quantity = 1, variant, customStartPos) => {
-    // 1. Strictly verify backend is running on port 8080 before modifying trolley
-    const backendRes = await api.addToCart(product.id, quantity, variant?.id);
-    if (!backendRes.success) {
-      useMartStore.getState().showToast(
-        'Backend Server Offline',
-        backendRes.error || 'Cannot add to trolley. Please run Spring Boot backend on port 8080 in your terminal.',
-        'warning'
-      );
-      return false;
-    }
-
+    // 0ms Instant Feedback: play sound immediately
     sounds.playPickSound();
+
+    // Fire-and-forget backend sync in background (0ms latency, zero UI freeze)
+    api.addToCart(product.id, quantity, variant?.id).then((backendRes) => {
+      if (!backendRes.success) {
+        useMartStore.getState().showToast(
+          'Backend Sync',
+          backendRes.error || 'Cart saved locally (backend is offline).',
+          'warning'
+        );
+      }
+    }).catch(() => {});
     
     // Determine realistic 3D world start position: custom -> shelf placement -> player hand
     let startPos: [number, number, number];
@@ -80,7 +81,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     const animId = 'fly-' + Math.random().toString(36).substring(2, 9);
     const color = variant?.colorCode || variant?.color || product.placement?.color || '#3b82f6';
     const modelType = product.placement?.modelType || 'box';
-    const duration = 950; // ms for graceful 3D lift, glide, and basket drop
+    const duration = 650; // Snappy, ultra-responsive 650ms parabolic glide
 
     // Check if 3D scene canvas is active in the DOM
     const has3DCanvas = typeof document !== 'undefined' && !!document.querySelector('canvas');
@@ -129,7 +130,6 @@ export const useCartStore = create<CartStore>((set, get) => ({
         const subtotal = newItems.reduce((acc, it) => acc + it.subtotal, 0);
         const mrpTotal = newItems.reduce((acc, it) => acc + it.mrp * it.quantity, 0);
         const discountTotal = Math.max(0, mrpTotal - subtotal);
-        // In-store 3D supermarket trolley total matches exact item costs (no delivery surcharge while browsing)
         const totalAmount = subtotal;
 
         return {
@@ -138,13 +138,13 @@ export const useCartStore = create<CartStore>((set, get) => ({
           subtotal,
           discountTotal,
           totalAmount,
-          isPaid: false, // Adding new items resets paid status
+          isPaid: false,
         };
       });
 
       useMartStore.getState().showToast(
         'Added to Trolley',
-        `${product.name} (Qty: ${quantity}) saved to backend`,
+        `${product.name} (Qty: ${quantity}) placed in your cart`,
         'success',
         product.imageUrl
       );
@@ -167,14 +167,13 @@ export const useCartStore = create<CartStore>((set, get) => ({
         ],
       }));
 
-      // 2. Only show item inside trolley basket AFTER drop finishes into the basket!
+      // 2. Settle into basket smoothly
       setTimeout(() => {
         get().removeFlyAnimation(animId);
         sounds.playScanBeep();
         commitItemToCart();
       }, duration);
     } else {
-      // Direct instant commit when outside 3D store view (e.g. wishlist/orders page)
       sounds.playScanBeep();
       commitItemToCart();
     }

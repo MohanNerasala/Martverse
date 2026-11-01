@@ -80,10 +80,10 @@ export const ProductModal: React.FC = () => {
       ];
     }
 
-    const added = await addItem(selectedProduct, quantity, currentVariant || undefined, startPos);
-    if (added) {
-      closeProductModal();
-    }
+    // Close modal immediately for instant 0ms snappy reaction
+    closeProductModal();
+
+    addItem(selectedProduct, quantity, currentVariant || undefined, startPos);
   };
 
   return (

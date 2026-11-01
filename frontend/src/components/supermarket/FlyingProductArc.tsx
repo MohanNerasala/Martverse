@@ -108,7 +108,7 @@ const SingleFlyArc: React.FC<{
       {anim.modelType === 'bottle' ? (
         <group position={[0, -0.06, 0]}>
           {/* Main Bottle Body */}
-          <mesh castShadow position={[0, 0.09, 0]}>
+          <mesh position={[0, 0.09, 0]}>
             <cylinderGeometry args={[0.065, 0.07, 0.20, 16]} />
             <meshStandardMaterial color={productColor} roughness={0.2} metalness={0.1} />
           </mesh>
@@ -131,7 +131,7 @@ const SingleFlyArc: React.FC<{
       ) : anim.modelType === 'shirt' || anim.modelType === 'hanger' ? (
         <group>
           {/* Folded garment */}
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.22, 0.07, 0.22]} />
             <meshStandardMaterial color={productColor} roughness={0.8} />
           </mesh>
@@ -144,7 +144,7 @@ const SingleFlyArc: React.FC<{
       ) : anim.modelType === 'chocolate' || anim.modelType === 'bar' ? (
         <group>
           {/* Chocolate Bar Packet */}
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.24, 0.11, 0.022]} />
             <meshStandardMaterial color={productColor} roughness={0.25} metalness={0.15} />
           </mesh>
@@ -160,7 +160,7 @@ const SingleFlyArc: React.FC<{
       ) : (
         /* Box / Package (Atta, Cereals, Biscuits, Chocolates, Staples) */
         <group>
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.2, 0.2, 0.15]} />
             <meshStandardMaterial color={productColor} roughness={0.3} metalness={0.05} />
           </mesh>

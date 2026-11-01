@@ -13,7 +13,7 @@ interface TrolleyProps {
   targetYaw?: number;
 }
 
-const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item, index }) => {
+const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item, index }) => {
   const col = index % 3;
   const row = Math.floor(index / 3) % 4;
   const layer = Math.floor(index / 12);
@@ -39,7 +39,7 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
   if (isChocolate) {
     return (
       <group position={[px, py - 0.02, pz]} rotation={[0.04, index * 0.4, -0.02]}>
-        <mesh castShadow>
+        <mesh>
           <boxGeometry args={[0.16, 0.018, 0.08]} />
           <meshStandardMaterial color={color} roughness={0.25} metalness={0.15} />
         </mesh>
@@ -59,7 +59,7 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
     return (
       <group position={[px, py + 0.04, pz]} rotation={[0.08, index * 0.5, 0.04]}>
         {/* Solid Realistic Product Bottle */}
-        <mesh castShadow>
+        <mesh>
           <cylinderGeometry args={[0.042, 0.048, 0.14, 14]} />
           <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
         </mesh>
@@ -86,7 +86,7 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
     return (
       <group position={[px, py, pz]} rotation={[0, index * 0.3, 0]}>
         {/* Folded garment */}
-        <mesh castShadow>
+        <mesh>
           <boxGeometry args={[0.16, 0.05, 0.16]} />
           <meshStandardMaterial color={color} roughness={0.8} />
         </mesh>
@@ -102,7 +102,7 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
   // Grocery Box / Carton (Atta, Biscuits, Cereal, Chocolate, etc.)
   return (
     <group position={[px, py + 0.02, pz]} rotation={[0, index * 0.4, index % 2 === 0 ? 0.05 : -0.05]}>
-      <mesh castShadow>
+      <mesh>
         <boxGeometry args={[0.13, 0.12, 0.09]} />
         <meshStandardMaterial color={color} roughness={0.3} metalness={0.08} />
       </mesh>
@@ -113,7 +113,8 @@ const TrolleyProductItem: React.FC<{ item: CartItem; index: number }> = ({ item,
       </mesh>
     </group>
   );
-};
+});
+TrolleyProductItem.displayName = 'TrolleyProductItem';
 
 const staticTargetPos = new THREE.Vector3();
 

@@ -53,7 +53,7 @@ export const ProductHoverCard: React.FC = () => {
       ];
     }
 
-    await addItem(hoveredProduct, 1, undefined, startPos);
+    addItem(hoveredProduct, 1, undefined, startPos);
   };
 
   return (

@@ -62,6 +62,10 @@ async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fall
     clearTimeout(timeoutId);
 
     if (!res.ok) {
+      if (res.status === 401 && typeof window !== 'undefined') {
+        localStorage.removeItem('martverse_token');
+        localStorage.removeItem('martverse_user');
+      }
       return fallback;
     }
     isBackendOffline = false;
@@ -84,13 +88,13 @@ export const api = {
   async checkBackendHealth(): Promise<boolean> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       let res: Response | null = null;
       try {
-        res = await fetch(`${API_BASE}/categories`, { signal: controller.signal });
+        res = await fetch(`${API_BASE}/health`, { signal: controller.signal });
       } catch {
         if (typeof window !== 'undefined') {
-          res = await fetch('/api/categories', { signal: controller.signal }).catch(() => null);
+          res = await fetch('/api/health', { signal: controller.signal }).catch(() => null);
         }
       }
       clearTimeout(timeoutId);
@@ -98,8 +102,21 @@ export const api = {
         isBackendOffline = false;
         return true;
       }
+
+      // Fallback check against categories if /health is not ready yet
+      const fallbackCtrl = new AbortController();
+      const fbTimeout = setTimeout(() => fallbackCtrl.abort(), 4000);
+      const catRes = await fetch(`${API_BASE}/categories`, { signal: fallbackCtrl.signal }).catch(() => null);
+      clearTimeout(fbTimeout);
+      if (catRes && catRes.ok) {
+        isBackendOffline = false;
+        return true;
+      }
+
+      isBackendOffline = true;
       return false;
     } catch {
+      isBackendOffline = true;
       return false;
     }
   },
