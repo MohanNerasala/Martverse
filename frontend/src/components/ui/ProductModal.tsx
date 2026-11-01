@@ -64,11 +64,6 @@ export const ProductModal: React.FC = () => {
       return;
     }
 
-    if (selectedProduct.inStock === false) {
-      setValidationError('This product is currently out of stock.');
-      return;
-    }
-
     setValidationError(null);
 
     let startPos: [number, number, number] | undefined = undefined;

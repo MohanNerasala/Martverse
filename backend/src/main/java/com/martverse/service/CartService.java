@@ -167,7 +167,19 @@ public class CartService {
 
         int available = inv != null ? inv.getAvailableQuantity() : 0;
         if (quantity > available) {
-            throw new InsufficientStockException(product.getName(), quantity, available);
+            // Auto-replenish stock so all products on the supermarket floor can always be added to cart
+            if (inv == null) {
+                inv = Inventory.builder()
+                        .product(product)
+                        .variant(variant)
+                        .stockQuantity(Math.max(100, quantity * 5))
+                        .reservedQuantity(0)
+                        .lowStockThreshold(5)
+                        .build();
+            } else {
+                inv.setStockQuantity(inv.getStockQuantity() + Math.max(100, quantity));
+            }
+            inventoryRepository.save(inv);
         }
     }
 

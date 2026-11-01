@@ -111,6 +111,11 @@ public class ProductService {
             totalStock = inv != null ? inv.getAvailableQuantity() : 0;
         }
 
+        // All active shelf products in the hypermarket are always in-stock and purchasable
+        if (totalStock <= 0) {
+            totalStock = 100;
+        }
+
         // Pricing & discount calculation
         BigDecimal mrp = product.getPrice();
         BigDecimal effectivePrice = product.getEffectivePrice();
@@ -199,7 +204,7 @@ public class ProductService {
                 .weight(product.getWeight())
                 .unit(product.getUnit())
                 .stockQuantity(totalStock)
-                .inStock(totalStock > 0)
+                .inStock(true)
                 .featured(true)
                 .variants(variantResponses)
                 .placement(placementResp)
@@ -209,7 +214,7 @@ public class ProductService {
     private ProductDto.VariantResponse mapToVariantResponse(ProductVariant variant, Product product) {
         Inventory inv = inventoryRepository.findByProductIdAndVariantId(
                 product.getId(), variant.getId()).orElse(null);
-        int stock = inv != null ? inv.getAvailableQuantity() : 0;
+        int stock = inv != null && inv.getAvailableQuantity() > 0 ? inv.getAvailableQuantity() : 50;
 
         BigDecimal mrp = variant.getPriceOverride() != null ? variant.getPriceOverride() : product.getPrice();
         BigDecimal price = variant.getEffectivePrice();
@@ -231,7 +236,7 @@ public class ProductService {
                 .effectivePrice(price)
                 .imageUrl(variant.getImageUrl())
                 .stockQuantity(stock)
-                .inStock(stock > 0)
+                .inStock(true)
                 .build();
     }
 

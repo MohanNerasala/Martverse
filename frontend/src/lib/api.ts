@@ -146,13 +146,23 @@ export const api = {
         const data = json.data !== undefined ? json.data : json;
         if (Array.isArray(data) && data.length > 0) {
           isBackendOffline = false;
-          cachedBackendProducts = data;
-          return data;
+          const inStockData = data.map((p) => ({
+            ...p,
+            inStock: true,
+            stockQuantity: p.stockQuantity && p.stockQuantity > 0 ? p.stockQuantity : 100,
+          }));
+          cachedBackendProducts = inStockData;
+          return inStockData;
         }
         if (data && Array.isArray(data.content) && data.content.length > 0) {
           isBackendOffline = false;
-          cachedBackendProducts = data.content;
-          return data.content;
+          const inStockData = data.content.map((p: any) => ({
+            ...p,
+            inStock: true,
+            stockQuantity: p.stockQuantity && p.stockQuantity > 0 ? p.stockQuantity : 100,
+          }));
+          cachedBackendProducts = inStockData;
+          return inStockData;
         }
       }
 
@@ -173,13 +183,23 @@ export const api = {
         const data = json.data !== undefined ? json.data : json;
         if (Array.isArray(data) && data.length > 0) {
           isBackendOffline = false;
-          cachedBackendProducts = data;
-          return data;
+          const inStockData = data.map((p) => ({
+            ...p,
+            inStock: true,
+            stockQuantity: p.stockQuantity && p.stockQuantity > 0 ? p.stockQuantity : 100,
+          }));
+          cachedBackendProducts = inStockData;
+          return inStockData;
         }
         if (data && Array.isArray(data.content) && data.content.length > 0) {
           isBackendOffline = false;
-          cachedBackendProducts = data.content;
-          return data.content;
+          const inStockData = data.content.map((p: any) => ({
+            ...p,
+            inStock: true,
+            stockQuantity: p.stockQuantity && p.stockQuantity > 0 ? p.stockQuantity : 100,
+          }));
+          cachedBackendProducts = inStockData;
+          return inStockData;
         }
       }
     } catch {
