@@ -44,7 +44,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="h-full w-full overflow-hidden bg-[#080B11] text-slate-100 select-none">
+      <body className="min-h-full w-full bg-[#080B11] text-slate-100 select-none">
         {children}
       </body>
     </html>
