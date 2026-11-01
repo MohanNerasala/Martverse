@@ -54,7 +54,7 @@ const ConveyorItemMesh: React.FC<{
       {isBottle ? (
         <group>
           {/* Main Bottle Body */}
-          <mesh castShadow>
+          <mesh>
             <cylinderGeometry args={[0.045, 0.05, 0.15, 16]} />
             <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
           </mesh>
@@ -76,7 +76,7 @@ const ConveyorItemMesh: React.FC<{
       ) : isClothing ? (
         <group>
           {/* Folded Garment */}
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.18, 0.06, 0.18]} />
             <meshStandardMaterial color={color} roughness={0.8} />
           </mesh>
@@ -89,7 +89,7 @@ const ConveyorItemMesh: React.FC<{
       ) : isChocolate ? (
         <group>
           {/* Chocolate Bar Packet on Scanning Conveyor */}
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.2, 0.02, 0.09]} />
             <meshStandardMaterial color={color} roughness={0.25} metalness={0.15} />
           </mesh>
@@ -110,7 +110,7 @@ const ConveyorItemMesh: React.FC<{
       ) : (
         <group>
           {/* Grocery Carton Box (Atta, Cereals, Biscuits, Detergents) */}
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.15, 0.14, 0.1]} />
             <meshStandardMaterial color={color} roughness={0.3} metalness={0.08} />
           </mesh>
@@ -184,43 +184,39 @@ const ConveyorAnimation3D: React.FC<{
     return list;
   }, [cartItems]);
 
-  const [activeItems, setActiveItems] = useState<
-    Array<{
-      id: string;
-      item: CartItem;
-      unitIndex: number;
-      totalUnits: number;
-      flatIndex: number;
-      startTime: number;
-      pos: [number, number, number];
-      rot: [number, number, number];
-      stage: 'fly' | 'convey' | 'scan' | 'pack' | 'done';
-      landSoundPlayed: boolean;
-      scanSoundPlayed: boolean;
-      priceTagY: number;
-      priceTagOpacity: number;
-    }>
-  >([]);
+  const itemsDataRef = useRef<Array<{
+    id: string;
+    item: CartItem;
+    unitIndex: number;
+    totalUnits: number;
+    flatIndex: number;
+    startTime: number;
+    pos: [number, number, number];
+    rot: [number, number, number];
+    stage: 'fly' | 'convey' | 'scan' | 'pack' | 'done';
+    landSoundPlayed: boolean;
+    scanSoundPlayed: boolean;
+    priceTagY: number;
+    priceTagOpacity: number;
+  }>>([]);
 
+  const groupRefs = useRef<Array<THREE.Group | null>>([]);
   const elapsedRef = useRef(0);
-  const lastTimeRef = useRef(Date.now());
   const finishedRef = useRef(false);
 
   useEffect(() => {
     if (phase === 'scanning' && unitItems.length > 0) {
       elapsedRef.current = 0;
-      lastTimeRef.current = Date.now();
       finishedRef.current = false;
-
-      const stagger = unitItems.length > 5 ? 1.8 : 2.4;
-      const initialized = unitItems.map((u) => ({
+      const stagger = 2.2;
+      itemsDataRef.current = unitItems.map((u) => ({
         id: u.uniqueScanId,
         item: u.item,
         unitIndex: u.unitIndex,
         totalUnits: u.totalUnits,
         flatIndex: u.flatIndex,
         startTime: u.flatIndex * stagger,
-        pos: [activeDeskX - 1.9, 0.72, -1.0] as [number, number, number],
+        pos: [typeof martRuntime.playerPos[0] === 'number' ? martRuntime.playerPos[0] : activeDeskX - 1.9, 0.72, (martRuntime.playerPos[2] || 17.0) - 18.0] as [number, number, number],
         rot: [0, 0, 0] as [number, number, number],
         stage: 'fly' as const,
         landSoundPlayed: false,
@@ -228,23 +224,21 @@ const ConveyorAnimation3D: React.FC<{
         priceTagY: 1.15,
         priceTagOpacity: 0,
       }));
-
-      setActiveItems(initialized);
     } else if (phase === 'idle') {
-      setActiveItems([]);
+      itemsDataRef.current = [];
     }
   }, [phase, unitItems, activeDeskX]);
 
   useFrame((_, delta) => {
-    if (phase !== 'scanning' || isPaused || activeItems.length === 0) return;
+    if (phase !== 'scanning' || isPaused || itemsDataRef.current.length === 0) return;
 
     elapsedRef.current += delta;
     const elapsed = elapsedRef.current;
-
     let allDone = true;
 
+    const playerX = martRuntime.playerPos[0];
     const playerZ = martRuntime.playerPos[2];
-    const trolleyX = activeDeskX - 1.9;
+    const trolleyX = typeof playerX === 'number' ? playerX : activeDeskX - 1.9;
     const trolleyZ = (playerZ > 14 && playerZ < 21 ? playerZ : 17.0) - 18.0;
 
     const beltX = activeDeskX - 0.15;
@@ -252,23 +246,28 @@ const ConveyorAnimation3D: React.FC<{
     const scannerZ = 0.3;
     const bagZ = 1.1;
 
-    const updated = activeItems.map((p) => {
+    for (let i = 0; i < itemsDataRef.current.length; i++) {
+      const p = itemsDataRef.current[i];
+      const grp = groupRefs.current[i];
       if (p.stage === 'done') {
-        return p;
+        if (grp) grp.visible = false;
+        continue;
       }
 
       allDone = false;
       const t = elapsed - p.startTime;
-
       if (t < 0) {
-        return p;
+        if (grp) grp.visible = false;
+        continue;
       }
+
+      if (grp) grp.visible = true;
 
       if (useBillingStore.getState().transferredToBenchCount < p.flatIndex + 1) {
         useBillingStore.getState().setTransferredToBenchCount(p.flatIndex + 1);
       }
 
-      const totalItemDuration = 3.6;
+      const totalItemDuration = 3.2;
       const progress = Math.min(1, Math.max(0, t / totalItemDuration));
 
       let curX = trolleyX;
@@ -277,72 +276,43 @@ const ConveyorAnimation3D: React.FC<{
       let rotX = 0;
       let rotY = p.flatIndex * 0.4;
       let rotZ = 0;
-      let curStage: 'fly' | 'convey' | 'scan' | 'pack' | 'done' = p.stage;
-      let landSound = p.landSoundPlayed;
-      let scanSound = p.scanSoundPlayed;
-      let priceY = p.priceTagY;
-      let priceOp = p.priceTagOpacity;
 
-      // 1. FLIGHT (0% - 32%)
       if (progress < 0.32) {
-        curStage = 'fly';
+        p.stage = 'fly';
         const u = progress / 0.32;
         const ease = u * u * (3 - 2 * u);
-
         curX = THREE.MathUtils.lerp(trolleyX, beltX, ease);
         curZ = THREE.MathUtils.lerp(trolleyZ, beltDropZ, ease);
         curY = THREE.MathUtils.lerp(0.72, 1.08, ease) + Math.sin(u * Math.PI) * 0.55;
-
         rotX = Math.sin(u * Math.PI) * 0.4;
         rotZ = (1 - u) * 0.35;
-      }
-      // 2. CONVEY (32% - 68%)
-      else if (progress < 0.68) {
-        curStage = 'convey';
-        if (!landSound) {
-          landSound = true;
+      } else if (progress < 0.68) {
+        p.stage = 'convey';
+        if (!p.landSoundPlayed) {
+          p.landSoundPlayed = true;
           sounds.playItemLand();
         }
-
         const u = (progress - 0.32) / 0.36;
         curX = beltX;
         curZ = THREE.MathUtils.lerp(beltDropZ, scannerZ, u);
-
         const bounce = Math.exp(-u * 6) * Math.sin(u * 12) * 0.04;
         curY = 1.08 + Math.max(0, bounce);
-
-        rotX = 0;
-        rotZ = 0;
-      }
-      // 3. SCAN (68% - 84%)
-      else if (progress < 0.84) {
-        curStage = 'scan';
+      } else if (progress < 0.84) {
+        p.stage = 'scan';
         curX = beltX;
         curZ = scannerZ;
         curY = 1.08;
-
-        if (!scanSound) {
-          scanSound = true;
+        if (!p.scanSoundPlayed) {
+          p.scanSoundPlayed = true;
           sounds.playScanBeep();
-          useBillingStore
-            .getState()
-            .recordUnitScanned(p.flatIndex + 1, p.item, p.unitIndex, p.totalUnits);
-          priceY = 1.25;
-          priceOp = 1.0;
+          useBillingStore.getState().recordUnitScanned(p.flatIndex + 1, p.item, p.unitIndex, p.totalUnits);
         }
-
-        priceY += delta * 0.4;
-        priceOp = Math.max(0, priceOp - delta * 1.5);
-      }
-      // 4. PACK (84% - 100%)
-      else {
-        curStage = 'pack';
+      } else {
+        p.stage = 'pack';
         const u = (progress - 0.84) / 0.16;
         const ease = u * u * (3 - 2 * u);
-
         curX = beltX;
         curZ = THREE.MathUtils.lerp(scannerZ, bagZ, ease);
-
         if (u < 0.5) {
           curY = THREE.MathUtils.lerp(1.08, 1.25, u * 2);
           rotX = u * 0.6;
@@ -350,34 +320,25 @@ const ConveyorAnimation3D: React.FC<{
           curY = THREE.MathUtils.lerp(1.25, 1.1, (u - 0.5) * 2);
           rotX = 0.6 - (u - 0.5) * 0.4;
         }
-
         if (progress >= 0.98) {
-          curStage = 'done';
+          p.stage = 'done';
           onBagBump();
           sounds.playPickSound();
         }
       }
 
-      return {
-        ...p,
-        pos: [curX, curY, curZ] as [number, number, number],
-        rot: [rotX, rotY, rotZ] as [number, number, number],
-        stage: curStage,
-        landSoundPlayed: landSound,
-        scanSoundPlayed: scanSound,
-        priceTagY: priceY,
-        priceTagOpacity: priceOp,
-      };
-    });
+      if (grp) {
+        grp.position.set(curX, curY, curZ);
+        grp.rotation.set(rotX, rotY, rotZ);
+      }
+    }
 
-    setActiveItems(updated);
-
-    if (allDone && !finishedRef.current && activeItems.length > 0) {
+    if (allDone && !finishedRef.current && itemsDataRef.current.length > 0) {
       finishedRef.current = true;
       sounds.playCashRegister();
       setTimeout(() => {
         useBillingStore.getState().finishScanning();
-      }, 500);
+      }, 750);
     }
   });
 
@@ -385,36 +346,22 @@ const ConveyorAnimation3D: React.FC<{
 
   return (
     <group>
-      {activeItems.map((p) => {
-        const isStarted = elapsedRef.current >= p.startTime;
-        if (!isStarted || p.stage === 'done') return null;
-
-        return (
-          <group key={p.id}>
-            <ConveyorItemMesh
-              item={p.item}
-              position={p.pos}
-              rotation={p.rot}
-              isLaserActive={p.stage === 'scan'}
-            />
-
-            {p.priceTagOpacity > 0.05 && (
-              <group position={[p.pos[0], p.priceTagY, p.pos[2]]}>
-                <Text
-                  fontSize={0.09}
-                  color="#10b981"
-                  anchorX="center"
-                  anchorY="middle"
-                  outlineWidth={0.015}
-                  outlineColor="#064e3b"
-                >
-                  {`+ ₹${p.item.price.toFixed(2)}`}
-                </Text>
-              </group>
-            )}
-          </group>
-        );
-      })}
+      {unitItems.map((u, i) => (
+        <group
+          key={u.uniqueScanId}
+          ref={(el) => {
+            groupRefs.current[i] = el;
+          }}
+          visible={false}
+        >
+          <ConveyorItemMesh
+            item={u.item}
+            position={[0, 0, 0]}
+            rotation={[0, 0, 0]}
+            isLaserActive={false}
+          />
+        </group>
+      ))}
     </group>
   );
 };
@@ -432,10 +379,9 @@ interface SingleCheckoutCounterProps {
   laserRef: React.RefObject<THREE.Mesh | null> | null;
   conveyorBeltRibsRef: React.RefObject<THREE.Group | null> | null;
   bagGroupRef: (el: THREE.Group | null) => void;
-  bagScale: number;
 }
 
-const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
+const SingleCheckoutCounterComponent: React.FC<SingleCheckoutCounterProps> = ({
   laneIndex,
   xOffset,
   isActiveDesk,
@@ -445,7 +391,6 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
   laserRef,
   conveyorBeltRibsRef,
   bagGroupRef,
-  bagScale,
 }) => {
   const laneNumberStr = `0${laneIndex + 1}`;
   const isScanning = isActiveDesk && phase === 'scanning';
@@ -456,13 +401,13 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
       {/* 1. COUNTER BASE & DESK CABINETRY (FURNITURE GRADE)             */}
       {/* ============================================================== */}
       {/* Recessed Kick-Plate Base (Elevation indentation) */}
-      <mesh position={[0, 0.06, 0]} receiveShadow>
+      <mesh position={[0, 0.06, 0]}>
         <boxGeometry args={[1.24, 0.12, 3.18]} />
         <meshStandardMaterial color="#090d16" roughness={0.85} metalness={0.2} />
       </mesh>
 
       {/* Main Cabinet Body (Deep Matte Charcoal Steel Chassis) */}
-      <mesh position={[0, 0.55, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.55, 0]}>
         <boxGeometry args={[1.3, 0.86, 3.24]} />
         <meshStandardMaterial color="#1e2430" roughness={0.45} metalness={0.35} />
       </mesh>
@@ -526,7 +471,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
       {/* Built-in Under-Counter Cash Drawer Unit (under POS on Cashier Side) */}
       <group position={[0.4, 0.86, 0.28]}>
         {/* Drawer Casing Face */}
-        <mesh castShadow>
+        <mesh>
           <boxGeometry args={[0.46, 0.16, 0.44]} />
           <meshStandardMaterial color="#0f172a" roughness={0.5} metalness={0.4} />
         </mesh>
@@ -593,7 +538,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
           <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
         </mesh>
         {/* Black Leather Seat Cushion */}
-        <mesh position={[0, 0.53, 0]} castShadow>
+        <mesh position={[0, 0.53, 0]}>
           <cylinderGeometry args={[0.18, 0.18, 0.06, 16]} />
           <meshStandardMaterial color="#18181b" roughness={0.7} metalness={0.1} />
         </mesh>
@@ -612,7 +557,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
       {/* 2. BRUSHED STAINLESS STEEL COUNTERTOP & DIVIDER TRAY           */}
       {/* ============================================================== */}
       {/* Heavy-Duty Brushed Stainless Steel Countertop Slab */}
-      <mesh position={[0, 1.025, 0]} castShadow receiveShadow>
+      <mesh position={[0, 1.025, 0]}>
         <boxGeometry args={[1.36, 0.05, 3.32]} />
         <meshStandardMaterial
           color="#e2e8f0"
@@ -694,7 +639,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
         </mesh>
 
         {/* Vulcanized Textured Rubber Conveyor Belt */}
-        <mesh receiveShadow>
+        <mesh>
           <boxGeometry args={[0.62, 0.02, 1.62]} />
           <meshStandardMaterial color="#111317" roughness={0.92} metalness={0.06} />
         </mesh>
@@ -873,7 +818,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
         {/* Vertical Bi-Optic Scanner Tower (Upright Hood) */}
         <group position={[0.22, 0.18, 0]}>
           {/* Molded Aerodynamic Tower Body */}
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.085, 0.38, 0.34]} />
             <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.3} />
           </mesh>
@@ -971,7 +916,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
       {/* Modern Widescreen POS Touchscreen Monitor */}
       <group position={[0.44, 1.45, 0.28]} rotation={[0.08, -0.45, 0]}>
         {/* Sleek Aluminum Monitor Chassis Rear */}
-        <mesh castShadow>
+        <mesh>
           <boxGeometry args={[0.54, 0.36, 0.028]} />
           <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.8} />
         </mesh>
@@ -1049,7 +994,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
         </mesh>
         {/* Customer VFD Display Head (Rotated towards customer) */}
         <group position={[0, 0.38, 0]} rotation={[0, Math.PI - 0.25, 0]}>
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.3, 0.09, 0.04]} />
             <meshStandardMaterial color="#0f172a" roughness={0.4} />
           </mesh>
@@ -1087,7 +1032,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
           <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.2} />
         </mesh>
         {/* Terminal Body */}
-        <mesh castShadow>
+        <mesh>
           <boxGeometry args={[0.11, 0.18, 0.035]} />
           <meshStandardMaterial color="#1e293b" roughness={0.6} />
         </mesh>
@@ -1133,7 +1078,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
       {/* Epson Thermal Receipt Printer beside POS */}
       <group position={[0.54, 1.055, -0.04]}>
         {/* Printer Chassis */}
-        <mesh position={[0, 0.07, 0]} castShadow>
+        <mesh position={[0, 0.07, 0]}>
           <boxGeometry args={[0.15, 0.14, 0.17]} />
           <meshStandardMaterial color="#0f172a" roughness={0.6} />
         </mesh>
@@ -1168,7 +1113,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
       {/* ============================================================== */}
       <group position={[-0.15, 1.055, 1.1]}>
         {/* Stainless Steel Bagging Basin Drop Well */}
-        <mesh position={[0, 0.005, 0]} receiveShadow>
+        <mesh position={[0, 0.005, 0]}>
           <boxGeometry args={[0.62, 0.03, 0.72]} />
           <meshStandardMaterial color="#cbd5e1" metalness={0.88} roughness={0.16} />
         </mesh>
@@ -1208,10 +1153,10 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
         <group
           ref={bagGroupRef}
           position={[0, 0.16, 0]}
-          scale={isActiveDesk ? [1, bagScale, 1] : [1, 1, 1]}
+          scale={[1, 1, 1]}
         >
           {/* Main Kraft Paper Bag Body */}
-          <mesh castShadow receiveShadow>
+          <mesh>
             <boxGeometry args={[0.42, 0.32, 0.28]} />
             <meshStandardMaterial color="#c29b67" roughness={0.96} metalness={0.02} />
           </mesh>
@@ -1302,7 +1247,7 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
         {/* Dual-Sided Backlit Acrylic Lane Number Box */}
         <group position={[0, 1.7, 0]}>
           {/* Black Machined Aluminum Outer Bezel */}
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.38, 0.28, 0.08]} />
             <meshStandardMaterial color="#0f172a" roughness={0.25} metalness={0.8} />
           </mesh>
@@ -1410,7 +1355,7 @@ const RealisticFloorDockDecal: React.FC<{
   return (
     <group position={position}>
       {/* Heavy Industrial Vulcanized Rubber Dock Mat */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[1.36, 2.46]} />
         <meshStandardMaterial
           color={isActive ? '#141824' : '#0e121a'}
@@ -1494,6 +1439,8 @@ const RealisticFloorDockDecal: React.FC<{
   );
 };
 
+const SingleCheckoutCounter = React.memo(SingleCheckoutCounterComponent);
+
 // ---------------------------------------------------------------------------
 // Main BillingCounter3D Component
 // ---------------------------------------------------------------------------
@@ -1507,13 +1454,15 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
   const runningTotal = useBillingStore((state) => state.runningTotal);
 
   const [activeDeskIndex, setActiveDeskIndex] = useState(1);
-  const [bagScale, setBagScale] = useState(1.0);
+  const bagScaleRef = useRef(1.0);
 
   // 3.8m spacing between counter centers
   const counterXPositions = [-3.8, 0, 3.8];
 
   const handleBagBump = () => {
-    setBagScale(1.15);
+    bagScaleRef.current = 1.15;
+    const activeBag = bagGroupRefs.current[activeDeskIndex];
+    if (activeBag) activeBag.scale.set(1, 1.15, 1);
   };
 
   useFrame((_, delta) => {
@@ -1543,16 +1492,20 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
     // Moving ribbed conveyor belt treads
     if (isConveyorMoving && conveyorBeltRibsRef.current) {
       conveyorBeltRibsRef.current.children.forEach((child) => {
-        child.position.z += delta * 0.65;
+        child.position.z += delta * 0.42;
         if (child.position.z > 0.8) {
           child.position.z = -0.8;
         }
       });
     }
 
-    // Smoothly settle bag squash & stretch bounce
-    if (bagScale > 1.0) {
-      setBagScale((prev) => Math.max(1.0, prev - delta * 0.8));
+    // Smoothly settle bag squash & stretch bounce imperatively without React setState overhead
+    if (bagScaleRef.current > 1.0) {
+      bagScaleRef.current = Math.max(1.0, bagScaleRef.current - delta * 0.8);
+      const activeBag = bagGroupRefs.current[activeDeskIndex];
+      if (activeBag) {
+        activeBag.scale.set(1, bagScaleRef.current, 1);
+      }
     }
   });
 
@@ -1575,7 +1528,7 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
         </mesh>
 
         {/* Pristine Pure White High-Gloss Porcelain/Acrylic Board Body */}
-        <mesh castShadow receiveShadow>
+        <mesh>
           <boxGeometry args={[11.0, 0.88, 0.16]} />
           <meshStandardMaterial color="#ffffff" roughness={0.08} metalness={0.04} />
         </mesh>
@@ -1624,10 +1577,9 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
             isConveyorMoving={isConveyorMoving}
             laserRef={isActiveDesk ? laserRef : null}
             conveyorBeltRibsRef={isActiveDesk ? conveyorBeltRibsRef : null}
-            bagGroupRef={(el) => {
+            bagGroupRef={(el: THREE.Group | null) => {
               bagGroupRefs.current[cIdx] = el;
             }}
-            bagScale={bagScale}
           />
         );
       })}
@@ -1663,7 +1615,7 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
       {/* --- Industrial Safety Hazard Sensor Line Across All 3 Lanes --- */}
       <group position={[0, 0.016, -2.4]}>
         {/* Main High-Visibility Safety Band */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[14.2, 0.38]} />
           <meshStandardMaterial color="#facc15" roughness={0.8} />
         </mesh>

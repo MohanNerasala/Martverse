@@ -167,15 +167,15 @@ export const WishlistModal: React.FC = () => {
                     )}
                     <button
                       onClick={() => handleAddToCart(prod)}
-                      className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-all flex items-center gap-1 text-xs font-extrabold shadow-sm cursor-pointer"
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transition-all duration-200 flex items-center gap-1.5 text-xs font-black shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/40 hover:scale-105 active:scale-95 cursor-pointer group/btn"
                       title="Add item to shopping trolley"
                     >
-                      <ShoppingCart className="w-3.5 h-3.5 text-white" />
+                      <ShoppingCart className="w-3.5 h-3.5 text-white transition-transform duration-200 group-hover/btn:-rotate-12 group-hover/btn:scale-110" />
                       <span>Add</span>
                     </button>
                     <button
                       onClick={() => removeFromWishlist(prod.id)}
-                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-90"
                       title="Remove from wishlist"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { gsap } from 'gsap';
-import { Store, ChevronDown, Mouse, ArrowRight } from 'lucide-react';
+import { ChevronDown, Mouse, ArrowRight } from 'lucide-react';
 import { sounds } from '@/lib/sound';
 
 interface CinematicIntroProps {
@@ -22,58 +22,56 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Imperative UI DOM refs to avoid React re-renders during high-speed 60fps scrubbing
+  // Imperative UI DOM refs to avoid React re-renders during high-speed 60-120fps scrubbing
   const frameCounterRef = useRef<HTMLSpanElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const percentTextRef = useRef<HTMLSpanElement>(null);
-  const loadedCountRef = useRef<HTMLSpanElement>(null);
 
-  // In-memory decoded image cache to prevent frame flickering or GC pauses
-  const imageCacheRef = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
-  const currentFrameRef = useRef<number>(0);
+  // In-memory decoded image / bitmap cache
+  const imageCacheRef = useRef<(HTMLImageElement | ImageBitmap | null)[]>(new Array(TOTAL_FRAMES).fill(null));
+  const loadStatusRef = useRef<Uint8Array>(new Uint8Array(TOTAL_FRAMES)); // 0 = idle, 1 = loading, 2 = loaded
+  const loadedCountRef = useRef<number>(0);
+
+  // Inertial physics state for 120 FPS buttery-smooth scrubbing
+  const currentFloatRef = useRef<number>(0);
   const targetFrameRef = useRef<number>(0);
-  const frameObjRef = useRef<{ frame: number }>({ frame: 0 });
+  const lastDrawnFrameRef = useRef<number>(-1);
   const isTransitioningRef = useRef<boolean>(false);
   const isComponentMounted = useRef<boolean>(true);
+  const rafIdRef = useRef<number | null>(null);
 
-  // --- High-Performance Aspect-Ratio Canvas Drawing ---
+  // --- Fast Aspect-Cover Canvas Drawing (Hardware Accelerated) ---
   const renderFrame = useCallback((frameIndex: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    // Retrieve target frame or find nearest available loaded frame (guarantees zero blank frames)
-    let img = imageCacheRef.current[frameIndex];
-    if (!img || !img.complete || img.naturalWidth === 0) {
-      for (let offset = 1; offset < TOTAL_FRAMES; offset++) {
-        if (frameIndex - offset >= 0) {
-          const prev = imageCacheRef.current[frameIndex - offset];
-          if (prev && prev.complete && prev.naturalWidth > 0) {
-            img = prev;
-            break;
-          }
+    // Direct lookup or nearest available neighbor within local 8-frame radius
+    let drawable: HTMLImageElement | ImageBitmap | null = imageCacheRef.current[frameIndex];
+    if (!drawable) {
+      for (let d = 1; d <= 8; d++) {
+        if (frameIndex - d >= 0 && imageCacheRef.current[frameIndex - d]) {
+          drawable = imageCacheRef.current[frameIndex - d];
+          break;
         }
-        if (frameIndex + offset < TOTAL_FRAMES) {
-          const next = imageCacheRef.current[frameIndex + offset];
-          if (next && next.complete && next.naturalWidth > 0) {
-            img = next;
-            break;
-          }
+        if (frameIndex + d < TOTAL_FRAMES && imageCacheRef.current[frameIndex + d]) {
+          drawable = imageCacheRef.current[frameIndex + d];
+          break;
         }
       }
     }
 
-    if (!img || !img.complete || img.naturalWidth === 0) return;
+    if (!drawable) return;
 
     const cw = canvas.width;
     const ch = canvas.height;
     if (cw === 0 || ch === 0) return;
 
-    const iw = img.naturalWidth || 1280;
-    const ih = img.naturalHeight || 720;
+    const iw = (drawable as any).naturalWidth || (drawable as any).width || 1280;
+    const ih = (drawable as any).naturalHeight || (drawable as any).height || 720;
 
-    // Aspect-cover scaling: perfectly fills viewport with zero distortion
+    // Aspect-cover scaling: fills viewport with zero distortion
     const scale = Math.max(cw / iw, ch / ih);
     const nw = iw * scale;
     const nh = ih * scale;
@@ -81,8 +79,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     const cy = (ch - nh) * 0.5;
 
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, 0, 0, iw, ih, cx, cy, nw, nh);
+    ctx.drawImage(drawable, 0, 0, iw, ih, cx, cy, nw, nh);
   }, []);
 
   // --- Resize Handler ---
@@ -96,7 +93,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       canvas.width = w;
       canvas.height = h;
     }
-    renderFrame(currentFrameRef.current);
+    renderFrame(Math.round(currentFloatRef.current));
   }, [renderFrame]);
 
   // --- Cinematic Transition to Interactive 3D Supermarket ---
@@ -112,7 +109,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       gsap.to(overlayRef.current, {
         opacity: 0,
         scale: 1.05,
-        duration: 0.8,
+        duration: 0.7,
         ease: 'power2.inOut',
         onComplete: () => {
           onComplete();
@@ -123,36 +120,145 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     }
   }, [onComplete]);
 
-  // --- Update Frame & Imperative UI ---
-  const applyFrame = useCallback(
-    (frameIndex: number) => {
-      const clamped = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(frameIndex)));
-      currentFrameRef.current = clamped;
-      renderFrame(clamped);
+  // --- Update HUD Imperatively (Zero React Re-render Overhead) ---
+  const updateHUD = useCallback((frameIndex: number) => {
+    if (frameCounterRef.current) {
+      frameCounterRef.current.textContent = `FRAME ${String(frameIndex + 1).padStart(3, '0')} OF ${TOTAL_FRAMES}`;
+    }
+    const progress = frameIndex / (TOTAL_FRAMES - 1);
+    if (progressBarRef.current) {
+      progressBarRef.current.style.width = `${Math.max(2, progress * 100)}%`;
+    }
+    if (percentTextRef.current) {
+      percentTextRef.current.textContent = `${Math.round(progress * 100)}% EXPLORED`;
+    }
+  }, []);
 
-      // Update HUD imperatively (Zero React re-render overhead!)
-      if (frameCounterRef.current) {
-        frameCounterRef.current.textContent = `FRAME ${String(clamped + 1).padStart(3, '0')} / ${TOTAL_FRAMES}`;
+  // --- Prioritized Sliding-Window Frame Preloader ---
+  const loadSingleFrame = useCallback((i: number, priority: 'high' | 'auto' = 'auto') => {
+    if (i < 0 || i >= TOTAL_FRAMES) return;
+    if (loadStatusRef.current[i] !== 0) return; // Already requested or loaded
+
+    loadStatusRef.current[i] = 1; // Mark loading
+
+    const img = new Image();
+    if ('fetchPriority' in img) {
+      (img as any).fetchPriority = priority;
+    }
+    img.decoding = 'async';
+    img.src = getFrameUrl(i);
+
+    img.onload = () => {
+      if (!isComponentMounted.current) return;
+
+      // Decode into GPU ImageBitmap off the main thread if supported
+      if (typeof createImageBitmap === 'function') {
+        createImageBitmap(img)
+          .then((bmp) => {
+            if (!isComponentMounted.current) return;
+            imageCacheRef.current[i] = bmp;
+            loadStatusRef.current[i] = 2;
+            loadedCountRef.current++;
+            if (i === 0 || i === Math.round(currentFloatRef.current)) {
+              renderFrame(i);
+            }
+          })
+          .catch(() => {
+            imageCacheRef.current[i] = img;
+            loadStatusRef.current[i] = 2;
+            loadedCountRef.current++;
+            if (i === 0 || i === Math.round(currentFloatRef.current)) {
+              renderFrame(i);
+            }
+          });
+      } else {
+        imageCacheRef.current[i] = img;
+        loadStatusRef.current[i] = 2;
+        loadedCountRef.current++;
+        if (i === 0 || i === Math.round(currentFloatRef.current)) {
+          renderFrame(i);
+        }
       }
-      const progress = clamped / (TOTAL_FRAMES - 1);
-      if (progressBarRef.current) {
-        progressBarRef.current.style.width = `${Math.max(2, progress * 100)}%`;
+    };
+
+    img.onerror = () => {
+      loadStatusRef.current[i] = 0; // Allow retry
+    };
+  }, [renderFrame]);
+
+  // Ensure lookahead frames right ahead of the playhead are ALWAYS loaded
+  const ensureLookaheadLoaded = useCallback((centerFrame: number) => {
+    const start = Math.max(0, centerFrame - 4);
+    const end = Math.min(TOTAL_FRAMES - 1, centerFrame + 36);
+    for (let i = start; i <= end; i++) {
+      loadSingleFrame(i, 'high');
+    }
+  }, [loadSingleFrame]);
+
+  // --- Physics Inertia Animation Loop (120 FPS Gliding, Zero Stutter) ---
+  useEffect(() => {
+    isComponentMounted.current = true;
+    handleResize();
+
+    // 1. Immediately load initial critical batch (frames 0 to 35) with high priority
+    for (let i = 0; i <= 35; i++) {
+      loadSingleFrame(i, 'high');
+    }
+
+    // 2. Progressively stream the remaining frames in the background
+    let bgTimer: any = null;
+    let nextBgFrame = 36;
+    const streamBackground = () => {
+      if (!isComponentMounted.current || nextBgFrame >= TOTAL_FRAMES) return;
+      const batchEnd = Math.min(TOTAL_FRAMES - 1, nextBgFrame + 6);
+      for (let i = nextBgFrame; i <= batchEnd; i++) {
+        loadSingleFrame(i, 'auto');
       }
-      if (percentTextRef.current) {
-        percentTextRef.current.textContent = `${Math.round(progress * 100)}%`;
+      nextBgFrame = batchEnd + 1;
+      bgTimer = setTimeout(streamBackground, 40);
+    };
+    bgTimer = setTimeout(streamBackground, 200);
+
+    // 3. Continuous Damped Inertia RAF Loop
+    const physicsLoop = () => {
+      if (!isComponentMounted.current) return;
+
+      const target = targetFrameRef.current;
+      const current = currentFloatRef.current;
+      const diff = target - current;
+
+      if (Math.abs(diff) > 0.005) {
+        // Frictionless exponential glide: 0.16 smoothing factor
+        currentFloatRef.current += diff * 0.16;
+        const rounded = Math.round(currentFloatRef.current);
+
+        if (rounded !== lastDrawnFrameRef.current) {
+          lastDrawnFrameRef.current = rounded;
+          renderFrame(rounded);
+          updateHUD(rounded);
+
+          if (rounded >= TOTAL_FRAMES - 1 && !isTransitioningRef.current) {
+            triggerCompletion();
+          }
+        }
       }
 
-      // When final frame is reached, trigger completion transition
-      if (clamped >= TOTAL_FRAMES - 1 && !isTransitioningRef.current) {
-        setTimeout(() => {
-          triggerCompletion();
-        }, 120);
-      }
-    },
-    [renderFrame, triggerCompletion]
-  );
+      rafIdRef.current = requestAnimationFrame(physicsLoop);
+    };
 
-  // --- Smooth Inertial Scrub Controller via GSAP ---
+    rafIdRef.current = requestAnimationFrame(physicsLoop);
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      isComponentMounted.current = false;
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      if (bgTimer) clearTimeout(bgTimer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [handleResize, loadSingleFrame, renderFrame, triggerCompletion, updateHUD]);
+
+  // --- Smooth Wheel & Gesture Input Capture ---
   const advanceFrames = useCallback(
     (delta: number) => {
       if (isTransitioningRef.current) return;
@@ -162,71 +268,27 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         Math.min(TOTAL_FRAMES - 1, targetFrameRef.current + delta)
       );
 
-      gsap.to(frameObjRef.current, {
-        frame: targetFrameRef.current,
-        duration: 0.35,
-        ease: 'power2.out',
-        overwrite: 'auto',
-        onUpdate: () => {
-          applyFrame(frameObjRef.current.frame);
-        },
-      });
+      // Immediately queue upcoming frames so the user never gets stuck
+      ensureLookaheadLoaded(Math.round(targetFrameRef.current));
     },
-    [applyFrame]
+    [ensureLookaheadLoaded]
   );
 
-  // --- Preloader & Parallel Image Streaming ---
   useEffect(() => {
-    isComponentMounted.current = true;
-    handleResize();
-
-    let count = 0;
-
-    // Preload all 280 frames concurrently
-    for (let i = 0; i < TOTAL_FRAMES; i++) {
-      const img = new Image();
-      img.src = getFrameUrl(i);
-      img.decoding = 'async';
-      img.onload = () => {
-        if (!isComponentMounted.current) return;
-        imageCacheRef.current[i] = img;
-        count++;
-        if (loadedCountRef.current) {
-          loadedCountRef.current.textContent = `Loaded ${count} / ${TOTAL_FRAMES} frames`;
-        }
-        if (i === 0) {
-          renderFrame(0);
-        }
-        if (i === currentFrameRef.current) {
-          renderFrame(i);
-        }
-      };
-    }
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      isComponentMounted.current = false;
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [handleResize, renderFrame]);
-
-  // --- Global Mouse Wheel & Gesture Input Capture ---
-  useEffect(() => {
-    // Wheel listener: active on entire screen
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
       if (typeof (e as any).stopImmediatePropagation === 'function') {
         (e as any).stopImmediatePropagation();
       }
-      // Sensitivity factor: ~4.5 frames per notch
-      const delta = (e.deltaY / 100) * 4.5;
+      // Natural scroll coefficient: ~4.2 frames per wheel click
+      const delta = (e.deltaY / 100) * 4.2;
       advanceFrames(delta);
     };
 
     window.addEventListener('wheel', handleWheel, { passive: false });
 
-    // Touch gesture support for trackpads & mobile
+    // Touch gesture support for trackpads & touchscreens
     let touchStartY = 0;
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length > 0) {
@@ -239,7 +301,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         const currentY = e.touches[0].clientY;
         const diff = touchStartY - currentY;
         touchStartY = currentY;
-        advanceFrames(diff * 0.4);
+        advanceFrames(diff * 0.38);
       }
     };
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -262,13 +324,12 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       } else if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
         e.stopPropagation();
-        advanceFrames(14);
+        advanceFrames(16);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      gsap.killTweensOf(frameObjRef.current);
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
@@ -350,7 +411,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
             </div>
 
             {/* Glowing Slender Progress Bar */}
-            <div className="w-60 sm:w-72 h-1.5 rounded-full bg-white/20 overflow-hidden shadow-inner mt-1">
+            <div className="w-64 sm:w-80 h-1.5 rounded-full bg-white/20 overflow-hidden shadow-inner mt-1">
               <div
                 ref={progressBarRef}
                 className="h-full rounded-full bg-gradient-to-r from-sky-400 via-white to-sky-300 shadow-md shadow-sky-300/90 transition-all duration-75"
@@ -358,10 +419,11 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
               />
             </div>
 
-            {/* Frame Counter & Percentage (Clear Spacing, Zero Overlap) */}
-            <div className="flex items-center justify-between w-60 sm:w-72 text-xs font-mono font-bold text-sky-200/90 px-1">
-              <span ref={frameCounterRef}>FRAME 001 / {TOTAL_FRAMES}</span>
-              <span ref={percentTextRef}>0%</span>
+            {/* Frame Counter & Percentage (Clear Glass Pill, Never Collides) */}
+            <div className="flex items-center justify-between w-64 sm:w-80 text-[11px] sm:text-xs font-mono font-bold text-sky-100/90 px-3 py-1 bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-lg mt-0.5">
+              <span ref={frameCounterRef} className="tracking-wider">FRAME 001 OF {TOTAL_FRAMES}</span>
+              <span className="text-white/40 font-normal select-none">•</span>
+              <span ref={percentTextRef} className="text-sky-300 font-black tracking-wider">0% EXPLORED</span>
             </div>
           </div>
         </div>

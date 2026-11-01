@@ -17,12 +17,33 @@ const sharedGeometries = {
 };
 
 // Shared texture cache to prevent duplicate fetches across shelf units
-const shelfTextureCache = new Map<string, THREE.Texture>();
+export const shelfTextureCache = new Map<string, THREE.Texture>();
 
-// Cached Canvas Textures for ESL digital price tags (High-Res 512x256)
-const eslTextureCache = new Map<string, THREE.CanvasTexture>();
+// Cached Canvas Textures for ESL digital price tags (Ultra-Fast 256x128)
+export const eslTextureCache = new Map<string, THREE.CanvasTexture>();
+export const eslMaterialCache = new Map<string, THREE.MeshBasicMaterial>();
+export const shelfMaterialCache = new Map<string, THREE.Material>();
 
-function getEslTexture(price: number, brand: string): THREE.CanvasTexture {
+// Static shared materials for all 5 aisles to eliminate redundant WebGL shader switches
+const shelfRackMaterials = {
+  divider: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.1, roughness: 0.3 }),
+  plank: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.15, roughness: 0.2 }),
+  led: new THREE.MeshStandardMaterial({ color: '#bae6fd', emissive: new THREE.Color('#0284c7'), emissiveIntensity: 0.75, roughness: 0.1 }),
+  rail: new THREE.MeshStandardMaterial({ color: '#0284c7', emissive: new THREE.Color('#0284c7'), emissiveIntensity: 0.55 }),
+  neon: new THREE.MeshBasicMaterial({ color: '#38bdf8' }),
+  post: new THREE.MeshStandardMaterial({ color: '#0f172a', metalness: 0.85, roughness: 0.2 }),
+  postNeon: new THREE.MeshStandardMaterial({ color: '#38bdf8', emissive: new THREE.Color('#0284c7'), emissiveIntensity: 0.85 }),
+  eslCasing: new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.4, metalness: 0.2 }),
+  acrylicTray: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.05 }),
+  acrylicLip: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.35, roughness: 0.1 }),
+  cartonFlap: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.5 }),
+  whiteCap: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3, metalness: 0.1 }),
+  hangerBar: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.5 }),
+  hangerHook: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.95, roughness: 0.1 }),
+};
+
+
+export function getEslTexture(price: number, brand: string): THREE.CanvasTexture {
   const key = `${price}-${brand}`;
   const existing = eslTextureCache.get(key);
   if (existing) return existing;
@@ -32,55 +53,99 @@ function getEslTexture(price: number, brand: string): THREE.CanvasTexture {
   }
 
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 256;
+  canvas.width = 256;
+  canvas.height = 128;
   const ctx = canvas.getContext('2d');
   if (ctx) {
     // High-tech dark e-ink background
     ctx.fillStyle = '#090d16';
-    ctx.fillRect(0, 0, 512, 256);
+    ctx.fillRect(0, 0, 256, 128);
 
     // Subtle casing bezel
     ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(12, 12, 488, 232);
+    ctx.lineWidth = 4;
+    ctx.strokeRect(6, 6, 244, 116);
 
     // Glowing electric sapphire accent line
     ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(20, 20, 472, 216);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(10, 10, 236, 108);
 
     // Digital ESL Yellow Price
     ctx.fillStyle = '#facc15';
-    ctx.font = 'bold 96px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`₹${price}`, 36, 104);
+    ctx.fillText(`₹${price}`, 18, 52);
 
     // Brand Label
     ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     const cleanBrand = brand && brand.length > 14 ? brand.slice(0, 13) + '..' : (brand || 'Martverse');
-    ctx.fillText(cleanBrand, 36, 192);
+    ctx.fillText(cleanBrand, 18, 96);
 
     // High-tech Digital Barcode pattern on right
     ctx.fillStyle = '#94a3b8';
-    const barX = 360;
-    const barWidths = [4, 2, 6, 2, 4, 8, 2, 6, 4, 2, 4, 6, 2, 8, 4];
+    const barX = 180;
+    const barWidths = [2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 2, 3, 1, 4, 2];
     let currX = barX;
     for (let i = 0; i < barWidths.length; i++) {
-      ctx.fillRect(currX, 48, barWidths[i], 156);
-      currX += barWidths[i] + (i % 2 === 0 ? 4 : 3);
+      ctx.fillRect(currX, 24, barWidths[i], 78);
+      currX += barWidths[i] + (i % 2 === 0 ? 2 : 1.5);
     }
   }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.generateMipmaps = true;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps = false;
+  texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 16;
   eslTextureCache.set(key, texture);
   return texture;
+}
+
+export function getEslMaterial(price: number, brand: string): THREE.MeshBasicMaterial {
+  const key = `${price}-${brand}`;
+  const existing = eslMaterialCache.get(key);
+  if (existing) return existing;
+  const tex = getEslTexture(price, brand);
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex,
+    toneMapped: false,
+  });
+  eslMaterialCache.set(key, mat);
+  return mat;
+}
+
+export function getShelfMaterial(tex: THREE.Texture, key: string, materialType: 'basic' | 'standard' = 'basic'): THREE.Material {
+  const cacheKey = `${key}-${materialType}`;
+  const existing = shelfMaterialCache.get(cacheKey);
+  if (existing) return existing;
+
+  const mat = materialType === 'standard'
+    ? new THREE.MeshStandardMaterial({
+        map: tex,
+        transparent: true,
+        alphaTest: 0.01,
+        roughness: 0.25,
+        metalness: 0.12,
+        side: THREE.FrontSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
+      })
+    : new THREE.MeshBasicMaterial({
+        map: tex,
+        transparent: true,
+        alphaTest: 0.01,
+        toneMapped: false,
+        side: THREE.FrontSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
+      });
+
+  shelfMaterialCache.set(cacheKey, mat);
+  return mat;
 }
 
 const ProductSmallImage: React.FC<{
@@ -92,9 +157,10 @@ const ProductSmallImage: React.FC<{
   roughness?: number;
   metalness?: number;
   alphaTest?: number;
-}> = React.memo(({ url, position, scale, rotation, materialType = 'basic', roughness = 0.25, metalness = 0.12, alphaTest = 0.01 }) => {
+}> = React.memo(({ url, position, scale, rotation, materialType = 'basic' }) => {
   const resolvedUrl: string = typeof url === 'object' && url && 'src' in url ? url.src : (url || '/products/sweets/DairyMilk.png');
 
+  // Synchronous texture lookup from pre-warmed cache (0ms instant render)
   const [texture, setTexture] = useState<THREE.Texture | null>(() => {
     return resolvedUrl ? (shelfTextureCache.get(resolvedUrl) || null) : null;
   });
@@ -102,7 +168,8 @@ const ProductSmallImage: React.FC<{
   useEffect(() => {
     if (!resolvedUrl) return;
     if (shelfTextureCache.has(resolvedUrl)) {
-      setTexture(shelfTextureCache.get(resolvedUrl)!);
+      const cached = shelfTextureCache.get(resolvedUrl)!;
+      if (texture !== cached) setTexture(cached);
       return;
     }
 
@@ -111,10 +178,9 @@ const ProductSmallImage: React.FC<{
       resolvedUrl,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
-        tex.generateMipmaps = true;
-        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.generateMipmaps = false;
+        tex.minFilter = THREE.LinearFilter;
         tex.magFilter = THREE.LinearFilter;
-        tex.anisotropy = 16;
         tex.needsUpdate = true;
         shelfTextureCache.set(resolvedUrl, tex);
         setTexture(tex);
@@ -124,48 +190,29 @@ const ProductSmallImage: React.FC<{
         if (resolvedUrl !== '/products/sweets/DairyMilk.png') {
           loader.load('/products/sweets/DairyMilk.png', (tex) => {
             tex.colorSpace = THREE.SRGBColorSpace;
-            tex.generateMipmaps = true;
-            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.generateMipmaps = false;
+            tex.minFilter = THREE.LinearFilter;
             tex.magFilter = THREE.LinearFilter;
-            tex.anisotropy = 16;
             shelfTextureCache.set(resolvedUrl, tex);
             setTexture(tex);
           });
         }
       }
     );
-  }, [resolvedUrl]);
+  }, [resolvedUrl, texture]);
+
+  const mat = texture ? getShelfMaterial(texture, resolvedUrl, materialType) : null;
 
   return (
-    <mesh position={position} rotation={rotation} geometry={sharedGeometries.plane} scale={[scale[0], scale[1], 1]} raycast={() => null}>
-      {texture ? (
-        materialType === 'standard' ? (
-          <meshStandardMaterial
-            map={texture}
-            transparent
-            alphaTest={alphaTest}
-            roughness={roughness}
-            metalness={metalness}
-            side={THREE.DoubleSide}
-            polygonOffset
-            polygonOffsetFactor={-4}
-            polygonOffsetUnits={-4}
-          />
-        ) : (
-          <meshBasicMaterial
-            map={texture}
-            transparent
-            alphaTest={alphaTest}
-            toneMapped={false}
-            side={THREE.DoubleSide}
-            polygonOffset
-            polygonOffsetFactor={-4}
-            polygonOffsetUnits={-4}
-          />
-        )
-      ) : (
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.7} />
-      )}
+    <mesh
+      position={position}
+      rotation={rotation}
+      geometry={sharedGeometries.plane}
+      scale={[scale[0], scale[1], 1]}
+      raycast={() => null}
+      material={mat || undefined}
+    >
+      {!mat && <meshBasicMaterial color="#ffffff" transparent opacity={0.5} />}
     </mesh>
   );
 });
@@ -187,10 +234,10 @@ interface ShelfSlotItemProps {
     worldZ: number;
     rotationY: number;
   };
-  eslTexture: THREE.CanvasTexture;
+  eslMaterial: THREE.MeshBasicMaterial;
 }
 
-const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTexture }) => {
+const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMaterial }) => {
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
 
@@ -211,38 +258,47 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
   const mainMatRef = useRef<THREE.MeshStandardMaterial>(null);
   const eslMatRef = useRef<THREE.MeshStandardMaterial>(null);
 
-  // Pure imperative hover tracking (0 React re-renders on hover, pure 60-120 FPS hardware acceleration)
-  const isHoveredRef = useRef(false);
-  const currentScale = useRef(1.0);
-  const currentLift = useRef(0.0);
-  const currentForward = useRef(0.0);
-  const isResting = useRef(true);
+  // On-demand hardware-accelerated RAF animation:
+  // Eliminates 540 idle useFrame loops per frame (saving 32,400+ function calls/second)
+  const animFrameRef = useRef<number | null>(null);
 
-  useFrame((_, delta) => {
-    if (!animGroupRef.current) return;
-    if (!isHoveredRef.current && isResting.current) return;
-
-    const targetScale = isHoveredRef.current ? 1.22 : 1.0;
-    const targetLift = isHoveredRef.current ? 0.06 : 0.0;
-    const targetForward = isHoveredRef.current ? 0.08 : 0.0;
-
-    if (!isHoveredRef.current && Math.abs(currentScale.current - 1.0) < 0.003 && Math.abs(currentLift.current) < 0.003) {
-      currentScale.current = 1.0;
-      currentLift.current = 0.0;
-      currentForward.current = 0.0;
-      animGroupRef.current.scale.set(1.0, 1.0, 1.0);
-      animGroupRef.current.position.set(0, 0, 0);
-      isResting.current = true;
-      return;
+  const startHoverAnimation = (hovering: boolean) => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
     }
+    const targetScale = hovering ? 1.20 : 1.0;
+    const targetLift = hovering ? 0.05 : 0.0;
+    const targetFwd = hovering ? 0.07 : 0.0;
 
-    currentScale.current = THREE.MathUtils.damp(currentScale.current, targetScale, 20, delta);
-    currentLift.current = THREE.MathUtils.damp(currentLift.current, targetLift, 20, delta);
-    currentForward.current = THREE.MathUtils.damp(currentForward.current, targetForward, 20, delta);
+    const step = () => {
+      if (!animGroupRef.current) return;
+      const curScale = animGroupRef.current.scale.x;
+      const curLift = animGroupRef.current.position.y;
+      const curFwd = animGroupRef.current.position.z;
 
-    animGroupRef.current.scale.set(currentScale.current, currentScale.current, currentScale.current);
-    animGroupRef.current.position.set(0, currentLift.current, currentForward.current);
-  });
+      const newScale = curScale + (targetScale - curScale) * 0.35;
+      const newLift = curLift + (targetLift - curLift) * 0.35;
+      const newFwd = curFwd + (targetFwd - curFwd) * 0.35;
+
+      animGroupRef.current.scale.set(newScale, newScale, newScale);
+      animGroupRef.current.position.set(0, newLift, newFwd);
+
+      if (Math.abs(targetScale - newScale) > 0.005 || Math.abs(targetLift - newLift) > 0.002) {
+        animFrameRef.current = requestAnimationFrame(step);
+      } else {
+        animGroupRef.current.scale.set(targetScale, targetScale, targetScale);
+        animGroupRef.current.position.set(0, targetLift, targetFwd);
+        animFrameRef.current = null;
+      }
+    };
+    animFrameRef.current = requestAnimationFrame(step);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, []);
 
   return (
     <group
@@ -257,8 +313,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
         scale={[isDairyMilk ? 0.72 : 0.60, 0.46, 0.42]}
         onPointerOver={(e) => {
           e.stopPropagation();
-          isHoveredRef.current = true;
-          isResting.current = false;
+          startHoverAnimation(true);
           if (mainMatRef.current) {
             mainMatRef.current.emissive.set(isDairyMilk ? '#6b21a8' : color);
             mainMatRef.current.emissiveIntensity = 0.35;
@@ -271,7 +326,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
-          isHoveredRef.current = false;
+          startHoverAnimation(false);
           if (mainMatRef.current) {
             mainMatRef.current.emissiveIntensity = 0;
           }
@@ -422,18 +477,15 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
       {/* Shelf Edge ESL (Electronic Shelf Label) Tag mounted directly on blue LED rail */}
       <group position={[0, -0.01, 0.44]} raycast={() => null}>
         {/* Sleek Digital ESL Casing */}
-        <mesh geometry={sharedGeometries.box} scale={[0.32, 0.12, 0.018]} raycast={() => null}>
-          <meshStandardMaterial
-            ref={eslMatRef}
-            color="#0f172a"
-            roughness={0.4}
-            metalness={0.2}
-          />
-        </mesh>
+        <mesh geometry={sharedGeometries.box} scale={[0.32, 0.12, 0.018]} raycast={() => null} material={shelfRackMaterials.eslCasing} />
         {/* High-Resolution Digital E-Ink Display Face */}
-        <mesh position={[0, 0, 0.012]} geometry={sharedGeometries.plane} scale={[0.30, 0.10, 1]} raycast={() => null}>
-          <meshBasicMaterial map={eslTexture} toneMapped={false} />
-        </mesh>
+        <mesh
+          position={[0, 0, 0.012]}
+          geometry={sharedGeometries.plane}
+          scale={[0.30, 0.10, 1]}
+          raycast={() => null}
+          material={eslMaterial}
+        />
       </group>
     </group>
   );
@@ -451,9 +503,6 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   const activeFloor = useMartStore((state) => state.activeFloor);
   const isFloorActive = (floorYOffset > 2 ? 2 : 1) === activeFloor;
 
-  // Floor Culling: if this shelf belongs to the inactive floor, unmount completely!
-  if (!isFloorActive) return null;
-
   const aisleProducts = useMemo(() => {
     const floorNum = floorYOffset > 2 ? 2 : 1;
     const directMatches = products.filter(
@@ -468,6 +517,9 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
       const pFloor = p.placement?.floorNumber ?? 1;
       return pFloor === floorNum;
     });
+    if (floorNum === 2) {
+      return floorProducts; // Floor 2 items removed until user adds them later
+    }
     return floorProducts.length > 0 ? floorProducts : products;
   }, [products, aisle.aisleNumber, aisle.categoryName, floorYOffset]);
 
@@ -496,7 +548,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
 
   // Generate 6 blocks x 3 items x 3 tiers = 54 items per side (108 items total per aisle)
   const displaySlots = useMemo(() => {
-    if (!aisleProducts || aisleProducts.length === 0) return [];
+    if (!isFloorActive || !aisleProducts || aisleProducts.length === 0) return [];
 
     const slots: Array<{
       key: string;
@@ -594,7 +646,10 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
     });
 
     return slots;
-  }, [aisleProducts, blockCenters, SHELF_TIERS, centerX, centerY, centerZ, floorYOffset, aisle.aisleNumber, aisle.name, aisle.shelfHeight, aisle.id, aisle.categoryName]);
+  }, [isFloorActive, aisleProducts, blockCenters, SHELF_TIERS, centerX, centerY, centerZ, floorYOffset, aisle.aisleNumber, aisle.name, aisle.shelfHeight, aisle.id, aisle.categoryName]);
+
+  // Floor Culling: unmount completely if this shelf belongs to inactive floor (placed AFTER all hooks)
+  if (!isFloorActive) return null;
 
   return (
     <group position={[centerX, centerY, centerZ]}>
@@ -647,9 +702,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
       {/* Central Shelving Rack - Raycast bypassed to keep hover 60+ FPS responsive */}
       <group raycast={() => null}>
         {/* Central Back Divider Wall */}
-        <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[0.08, aisle.shelfHeight, length]}>
-          <meshStandardMaterial color="#ffffff" metalness={0.1} roughness={0.3} />
-        </mesh>
+        <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[0.08, aisle.shelfHeight, length]} material={shelfRackMaterials.divider} />
 
         {/* 3 Horizontal Shelves for LEFT and RIGHT sides */}
         {[0.5, 1.3, 2.1].map((shelfH, sIdx) => {
@@ -657,38 +710,22 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
           return (
             <group key={`shelf-tier-${sIdx}`} position={[0, yRel, 0]}>
               {/* Left Shelf Plank */}
-              <mesh position={[-0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]}>
-                <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
-              </mesh>
+              <mesh position={[-0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]} material={shelfRackMaterials.plank} />
               {/* Left Under-Shelf Linear LED Glow Strip */}
-              <mesh position={[-0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]}>
-                <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.75} roughness={0.1} />
-              </mesh>
+              <mesh position={[-0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]} material={shelfRackMaterials.led} />
               {/* Left Price Tag Rail */}
-              <mesh position={[-0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]}>
-                <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.55} />
-              </mesh>
+              <mesh position={[-0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]} material={shelfRackMaterials.rail} />
               {/* Left Slim Cyan Neon Accent Edge Line */}
-              <mesh position={[-0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]}>
-                <meshBasicMaterial color="#38bdf8" />
-              </mesh>
+              <mesh position={[-0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]} material={shelfRackMaterials.neon} />
 
               {/* Right Shelf Plank */}
-              <mesh position={[0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]}>
-                <meshStandardMaterial color="#ffffff" metalness={0.15} roughness={0.2} />
-              </mesh>
+              <mesh position={[0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]} material={shelfRackMaterials.plank} />
               {/* Right Under-Shelf Linear LED Glow Strip */}
-              <mesh position={[0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]}>
-                <meshStandardMaterial color="#bae6fd" emissive="#0284c7" emissiveIntensity={0.75} roughness={0.1} />
-              </mesh>
+              <mesh position={[0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]} material={shelfRackMaterials.led} />
               {/* Right Price Tag Rail */}
-              <mesh position={[0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]}>
-                <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.55} />
-              </mesh>
+              <mesh position={[0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]} material={shelfRackMaterials.rail} />
               {/* Right Slim Cyan Neon Accent Edge Line */}
-              <mesh position={[0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]}>
-                <meshBasicMaterial color="#38bdf8" />
-              </mesh>
+              <mesh position={[0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]} material={shelfRackMaterials.neon} />
             </group>
           );
         })}
@@ -697,21 +734,13 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
         {[-length / 2, -length / 3, -length / 6, 0, length / 6, length / 3, length / 2].map((zPos, pIdx) => (
           <group key={`post-${pIdx}`} position={[0, 0, zPos]}>
             <group position={[-0.86, 0, 0]}>
-              <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]}>
-                <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
-              </mesh>
-              <mesh position={[-0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]}>
-                <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
-              </mesh>
+              <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]} material={shelfRackMaterials.post} />
+              <mesh position={[-0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]} material={shelfRackMaterials.postNeon} />
             </group>
 
             <group position={[0.86, 0, 0]}>
-              <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]}>
-                <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.2} />
-              </mesh>
-              <mesh position={[0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]}>
-                <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
-              </mesh>
+              <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]} material={shelfRackMaterials.post} />
+              <mesh position={[0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]} material={shelfRackMaterials.postNeon} />
             </group>
           </group>
         ))}
@@ -720,12 +749,12 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
       {/* 6 Blocks x 3 Items per Block */}
       <group>
         {displaySlots.map((slot) => {
-          const eslTexture = getEslTexture(slot.product.price, slot.product.brand || 'Cadbury');
+          const eslMaterial = getEslMaterial(slot.product.price, slot.product.brand || 'Cadbury');
           return (
             <ShelfProductItem
               key={slot.key}
               slot={slot}
-              eslTexture={eslTexture}
+              eslMaterial={eslMaterial}
             />
           );
         })}

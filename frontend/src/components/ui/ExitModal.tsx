@@ -40,8 +40,8 @@ export const ExitModal: React.FC = () => {
     } catch {}
     clearCart();
     closeFinalCompletedPopup();
-    // Reset player back to Entrance (z = -20)
-    setPlayerPos([0, 1.5, -20], 0);
+    // Reset player & trolley back to Entrance (z = -20)
+    useMartStore.getState().resetToOriginalState();
   };
 
   return (

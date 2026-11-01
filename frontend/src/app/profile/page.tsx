@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useWishlistStore } from '@/store/useWishlistStore';
-import { useMartStore } from '@/store/useMartStore';
+import { useMartStore, martRuntime } from '@/store/useMartStore';
 import { LoginModal } from '@/components/ui/LoginModal';
 import { api } from '@/lib/api';
 import {
@@ -62,7 +62,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     hydrateAuth();
-  }, [hydrateAuth]);
+    router.prefetch('/');
+  }, [hydrateAuth, router]);
 
   const fetchOrders = useCallback(async (phone: string) => {
     setIsLoadingOrders(true);
@@ -90,6 +91,25 @@ export default function ProfilePage() {
     router.push('/');
   };
 
+  const handleBackToMart = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    martRuntime.playerPos[0] = 0;
+    martRuntime.playerPos[1] = 1.5;
+    martRuntime.playerPos[2] = -20;
+    martRuntime.playerYaw = 0;
+    useMartStore.getState().setHasEnteredStore(true);
+    useMartStore.getState().setPlayerPos([0, 1.5, -20], 0);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('martverse_entered', 'true');
+      sessionStorage.setItem('martverse_skip_intro', 'true');
+      sessionStorage.setItem('martverse_return_target', 'trolley_reset');
+      localStorage.setItem('martverse_entered', 'true');
+      localStorage.setItem('martverse_intro_completed', 'true');
+      localStorage.setItem('martverse_skip_intro', 'true');
+    }
+    router.replace('/?return=trolley_reset');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
       <LoginModal />
@@ -100,25 +120,30 @@ export default function ProfilePage() {
           
           {/* Back & Logo */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-bold text-xs transition-all border border-slate-200"
+            <button
+              type="button"
+              onClick={handleBackToMart}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-bold text-xs transition-all border border-slate-200 cursor-pointer shadow-xs active:scale-95 select-none"
               title="Return to 3D Supermarket"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Mart</span>
-            </Link>
+            </button>
 
             <div className="h-5 w-px bg-slate-200 hidden sm:block" />
 
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25">
+            <div
+              onClick={handleBackToMart}
+              className="flex items-center gap-2.5 group cursor-pointer select-none"
+              title="Return to 3D Supermarket"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform">
                 <Store className="w-5 h-5 text-white" />
               </div>
-              <span className="text-base font-black tracking-tight text-slate-900 hidden xs:inline">
+              <span className="text-base font-black tracking-tight text-slate-900 hidden xs:inline group-hover:text-blue-600 transition-colors">
                 MART<span className="text-blue-600">VERSE</span>
               </span>
-            </Link>
+            </div>
           </div>
 
           {/* Quick Header Actions */}

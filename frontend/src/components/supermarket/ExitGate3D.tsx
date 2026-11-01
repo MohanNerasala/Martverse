@@ -9,7 +9,7 @@ interface ExitGateProps {
   position: [number, number, number];
 }
 
-export const ExitGate3D: React.FC<ExitGateProps> = ({ position }) => {
+const ExitGate3DComponent: React.FC<ExitGateProps> = ({ position }) => {
   const canExit = useCartStore((state) => state.items.length === 0 || state.isPaid);
   const leftWingRef = useRef<THREE.Mesh>(null);
   const rightWingRef = useRef<THREE.Mesh>(null);
@@ -89,3 +89,5 @@ export const ExitGate3D: React.FC<ExitGateProps> = ({ position }) => {
     </group>
   );
 };
+
+export const ExitGate3D = React.memo(ExitGate3DComponent);

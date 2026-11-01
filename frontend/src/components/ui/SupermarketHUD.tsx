@@ -1,3 +1,6 @@
+
+'use client';
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMartStore, martRuntime } from '@/store/useMartStore';
@@ -15,6 +18,7 @@ import {
   RotateCcw,
   Eye,
   Camera,
+  Check,
   CheckCircle2,
   AlertTriangle,
   Info,
@@ -38,6 +42,214 @@ import {
 import { api } from '@/lib/api';
 import { ProductHoverCard } from '@/components/ui/ProductHoverCard';
 
+const FpsTelemetryBadge: React.FC = () => {
+  const [stats, setStats] = useState<{ fps: number; drawCalls: number } | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (typeof window !== 'undefined' && (window as any).__martverseStats) {
+        setStats({
+          fps: (window as any).__martverseStats.fps,
+          drawCalls: (window as any).__martverseStats.drawCalls,
+        });
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!stats) return null;
+
+  return (
+    <div className="hidden 2xl:flex items-center gap-1.5 px-2.5 h-10 rounded-xl bg-slate-100/90 border border-slate-200/90 text-[11px] font-mono text-slate-700 shadow-2xs select-none" title="Live Three.js Hardware Performance">
+      <span className={`w-2 h-2 rounded-full ${stats.fps >= 55 ? 'bg-emerald-500 animate-pulse' : stats.fps >= 35 ? 'bg-amber-500' : 'bg-rose-500'}`} />
+      <span className="font-bold text-slate-900">{stats.fps} FPS</span>
+      <span className="text-slate-300">|</span>
+      <span className="text-slate-500">{stats.drawCalls} calls</span>
+    </div>
+  );
+};
+
+export const ContextualPromptBanner: React.FC = React.memo(() => {
+  const promptText = useMartStore((state) => state.promptText);
+  if (!promptText) return null;
+
+  return (
+    <div className="flex justify-center pointer-events-none">
+      <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md px-5 py-2.5 rounded-full shadow-xl flex items-center gap-3 border border-slate-700/80 text-white transition-all">
+        <span className="w-2 h-2 rounded-full bg-blue-400" />
+        <span className="text-xs sm:text-sm font-semibold tracking-wide">{promptText}</span>
+        <kbd className="bg-white/10 border border-white/20 text-white text-xs font-mono font-bold px-2 py-0.5 rounded-md shadow-inner">
+          E
+        </kbd>
+      </div>
+    </div>
+  );
+});
+
+export const EscalatorPromptCard: React.FC = React.memo(() => {
+  const promptText = useMartStore((state) => state.promptText);
+  const activeFloor = useMartStore((state) => state.activeFloor);
+  const setActiveFloor = useMartStore((state) => state.setActiveFloor);
+  const setPlayerPos = useMartStore((state) => state.setPlayerPos);
+
+  if (!promptText?.includes('Escalator') && !promptText?.includes('Ride to')) return null;
+
+  return (
+    <div className="fixed top-36 sm:top-40 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-slate-200/90 text-slate-900 max-w-xs w-full transition-all">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">
+            <ArrowUpDown className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-extrabold text-xs text-slate-900 tracking-tight block">
+              Store Escalator & Floors
+            </span>
+            <span className="text-[10px] text-slate-500 font-medium">
+              {activeFloor === 2 ? 'Currently on Floor 2' : 'Currently on Ground Floor'}
+            </span>
+          </div>
+        </div>
+        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+          Walkway
+        </span>
+      </div>
+
+      <div className="space-y-2 text-left">
+        {/* Option 1: 2nd Floor (Fashion Studio & Apparel) */}
+        <button
+          type="button"
+          onClick={() => {
+            setPlayerPos([14.7, 6.5, 6.2], 0);
+            setActiveFloor(2);
+          }}
+          className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
+            activeFloor === 2
+              ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-400/30'
+              : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 hover:shadow-sm'
+          }`}
+        >
+          <div className="space-y-0.5">
+            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
+              <span>↑ 2nd Floor • Upper Level</span>
+              {activeFloor === 2 ? (
+                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full">Current</span>
+              ) : (
+                <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">L2</span>
+              )}
+            </div>
+            <div className="text-[11px] text-slate-500 font-medium">
+              Department Expansion (Coming Soon)
+            </div>
+          </div>
+          <ArrowRight className={`w-4 h-4 transition-transform duration-200 ${
+            activeFloor === 2
+              ? 'text-blue-600'
+              : 'text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1'
+          }`} />
+        </button>
+
+        {/* Option 2: Ground Floor (Groceries, Staples & POS) */}
+        <button
+          type="button"
+          onClick={() => {
+            setPlayerPos([14.7, 1.5, -9.2], 0);
+            setActiveFloor(1);
+          }}
+          className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
+            activeFloor === 1
+              ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-400/30'
+              : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 hover:shadow-sm'
+          }`}
+        >
+          <div className="space-y-0.5">
+            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
+              <span>↓ Ground Floor • Groceries & POS</span>
+              {activeFloor === 1 ? (
+                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full">Current</span>
+              ) : (
+                <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">L1</span>
+              )}
+            </div>
+            <div className="text-[11px] text-slate-500 font-medium">
+              Groceries, Snacks & Billing Counters
+            </div>
+          </div>
+          <ArrowRight className={`w-4 h-4 transition-transform duration-200 ${
+            activeFloor === 1
+              ? 'text-blue-600'
+              : 'text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1'
+          }`} />
+        </button>
+      </div>
+    </div>
+  );
+});
+
+export const IntroBrandBanner: React.FC = React.memo(() => {
+  const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
+  const [shouldShow, setShouldShow] = useState(false);
+  const [hasDismissed, setHasDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const alreadySeen =
+      sessionStorage.getItem('martverse_intro_card_seen') === 'true' ||
+      localStorage.getItem('martverse_intro_card_seen') === 'true' ||
+      sessionStorage.getItem('martverse_return_target') !== null;
+
+    if (!alreadySeen && !hasMovedTrolley) {
+      setShouldShow(true);
+    } else {
+      setHasDismissed(true);
+    }
+  }, [hasMovedTrolley]);
+
+  useEffect(() => {
+    if (hasMovedTrolley && shouldShow) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('martverse_intro_card_seen', 'true');
+        localStorage.setItem('martverse_intro_card_seen', 'true');
+      }
+      const timer = setTimeout(() => {
+        setHasDismissed(true);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [hasMovedTrolley, shouldShow]);
+
+  if (hasDismissed || !shouldShow) return null;
+
+  return (
+    <div
+      className={`fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-700 ease-out transform ${
+        hasMovedTrolley
+          ? 'opacity-0 -translate-y-8 scale-95 pointer-events-none'
+          : 'opacity-100 translate-y-0 scale-100'
+      }`}
+    >
+      <div className="bg-gradient-to-b from-sky-50/98 via-white/98 to-blue-50/95 px-8 py-4 rounded-3xl border border-sky-200/90 shadow-[0_20px_50px_rgba(2,132,199,0.18),0_4px_16px_rgba(15,23,42,0.06)] text-center flex flex-col items-center gap-1.5 backdrop-blur-2xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white flex items-center justify-center shadow-md shadow-blue-500/25">
+            <Store className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-slate-900">
+            MART<span className="text-blue-600">VERSE</span>
+          </h1>
+        </div>
+        <p className="text-xs text-sky-800 font-semibold tracking-wide">
+          3D Virtual Hypermarket
+        </p>
+        <div className="flex items-center gap-2 text-[11px] text-slate-700 font-mono mt-1 bg-sky-100/80 px-3.5 py-1 rounded-full border border-sky-200/90 shadow-2xs">
+          <span className="bg-white text-blue-700 font-black px-1.5 py-0.5 rounded border border-blue-200/60 shadow-2xs">W A S D</span>
+          <span className="text-sky-400 font-bold">•</span>
+          <span className="text-slate-700 font-bold">Push Trolley to Explore</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export const SupermarketHUD: React.FC = () => {
   const router = useRouter();
   const activeFloor = useMartStore((state) => state.activeFloor);
@@ -46,7 +258,6 @@ export const SupermarketHUD: React.FC = () => {
   const toggleSound = useMartStore((state) => state.toggleSound);
   const cameraMode = useMartStore((state) => state.cameraMode);
   const setCameraMode = useMartStore((state) => state.setCameraMode);
-  const promptText = useMartStore((state) => state.promptText);
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
   const setHasMovedTrolley = useMartStore((state) => state.setHasMovedTrolley);
@@ -95,7 +306,7 @@ export const SupermarketHUD: React.FC = () => {
       if (isSubscribed) setIsBackendOnline(ok);
     }
     checkHealth();
-    const interval = setInterval(checkHealth, 5000);
+    const interval = setInterval(checkHealth, 20000);
 
     return () => {
       isSubscribed = false;
@@ -234,11 +445,11 @@ export const SupermarketHUD: React.FC = () => {
                   ? 'bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 text-white shadow-xs border border-sky-400/40'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
-              title="First Floor: Fashion Studio & Apparel"
+              title="Second Floor: Upper Level"
             >
               <Layers className={`w-3.5 h-3.5 ${activeFloor === 2 ? 'text-white' : 'text-slate-500'}`} />
               <span className="hidden sm:inline">Floor 2:</span>
-              <span>Fashion</span>
+              <span>Upper Level</span>
             </button>
           </nav>
 
@@ -340,6 +551,7 @@ export const SupermarketHUD: React.FC = () => {
 
           {/* Action Utilities & User Area - Tactile Frosted Pearl Glass Controls */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            <FpsTelemetryBadge />
             {/* Camera Perspective Mode (1st / 3rd Person) */}
             <button
               onClick={() =>
@@ -461,144 +673,16 @@ export const SupermarketHUD: React.FC = () => {
       {/* ============================================================== */}
       {/* --- Middle: Contextual Proximity Interaction Prompt --- */}
       {/* ============================================================== */}
-      <div className="flex justify-center">
-        {promptText && (
-          <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md px-5 py-2.5 rounded-full shadow-xl flex items-center gap-3 border border-slate-700/80 text-white transition-all">
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            <span className="text-xs sm:text-sm font-semibold tracking-wide">{promptText}</span>
-            <kbd className="bg-white/10 border border-white/20 text-white text-xs font-mono font-bold px-2 py-0.5 rounded-md shadow-inner">
-              E
-            </kbd>
-          </div>
-        )}
-      </div>
+      <ContextualPromptBanner />
 
       {/* ============================================================== */}
       {/* --- Escalator Options: Clean White Card with High-End Styling --- */}
       {/* Positioned comfortably below navbar toasts to prevent overlapping */}
       {/* ============================================================== */}
-      {(promptText?.includes('Escalator') || promptText?.includes('Ride to')) && (
-        <div className="fixed top-36 sm:top-40 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-slate-200/90 text-slate-900 max-w-xs w-full transition-all">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">
-                <ArrowUpDown className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="font-extrabold text-xs text-slate-900 tracking-tight block">
-                  Store Escalator & Floors
-                </span>
-                <span className="text-[10px] text-slate-500 font-medium">
-                  {activeFloor === 2 ? 'Currently on Floor 2' : 'Currently on Ground Floor'}
-                </span>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-              Walkway
-            </span>
-          </div>
-
-          <div className="space-y-2 text-left">
-            {/* Option 1: 2nd Floor (Fashion Studio & Apparel) */}
-            <button
-              type="button"
-              onClick={() => {
-                setPlayerPos([14.7, 6.5, 6.2], 0);
-                setActiveFloor(2);
-              }}
-              className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
-                activeFloor === 2
-                  ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-400/30'
-                  : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 hover:shadow-sm'
-              }`}
-            >
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
-                  <span>↑ 2nd Floor • Fashion Studio</span>
-                  {activeFloor === 2 ? (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full">Current</span>
-                  ) : (
-                    <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">L2</span>
-                  )}
-                </div>
-                <div className="text-[11px] text-slate-500 font-medium">
-                  Kurtas, Ethnic, Western & Denim
-                </div>
-              </div>
-              <ArrowRight className={`w-4 h-4 transition-transform duration-200 ${
-                activeFloor === 2
-                  ? 'text-blue-600'
-                  : 'text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1'
-              }`} />
-            </button>
-
-            {/* Option 2: Ground Floor (Groceries, Staples & POS) */}
-            <button
-              type="button"
-              onClick={() => {
-                setPlayerPos([14.7, 1.5, -9.2], 0);
-                setActiveFloor(1);
-              }}
-              className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
-                activeFloor === 1
-                  ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-400/30'
-                  : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 hover:shadow-sm'
-              }`}
-            >
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
-                  <span>↓ Ground Floor • Groceries & POS</span>
-                  {activeFloor === 1 ? (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full">Current</span>
-                  ) : (
-                    <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">L1</span>
-                  )}
-                </div>
-                <div className="text-[11px] text-slate-500 font-medium">
-                  Groceries, Snacks & Billing Counters
-                </div>
-              </div>
-              <ArrowRight className={`w-4 h-4 transition-transform duration-200 ${
-                activeFloor === 1
-                  ? 'text-blue-600'
-                  : 'text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1'
-              }`} />
-            </button>
-          </div>
-          
-          <div className="text-[10px] text-slate-400 font-medium text-center mt-2.5 pt-2 border-t border-slate-100">
-            Walk onto moving ramp or click a floor to glide
-          </div>
-        </div>
-      )}
-      {/* --- First-Look Prominent Mart Name (Hides when moving trolley) --- */}
+      <EscalatorPromptCard />
+      {/* --- First-Look Prominent Mart Name (First-Time Only, Light Blue to White Theme) --- */}
       {/* ============================================================== */}
-      <div
-        className={`fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-700 ease-out transform ${
-          hasMovedTrolley
-            ? 'opacity-0 -translate-y-8 scale-95 pointer-events-none'
-            : 'opacity-100 translate-y-0 scale-100'
-        }`}
-      >
-        <div className="bg-slate-950/60 px-7 py-3.5 rounded-3xl border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.25)] text-center flex flex-col items-center gap-1.5 backdrop-blur-2xl">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-inner">
-              <Store className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white">
-              MART<span className="text-white/60">VERSE</span>
-            </h1>
-          </div>
-          <p className="text-xs text-white/70 font-semibold tracking-wide">
-            3D Virtual Hypermarket
-          </p>
-          <div className="flex items-center gap-2 text-[11px] text-white/80 font-mono mt-1 bg-white/[0.08] px-3.5 py-1 rounded-full border border-white/15 backdrop-blur-md">
-            <span className="text-white font-bold">W A S D</span>
-            <span className="text-white/40">•</span>
-            <span>Push Trolley to Explore</span>
-          </div>
-        </div>
-      </div>
+      <IntroBrandBanner />
 
       {/* ============================================================== */}
       {/* --- Bottom: 4-Arrow On-Screen Navigator (Only Shown When User Taps "Arrows") --- */}
@@ -697,89 +781,156 @@ export const SupermarketHUD: React.FC = () => {
       )}
 
       {/* ============================================================== */}
-      {/* --- Floating Confirmation Toast (Moved Down with Best Look Small Box) --- */}
+      {/* --- Floating Confirmation Toast — Dynamic Wishlist & Trolley, Best Look --- */}
       {/* ============================================================== */}
       {toast && (
-        <div className="pointer-events-auto fixed top-[118px] sm:top-[128px] right-3 sm:right-6 md:right-8 z-50 animate-in slide-in-from-top-4 fade-in duration-300 ease-out">
-          <div
-            className={`relative overflow-hidden px-3.5 py-3 rounded-2xl border flex items-center gap-3.5 max-w-[330px] sm:max-w-[370px] bg-white/95 backdrop-blur-2xl shadow-[0_20px_45px_rgba(15,23,42,0.15),0_4px_12px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] transition-all ${
-              toast.type === 'success'
-                ? 'border-emerald-300/90 ring-1 ring-emerald-400/20'
-                : toast.type === 'warning'
-                ? 'border-amber-300/90 ring-1 ring-amber-400/20'
-                : 'border-sky-300/90 ring-1 ring-sky-400/20'
-            }`}
-          >
-            {/* Visual Thumbnail: Best-Look Small Product Box Image or Dynamic Icon */}
-            {toast.imageUrl || toast.title.includes('Trolley') ? (
-              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-b from-slate-50 to-slate-100 border border-slate-200/90 flex items-center justify-center p-1.5 flex-shrink-0 overflow-hidden shadow-xs">
-                <img
-                  src={toast.imageUrl || '/products/fallback.svg'}
-                  alt={toast.title}
-                  className="w-full h-full object-contain drop-shadow-xs"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/products/fallback.svg';
-                  }}
-                />
-                <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-xs">
-                  <CheckCircle2 className="w-2.5 h-2.5 stroke-[3]" />
-                </div>
-              </div>
-            ) : (
+        <div className="pointer-events-auto fixed top-[108px] sm:top-[118px] right-3 sm:right-6 md:right-8 z-50 animate-framer-spring">
+          {(() => {
+            const isWishlist =
+              toast.title.toLowerCase().includes('wishlist') ||
+              (toast.subtitle || '').toLowerCase().includes('wishlist');
+            const isRemoved = toast.title.toLowerCase().includes('removed');
+            const isOrder = toast.title.toLowerCase().includes('order');
+            const isWarning = toast.type === 'warning';
+
+            return (
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
-                  toast.type === 'success'
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/90'
-                    : toast.type === 'warning'
-                    ? 'bg-amber-50 text-amber-600 border border-amber-200/90'
-                    : 'bg-sky-50 text-sky-600 border border-sky-200/90'
+                className={`w-[285px] sm:w-[310px] max-w-[calc(100vw-24px)] p-3 rounded-2xl bg-white/98 backdrop-blur-2xl border shadow-[0_12px_36px_rgba(15,23,42,0.1),0_2px_8px_rgba(15,23,42,0.04)] transition-all duration-300 select-none ${
+                  isWishlist
+                    ? 'border-rose-200/90 hover:border-rose-300 hover:shadow-[0_16px_40px_rgba(244,63,94,0.14)]'
+                    : isWarning
+                    ? 'border-amber-200/90 hover:border-amber-300 hover:shadow-[0_16px_40px_rgba(245,158,11,0.14)]'
+                    : 'border-sky-200/90 hover:border-sky-300 hover:shadow-[0_16px_40px_rgba(2,132,199,0.14)]'
                 }`}
               >
-                {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600 stroke-[2.5]" />}
-                {toast.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-600 stroke-[2.5]" />}
-                {toast.type === 'info' && <Info className="w-5 h-5 text-sky-600 stroke-[2.5]" />}
-              </div>
-            )}
+                <div className="flex items-center gap-3">
+                  {/* Product Thumbnail or Dynamic Icon */}
+                  {toast.imageUrl || toast.title.includes('Trolley') || isWishlist ? (
+                    <div className="relative w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-2xs">
+                      <img
+                        src={toast.imageUrl || '/products/fallback.svg'}
+                        alt={toast.title}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/products/fallback.svg';
+                        }}
+                      />
+                      {isWishlist ? (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-rose-500 text-white flex items-center justify-center border-2 border-white shadow-2xs">
+                          <Heart className="w-2.5 h-2.5 fill-white stroke-white" />
+                        </div>
+                      ) : (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-sky-500 text-white flex items-center justify-center border-2 border-white shadow-2xs">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-2xs ${
+                        isWarning
+                          ? 'bg-amber-50 text-amber-600 border border-amber-200/90'
+                          : 'bg-sky-50 text-sky-600 border border-sky-200/90'
+                      }`}
+                    >
+                      {isWarning ? (
+                        <AlertTriangle className="w-4.5 h-4.5 text-amber-600 stroke-[2.5]" />
+                      ) : (
+                        <CheckCircle2 className="w-4.5 h-4.5 text-sky-600 stroke-[2.5]" />
+                      )}
+                    </div>
+                  )}
 
-            {/* Toast Title & Subtitle in Clean Hierarchy */}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-black text-slate-900 leading-tight tracking-tight">
-                  {toast.title}
-                </span>
-                {toast.type === 'success' && (
-                  <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/80 leading-none">
-                    In Trolley
-                  </span>
-                )}
-              </div>
-              {toast.subtitle && (
-                <div className="text-[11px] text-slate-600 font-semibold truncate mt-0.5 leading-tight">
-                  {toast.subtitle}
+                  {/* Title, Subtitle, and Clean In Trolley / In Wishlist Pill */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-black text-slate-900 leading-tight tracking-tight">
+                        {toast.title}
+                      </span>
+                      <button
+                        onClick={hideToast}
+                        className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1 rounded-full transition-all cursor-pointer flex-shrink-0 active:scale-90 -mr-1 -mt-0.5"
+                        title="Dismiss"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {toast.subtitle && (
+                      <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5 leading-snug">
+                        {toast.subtitle}
+                      </p>
+                    )}
+
+                    <div className="mt-1 flex items-center justify-between gap-1">
+                      {isWishlist ? (
+                        <>
+                          <span
+                            className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 shadow-2xs ${
+                              isRemoved
+                                ? 'text-slate-500 bg-slate-50 border-slate-200'
+                                : 'text-rose-600 bg-rose-50 border-rose-200/80'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isRemoved ? 'bg-slate-400' : 'bg-rose-500 animate-pulse'
+                              }`}
+                            />
+                            {isRemoved ? 'Removed' : 'In Wishlist'}
+                          </span>
+                          <button
+                            onClick={() => {
+                              hideToast();
+                              router.push('/wishlist');
+                            }}
+                            className="text-[9.5px] font-bold text-slate-400 hover:text-rose-600 transition-colors cursor-pointer flex items-center gap-0.5 group active:scale-95"
+                          >
+                            <span>View Wishlist</span>
+                            <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                          </button>
+                        </>
+                      ) : isOrder ? (
+                        <>
+                          <span className="text-[9.5px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 flex items-center gap-1 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Order Placed
+                          </span>
+                          <button
+                            onClick={() => {
+                              hideToast();
+                              router.push('/orders');
+                            }}
+                            className="text-[9.5px] font-bold text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer flex items-center gap-0.5 group active:scale-95"
+                          >
+                            <span>View Orders</span>
+                            <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[9.5px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200/80 flex items-center gap-1 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+                            In Trolley
+                          </span>
+                          <button
+                            onClick={() => {
+                              hideToast();
+                              toggleCart(true);
+                            }}
+                            className="text-[9.5px] font-bold text-slate-400 hover:text-sky-600 transition-colors cursor-pointer flex items-center gap-0.5 group active:scale-95"
+                          >
+                            <span>View Cart</span>
+                            <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-
-            {/* Quick Dismiss Button */}
-            <button
-              onClick={hideToast}
-              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer flex-shrink-0 active:scale-90"
-              title="Dismiss notification"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Top Accent Micro-Indicator Bar */}
-            <div
-              className={`absolute top-0 left-3 right-3 h-[2px] rounded-full ${
-                toast.type === 'success'
-                  ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-400'
-                  : toast.type === 'warning'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-400'
-                  : 'bg-gradient-to-r from-sky-500 to-indigo-500'
-              }`}
-            />
-          </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 

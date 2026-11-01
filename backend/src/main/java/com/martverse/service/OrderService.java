@@ -239,6 +239,48 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public OrderDto.OrderResponse cancelOrder(String idOrNumber, String reason) {
+        Order order = null;
+        try {
+            UUID orderUuid = UUID.fromString(idOrNumber);
+            order = orderRepository.findById(orderUuid).orElse(null);
+        } catch (IllegalArgumentException ignored) {
+        }
+        if (order == null) {
+            order = orderRepository.findByOrderNumber(idOrNumber)
+                    .orElseThrow(() -> new ResourceNotFoundException("Order", idOrNumber));
+        }
+
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new BadRequestException("Delivered orders cannot be cancelled");
+        }
+        order.setStatus(OrderStatus.CANCELLED);
+        if (reason != null && !reason.isBlank()) {
+            order.setNotes(order.getNotes() != null ? order.getNotes() + " | Cancel Reason: " + reason : "Cancel Reason: " + reason);
+        }
+        Order saved = orderRepository.save(order);
+        log.info("Order {} cancelled. Reason: {}", saved.getOrderNumber(), reason);
+        return mapToOrderResponse(saved);
+    }
+
+    @Transactional
+    public void deleteOrder(String idOrNumber) {
+        Order order = null;
+        try {
+            UUID orderUuid = UUID.fromString(idOrNumber);
+            order = orderRepository.findById(orderUuid).orElse(null);
+        } catch (IllegalArgumentException ignored) {
+        }
+        if (order == null) {
+            order = orderRepository.findByOrderNumber(idOrNumber).orElse(null);
+        }
+        if (order != null) {
+            orderRepository.delete(order);
+            log.info("Order {} deleted from database", idOrNumber);
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────────
 
     private void validateStockAvailability(CartItem item) {

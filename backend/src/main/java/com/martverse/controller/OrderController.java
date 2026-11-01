@@ -116,4 +116,22 @@ public class OrderController {
         List<OrderDto.OrderResponse> resultList = new ArrayList<>(combined.values());
         return ResponseEntity.ok(ApiResponse.success(resultList));
     }
+
+    @PostMapping("/{id}/cancel")
+    @Operation(summary = "Cancel an order by ID or order number")
+    public ResponseEntity<ApiResponse<OrderDto.OrderResponse>> cancelOrder(
+            @PathVariable String id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String reason = (body != null && body.containsKey("reason")) ? body.get("reason") : "Customer requested cancellation";
+        return ResponseEntity.ok(ApiResponse.success(
+                "Order cancelled successfully",
+                orderService.cancelOrder(id, reason)));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete an order by ID or order number")
+    public ResponseEntity<ApiResponse<Void>> deleteOrder(@PathVariable String id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.ok(ApiResponse.success("Order deleted successfully", null));
+    }
 }

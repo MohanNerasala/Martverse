@@ -1,6 +1,27 @@
 'use client';
 
 import React from 'react';
+import * as THREE from 'three';
+
+// Pre-allocated static materials and geometries to eliminate GPU pipeline re-compilations
+const sharedMaterials = {
+  floor: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.12, metalness: 0.22 }),
+  wall: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.6 }),
+  slab: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.7 }),
+  ceilingLight: new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: new THREE.Color('#ffffff'), emissiveIntensity: 0.9 }),
+  glassRail: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.4, roughness: 0.1 }),
+  escalatorBase: new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.7, roughness: 0.3 }),
+  escalatorSteps: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.8 }),
+  yellowLine: new THREE.MeshBasicMaterial({ color: '#facc15' }),
+  escalatorGlass: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.5, roughness: 0.1 }),
+  roof: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.9 }),
+};
+
+const sharedGeos = {
+  light1: new THREE.BoxGeometry(0.3, 0.08, 4.0),
+  light2: new THREE.BoxGeometry(0.3, 0.08, 6.0),
+};
+
 import { Text } from '@react-three/drei';
 
 interface StoreArchitectureProps {
@@ -14,28 +35,28 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
           GROUND FLOOR (y = 0)
           ============================================================== */}
       {/* Ground Floor Polished Carrara Porcelain Floor (White & Blue Specular Sheen) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[36, 52]} />
         <meshStandardMaterial color="#ffffff" roughness={0.12} metalness={0.22} />
       </mesh>
 
       {/* Ground Floor Architectural Pristine White Walls */}
       {/* Back Wall (z = 25) */}
-      <mesh position={[0, 2.5, 26]} receiveShadow>
+      <mesh position={[0, 2.5, 26]}>
         <boxGeometry args={[36, 5, 0.4]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
       {/* Front Entrance Wall (z = -26) with doorway opening */}
-      <mesh position={[-11, 2.5, -26]} receiveShadow>
+      <mesh position={[-11, 2.5, -26]}>
         <boxGeometry args={[14, 5, 0.4]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
-      <mesh position={[11, 2.5, -26]} receiveShadow>
+      <mesh position={[11, 2.5, -26]}>
         <boxGeometry args={[14, 5, 0.4]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
       {/* Wall opening lintel over entrance door (Pristine Architectural White) */}
-      <mesh position={[0, 4.2, -26]} receiveShadow>
+      <mesh position={[0, 4.2, -26]}>
         <boxGeometry args={[8, 1.6, 0.4]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
@@ -48,7 +69,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
           <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
         </mesh>
         {/* Pure White Acrylic/Porcelain Board */}
-        <mesh position={[0, 0, 0.015]} castShadow>
+        <mesh position={[0, 0, 0.015]}>
           <boxGeometry args={[5.2, 0.85, 0.03]} />
           <meshStandardMaterial color="#ffffff" roughness={0.12} metalness={0.08} />
         </mesh>
@@ -80,34 +101,34 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       </group>
 
       {/* Left Wall (x = -18) */}
-      <mesh position={[-18, 2.5, 0]} receiveShadow>
+      <mesh position={[-18, 2.5, 0]}>
         <boxGeometry args={[0.4, 5, 52]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
       {/* Right Wall (x = 18) */}
-      <mesh position={[18, 2.5, 0]} receiveShadow>
+      <mesh position={[18, 2.5, 0]}>
         <boxGeometry args={[0.4, 5, 52]} />
         <meshStandardMaterial color="#f8fafc" roughness={0.6} />
       </mesh>
 
       {/* Ground Floor Ceiling / Floor 2 Floor Slab (y = 5.0) */}
       {/* 1. Main Floor Slab covering from x = -18 to x = 13.2 */}
-      <mesh position={[-2.4, 5.0, 0]} receiveShadow>
+      <mesh position={[-2.4, 5.0, 0]}>
         <boxGeometry args={[31.2, 0.3, 52]} />
         <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
       </mesh>
       {/* 2. Front Slab (z = 5.4 to 26 - escalator top landing platform) */}
-      <mesh position={[15.6, 5.0, 15.7]} receiveShadow>
+      <mesh position={[15.6, 5.0, 15.7]}>
         <boxGeometry args={[4.8, 0.3, 20.6]} />
         <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
       </mesh>
       {/* 3. Back Slab (z = -26 to -6.5) */}
-      <mesh position={[15.6, 5.0, -16.25]} receiveShadow>
+      <mesh position={[15.6, 5.0, -16.25]}>
         <boxGeometry args={[4.8, 0.3, 19.5]} />
         <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
       </mesh>
       {/* 4. Side Walkway slab next to right wall */}
-      <mesh position={[17.1, 5.0, 0]} receiveShadow>
+      <mesh position={[17.1, 5.0, 0]}>
         <boxGeometry args={[1.8, 0.3, 13]} />
         <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
       </mesh>
@@ -131,7 +152,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
         {/* Slanted Escalator Ramp (from z = -8, y = 0 up to z = 6, y = 5.0) */}
         <group position={[0, 2.5, -1]} rotation={[-0.34, 0, 0]}>
           {/* Moving steps base */}
-          <mesh castShadow receiveShadow>
+          <mesh>
             <boxGeometry args={[2.2, 0.4, 15]} />
             <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.3} />
           </mesh>
@@ -204,7 +225,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
             anchorX="center"
             anchorY="middle"
           >
-            {'↑ 2ND FLOOR • FASHION & APPAREL'}
+            {'↑ 2ND FLOOR • UPPER LEVEL'}
           </Text>
           {/* Divider Line */}
           <mesh position={[0, 0.02, 0.05]}>
@@ -232,7 +253,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
               anchorX="center"
               anchorY="middle"
             >
-              {'↑ 2ND FLOOR • FASHION & APPAREL'}
+              {'↑ 2ND FLOOR • UPPER LEVEL'}
             </Text>
             {/* Divider Line */}
             <mesh position={[0, 0.02, 0.05]}>
@@ -275,7 +296,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       </mesh>
 
       {/* Store Roof (y = 10.0) */}
-      <mesh position={[0, 10.0, 0]} receiveShadow>
+      <mesh position={[0, 10.0, 0]}>
         <boxGeometry args={[36, 0.4, 52]} />
         <meshStandardMaterial color="#334155" roughness={0.9} />
       </mesh>
@@ -287,10 +308,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       {[-12, -6, 0, 6].map((xL, idx) => (
         <group key={`light-row-1-${idx}`}>
           {[-15, -5, 5, 15].map((zL, jdx) => (
-            <mesh key={`fl-1-${idx}-${jdx}`} position={[xL, 4.85, zL]}>
-              <boxGeometry args={[0.3, 0.08, 4.0]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.9} />
-            </mesh>
+            <mesh key={`fl-1-${idx}-${jdx}`} position={[xL, 4.85, zL]} geometry={sharedGeos.light1} material={sharedMaterials.ceilingLight} />
           ))}
         </group>
       ))}
@@ -299,10 +317,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       {[-10, 0, 10].map((xL, idx) => (
         <group key={`light-row-2-${idx}`}>
           {[-15, 0, 15].map((zL, jdx) => (
-            <mesh key={`fl-2-${idx}-${jdx}`} position={[xL, 9.85, zL]}>
-              <boxGeometry args={[0.3, 0.08, 6.0]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.9} />
-            </mesh>
+            <mesh key={`fl-2-${idx}-${jdx}`} position={[xL, 9.85, zL]} geometry={sharedGeos.light2} material={sharedMaterials.ceilingLight} />
           ))}
         </group>
       ))}
@@ -418,61 +433,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
         </Text>
       </group>
 
-      {/* Wall Promotional Lightbox on Fashion Floor */}
-      <group position={[-17.65, 7.5, 0]} rotation={[0, Math.PI / 2, 0]}>
-        {/* Backing Frame */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[8.2, 2.3, 0.04]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
-        </mesh>
-        {/* Regal Plum Poster Panel (Raised in front of frame) */}
-        <mesh position={[0, 0, 0.03]}>
-          <boxGeometry args={[8.0, 2.1, 0.02]} />
-          <meshStandardMaterial color="#4a044e" roughness={0.25} metalness={0.1} />
-        </mesh>
-        {/* Top Violet Category Pill */}
-        <mesh position={[0, 0.65, 0.05]}>
-          <boxGeometry args={[3.4, 0.28, 0.01]} />
-          <meshBasicMaterial color="#9333ea" />
-        </mesh>
-        <Text
-          position={[0, 0.65, 0.065]}
-          fontSize={0.14}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-        >
-          PREMIUM APPAREL STUDIO
-        </Text>
-        <Text
-          position={[0, 0.25, 0.065]}
-          fontSize={0.34}
-          color="#f0abfc"
-          anchorX="center"
-          anchorY="middle"
-        >
-          MARTVERSE FASHION STUDIO
-        </Text>
-        <Text
-          position={[0, -0.22, 0.065]}
-          fontSize={0.16}
-          color="#fdf4ff"
-          anchorX="center"
-          anchorY="middle"
-        >
-          Exclusive Ethnic Kurtas, Formal Shirts & Premium Denim
-        </Text>
-        <Text
-          position={[0, -0.58, 0.065]}
-          fontSize={0.12}
-          color="#f5d0fe"
-          anchorX="center"
-          anchorY="middle"
-        >
-          ✨ New Seasonal Collection Available Now
-        </Text>
-      </group>
-    </group>
+          </group>
   );
 };
 

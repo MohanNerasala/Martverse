@@ -36,5 +36,13 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     @Query("SELECT p FROM Product p JOIN FETCH p.category WHERE p.active = true")
     List<Product> findAllActiveWithCategory();
 
+    @Query("SELECT DISTINCT p FROM Product p " +
+           "JOIN FETCH p.category " +
+           "LEFT JOIN FETCH p.placements pp " +
+           "LEFT JOIN FETCH pp.aisle a " +
+           "LEFT JOIN FETCH pp.floor f " +
+           "WHERE p.active = true")
+    List<Product> findAllActiveEager();
+
     long countByActiveTrue();
 }

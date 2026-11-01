@@ -173,6 +173,12 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* Light theme smooth scrollbar for modals & cart drawer */
+.light-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
 .light-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -417,6 +423,34 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 22px rgba(56, 189, 248, 0.55),
               0 4px 12px rgba(0, 0, 0, 0.25);
 }
+
+/* Framer Motion Spring Simulation for Floating Toasts */
+@keyframes framerSpringIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.92);
+    filter: blur(4px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.02);
+    filter: blur(0px);
+  }
+  75% {
+    transform: translateY(-1.5px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.animate-framer-spring {
+  animation: framerSpringIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
 
 
 

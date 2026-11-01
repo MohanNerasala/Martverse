@@ -232,7 +232,8 @@ export const ProductModal: React.FC = () => {
                 showToast(
                   added ? 'Added to Wishlist' : 'Removed from Wishlist',
                   `${selectedProduct.name} ${added ? 'saved to your wishlist' : 'removed'}`,
-                  added ? 'success' : 'info'
+                  added ? 'success' : 'info',
+                  selectedProduct.imageUrl
                 );
               }}
               className={`h-11 w-11 rounded-xl flex items-center justify-center border transition-all cursor-pointer flex-shrink-0 ${

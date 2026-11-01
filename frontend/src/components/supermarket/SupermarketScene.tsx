@@ -1,7 +1,7 @@
 'use client';
 
-import React, { Suspense, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { Suspense, useEffect, useRef } from 'react';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { StoreArchitecture } from './StoreArchitecture';
 import { ShelfUnit } from './ShelfUnit';
@@ -13,7 +13,50 @@ import { PlayerController } from './PlayerController';
 import { useMartStore } from '@/store/useMartStore';
 import { api } from '@/lib/api';
 
-export const SupermarketScene: React.FC = () => {
+// Real-Time Scene Performance Monitor (Zero-overhead telemetry)
+const ScenePerformanceMonitor: React.FC = () => {
+  const { gl } = useThree();
+  const frameCount = useRef(0);
+  const lastTime = useRef(performance.now());
+  const fpsHistory = useRef<number[]>([]);
+
+  useFrame(() => {
+    frameCount.current++;
+    const now = performance.now();
+    const elapsed = now - lastTime.current;
+
+    if (elapsed >= 1000) {
+      const currentFps = Math.round((frameCount.current * 1000) / elapsed);
+      fpsHistory.current.push(currentFps);
+      if (fpsHistory.current.length > 30) fpsHistory.current.shift();
+
+      const avgFps = Math.round(fpsHistory.current.reduce((a: number, b: number) => a + b, 0) / fpsHistory.current.length);
+      const minFps = Math.min(...fpsHistory.current);
+      const maxFps = Math.max(...fpsHistory.current);
+
+      if (typeof window !== 'undefined') {
+        (window as any).__martverseStats = {
+          fps: currentFps,
+          avgFps,
+          minFps,
+          maxFps,
+          drawCalls: gl.info.render.calls,
+          triangles: gl.info.render.triangles,
+          geometries: gl.info.memory.geometries,
+          textures: gl.info.memory.textures,
+          timestamp: Date.now(),
+        };
+      }
+
+      frameCount.current = 0;
+      lastTime.current = now;
+    }
+  });
+
+  return null;
+};
+
+export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = false }) => {
   const floors = useMartStore((state) => state.floors);
   const products = useMartStore((state) => state.products);
   const activeFloor = useMartStore((state) => state.activeFloor);
@@ -37,15 +80,10 @@ export const SupermarketScene: React.FC = () => {
           if (floorsData && floorsData.length > 0) setFloors(floorsData);
           if (productsData && productsData.length > 0) {
             setProducts(productsData);
-          } else {
-            // Backend offline: empty shelves
-            setProducts([]);
           }
         }
       } catch {
-        if (!isCancelled) {
-          setProducts([]);
-        }
+        // Keep existing products intact on network blip
       } finally {
         isFetching = false;
       }
@@ -53,29 +91,8 @@ export const SupermarketScene: React.FC = () => {
 
     loadData();
 
-    // Resilient backend monitoring:
-    // - If shelves are empty, retry loading live products every 4s
-    // - If shelves are populated, perform ultra-fast <1ms /api/health probes without DB load
-    const timer = setInterval(async () => {
-      if (isCancelled) return;
-      const currentProds = useMartStore.getState().products;
-      if (currentProds.length === 0) {
-        loadData();
-      } else {
-        const isHealthy = await api.checkBackendHealth();
-        if (!isHealthy && !isCancelled) {
-          // Double-check with a 2nd probe to prevent momentary WAN jitter from clearing shelves
-          const retryHealthy = await api.checkBackendHealth();
-          if (!retryHealthy && !isCancelled) {
-            setProducts([]);
-          }
-        }
-      }
-    }, 6000);
-
     return () => {
       isCancelled = true;
-      clearInterval(timer);
     };
   }, [setFloors, setProducts]);
 
@@ -85,9 +102,10 @@ export const SupermarketScene: React.FC = () => {
   return (
     <div className="w-full h-full relative select-none">
       <Canvas
-        dpr={[1, 2]}
-        camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
-        raycaster={{ near: 0.1, far: 45 }}
+        frameloop={isPaused ? 'never' : 'always'}
+        dpr={[1, 1.25]}
+        camera={{ position: [0, 4, -24], fov: 60, near: 0.15, far: 65 }}
+        raycaster={{ near: 0.2, far: 25 }}
         gl={{
           antialias: true,
           alpha: false,
@@ -99,7 +117,7 @@ export const SupermarketScene: React.FC = () => {
         }}
       >
         <color attach="background" args={['#0a0f1d']} />
-        <fog attach="fog" args={['#0a0f1d', 55, 135]} />
+        <fog attach="fog" args={['#0a0f1d', 45, 65]} />
 
         {/* --- Commercial Retail Lighting: Rich Contrast, Lustrous Metallic Sheen & Crisp Packaging --- */}
         <ambientLight intensity={1.05} />
@@ -113,6 +131,7 @@ export const SupermarketScene: React.FC = () => {
         <directionalLight position={[0, 18, 0]} intensity={0.35} />
 
         <Suspense fallback={null}>
+          <ScenePerformanceMonitor />
           {/* Store Shell */}
           <StoreArchitecture />
 

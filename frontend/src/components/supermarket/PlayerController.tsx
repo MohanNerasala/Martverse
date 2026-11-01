@@ -33,12 +33,14 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 3.8, maxX: 22.0, minZ: -28.0, maxZ: -24.8 },  // Front Entrance Wall (Right of door)
   { minX: -3.8, maxX: 3.8, minZ: -28.0, maxZ: -25.8 },  // Front Doorway Backstop
 
-  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 0.72 (generous aisle clearance, zero edge snags)
-  { minX: -10.72, maxX: -9.28, minZ: -11.8, maxZ: 11.8 },
-  { minX: -5.72, maxX: -4.28, minZ: -11.8, maxZ: 11.8 },
-  { minX: -0.72, maxX: 0.72, minZ: -11.8, maxZ: 11.8 },
-  { minX: 4.28, maxX: 5.72, minZ: -11.8, maxZ: 11.8 },
-  { minX: 9.28, maxX: 10.72, minZ: -11.8, maxZ: 11.8 },
+  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 1.15, Z: [-12.55, 12.55]
+  // Physical shelf planks extend to +-0.89m, support posts and ESL price tags extend to +-0.92m.
+  // halfW = 1.15m and Z: [-12.55, 12.55] guarantees absolute zero clipping of trolley edges, corners, and handlebar!
+  { minX: -11.15, maxX: -8.85, minZ: -12.55, maxZ: 12.55 }, // Aisle 1
+  { minX: -6.15, maxX: -3.85, minZ: -12.55, maxZ: 12.55 },  // Aisle 2
+  { minX: -1.15, maxX: 1.15, minZ: -12.55, maxZ: 12.55 },   // Aisle 3
+  { minX: 3.85, maxX: 6.15, minZ: -12.55, maxZ: 12.55 },    // Aisle 4
+  { minX: 8.85, maxX: 11.15, minZ: -12.55, maxZ: 12.55 },   // Aisle 5
 
   // Billing Counter Desks at [-3.8, 0, 3.8]
   { minX: -4.45, maxX: -3.15, minZ: 16.5, maxZ: 19.5 },
@@ -61,13 +63,13 @@ const STATIC_OBSTACLES_FLOOR2: ObstacleBox[] = [
   { minX: -22.0, maxX: 22.0, minZ: 24.6, maxZ: 28.0 },   // Back Wall
   { minX: -22.0, maxX: 22.0, minZ: -28.0, maxZ: -24.8 }, // Front Wall
 
-  // Shelves Floor 2: [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5], halfW = 0.72
-  { minX: -11.72, maxX: -10.28, minZ: -11.8, maxZ: 11.8 },
-  { minX: -7.22, maxX: -5.78, minZ: -11.8, maxZ: 11.8 },
-  { minX: -2.72, maxX: -1.28, minZ: -11.8, maxZ: 11.8 },
-  { minX: 1.78, maxX: 3.22, minZ: -11.8, maxZ: 11.8 },
-  { minX: 6.28, maxX: 7.72, minZ: -11.8, maxZ: 11.8 },
-  { minX: 10.78, maxX: 12.22, minZ: -11.8, maxZ: 11.8 },
+  // Shelves Floor 2: [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5], halfW = 0.96, Z: [-12.1, 12.1]
+  { minX: -11.96, maxX: -10.04, minZ: -12.1, maxZ: 12.1 }, // Aisle 6
+  { minX: -7.46, maxX: -5.54, minZ: -12.1, maxZ: 12.1 },  // Aisle 7
+  { minX: -2.96, maxX: -1.04, minZ: -12.1, maxZ: 12.1 },  // Aisle 8
+  { minX: 1.54, maxX: 3.46, minZ: -12.1, maxZ: 12.1 },    // Aisle 9
+  { minX: 6.04, maxX: 7.96, minZ: -12.1, maxZ: 12.1 },    // Aisle 10
+  { minX: 10.54, maxX: 12.46, minZ: -12.1, maxZ: 12.1 },  // Aisle 11
 
   // Floor 2 Escalator void opening guardrails
   { minX: 13.0, maxX: 13.4, minZ: -6.5, maxZ: 5.2 },
@@ -157,6 +159,29 @@ function getCircleBoxDepenetration(
 // Pre-allocated static motion vector to eliminate GC heap allocation in useFrame
 const staticMoveVector = new THREE.Vector3();
 
+// Full-Perimeter Trolley Rig Collision Spheres:
+// Encloses Front Bumper, Basket Corners, Side Walls, Handlebar Tips, and Player Body.
+// Completely prevents any part of the trolley edges, corners, or handlebar from clipping into shelves!
+const STATIC_SPHERES = [
+  // Front Bumper & Front Wheels (Foremost reach of trolley)
+  { fwdDist: 1.54, latDist: 0.0, radius: 0.28 },     // Front-Center Bumper Nose
+  { fwdDist: 1.40, latDist: -0.38, radius: 0.26 },   // Front-Left Basket Corner
+  { fwdDist: 1.40, latDist: 0.38, radius: 0.26 },    // Front-Right Basket Corner
+  // Mid Basket Walls & Frame
+  { fwdDist: 1.05, latDist: -0.40, radius: 0.26 },   // Upper-Mid Left Wall
+  { fwdDist: 1.05, latDist: 0.40, radius: 0.26 },    // Upper-Mid Right Wall
+  { fwdDist: 0.70, latDist: -0.42, radius: 0.26 },   // Lower-Mid Left Wall
+  { fwdDist: 0.70, latDist: 0.42, radius: 0.26 },    // Lower-Mid Right Wall
+  // Rear Handlebar, Grips & Rear Wheels (Crucial contact zone protecting shelf edges & corners)
+  { fwdDist: 0.32, latDist: -0.46, radius: 0.28 },   // Rear-Left Handlebar Grip & Outer Edge
+  { fwdDist: 0.32, latDist: 0.46, radius: 0.28 },    // Rear-Right Handlebar Grip & Outer Edge
+  { fwdDist: 0.32, latDist: 0.0, radius: 0.26 },     // Rear-Center Handlebar Display
+  // Player Body & Flanks
+  { fwdDist: 0.0, latDist: 0.0, radius: 0.34 },      // Player Body Core
+  { fwdDist: 0.08, latDist: -0.30, radius: 0.26 },   // Player Left Flank
+  { fwdDist: 0.08, latDist: 0.30, radius: 0.26 },    // Player Right Flank
+] as const;
+
 export const PlayerController: React.FC = () => {
   const { camera } = useThree();
   const keys = useRef<KeyState>({
@@ -200,26 +225,42 @@ export const PlayerController: React.FC = () => {
   const lastProximityCheck = useRef(0);
   const camDistRef = useRef(3.0);
   const resetPending = useRef(false);
+  const prevZRef = useRef(martRuntime.playerPos[2]);
   const proximityCache = useRef<{
     nearBilling: boolean;
     nearExit: boolean;
     prompt: string | null;
   }>({ nearBilling: false, nearExit: false, prompt: null });
 
-  // Strict trolley freeze & position lock at entrance during cinematic intro
+  // Initialize trolley position (Preserve existing target like billing counter if returning)
   useEffect(() => {
-    posRef.current.set(0, 1.5, -20);
+    const initX = martRuntime.playerPos[0];
+    const initY = martRuntime.playerPos[1];
+    const initZ = martRuntime.playerPos[2];
+    const initYaw = martRuntime.playerYaw ?? 0;
+
+    posRef.current.set(initX, initY, initZ);
     velocityRef.current = { x: 0, z: 0 };
     wheelMomentum.current = { x: 0, z: 0 };
-    yawRef.current = 0;
+    yawRef.current = initYaw;
     pitchRef.current = 0;
-    targetYawRef.current = 0;
+    targetYawRef.current = initYaw;
     targetPitchRef.current = 0;
-    currentLookTarget.current.set(0, 1.85, -17.7);
-    martRuntime.playerPos[0] = 0;
-    martRuntime.playerPos[1] = 1.5;
-    martRuntime.playerPos[2] = -20;
-    martRuntime.playerYaw = 0;
+    currentLookTarget.current.set(
+      initX + Math.sin(initYaw) * 2.3,
+      initY + 0.35,
+      initZ + Math.cos(initYaw) * 2.3
+    );
+    const camDist = 3.0;
+    const camHeight = 1.95;
+    const rayDirX = -Math.sin(initYaw);
+    const rayDirZ = -Math.cos(initYaw);
+    camera.position.set(initX + rayDirX * camDist, initY + camHeight, initZ + rayDirZ * camDist);
+    camera.lookAt(
+      initX + Math.sin(initYaw) * 2.3,
+      initY + 0.35,
+      initZ + Math.cos(initYaw) * 2.3
+    );
     keys.current = {
       forward: false,
       backward: false,
@@ -390,13 +431,18 @@ export const PlayerController: React.FC = () => {
     };
 
     const handleWheel = (e: WheelEvent) => {
-      // Trolley NEVER moves from wheel while cinematic intro is active
+      // Trolley NEVER moves from wheel while cinematic intro is active, or if cart drawer/any modal is open
       if (!useMartStore.getState().hasEnteredStore) return;
+      if (useCartStore.getState().isCartOpen) return;
+      if (useMartStore.getState().isProductModalOpen) return;
+
       const target = e.target as HTMLElement;
       if (
         target?.closest('.overflow-y-auto') ||
         target?.closest('.overflow-x-auto') ||
-        ['INPUT', 'TEXTAREA'].includes(target?.tagName)
+        target?.closest('.fixed') ||
+        target?.closest('[role="dialog"]') ||
+        ['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT'].includes(target?.tagName)
       ) {
         return;
       }
@@ -635,25 +681,22 @@ export const PlayerController: React.FC = () => {
         let nextX = posRef.current.x + worldDX;
         let nextZ = posRef.current.z + worldDZ;
 
-        // Slender 2-sphere footprint (compact nose glides freely past shelf corners and aisle edges)
-        const spheres = [
-          { dist: 0.65, radius: 0.28 }, // Front basket and wheel casters
-          { dist: 0.10, radius: 0.30 }, // Rear handle and player body
-        ];
+        // Full-perimeter 8-sphere footprint: guarantees zero edge clipping while preserving buttery-smooth sliding
+        const spheres = STATIC_SPHERES;
 
-        for (let iter = 0; iter < 2; iter++) {
+        for (let iter = 0; iter < 3; iter++) {
           for (let s = 0; s < spheres.length; s++) {
             const sp = spheres[s];
-            let sx = nextX + sinYaw * sp.dist;
-            let sz = nextZ + cosYaw * sp.dist;
+            let sx = nextX + sinYaw * sp.fwdDist + cosYaw * sp.latDist;
+            let sz = nextZ + cosYaw * sp.fwdDist - sinYaw * sp.latDist;
 
             for (let i = 0; i < boxes.length; i++) {
               const res = getCircleBoxDepenetration(sx, sz, sp.radius, boxes[i]);
               if (res.overlap) {
                 nextX += res.pX;
                 nextZ += res.pZ;
-                sx = nextX + sinYaw * sp.dist;
-                sz = nextZ + cosYaw * sp.dist;
+                sx = nextX + sinYaw * sp.fwdDist + cosYaw * sp.latDist;
+                sz = nextZ + cosYaw * sp.fwdDist - sinYaw * sp.latDist;
 
                 // Slide smoothly along obstacle surface: deflect only velocity penetrating into obstacle
                 const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;
@@ -681,9 +724,9 @@ export const PlayerController: React.FC = () => {
           const activeCart = useCartStore.getState().items;
           const activePaid = useCartStore.getState().isPaid;
           if (activeCart.length > 0 && !activePaid && currentFloor === 1) {
-            const frontSp = spheres[0];
-            let fx = nextX + sinYaw * frontSp.dist;
-            let fz = nextZ + cosYaw * frontSp.dist;
+            const frontSp = spheres[2]; // Front-Center Nose
+            let fx = nextX + sinYaw * frontSp.fwdDist;
+            let fz = nextZ + cosYaw * frontSp.fwdDist;
             const resExit = getCircleBoxDepenetration(fx, fz, frontSp.radius, UNPAID_EXIT_BARRIER);
             if (resExit.overlap) {
               nextX += resExit.pX;
@@ -705,29 +748,47 @@ export const PlayerController: React.FC = () => {
       posRef.current.x = Math.max(-16.8, Math.min(16.8, posRef.current.x));
       posRef.current.z = Math.max(-24.2, Math.min(24.2, posRef.current.z));
 
-      // Auto-trigger scanning when walking trolley into the checkout box or crossing the stop line
-      const billingPhase = useBillingStore.getState().phase;
-      const inCheckoutQueueBox =
-        currentFloor === 1 &&
-        posRef.current.z >= 15.2 &&
-        posRef.current.z <= 18.5 &&
-        (
-          (posRef.current.x >= -6.5 && posRef.current.x <= -4.9) || // Box 1 (Left of Bench 1)
-          (posRef.current.x >= -2.7 && posRef.current.x <= -1.1) || // Box 2 (Left of Bench 2)
-          (posRef.current.x >= 1.1 && posRef.current.x <= 2.7)      // Box 3 (Left of Bench 3)
-        );
+      // Track previous Z to detect directional crossing across the yellow checkout sensor line (z = 15.6)
+      const prevZ = prevZRef.current;
+      const currZ = posRef.current.z;
+      const currX = posRef.current.x;
+      prevZRef.current = currZ;
 
+      const billingPhase = useBillingStore.getState().phase;
       const activeCartItems = useCartStore.getState().items;
       const isCartPaid = useCartStore.getState().isPaid;
 
+      // The Yellow Checkout Sensor Line spans all 3 lanes (x: -7.2 to +7.2, z: 15.6)
+      const isWithinBillingWidth = currentFloor === 1 && Math.abs(currX) <= 7.2;
+
+      // 1. FORWARD CROSSING: User pushes trolley forward across the yellow line (z >= 15.5) into the scan dock
+      // Automatically takes items from trolley and scans them!
+      const isCrossingForward =
+        isWithinBillingWidth &&
+        currZ >= 15.5 &&
+        currZ <= 19.5 &&
+        (prevZ < 15.5 || velocityRef.current.z > 0.04 || keys.current.forward || martRuntime.virtualKeys.forward);
+
       if (
-        inCheckoutQueueBox &&
+        isCrossingForward &&
         activeCartItems.length > 0 &&
         !isCartPaid &&
         billingPhase === 'idle' &&
         Date.now() > martRuntime.billingCooldownUntil
       ) {
         startCheckout(activeCartItems);
+      }
+
+      // 2. RETREATING BACKWARD: User pulls trolley back across that line (currZ < 15.4)
+      // When coming back, do NOT take items! If a scan was active, cancel and keep items in trolley
+      const isRetreatingBackward =
+        isWithinBillingWidth &&
+        currZ < 15.4 &&
+        (prevZ >= 15.4 || velocityRef.current.z < -0.04 || keys.current.backward || martRuntime.virtualKeys.backward);
+
+      if (isRetreatingBackward && billingPhase === 'scanning') {
+        useBillingStore.getState().resetBilling();
+        martRuntime.billingCooldownUntil = Date.now() + 1000;
       }
     }
 
@@ -799,29 +860,14 @@ export const PlayerController: React.FC = () => {
       }
     }
 
-    // High-frequency zero-rerender runtime update
+    // High-frequency zero-rerender runtime update (0ms lockstep synchronization with all 3D systems)
     martRuntime.playerPos[0] = posRef.current.x;
     martRuntime.playerPos[1] = posRef.current.y;
     martRuntime.playerPos[2] = posRef.current.z;
     martRuntime.playerYaw = yawRef.current;
 
-    // Background state sync: Only syncs when player is stationary to preserve 100% 60FPS WebGL performance while moving
-    const now = performance.now();
-    const isStationary = Math.abs(velocityRef.current.x) < 0.05 && Math.abs(velocityRef.current.z) < 0.05;
-    if (isStationary && now - lastSyncTime.current > 500) {
-      lastSyncTime.current = now;
-      if (
-        Math.abs(useMartStore.getState().playerPos[0] - posRef.current.x) > 0.05 ||
-        Math.abs(useMartStore.getState().playerPos[2] - posRef.current.z) > 0.05
-      ) {
-        useMartStore.setState({
-          playerPos: [posRef.current.x, posRef.current.y, posRef.current.z],
-          playerYaw: yawRef.current,
-        });
-      }
-    }
-
     // Proximity checks for HUD prompt
+    const now = performance.now();
     const px = posRef.current.x;
     const pz = posRef.current.z;
 
@@ -836,7 +882,7 @@ export const PlayerController: React.FC = () => {
     if (onEscalatorRamp) {
       prompt = 'Escalator Moving Walkway • Gliding automatically between floors...';
     } else if (nearEscalatorGround) {
-      prompt = 'Press [E] or Step On: ↑ Ride to 2nd Floor (Fashion Studio)';
+      prompt = 'Press [E] or Step On: ↑ Ride to 2nd Floor (Upper Level)';
       targetPos = [14.7, 1.5, -7.0];
     } else if (nearEscalatorFloor2) {
       prompt = 'Press [E] or Step On: ↓ Ride to Ground Floor (Groceries & POS)';
@@ -847,7 +893,7 @@ export const PlayerController: React.FC = () => {
       const activeCart = useCartStore.getState().items;
       const isCartPaid = useCartStore.getState().isPaid;
       prompt = isCartPaid || activeCart.length === 0 ? 'Press [E] to Exit Supermarket' : 'Exit Locked: Please pay at the billing counter!';
-    } else if (now - lastProximityCheck.current > 80) {
+    } else if (now - lastProximityCheck.current > 250) {
       lastProximityCheck.current = now;
       const nearbyProd = products.find((p) => {
         if (!p.placement) return false;

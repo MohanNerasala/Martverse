@@ -32,7 +32,7 @@ export default function AdminDashboard() {
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            href="/"
+            href="/?return=trolley_reset"
             className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-emerald-400 bg-slate-800 px-3 py-1.5 rounded-xl transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" />

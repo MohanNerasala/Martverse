@@ -334,6 +334,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       scannedItems: [],
       currentScanningItem: null,
       scanStage: 'idle',
+      completedOrder: null,
     });
   },
 
@@ -354,6 +355,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       backendQuote: null,
       currentScanningItem: null,
       scanStage: 'idle',
+      completedOrder: null,
     });
   },
 }));

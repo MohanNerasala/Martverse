@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/useCartStore';
-import { useMartStore } from '@/store/useMartStore';
+import { useMartStore, martRuntime } from '@/store/useMartStore';
 import { useBillingStore } from '@/store/useBillingStore';
 import {
   X,
@@ -45,10 +45,39 @@ export const CartDrawer: React.FC = () => {
 
   const handleProceedToBilling = () => {
     toggleCart(false);
-    // Smooth navigation to POS Billing Counter #02 (x=0, y=1.5, z=15)
-    setPlayerPos([0, 1.5, 15], 0);
-    setCameraMode('billing');
-    startCheckout(items);
+
+    // If currently in the 3D supermarket scene (at '/'), instantly teleport to Lane 02 Billing Counter and start checkout
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      martRuntime.playerPos[0] = 0;
+      martRuntime.playerPos[1] = 1.5;
+      martRuntime.playerPos[2] = 16.0;
+      martRuntime.playerYaw = 0;
+      martRuntime.billingCooldownUntil = 0;
+      setPlayerPos([0, 1.5, 16.0], 0);
+      setCameraMode('billing');
+      useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
+
+      if (items.length > 0) {
+        startCheckout(items);
+      }
+    } else {
+      // If opened from another page (e.g. /cart, /wishlist), navigate to mart with return=billing
+      martRuntime.playerPos[0] = 0;
+      martRuntime.playerPos[1] = 1.5;
+      martRuntime.playerPos[2] = 14.6;
+      martRuntime.playerYaw = 0;
+      useMartStore.getState().setHasEnteredStore(true);
+      useMartStore.getState().setPlayerPos([0, 1.5, 14.6], 0);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('martverse_entered', 'true');
+        sessionStorage.setItem('martverse_skip_intro', 'true');
+        sessionStorage.setItem('martverse_return_target', 'billing');
+        localStorage.setItem('martverse_entered', 'true');
+        localStorage.setItem('martverse_intro_completed', 'true');
+        localStorage.setItem('martverse_skip_intro', 'true');
+      }
+      router.replace('/?return=billing');
+    }
   };
 
   const handleOpenFullCart = () => {
@@ -60,14 +89,12 @@ export const CartDrawer: React.FC = () => {
     <div
       className="fixed inset-0 z-50 overflow-hidden bg-slate-950/65 flex justify-end animate-backdrop-fade"
       onClick={() => toggleCart(false)}
-      onWheel={(e) => e.stopPropagation()}
     >
       {/* High-Performance Smooth Drawer Panel */}
       <div
         className="w-full max-w-[440px] bg-white border-l border-slate-200/90 h-full flex flex-col justify-between shadow-[0_25px_70px_rgba(0,0,0,0.35)] animate-drawer-slide text-slate-900 select-none relative"
         style={{ willChange: 'transform' }}
         onClick={(e) => e.stopPropagation()}
-        onWheel={(e) => e.stopPropagation()}
       >
         {/* --- Header --- */}
         <div className="flex-shrink-0 px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white z-10">
@@ -143,14 +170,16 @@ export const CartDrawer: React.FC = () => {
           )}
         </div>
 
-        {/* --- Trolley Items Scrollable List (Ultra-Smooth 60FPS with Generous Bottom Padding) --- */}
+        {/* --- Trolley Items Scrollable List (Ultra-Smooth 60FPS / 120FPS with GPU Accelerated Scrolling) --- */}
         <div
-          className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-3.5 bg-slate-50/70 pb-28 light-scrollbar"
+          className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-3.5 bg-slate-50/70 pb-36 light-scrollbar scroll-smooth"
           style={{
-            overscrollBehavior: 'contain',
+            overscrollBehaviorY: 'contain',
             WebkitOverflowScrolling: 'touch',
+            transform: 'translateZ(0)',
+            willChange: 'scroll-position',
+            contain: 'content',
           }}
-          onWheel={(e) => e.stopPropagation()}
         >
           {items.length === 0 ? (
             <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-4">
@@ -179,7 +208,12 @@ export const CartDrawer: React.FC = () => {
               return (
                 <div
                   key={it.id}
-                  className="bg-white border border-slate-200/80 rounded-2xl p-3.5 flex flex-col gap-3 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] hover:border-blue-300/80 transition-all duration-200 group"
+                  className="bg-white border border-slate-200/80 rounded-2xl p-3.5 flex flex-col gap-3 shadow-2xs hover:shadow-md hover:border-blue-300/80 transition-[border-color,box-shadow,transform] duration-150 group"
+                  style={{
+                    transform: 'translateZ(0)',
+                    contentVisibility: 'auto',
+                    containIntrinsicSize: '0 120px',
+                  }}
                 >
                   {/* Top: Product Image & Info */}
                   <div className="flex gap-3 items-center">
@@ -190,7 +224,7 @@ export const CartDrawer: React.FC = () => {
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = '/products/fallback.svg';
                         }}
-                        className="w-full h-full object-contain filter drop-shadow-2xs"
+                        className="w-full h-full object-contain"
                       />
                     </div>
 
@@ -368,14 +402,15 @@ export const CartDrawer: React.FC = () => {
                 </div>
               </button>
 
-              {/* Button 2: Go to Billing Counter / POS Checkout */}
+              {/* Button 2: Go to Billing Section */}
               <button
                 type="button"
                 onClick={handleProceedToBilling}
                 className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 hover:from-blue-700 hover:via-indigo-700 hover:to-sky-600 text-white font-black text-sm shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-95 cursor-pointer group btn-shine"
+                title="Go directly to POS Billing Counter (Lane 02)"
               >
                 <CreditCard className="w-4.5 h-4.5 text-sky-200 group-hover:scale-110 transition-transform" />
-                <span>Go to Billing Counter</span>
+                <span>Go to Billing Section</span>
                 <ArrowRight className="w-4.5 h-4.5 text-sky-200 group-hover:translate-x-1.5 transition-transform" />
               </button>
             </div>

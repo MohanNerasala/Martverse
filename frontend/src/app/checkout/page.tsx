@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/useCartStore';
 import { useBillingStore } from '@/store/useBillingStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useMartStore } from '@/store/useMartStore';
+import { useMartStore, martRuntime } from '@/store/useMartStore';
 import { api } from '@/lib/api';
 import confetti from 'canvas-confetti';
 import {
@@ -91,6 +91,35 @@ const PaytmIcon: React.FC<{ className?: string }> = ({ className = 'h-5.5 w-auto
   </svg>
 );
 
+const VisaLogo: React.FC<{ className?: string }> = ({ className = 'h-3.5 w-auto' }) => (
+  <svg className={className} viewBox="0 0 36 12" fill="none">
+    <path d="M14.5 1.1l-3.2 9.8h-2.1L6.6 3.1c-.2-.8-.4-1.1-1.1-1.4C4.3 1.3 2.8 1 1.4 0.7L1.6 0.2h5.3c.7 0 1.3.5 1.5 1.3l1.3 6.9 3.2-8.2h2.2zm8.3 6.5c0-2.5-3.5-2.7-3.5-3.8 0-1.2 1.3-1.2 1.7-1.2 1 0 2 .2 2.6.6l.4-2.1c-.6-.3-1.6-.4-2.8-.4-3 0-5.1 1.6-5.1 3.8 0 3.3 4.6 2.8 4.6 4.6 0 1.3-1.6 1.4-2.3 1.4-1.4 0-2.5-.4-3.3-.7l-.4 2.2c.8.4 2.2.6 3.8.6 3.5 0 5.7-1.7 5.7-3.9v-.5zm7.8 3.3h2.1l-1.8-9.8h-2c-.4 0-.9.3-1 .7l-3.7 9.1h2.3l.5-1.3h3l.6 1.3zm-2.6-3.1l1.3-3.6.7 3.6h-2zm-10.7 3.1l2-9.8h-2.2l-2 9.8h2.2z" fill="#1A1F71" />
+  </svg>
+);
+
+const MastercardLogo: React.FC<{ className?: string }> = ({ className = 'h-4 w-auto' }) => (
+  <svg className={className} viewBox="0 0 36 22" fill="none">
+    <circle cx="12" cy="11" r="9" fill="#EB001B" />
+    <circle cx="24" cy="11" r="9" fill="#F79E1B" fillOpacity="0.88" />
+  </svg>
+);
+
+const RuPayLogo: React.FC<{ className?: string }> = ({ className = 'h-3 w-auto' }) => (
+  <svg className={className} viewBox="0 0 60 14" fill="none">
+    <text x="0" y="12" fontFamily="system-ui, sans-serif" fontSize="13" fontWeight="900" fontStyle="italic" fill="#005B9F">RuPay</text>
+    <path d="M50 1l3 5-3 5h3l3-5-3-5h-3z" fill="#F47920" />
+    <path d="M45 1l3 5-3 5h3l3-5-3-5h-3z" fill="#00A551" />
+  </svg>
+);
+
+const UpiBadge: React.FC<{ className?: string }> = ({ className = 'h-4 w-auto' }) => (
+  <svg className={className} viewBox="0 0 54 20" fill="none">
+    <rect width="54" height="20" rx="4" fill="#097939" fillOpacity="0.1" />
+    <path d="M40 3l-4 7h4l-2 7 8-7h-4l2-7z" fill="#097939" />
+    <text x="6" y="15" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="900" fontStyle="italic" fill="#097939">UPI</text>
+  </svg>
+);
+
 interface SavedAddress {
   id: string;
   name: string;
@@ -124,13 +153,59 @@ export default function CheckoutPage() {
     scannedAt: Date.now(),
   }));
 
-  // Customer Contact State
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState(authPhone || '');
+  // Customer Contact State — Instant 0ms Hydration from localStorage/Auth
+  const [customerName, setCustomerName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('martverse_customer_name');
+        if (saved) return saved;
+        const userRaw = localStorage.getItem('martverse_user');
+        if (userRaw) {
+          const u = JSON.parse(userRaw);
+          if (u.name || u.fullName) return u.name || u.fullName;
+        }
+      } catch {}
+    }
+    return '';
+  });
 
-  // Address Management State
-  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [customerPhone, setCustomerPhone] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const p = localStorage.getItem('martverse_phone');
+      if (p) return p;
+    }
+    return authPhone || '';
+  });
+
+  // Address Management State — Instant 0ms Hydration from localStorage
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        const valid = (Array.isArray(raw) ? raw : []).filter(
+          (a: SavedAddress) => a.id !== 'addr-1' && a.id !== 'addr-2'
+        );
+        return valid;
+      } catch {}
+    }
+    return [];
+  });
+
+  const [selectedAddressId, setSelectedAddressId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        const valid = (Array.isArray(raw) ? raw : []).filter(
+          (a: SavedAddress) => a.id !== 'addr-1' && a.id !== 'addr-2'
+        );
+        if (valid.length > 0) {
+          const def = valid.find((a: SavedAddress) => a.isDefault) || valid[0];
+          return def.id;
+        }
+      } catch {}
+    }
+    return '';
+  });
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationSuccessMsg, setLocationSuccessMsg] = useState<string | null>(null);
@@ -161,12 +236,80 @@ export default function CheckoutPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<any | null>(null);
+  const orderJustCompleted = React.useRef(false);
 
   // Rating & Feedback State
   const [starRating, setStarRating] = useState<number>(5);
   const [hoverStar, setHoverStar] = useState<number | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(['⚡ Fast Checkout', '🛒 3D Supermarket']);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  // Whenever user has active items in trolley, this is a NEW order!
+  // Always clear any previous completed order so checkout view displays immediately
+  useEffect(() => {
+    router.prefetch('/');
+    router.prefetch('/orders');
+    if (activeItems.length > 0) {
+      setCompletedOrder(null);
+      orderJustCompleted.current = false;
+    }
+  }, [activeItems.length, router]);
+
+  // Unified Store Navigation Handlers
+  const handleBackToStore = () => {
+    setCompletedOrder(null);
+    orderJustCompleted.current = false;
+    resetBilling();
+    martRuntime.billingCooldownUntil = Date.now() + 2500;
+    // Back to Store: Return directly to Billing Section in front of Lane 02 ([0, 1.5, 14.6])
+    martRuntime.playerPos[0] = 0;
+    martRuntime.playerPos[1] = 1.5;
+    martRuntime.playerPos[2] = 14.6;
+    martRuntime.playerYaw = 0;
+    useMartStore.getState().setHasEnteredStore(true);
+    useMartStore.getState().setPlayerPos([0, 1.5, 14.6], 0);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('martverse_entered', 'true');
+      sessionStorage.setItem('martverse_skip_intro', 'true');
+      sessionStorage.setItem('martverse_return_target', 'billing');
+      localStorage.setItem('martverse_entered', 'true');
+      localStorage.setItem('martverse_intro_completed', 'true');
+      localStorage.setItem('martverse_skip_intro', 'true');
+    }
+    router.replace('/?return=billing');
+  };
+
+  const handleContinueShopping = () => {
+    setCompletedOrder(null);
+    orderJustCompleted.current = false;
+    resetBilling();
+    clearCart();
+    martRuntime.billingCooldownUntil = Date.now() + 2500;
+    // Continue Shopping: Return to Trolley Reset Place in mart ([0, 1.5, -20]) with a fresh empty trolley
+    martRuntime.playerPos[0] = 0;
+    martRuntime.playerPos[1] = 1.5;
+    martRuntime.playerPos[2] = -20;
+    martRuntime.playerYaw = 0;
+    useMartStore.getState().setHasEnteredStore(true);
+    useMartStore.getState().setPlayerPos([0, 1.5, -20], 0);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('martverse_entered', 'true');
+      sessionStorage.setItem('martverse_skip_intro', 'true');
+      sessionStorage.setItem('martverse_return_target', 'trolley_reset');
+      localStorage.setItem('martverse_entered', 'true');
+      localStorage.setItem('martverse_intro_completed', 'true');
+      localStorage.setItem('martverse_skip_intro', 'true');
+    }
+    router.replace('/?return=trolley_reset');
+  };
+
+  const handleViewInOrders = () => {
+    setCompletedOrder(null);
+    orderJustCompleted.current = false;
+    resetBilling();
+    clearCart();
+    router.push('/orders');
+  };
 
   const feedbackTagOptions = [
     '⚡ Fast Checkout',
@@ -184,30 +327,26 @@ export default function CheckoutPage() {
     }
   }, [authPhone]);
 
-  // Load addresses from backend database & sync with localStorage
+  // Background sync for addresses from backend database
   useEffect(() => {
     let isMounted = true;
     const fetchAddresses = async () => {
       try {
         const list = await api.getAddresses(customerPhone);
-        if (isMounted) {
-          const valid = (Array.isArray(list) ? list : []).filter(
+        if (isMounted && Array.isArray(list)) {
+          const valid = list.filter(
             (a: SavedAddress) => a.id !== 'addr-1' && a.id !== 'addr-2'
           );
-          setSavedAddresses(valid);
           if (valid.length > 0) {
-            const def = valid.find((a: SavedAddress) => a.isDefault) || valid[0];
-            setSelectedAddressId(def.id);
-          } else {
-            setSelectedAddressId('');
+            setSavedAddresses(valid);
+            setSelectedAddressId((curr) => {
+              if (curr && valid.some((a) => a.id === curr)) return curr;
+              const def = valid.find((a: SavedAddress) => a.isDefault) || valid[0];
+              return def.id;
+            });
           }
         }
-      } catch {
-        if (isMounted) {
-          setSavedAddresses([]);
-          setSelectedAddressId('');
-        }
-      }
+      } catch {}
     };
     fetchAddresses();
     return () => {
@@ -468,6 +607,7 @@ export default function CheckoutPage() {
       resetBilling();
 
       // Show success screen
+      orderJustCompleted.current = true;
       setCompletedOrder({
         ...orderRes,
         finalAmount: totalPayable,
@@ -483,160 +623,169 @@ export default function CheckoutPage() {
   };
 
   // ==============================================================
-  // VIEW: SUCCESS ORDER SCREEN
-  // ==============================================================
-  if (completedOrder) {
-    return (
-      <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        <div className="max-w-lg w-full bg-white rounded-3xl border border-slate-200/90 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.12)] p-6 sm:p-8 text-center space-y-6 relative overflow-hidden my-auto">
-          {/* Top Success Badge */}
-          <div className="relative mx-auto w-24 h-24">
-            <div className="absolute inset-0 bg-emerald-400/20 rounded-full blur-xl animate-pulse" />
-            <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <CheckCircle2 className="w-12 h-12 stroke-[2.5]" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200">
-              <BadgeCheck className="w-4 h-4 text-emerald-600" />
-              Order Confirmed & Verified
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Order Placed Successfully!
-            </h1>
-            <p className="text-xs text-slate-500 font-mono">
-              Order Reference: <strong className="text-slate-800 font-bold">{completedOrder.orderNumber}</strong>
-            </p>
-          </div>
-
-          {/* Amount Paid & Delivery Information Card */}
-          <div className="bg-slate-50/90 rounded-2xl p-4 border border-slate-200/90 text-left space-y-3 shadow-2xs">
-            <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80 text-xs">
-              <span className="text-slate-600 font-bold">Total Paid:</span>
-              <span className="font-mono font-black text-lg text-slate-900">
-                ₹{completedOrder.finalAmount?.toLocaleString('en-IN')}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Payment Mode:</span>
-              <span className="font-bold text-slate-800">{completedOrder.paymentProvider}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Estimated Delivery:</span>
-              <span className="font-bold text-emerald-700 flex items-center gap-1.5 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                <Truck className="w-3.5 h-3.5 text-emerald-600" />
-                Within 30 Mins (Express Dispatch)
-              </span>
-            </div>
-          </div>
-
-          {/* Customer Rating Section */}
-          <div className="bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-slate-50 rounded-2xl p-4 border border-blue-100 text-center space-y-2.5">
-            <span className="text-xs font-bold text-slate-800 block">Rate Your Supermarket Experience</span>
-            <div className="flex items-center justify-center gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onMouseEnter={() => setHoverStar(star)}
-                  onMouseLeave={() => setHoverStar(null)}
-                  onClick={() => setStarRating(star)}
-                  className="p-1 text-amber-400 hover:scale-125 transition-transform cursor-pointer"
-                >
-                  <Star
-                    className={`w-7 h-7 ${
-                      star <= (hoverStar || starRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Tag feedback chips */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
-              {feedbackTagOptions.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() =>
-                    setSelectedTags((prev) =>
-                      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-                    )
-                  }
-                  className={`text-[11px] font-bold px-3 py-1 rounded-full border transition-all cursor-pointer ${
-                    selectedTags.includes(tag)
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => router.push('/orders')}
-              className="py-3 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-slate-900/10 active:scale-95"
-            >
-              View in Orders
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/')}
-              className="py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-blue-500/25 active:scale-95"
-            >
-              Continue Shopping
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ==============================================================
   // VIEW: MAIN STANDALONE CHECKOUT PAGE (Fully Scrollable & Polished)
   // ==============================================================
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white pb-24 overflow-x-hidden overflow-y-auto">
-      {/* Ambient luxury backdrop glows */}
-      <div className="fixed top-0 right-1/4 w-[500px] h-[500px] bg-blue-100/50 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed bottom-0 left-1/4 w-[500px] h-[500px] bg-indigo-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
+    <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white pb-24 overflow-x-hidden overflow-y-auto relative">
+      {/* Ambient soft light blue luxury backdrop glows */}
+      <div className="fixed top-0 right-1/4 w-[500px] h-[500px] bg-sky-50/70 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="fixed bottom-0 left-1/4 w-[500px] h-[500px] bg-sky-50/50 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      {/* ============================================================== */}
+      {/* POPUP: ORDER SUCCESS CONFIRMATION MODAL OVERLAY                */}
+      {/* Soft glass blur on top of checkout page — NO pitch black backdrop */}
+      {/* ============================================================== */}
+      {completedOrder && orderJustCompleted.current && (
+        <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="max-w-[440px] w-full bg-white rounded-3xl border border-sky-100 shadow-[0_25px_70px_rgba(2,132,199,0.22)] p-5 sm:p-6 text-center space-y-4 relative overflow-hidden my-auto animate-framer-spring">
+            {/* Top Success Badge */}
+            <div className="relative mx-auto w-16 h-16">
+              <div className="absolute inset-0 bg-sky-400/25 rounded-2xl blur-lg animate-pulse" />
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-sky-400 text-white flex items-center justify-center shadow-lg shadow-sky-500/25">
+                <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
+                <BadgeCheck className="w-3.5 h-3.5 text-sky-600" />
+                Order Confirmed &amp; Verified
+              </span>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Order Placed Successfully!
+              </h1>
+              <p className="text-[11px] text-slate-500 font-mono">
+                Order Reference: <strong className="text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded font-mono">{completedOrder.orderNumber}</strong>
+              </p>
+            </div>
+
+            {/* Amount Paid & Delivery Information Card */}
+            <div className="bg-slate-50/90 rounded-2xl p-3.5 border border-slate-200/80 text-left space-y-2.5 shadow-2xs">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 text-xs">
+                <span className="text-slate-600 font-bold">Total Paid:</span>
+                <span className="font-mono font-black text-base text-slate-900">
+                  ₹{completedOrder.finalAmount?.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-600 font-medium">Payment Mode:</span>
+                <span className="font-bold text-slate-800">{completedOrder.paymentProvider}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-600 font-medium">Estimated Delivery:</span>
+                <span className="font-bold text-sky-700 flex items-center gap-1 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">
+                  <Truck className="w-3 h-3 text-sky-600" />
+                  Within 30 Mins (Express Dispatch)
+                </span>
+              </div>
+            </div>
+
+            {/* Customer Rating Section */}
+            <div className="bg-gradient-to-br from-sky-50/50 via-slate-50 to-blue-50/30 rounded-2xl p-3 border border-sky-100/90 text-center space-y-2">
+              <span className="text-[11px] font-bold text-slate-800 block">Rate Your Supermarket Experience</span>
+              <div className="flex items-center justify-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onMouseEnter={() => setHoverStar(star)}
+                    onMouseLeave={() => setHoverStar(null)}
+                    onClick={() => setStarRating(star)}
+                    className="p-0.5 text-amber-400 hover:scale-125 transition-transform cursor-pointer"
+                  >
+                    <Star
+                      className={`w-6 h-6 ${
+                        star <= (hoverStar || starRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              {/* Tag feedback chips */}
+              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
+                {feedbackTagOptions.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() =>
+                      setSelectedTags((prev) =>
+                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+                      )
+                    }
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border transition-all cursor-pointer ${
+                      selectedTags.includes(tag)
+                        ? 'bg-sky-600 text-white border-sky-600 shadow-2xs'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Highly Clickable & Distinct Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleViewInOrders}
+                className="py-3 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 hover:text-slate-950 font-black text-xs transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 border border-slate-200/90 group"
+              >
+                <Receipt className="w-3.5 h-3.5 text-slate-600 group-hover:scale-110 transition-transform" />
+                <span>View in Orders</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleContinueShopping}
+                className="py-3 px-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 hover:from-sky-400 hover:via-blue-500 hover:to-sky-400 text-white font-black text-xs transition-all duration-200 cursor-pointer shadow-md shadow-sky-500/30 hover:shadow-lg hover:shadow-sky-500/40 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 border border-sky-400/40 group overflow-hidden relative"
+              >
+                <Store className="w-3.5 h-3.5 text-white group-hover:scale-110 transition-transform" />
+                <span>Continue Shopping</span>
+                <ArrowRight className="w-3.5 h-3.5 text-white group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Ambient soft light blue luxury backdrop glows */}
+      <div className="fixed top-0 right-1/4 w-[500px] h-[500px] bg-sky-50/70 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="fixed bottom-0 left-1/4 w-[500px] h-[500px] bg-sky-50/50 rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* --- Top Glassy Luxury White Executive Header --- */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/90 px-4 sm:px-8 py-3.5 shadow-[0_4px_25px_rgba(15,23,42,0.04)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 border border-white/60 flex-shrink-0 transform hover:scale-105 transition-transform">
+          <div
+            onClick={handleBackToStore}
+            className="flex items-center gap-3.5 cursor-pointer group"
+            title="Return to Billing Section"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-sky-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-sky-500/20 border border-white/60 flex-shrink-0 group-hover:scale-105 transition-transform">
               <Store className="w-5 h-5 text-white stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-sm sm:text-base tracking-tight font-black uppercase text-slate-900 font-sans">
-                  MART<span className="text-blue-600">VERSE</span> EXPRESS CHECKOUT
+                <h1 className="text-sm sm:text-base tracking-tight font-black uppercase text-slate-900 font-sans group-hover:text-sky-600 transition-colors">
+                  MART<span className="text-sky-600">VERSE</span> EXPRESS CHECKOUT
                 </h1>
-                <span className="text-[10px] bg-blue-50 border border-blue-200/90 text-blue-700 font-black px-2.5 py-0.5 rounded-full font-mono shadow-2xs flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                <span className="text-[10px] bg-sky-50 border border-sky-200/90 text-sky-700 font-black px-2.5 py-0.5 rounded-full font-mono shadow-2xs flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
                   LANE 02
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium leading-none mt-1">
-                Official In-Store Express Checkout & Instant Invoice
+                Official In-Store Express Checkout &amp; Instant Invoice
               </p>
             </div>
           </div>
 
           <button
             type="button"
-            onClick={() => router.push('/')}
-            title="Return to Supermarket Aisle"
-            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 text-xs font-bold flex items-center gap-2 transition-all duration-200 cursor-pointer active:scale-95 border border-slate-200 hover:border-slate-300 shadow-2xs"
+            onClick={handleBackToStore}
+            title="Return to Billing Section"
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-sky-50 to-white hover:from-sky-100 hover:to-sky-50 text-slate-800 text-xs font-bold flex items-center gap-2 transition-all duration-200 cursor-pointer active:scale-95 border border-sky-200/80 hover:border-sky-300 shadow-xs hover:shadow-sm"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-blue-600" />
+            <ArrowLeft className="w-3.5 h-3.5 text-sky-600" />
             <span>Back to Store</span>
           </button>
         </div>
@@ -647,20 +796,20 @@ export default function CheckoutPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto select-none">
             {/* Step 1 */}
-            <span className="flex items-center gap-1.5 text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 shadow-2xs">
-              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+            <span className="flex items-center gap-1.5 text-sky-800 font-bold bg-sky-50 px-3 py-1 rounded-full border border-sky-200 shadow-2xs">
+              <Check className="w-3.5 h-3.5 text-sky-600 stroke-[3]" />
               <span>1. Trolley Items</span>
             </span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
 
             {/* Step 2 */}
-            <span className="flex items-center gap-1.5 text-blue-700 font-extrabold bg-blue-50 px-3 py-1 rounded-full border border-blue-300 shadow-2xs ring-2 ring-blue-500/20">
-              <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="flex items-center gap-1.5 text-sky-900 font-extrabold bg-gradient-to-r from-sky-50 to-white px-3 py-1 rounded-full border border-sky-300 shadow-2xs">
+              <span className="w-4 h-4 rounded-full bg-sky-600 text-white text-[10px] font-bold flex items-center justify-center">
                 2
               </span>
               <span>2. Delivery & Payment</span>
             </span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
 
             {/* Step 3 */}
             <span className="flex items-center gap-1.5 text-slate-400 font-semibold px-2 py-1">
@@ -672,12 +821,12 @@ export default function CheckoutPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-4 text-xs font-medium text-slate-600">
-            <span className="flex items-center gap-1.5 text-emerald-700 font-bold bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/80">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span className="flex items-center gap-1.5 text-sky-800 font-bold bg-sky-50/80 px-2.5 py-1 rounded-lg border border-sky-200/80">
+              <ShieldCheck className="w-4 h-4 text-sky-600" />
               100% Purchase Protection
             </span>
-            <span className="flex items-center gap-1.5 text-blue-700 font-bold bg-blue-50/80 px-2.5 py-1 rounded-lg border border-blue-200/80">
-              <Clock className="w-4 h-4 text-blue-600" />
+            <span className="flex items-center gap-1.5 text-sky-800 font-bold bg-sky-50/80 px-2.5 py-1 rounded-lg border border-sky-200/80">
+              <Clock className="w-4 h-4 text-sky-600" />
               Express 30-Min Delivery
             </span>
           </div>
@@ -692,10 +841,10 @@ export default function CheckoutPage() {
           {/* ============================================================== */}
           <div className="lg:col-span-7 space-y-5">
             {/* 1. DELIVERY ADDRESS SECTION */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-2px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_36px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-1.5 before:bg-gradient-to-r before:from-blue-600 before:via-indigo-500 before:to-cyan-400">
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_2px_14px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_30px_rgba(56,189,248,0.08)] hover:border-sky-200 transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-sky-300 before:via-sky-100 before:to-transparent">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white flex items-center justify-center font-black shadow-lg shadow-blue-500/30 text-sm ring-2 ring-blue-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-white text-sky-900 border border-sky-200/90 flex items-center justify-center font-black text-sm shadow-xs transition-transform duration-200 hover:scale-105">
                     1
                   </div>
                   <div>
@@ -715,9 +864,9 @@ export default function CheckoutPage() {
                       setIsAddingNewAddress(true);
                       setFormError(null);
                     }}
-                    className="text-xs font-bold text-blue-600 hover:text-white bg-blue-50/90 hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer flex items-center gap-1.5 border border-blue-200/80 shadow-2xs hover:shadow-md hover:shadow-blue-500/20 active:scale-95 group"
+                    className="text-xs font-bold text-sky-800 bg-gradient-to-r from-sky-50 to-white hover:from-sky-100 hover:to-sky-50 px-3.5 py-1.5 rounded-xl border border-sky-200/90 hover:border-sky-300 shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer flex items-center gap-1.5 active:scale-95 group"
                   >
-                    <Plus className="w-4 h-4 stroke-[2.5] group-hover:rotate-90 transition-transform duration-200" />
+                    <Plus className="w-4 h-4 stroke-[2.5] text-sky-600 group-hover:rotate-90 transition-transform duration-200" />
                     <span>Add Address</span>
                   </button>
                 )}
@@ -736,15 +885,15 @@ export default function CheckoutPage() {
                         onClick={() => setSelectedAddressId(addr.id)}
                         className={`p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer relative active:scale-[0.99] ${
                           isSelected
-                            ? 'bg-gradient-to-br from-blue-50/80 via-white to-sky-50/40 border-2 border-blue-600 shadow-lg shadow-blue-500/10 ring-4 ring-blue-500/10'
-                            : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60 hover:shadow-xs'
+                            ? 'bg-gradient-to-r from-sky-50/90 via-sky-50/40 to-white border-2 border-sky-400 shadow-md shadow-sky-500/10'
+                            : 'bg-white border-slate-200/90 hover:border-sky-300 hover:bg-sky-50/20 hover:shadow-xs'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
                             <div
                               className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                                isSelected ? 'border-blue-600 bg-blue-600 text-white shadow-xs' : 'border-slate-300 bg-white'
+                                isSelected ? 'border-sky-500 bg-sky-500 text-white shadow-xs' : 'border-slate-300 bg-white'
                               }`}
                             >
                               {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
@@ -754,7 +903,7 @@ export default function CheckoutPage() {
                               {addr.type}
                             </span>
                             {addr.isDefault && (
-                              <span className="text-[10px] font-black px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-2xs tracking-wide">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200/80 shadow-3xs tracking-wide">
                                 DEFAULT
                               </span>
                             )}
@@ -765,7 +914,7 @@ export default function CheckoutPage() {
                               <button
                                 type="button"
                                 onClick={(e) => handleSetDefaultAddress(addr.id, e)}
-                                className="text-[11px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer hover:underline px-1 py-0.5"
+                                className="text-[11px] text-sky-600 hover:text-sky-800 font-bold cursor-pointer hover:underline px-1 py-0.5"
                                 title="Set as default address"
                               >
                                 Set Default
@@ -975,10 +1124,10 @@ export default function CheckoutPage() {
             </div>
 
             {/* 2. CUSTOMER CONTACT DETAILS */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-2px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_36px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-1.5 before:bg-gradient-to-r before:from-purple-600 before:via-violet-500 before:to-indigo-400">
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_2px_14px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_30px_rgba(56,189,248,0.08)] hover:border-sky-200 transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-sky-300 before:via-sky-100 before:to-transparent">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-violet-600 to-indigo-500 text-white flex items-center justify-center font-black shadow-lg shadow-purple-500/30 text-sm ring-2 ring-purple-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-white text-sky-900 border border-sky-200/90 flex items-center justify-center font-black text-sm shadow-xs transition-transform duration-200 hover:scale-105">
                     2
                   </div>
                   <div>
@@ -986,13 +1135,13 @@ export default function CheckoutPage() {
                       2. Customer Contact
                     </h2>
                     <p className="text-xs text-slate-500 font-medium">
-                      For instant order invoice & live GPS delivery updates
+                      For instant order invoice &amp; live GPS delivery updates
                     </p>
                   </div>
                 </div>
                 {isCustomerValid ? (
-                  <span className="text-[10px] text-emerald-800 font-black bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/80 flex items-center gap-1.5 shadow-2xs tracking-wide">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                  <span className="text-[10px] text-sky-800 font-bold bg-sky-50 px-3 py-1 rounded-full border border-sky-200/80 flex items-center gap-1.5 shadow-2xs tracking-wide">
+                    <Check className="w-3.5 h-3.5 text-sky-600 stroke-[3]" />
                     Verified
                   </span>
                 ) : (
@@ -1012,11 +1161,17 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomerName(val);
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('martverse_customer_name', val);
+                        }
+                      }}
                       placeholder="e.g. Rahul Sharma"
-                      className="w-full bg-slate-50/70 hover:bg-white focus:bg-white border border-slate-200/90 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-10 pr-3.5 py-3 text-xs sm:text-sm font-semibold text-slate-900 transition-all outline-none shadow-inner"
+                      className="w-full bg-slate-50/70 hover:bg-white focus:bg-white border border-slate-200/90 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 rounded-2xl pl-10 pr-3.5 py-3 text-xs sm:text-sm font-semibold text-slate-900 transition-all outline-none"
                     />
-                    <User className="w-4 h-4 text-blue-500 absolute left-3.5 top-3.5" />
+                    <User className="w-4 h-4 text-sky-500 absolute left-3.5 top-3.5" />
                   </div>
                 </div>
 
@@ -1033,13 +1188,19 @@ export default function CheckoutPage() {
                       required
                       maxLength={10}
                       value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setCustomerPhone(val);
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('martverse_phone', val);
+                        }
+                      }}
                       placeholder="9876543210"
-                      className="w-full bg-slate-50/70 hover:bg-white focus:bg-white border border-slate-200/90 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-16 pr-10 py-3 text-xs sm:text-sm font-bold text-slate-900 transition-all outline-none font-mono tracking-wider shadow-inner"
+                      className="w-full bg-slate-50/70 hover:bg-white focus:bg-white border border-slate-200/90 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 rounded-2xl pl-16 pr-10 py-3 text-xs sm:text-sm font-bold text-slate-900 transition-all outline-none font-mono tracking-wider"
                     />
                     {customerPhone.length === 10 ? (
-                      <span className="absolute right-3.5 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                      <span className="absolute right-3.5 w-5 h-5 rounded-full bg-sky-100 flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5 text-sky-600 stroke-[3]" />
                       </span>
                     ) : (
                       <Phone className="w-4 h-4 text-slate-400 absolute right-3.5" />
@@ -1050,10 +1211,10 @@ export default function CheckoutPage() {
             </div>
 
             {/* 3. PAYMENT METHOD SECTION */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-2px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_36px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-1.5 before:bg-gradient-to-r before:from-emerald-600 before:via-teal-500 before:to-cyan-400">
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_2px_14px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_30px_rgba(56,189,248,0.08)] hover:border-sky-200 transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-sky-300 before:via-sky-100 before:to-transparent">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-500 text-white flex items-center justify-center font-black shadow-lg shadow-emerald-500/30 text-sm ring-2 ring-emerald-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-sky-100 via-sky-50 to-white text-sky-900 border border-sky-200/90 flex items-center justify-center font-black text-sm shadow-xs transition-transform duration-200 hover:scale-105">
                     3
                   </div>
                   <div>
@@ -1063,73 +1224,148 @@ export default function CheckoutPage() {
                     <p className="text-xs text-slate-500 font-medium">Choose how you want to pay</p>
                   </div>
                 </div>
-                <span className="text-[10px] text-emerald-800 font-black bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/80 flex items-center gap-1.5 shadow-2xs tracking-wide">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  100% Encrypted & Safe
+                <span className="text-[10px] text-sky-800 font-bold bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200/80 flex items-center gap-1.5 shadow-2xs tracking-wide">
+                  <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
+                  100% Encrypted &amp; Safe
                 </span>
               </div>
 
-              {/* 3 Payment Options */}
-              <div className="grid grid-cols-1 gap-3.5">
-                {/* Option 1: UPI Apps */}
-                <div
-                  onClick={() => {
-                    setSelectedPaymentMethod('UPI');
-                    if (!selectedUpiApp) setSelectedUpiApp('PHONEPE');
-                  }}
-                  className={`p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 active:scale-[0.99] ${
-                    selectedPaymentMethod === 'UPI'
-                      ? 'bg-gradient-to-r from-blue-50/80 via-white to-indigo-50/40 border-2 border-blue-600 shadow-md shadow-blue-500/10 ring-4 ring-blue-500/10'
-                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60 hover:shadow-xs'
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                        selectedPaymentMethod === 'UPI'
-                          ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
-                          : 'border-slate-300 bg-white'
-                      }`}
-                    >
-                      {selectedPaymentMethod === 'UPI' && <Check className="w-3 h-3 stroke-[3]" />}
+              {/* 3 Payment Options in ONE Row */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Card 1: UPI */}
+                  <div
+                    onClick={() => {
+                      setSelectedPaymentMethod('UPI');
+                    }}
+                    className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 select-none active:scale-[0.99] ${
+                      selectedPaymentMethod === 'UPI'
+                        ? 'bg-white border-2 border-[#00AEEF] shadow-sm shadow-sky-500/10 ring-2 ring-sky-100'
+                        : 'bg-white border-slate-200 hover:border-sky-300 hover:bg-sky-50/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE]/70 border border-[#BAE6FD] text-[#0284C7] flex items-center justify-center shrink-0 shadow-xs">
+                        <QrCode className="w-5 h-5 stroke-[2]" />
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                          selectedPaymentMethod === 'UPI'
+                            ? 'border-[#00AEEF] bg-[#00AEEF] text-white shadow-xs'
+                            : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {selectedPaymentMethod === 'UPI' && (
+                          <Check className="w-3 h-3 stroke-[3] text-white" />
+                        )}
+                      </div>
                     </div>
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/25">
-                      <QrCode className="w-5 h-5 stroke-[2.2]" />
-                    </div>
+
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-black text-slate-900">UPI Instant Payment</span>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-3xs">
-                          ⚡ Instant & Zero Fee
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900">UPI Instant</span>
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200">
+                          ⚡ Free
                         </span>
                       </div>
-                      <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium">
-                        Pay with PhonePe, Google Pay, Paytm, or BHIM
+                      <p className="text-[11px] text-slate-500 mt-0.5 font-medium line-clamp-1">
+                        PhonePe, GPay, Paytm
                       </p>
                     </div>
                   </div>
 
-                  {/* Logo Previews */}
-                  <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-                    <div className="h-8 px-2 rounded-xl bg-white border border-slate-200 flex items-center shadow-3xs">
-                      <PhonePeIcon className="h-4.5 w-auto" />
+                  {/* Card 2: Credit / Debit Card */}
+                  <div
+                    onClick={() => setSelectedPaymentMethod('CARD')}
+                    className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 select-none active:scale-[0.99] ${
+                      selectedPaymentMethod === 'CARD'
+                        ? 'bg-white border-2 border-[#00AEEF] shadow-sm shadow-sky-500/10 ring-2 ring-sky-100'
+                        : 'bg-white border-slate-200 hover:border-sky-300 hover:bg-sky-50/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE]/70 border border-[#BAE6FD] text-[#0284C7] flex items-center justify-center shrink-0 shadow-xs">
+                        <CreditCard className="w-5 h-5 stroke-[2]" />
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                          selectedPaymentMethod === 'CARD'
+                            ? 'border-[#00AEEF] bg-[#00AEEF] text-white shadow-xs'
+                            : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {selectedPaymentMethod === 'CARD' && (
+                          <Check className="w-3 h-3 stroke-[3] text-white" />
+                        )}
+                      </div>
                     </div>
-                    <div className="h-8 px-2 rounded-xl bg-white border border-slate-200 flex items-center shadow-3xs">
-                      <PaytmIcon className="h-3.5 w-auto" />
+
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900">Cards</span>
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200">
+                          Visa / MC
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 font-medium line-clamp-1">
+                        Credit / Debit Card
+                      </p>
                     </div>
-                    <div className="h-8 px-2 rounded-xl bg-white border border-slate-200 flex items-center shadow-3xs">
-                      <GooglePayIcon className="h-3.5 w-auto" />
+                  </div>
+
+                  {/* Card 3: Cash on Delivery */}
+                  <div
+                    onClick={() => setSelectedPaymentMethod('CASH')}
+                    className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 select-none active:scale-[0.99] ${
+                      selectedPaymentMethod === 'CASH'
+                        ? 'bg-white border-2 border-[#00AEEF] shadow-sm shadow-sky-500/10 ring-2 ring-sky-100'
+                        : 'bg-white border-slate-200 hover:border-sky-300 hover:bg-sky-50/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE]/70 border border-[#BAE6FD] text-[#0284C7] flex items-center justify-center shrink-0 shadow-xs">
+                        <Banknote className="w-5 h-5 stroke-[2]" />
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                          selectedPaymentMethod === 'CASH'
+                            ? 'border-[#00AEEF] bg-[#00AEEF] text-white shadow-xs'
+                            : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {selectedPaymentMethod === 'CASH' && (
+                          <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900">Cash / QR</span>
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-[#FEF9C3] text-[#854D0E] border border-[#FEF08A]">
+                          +₹20
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 font-medium line-clamp-1">
+                        Pay upon delivery
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Sub-view: UPI Providers when UPI is selected */}
+                {/* ------------------------------------------------------------ */}
+                {/* When UPI is tapped: Show Below the 3 UPI Options */}
+                {/* ------------------------------------------------------------ */}
                 {selectedPaymentMethod === 'UPI' && (
-                  <div className="ml-8 p-4 rounded-2xl bg-gradient-to-b from-slate-50/90 to-blue-50/20 border border-blue-200/90 shadow-inner space-y-3 animate-in fade-in duration-200">
-                    <span className="text-xs font-bold text-slate-700 block">
-                      Select your preferred UPI App:
-                    </span>
-                    <div className="grid grid-cols-3 gap-3">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-[0_2px_12px_rgba(2,132,199,0.04)] space-y-3 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800">
+                        Select your preferred UPI App:
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-medium">Fast 1-click verification</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                       {/* PhonePe */}
                       <button
                         type="button"
@@ -1137,41 +1373,19 @@ export default function CheckoutPage() {
                           e.stopPropagation();
                           setSelectedUpiApp('PHONEPE');
                         }}
-                        className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 ${
+                        className={`p-3 sm:p-3.5 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all duration-200 cursor-pointer active:scale-95 ${
                           selectedUpiApp === 'PHONEPE'
-                            ? 'bg-gradient-to-b from-purple-50/90 via-white to-purple-50/30 border-2 border-[#5F259F] ring-4 ring-[#5F259F]/20 shadow-md shadow-purple-500/15'
-                            : 'bg-white border-slate-200 hover:border-[#5F259F]/40 hover:bg-purple-50/20 shadow-2xs'
+                            ? 'bg-sky-50/40 border-2 border-[#00AEEF] shadow-xs'
+                            : 'bg-white border-slate-200 hover:border-slate-300'
                         }`}
                       >
-                        <PhonePeIcon className="h-7 w-auto" />
-                        <span className="text-[11px] font-black text-[#5F259F]">PhonePe</span>
-                        {selectedUpiApp === 'PHONEPE' && (
-                          <span className="text-[9px] font-black text-white bg-[#5F259F] px-2 py-0.5 rounded-full shadow-2xs">
-                            Selected
-                          </span>
-                        )}
-                      </button>
-
-                      {/* Paytm */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedUpiApp('PAYTM');
-                        }}
-                        className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 ${
-                          selectedUpiApp === 'PAYTM'
-                            ? 'bg-gradient-to-b from-sky-50/90 via-white to-sky-50/30 border-2 border-[#00BAF2] ring-4 ring-[#00BAF2]/20 shadow-md shadow-sky-500/15'
-                            : 'bg-white border-slate-200 hover:border-[#00BAF2]/40 hover:bg-sky-50/20 shadow-2xs'
-                        }`}
-                      >
-                        <PaytmIcon className="h-5 w-auto" />
-                        <span className="text-[11px] font-black text-[#002970]">Paytm UPI</span>
-                        {selectedUpiApp === 'PAYTM' && (
-                          <span className="text-[9px] font-black text-white bg-[#002970] px-2 py-0.5 rounded-full shadow-2xs">
-                            Selected
-                          </span>
-                        )}
+                        <div className="h-7 flex items-center justify-center">
+                          <PhonePeIcon className="h-6 w-auto" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">PhonePe</span>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${selectedUpiApp === 'PHONEPE' ? 'border-[#00AEEF] bg-[#00AEEF]' : 'border-slate-300 bg-white'}`}>
+                          {selectedUpiApp === 'PHONEPE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
                       </button>
 
                       {/* Google Pay */}
@@ -1181,70 +1395,57 @@ export default function CheckoutPage() {
                           e.stopPropagation();
                           setSelectedUpiApp('GPAY');
                         }}
-                        className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 ${
+                        className={`p-3 sm:p-3.5 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all duration-200 cursor-pointer active:scale-95 ${
                           selectedUpiApp === 'GPAY'
-                            ? 'bg-gradient-to-b from-blue-50/90 via-white to-blue-50/30 border-2 border-blue-600 ring-4 ring-blue-600/20 shadow-md shadow-blue-500/15'
-                            : 'bg-white border-slate-200 hover:border-blue-400 hover:bg-blue-50/20 shadow-2xs'
+                            ? 'bg-sky-50/40 border-2 border-[#00AEEF] shadow-xs'
+                            : 'bg-white border-slate-200 hover:border-slate-300'
                         }`}
                       >
-                        <GooglePayIcon className="h-5 w-auto" />
-                        <span className="text-[11px] font-black text-slate-800">Google Pay</span>
-                        {selectedUpiApp === 'GPAY' && (
-                          <span className="text-[9px] font-black text-white bg-blue-600 px-2 py-0.5 rounded-full shadow-2xs">
-                            Selected
-                          </span>
-                        )}
+                        <div className="h-7 flex items-center justify-center">
+                          <GooglePayIcon className="h-4.5 w-auto" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">Google Pay</span>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${selectedUpiApp === 'GPAY' ? 'border-[#00AEEF] bg-[#00AEEF]' : 'border-slate-300 bg-white'}`}>
+                          {selectedUpiApp === 'GPAY' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </button>
+
+                      {/* Paytm */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUpiApp('PAYTM');
+                        }}
+                        className={`p-3 sm:p-3.5 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all duration-200 cursor-pointer active:scale-95 ${
+                          selectedUpiApp === 'PAYTM'
+                            ? 'bg-sky-50/40 border-2 border-[#00AEEF] shadow-xs'
+                            : 'bg-white border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="h-7 flex items-center justify-center">
+                          <PaytmIcon className="h-4.5 w-auto" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">Paytm</span>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${selectedUpiApp === 'PAYTM' ? 'border-[#00AEEF] bg-[#00AEEF]' : 'border-slate-300 bg-white'}`}>
+                          {selectedUpiApp === 'PAYTM' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Option 2: Credit / Debit Card */}
-                <div
-                  onClick={() => setSelectedPaymentMethod('CARD')}
-                  className={`p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 active:scale-[0.99] ${
-                    selectedPaymentMethod === 'CARD'
-                      ? 'bg-gradient-to-r from-blue-50/80 via-white to-indigo-50/40 border-2 border-blue-600 shadow-md shadow-blue-500/10 ring-4 ring-blue-500/10'
-                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60 hover:shadow-xs'
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                        selectedPaymentMethod === 'CARD'
-                          ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
-                          : 'border-slate-300 bg-white'
-                      }`}
-                    >
-                      {selectedPaymentMethod === 'CARD' && <Check className="w-3 h-3 stroke-[3]" />}
-                    </div>
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-500/25">
-                      <CreditCard className="w-5 h-5 stroke-[2.2]" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-black text-slate-900">Credit / Debit Card</span>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 shadow-3xs">
-                          Visa / MasterCard / RuPay
-                        </span>
-                      </div>
-                      <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium">
-                        Pay securely with your credit or debit card
-                      </p>
-                    </div>
-                  </div>
-                  <Lock className="w-4 h-4 text-slate-400 flex-shrink-0 hidden sm:block" />
-                </div>
-
-                {/* Sub-view: Card Inputs when Card is selected */}
+                {/* ------------------------------------------------------------ */}
+                {/* When Card is tapped: Show Below the Card Form */}
+                {/* ------------------------------------------------------------ */}
                 {selectedPaymentMethod === 'CARD' && (
-                  <div className="ml-8 p-4.5 rounded-2xl bg-gradient-to-b from-slate-50/90 to-blue-50/20 border border-blue-200/90 shadow-inner space-y-4 animate-in fade-in duration-200">
+                  <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#BAE6FD] shadow-[0_2px_12px_rgba(2,132,199,0.04)] space-y-4 animate-in fade-in duration-200">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs text-slate-700 font-bold block mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 block mb-1.5">
                           Card Number <span className="text-rose-500">*</span>
                         </label>
-                        <div className="relative">
+                        <div className="relative flex items-center">
                           <input
                             type="text"
                             maxLength={19}
@@ -1254,13 +1455,14 @@ export default function CheckoutPage() {
                               setCardNumber(val);
                             }}
                             placeholder="4532 8920 1204 8821"
-                            className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-10 pr-3.5 py-2.5 text-xs sm:text-sm font-mono font-bold text-slate-900 outline-none shadow-xs"
+                            className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-xs sm:text-sm font-mono font-bold text-slate-800 placeholder:text-slate-400 focus:border-[#00AEEF] focus:ring-4 focus:ring-sky-100 outline-none transition-all shadow-xs"
                           />
-                          <CreditCard className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                          <CreditCard className="w-4 h-4 text-slate-400 absolute left-3.5" />
                         </div>
                       </div>
+
                       <div>
-                        <label className="text-xs text-slate-700 font-bold block mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 block mb-1.5">
                           Name on Card <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -1268,14 +1470,14 @@ export default function CheckoutPage() {
                           value={cardHolder}
                           onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
                           placeholder="MOHAN NERASALA"
-                          className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 outline-none uppercase shadow-xs"
+                          className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold text-slate-800 uppercase placeholder:text-slate-400 focus:border-[#00AEEF] focus:ring-4 focus:ring-sky-100 outline-none transition-all shadow-xs"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs text-slate-700 font-bold block mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 block mb-1.5">
                           Expiry Date (MM/YY) <span className="text-rose-500">*</span>
                         </label>
                         <input
@@ -1288,74 +1490,46 @@ export default function CheckoutPage() {
                             setCardExpiry(v);
                           }}
                           placeholder="MM/YY"
-                          className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-mono font-bold text-slate-900 outline-none text-center shadow-xs"
+                          className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs sm:text-sm font-mono font-bold text-slate-800 text-center placeholder:text-slate-400 focus:border-[#00AEEF] focus:ring-4 focus:ring-sky-100 outline-none transition-all shadow-xs"
                         />
                       </div>
+
                       <div>
-                        <label className="text-xs text-slate-700 font-bold block mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 block mb-1.5">
                           CVV (3 Digits) <span className="text-rose-500">*</span>
                         </label>
-                        <div className="relative">
+                        <div className="relative flex items-center">
                           <input
                             type="password"
                             maxLength={3}
                             value={cardCvv}
                             onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
                             placeholder="•••"
-                            className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-mono font-bold text-slate-900 outline-none text-center tracking-widest shadow-xs"
+                            className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs sm:text-sm font-mono font-bold text-slate-800 text-center tracking-widest placeholder:text-slate-400 focus:border-[#00AEEF] focus:ring-4 focus:ring-sky-100 outline-none transition-all shadow-xs"
                           />
-                          <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3.5 top-3.5" />
+                          <Lock className="w-4 h-4 text-slate-400 absolute right-3.5" />
                         </div>
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 text-[11px] text-slate-500">
+                      <ShieldCheck className="w-3.5 h-3.5 text-sky-600 flex-shrink-0" />
+                      <span>Protected with 256-bit bank-grade encryption. CVV is never stored.</span>
                     </div>
                   </div>
                 )}
 
-                {/* Option 3: Cash on Delivery */}
-                <div
-                  onClick={() => setSelectedPaymentMethod('CASH')}
-                  className={`p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 active:scale-[0.99] ${
-                    selectedPaymentMethod === 'CASH'
-                      ? 'bg-gradient-to-r from-blue-50/80 via-white to-indigo-50/40 border-2 border-blue-600 shadow-md shadow-blue-500/10 ring-4 ring-blue-500/10'
-                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60 hover:shadow-xs'
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                        selectedPaymentMethod === 'CASH'
-                          ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
-                          : 'border-slate-300 bg-white'
-                      }`}
-                    >
-                      {selectedPaymentMethod === 'CASH' && <Check className="w-3 h-3 stroke-[3]" />}
-                    </div>
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-amber-500/25">
-                      <Banknote className="w-5 h-5 stroke-[2.2]" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-black text-slate-900">Cash on Delivery</span>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 shadow-3xs">
-                          +₹20 Handling Fee
-                        </span>
-                      </div>
-                      <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium">
-                        Pay cash or UPI to delivery agent at your doorstep
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sub-view: Cash on Delivery Note when selected */}
+                {/* ------------------------------------------------------------ */}
+                {/* When Cash on Delivery is tapped: Show Below the Cash Note */}
+                {/* ------------------------------------------------------------ */}
                 {selectedPaymentMethod === 'CASH' && (
-                  <div className="ml-8 p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 space-y-1.5 animate-in fade-in duration-200 text-xs text-amber-900 shadow-2xs">
-                    <div className="flex items-center gap-2 font-black text-xs sm:text-sm">
-                      <Banknote className="w-4.5 h-4.5 text-amber-700" />
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-[0_2px_12px_rgba(2,132,199,0.04)] space-y-1.5 animate-in fade-in duration-200 text-xs text-slate-700">
+                    <div className="flex items-center gap-2 font-bold text-slate-900">
+                      <Banknote className="w-4 h-4 text-[#0284C7]" />
                       <span>Cash on Delivery Confirmed (+₹20 added to bill)</span>
                     </div>
-                    <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                      Please keep exact cash ready (₹{totalPayable.toLocaleString('en-IN')}) upon express arrival.
+                    <p className="text-slate-500 font-medium leading-relaxed">
+                      Please keep exact cash ready (₹{totalPayable.toLocaleString('en-IN')}) upon arrival, or pay instantly using delivery agent&apos;s UPI QR code.
                     </p>
                   </div>
                 )}
@@ -1385,10 +1559,10 @@ export default function CheckoutPage() {
           {/* ============================================================== */}
           <div className="lg:col-span-5 space-y-5">
             {/* Scanned Items Card */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-2px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_36px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-1.5 before:bg-gradient-to-r before:from-blue-600 before:via-sky-400 before:to-indigo-500">
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_2px_14px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_30px_rgba(56,189,248,0.08)] hover:border-sky-200 transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-sky-300 before:via-sky-100 before:to-transparent">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-b from-sky-100 to-sky-50 text-sky-700 flex items-center justify-center border border-sky-200/80 shadow-xs">
                     <Barcode className="w-4.5 h-4.5" />
                   </div>
                   <h3 className="font-black text-slate-900 text-base sm:text-lg tracking-tight">
@@ -1403,9 +1577,17 @@ export default function CheckoutPage() {
               {/* Scrollable Scanned Items List */}
               <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 pr-1 space-y-1">
                 {activeItems.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 text-xs font-medium space-y-2">
+                  <div className="text-center py-8 text-slate-400 text-xs font-medium space-y-3">
                     <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto" />
-                    <p>Your trolley is empty. Please add items from the store.</p>
+                    <p className="text-slate-600 font-bold">Your trolley is empty.</p>
+                    <button
+                      type="button"
+                      onClick={handleBackToStore}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Return to Entrance (Reset Trolley)</span>
+                    </button>
                   </div>
                 ) : (
                   activeItems.map((item) => (
@@ -1472,17 +1654,17 @@ export default function CheckoutPage() {
             </div>
 
             {/* Order Summary & Calculations */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-2px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_36px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-1.5 before:bg-gradient-to-r before:from-emerald-500 before:via-teal-400 before:to-blue-500">
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_2px_14px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_30px_rgba(56,189,248,0.08)] hover:border-sky-200 transition-all duration-300 p-6 sm:p-7 space-y-5 relative overflow-hidden before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-sky-300 before:via-sky-100 before:to-transparent">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shadow-2xs">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-b from-sky-100 to-sky-50 text-sky-700 flex items-center justify-center border border-sky-200/80 shadow-xs">
                     <Receipt className="w-4.5 h-4.5" />
                   </div>
                   <h3 className="font-black text-slate-900 text-base sm:text-lg tracking-tight">
                     Order Summary
                   </h3>
                 </div>
-                <span className="text-[10px] font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 shadow-2xs uppercase tracking-wide">
+                <span className="text-[10px] font-bold text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200/80 tracking-wide">
                   Exact Calculation
                 </span>
               </div>
@@ -1499,7 +1681,7 @@ export default function CheckoutPage() {
                 {savingsOnMrp > 0 && (
                   <div className="flex justify-between items-center text-slate-600">
                     <span className="font-medium">Savings on MRP:</span>
-                    <span className="font-mono text-emerald-700 font-black bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 shadow-3xs">
+                    <span className="font-mono text-sky-800 font-bold bg-sky-50 px-2.5 py-0.5 rounded-lg border border-sky-200 shadow-3xs">
                       - ₹{savingsOnMrp.toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -1511,7 +1693,7 @@ export default function CheckoutPage() {
                     {deliveryCharge === 0 ? (
                       <span className="flex items-center gap-2">
                         <span className="line-through text-slate-400 text-xs">₹40</span>
-                        <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 font-black text-[10px] px-2.5 py-0.5 rounded-lg shadow-3xs tracking-wide">
+                        <span className="text-sky-800 bg-sky-50 border border-sky-200 font-bold text-[10px] px-2.5 py-0.5 rounded-lg shadow-3xs tracking-wide">
                           FREE DELIVERY
                         </span>
                       </span>
@@ -1568,7 +1750,7 @@ export default function CheckoutPage() {
                 disabled={!isFormValid || isProcessing}
                 className={`w-full py-4.5 px-6 rounded-2xl flex items-center justify-center gap-2.5 text-xs sm:text-sm font-black uppercase tracking-wider transition-all duration-300 select-none relative overflow-hidden group ${
                   isFormValid && !isProcessing
-                    ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 hover:from-blue-700 hover:via-indigo-700 hover:to-sky-600 text-white shadow-xl shadow-blue-500/35 hover:shadow-2xl hover:shadow-blue-500/45 hover:scale-[1.01] cursor-pointer active:scale-98'
+                    ? 'bg-gradient-to-r from-sky-600 via-sky-500 to-blue-600 hover:from-sky-500 hover:via-sky-600 hover:to-blue-700 text-white shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/35 hover:-translate-y-0.5 cursor-pointer active:scale-98'
                     : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-75 shadow-none'
                 }`}
               >

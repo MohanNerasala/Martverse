@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useMartStore } from '@/store/useMartStore';
+import { useMartStore, martRuntime } from '@/store/useMartStore';
 import { LoginModal } from '@/components/ui/LoginModal';
 import {
   ShoppingCart,
@@ -22,6 +22,8 @@ import {
   User,
   LogIn,
   CheckCircle2,
+  Check,
+  Heart,
   Package,
   AlertTriangle,
   Info,
@@ -55,7 +57,8 @@ export default function CartPage() {
 
   useEffect(() => {
     hydrateAuth();
-  }, [hydrateAuth]);
+    router.prefetch('/');
+  }, [hydrateAuth, router]);
 
   const handleApplyCoupon = (e?: React.FormEvent, customCode?: string) => {
     if (e) e.preventDefault();
@@ -102,88 +105,169 @@ export default function CartPage() {
     router.push('/checkout');
   };
 
+  const handleBackToMart = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    martRuntime.playerPos[0] = 0;
+    martRuntime.playerPos[1] = 1.5;
+    martRuntime.playerPos[2] = -20;
+    martRuntime.playerYaw = 0;
+    useMartStore.getState().setHasEnteredStore(true);
+    useMartStore.getState().setPlayerPos([0, 1.5, -20], 0);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('martverse_entered', 'true');
+      sessionStorage.setItem('martverse_skip_intro', 'true');
+      sessionStorage.setItem('martverse_return_target', 'trolley_reset');
+      localStorage.setItem('martverse_entered', 'true');
+      localStorage.setItem('martverse_intro_completed', 'true');
+      localStorage.setItem('martverse_skip_intro', 'true');
+    }
+    router.replace('/?return=trolley_reset');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       <LoginModal />
 
-      {/* Floating Confirmation Toast */}
+      {/* Floating Confirmation Toast — Minimal, Line-Free, Best Look */}
+      {/* Floating Confirmation Toast (Positioned Top-Right Below Header) */}
       {toast && (
-        <div className="pointer-events-auto fixed top-24 sm:top-28 right-4 sm:right-6 md:right-8 z-50 animate-in slide-in-from-top-3 fade-in duration-250 ease-out">
-          <div
-            className={`relative overflow-hidden px-3.5 py-2.5 rounded-2xl border flex items-center gap-3 max-w-[310px] sm:max-w-[350px] bg-white/95 backdrop-blur-2xl shadow-[0_16px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] transition-all ${
-              toast.type === 'success'
-                ? 'border-emerald-300/90'
-                : toast.type === 'warning'
-                ? 'border-amber-300/90'
-                : 'border-sky-300/90'
-            }`}
-          >
-            {toast.imageUrl ? (
-              <div className="relative w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-center p-1 flex-shrink-0 overflow-hidden shadow-xs">
-                <img
-                  src={toast.imageUrl}
-                  alt={toast.title}
-                  className="w-full h-full object-contain drop-shadow-xs"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
-                />
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-xs">
-                  <CheckCircle2 className="w-2.5 h-2.5 stroke-[3]" />
-                </div>
-              </div>
-            ) : (
+        <div className="pointer-events-auto fixed top-24 sm:top-28 right-4 sm:right-6 md:right-8 z-50 animate-framer-spring">
+          {(() => {
+            const isWishlist =
+              toast.title.toLowerCase().includes('wishlist') ||
+              (toast.subtitle || '').toLowerCase().includes('wishlist');
+            const isRemoved = toast.title.toLowerCase().includes('removed');
+            const isOrder = toast.title.toLowerCase().includes('order');
+            const isWarning = toast.type === 'warning';
+
+            return (
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
-                  toast.type === 'success'
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/90'
-                    : toast.type === 'warning'
-                    ? 'bg-amber-50 text-amber-600 border border-amber-200/90'
-                    : 'bg-sky-50 text-sky-600 border border-sky-200/90'
+                className={`w-[285px] sm:w-[310px] max-w-[calc(100vw-24px)] p-3 rounded-2xl bg-white/98 backdrop-blur-2xl border shadow-[0_12px_36px_rgba(15,23,42,0.1),0_2px_8px_rgba(15,23,42,0.04)] transition-all duration-300 select-none ${
+                  isWishlist
+                    ? 'border-rose-200/90 hover:border-rose-300 hover:shadow-[0_16px_40px_rgba(244,63,94,0.14)]'
+                    : isWarning
+                    ? 'border-amber-200/90 hover:border-amber-300 hover:shadow-[0_16px_40px_rgba(245,158,11,0.14)]'
+                    : 'border-sky-200/90 hover:border-sky-300 hover:shadow-[0_16px_40px_rgba(2,132,199,0.14)]'
                 }`}
               >
-                {toast.type === 'success' && <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 stroke-[2.5]" />}
-                {toast.type === 'warning' && <AlertTriangle className="w-4.5 h-4.5 text-amber-600 stroke-[2.5]" />}
-                {toast.type === 'info' && <Info className="w-4.5 h-4.5 text-sky-600 stroke-[2.5]" />}
-              </div>
-            )}
+                <div className="flex items-center gap-3">
+                  {toast.imageUrl || toast.title.includes('Trolley') || isWishlist ? (
+                    <div className="relative w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center p-1 flex-shrink-0 overflow-hidden shadow-2xs">
+                      <img
+                        src={toast.imageUrl || '/products/fallback.svg'}
+                        alt={toast.title}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                      {isWishlist ? (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-rose-500 text-white flex items-center justify-center border-2 border-white shadow-2xs">
+                          <Heart className="w-2.5 h-2.5 fill-white stroke-white" />
+                        </div>
+                      ) : (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-sky-500 text-white flex items-center justify-center border-2 border-white shadow-2xs">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-2xs ${
+                        isWarning
+                          ? 'bg-amber-50 text-amber-600 border border-amber-200/90'
+                          : 'bg-sky-50 text-sky-600 border border-sky-200/90'
+                      }`}
+                    >
+                      {isWarning ? (
+                        <AlertTriangle className="w-4.5 h-4.5 text-amber-600 stroke-[2.5]" />
+                      ) : (
+                        <CheckCircle2 className="w-4.5 h-4.5 text-sky-600 stroke-[2.5]" />
+                      )}
+                    </div>
+                  )}
 
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-black text-slate-900 leading-tight tracking-tight">
-                  {toast.title}
-                </span>
-                {toast.type === 'success' && (
-                  <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/80 leading-none">
-                    In Trolley
-                  </span>
-                )}
-              </div>
-              {toast.subtitle && (
-                <div className="text-[11px] text-slate-600 font-semibold truncate mt-0.5 leading-tight">
-                  {toast.subtitle}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-black text-slate-900 leading-tight tracking-tight">
+                        {toast.title}
+                      </span>
+                      <button
+                        onClick={hideToast}
+                        className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1 rounded-full transition-all cursor-pointer flex-shrink-0 active:scale-90 -mr-1 -mt-0.5"
+                        title="Dismiss"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    {toast.subtitle && (
+                      <div className="text-[11px] text-slate-500 font-medium truncate mt-0.5 leading-tight">
+                        {toast.subtitle}
+                      </div>
+                    )}
+                    <div className="mt-1 flex items-center justify-between gap-1">
+                      {isWishlist ? (
+                        <>
+                          <span
+                            className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 shadow-2xs ${
+                              isRemoved
+                                ? 'text-slate-500 bg-slate-50 border-slate-200'
+                                : 'text-rose-600 bg-rose-50 border-rose-200/80'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isRemoved ? 'bg-slate-400' : 'bg-rose-500 animate-pulse'
+                              }`}
+                            />
+                            {isRemoved ? 'Removed' : 'In Wishlist'}
+                          </span>
+                          <Link
+                            href="/wishlist"
+                            onClick={hideToast}
+                            className="text-[9.5px] font-bold text-slate-400 hover:text-rose-600 transition-colors cursor-pointer flex items-center gap-0.5 group"
+                          >
+                            <span>View Wishlist</span>
+                            <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                          </Link>
+                        </>
+                      ) : isOrder ? (
+                        <>
+                          <span className="text-[9.5px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 flex items-center gap-1 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Order Placed
+                          </span>
+                          <Link
+                            href="/orders"
+                            onClick={hideToast}
+                            className="text-[9.5px] font-bold text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer flex items-center gap-0.5 group"
+                          >
+                            <span>View Orders</span>
+                            <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[9.5px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200/80 flex items-center gap-1 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+                            In Trolley
+                          </span>
+                          <Link
+                            href="/cart"
+                            onClick={hideToast}
+                            className="text-[9.5px] font-bold text-slate-400 hover:text-sky-600 transition-colors cursor-pointer flex items-center gap-0.5 group"
+                          >
+                            <span>View Cart</span>
+                            <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                          </Link>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-
-            <button
-              onClick={hideToast}
-              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1 rounded-lg transition-colors cursor-pointer flex-shrink-0"
-              title="Dismiss notification"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-
-            <div
-              className={`absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full ${
-                toast.type === 'success'
-                  ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-400'
-                  : toast.type === 'warning'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-400'
-                  : 'bg-gradient-to-r from-sky-500 to-indigo-500'
-              }`}
-            />
-          </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -193,50 +277,67 @@ export default function CartPage() {
           
           {/* Brand & Back Button */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-black font-extrabold text-xs transition-all border border-slate-200 cursor-pointer active:scale-95"
+            <button
+              type="button"
+              onClick={handleBackToMart}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-black font-extrabold text-xs transition-all border border-slate-200 cursor-pointer active:scale-95 shadow-2xs hover:shadow-xs select-none"
+              title="Return to 3D Mart with empty reset trolley"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 text-slate-700" />
               <span>Back to 3D Mart</span>
-            </Link>
+            </button>
 
             <div className="h-5 w-px bg-slate-200 hidden sm:block" />
 
-            <Link href="/" className="flex items-center gap-2.5 group">
+            <div
+              onClick={handleBackToMart}
+              className="flex items-center gap-2.5 group cursor-pointer select-none"
+              title="Return to 3D Supermarket"
+            >
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform">
                 <Store className="w-5 h-5 text-white" />
               </div>
-              <span className="text-base font-black tracking-tight text-slate-900 hidden xs:inline">
+              <span className="text-base font-black tracking-tight text-slate-900 hidden xs:inline group-hover:text-blue-600 transition-colors">
                 MART<span className="text-blue-600">VERSE</span>
               </span>
-            </Link>
+            </div>
           </div>
 
           {/* Right Header Navigation Actions */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Orders Luxury Button - Shows visible text "Orders" + package icon + best look CSS */}
             <Link
               href="/orders"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 transition-all shadow-2xs cursor-pointer"
+              className="group flex items-center gap-2 px-3.5 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-50/80 via-white to-sky-50/60 hover:from-blue-100/90 hover:via-blue-50 hover:to-sky-100/80 text-slate-800 hover:text-blue-700 font-bold text-xs border border-blue-200/90 hover:border-blue-400 shadow-2xs hover:shadow-md hover:shadow-blue-500/15 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer select-none"
+              title="View your orders & invoices"
             >
-              <Package className="w-4 h-4 text-blue-600" />
-              <span className="hidden xs:inline">My Orders</span>
+              <div className="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-2xs group-hover:scale-110 transition-transform">
+                <Package className="w-3 h-3 text-white" />
+              </div>
+              <span className="font-extrabold tracking-tight text-slate-900 group-hover:text-blue-700">Orders</span>
             </Link>
 
+            {/* User Profile / Phone Number Luxury Pill */}
             {isAuthenticated ? (
               <Link
                 href="/profile"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 border border-slate-200 text-xs font-bold text-slate-800 transition-colors cursor-pointer"
+                className="group flex items-center gap-2 px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200/90 hover:border-slate-300 text-slate-800 hover:text-slate-950 font-bold text-xs shadow-2xs hover:shadow-sm hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer select-none"
+                title="Account & Profile Details"
               >
-                <User className="w-3.5 h-3.5 text-blue-600" />
-                <span className="hidden sm:inline">+91 {phone}</span>
+                <div className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                  <User className="w-3 h-3 text-white" />
+                </div>
+                <span className="font-mono font-bold tracking-tight text-[11.5px] text-slate-700 group-hover:text-slate-900">
+                  {phone ? (phone.startsWith('+91') ? phone : `+91 ${phone}`) : 'My Account'}
+                </span>
               </Link>
             ) : (
               <button
+                type="button"
                 onClick={() => openLoginModal()}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 transition-all cursor-pointer active:scale-95"
+                className="group flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/35 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer select-none"
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                 <span>Sign In</span>
               </button>
             )}

@@ -48,6 +48,24 @@ const sharedWhiteLabelMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
 // Maximum visible 3D items displayed inside the basket (Neat, clean 3x4 layout that never overflows or lags)
 const MAX_BASKET_DISPLAY_ITEMS = 12;
 
+// Strict Physical Shelf Obstacle Bounds (Planks, Uprights, & ESL Digital Price Tag Rails)
+const SHELF_OBSTACLES_FLOOR1 = [
+  { minX: -11.15, maxX: -8.85, minZ: -12.55, maxZ: 12.55 }, // Aisle 1
+  { minX: -6.15, maxX: -3.85, minZ: -12.55, maxZ: 12.55 },  // Aisle 2
+  { minX: -1.15, maxX: 1.15, minZ: -12.55, maxZ: 12.55 },   // Aisle 3
+  { minX: 3.85, maxX: 6.15, minZ: -12.55, maxZ: 12.55 },    // Aisle 4
+  { minX: 8.85, maxX: 11.15, minZ: -12.55, maxZ: 12.55 },   // Aisle 5
+];
+
+const SHELF_OBSTACLES_FLOOR2 = [
+  { minX: -11.96, maxX: -10.04, minZ: -12.1, maxZ: 12.1 }, // Aisle 6
+  { minX: -7.46, maxX: -5.54, minZ: -12.1, maxZ: 12.1 },  // Aisle 7
+  { minX: -2.96, maxX: -1.04, minZ: -12.1, maxZ: 12.1 },  // Aisle 8
+  { minX: 1.54, maxX: 3.46, minZ: -12.1, maxZ: 12.1 },    // Aisle 9
+  { minX: 6.04, maxX: 7.96, minZ: -12.1, maxZ: 12.1 },    // Aisle 10
+  { minX: 10.54, maxX: 12.46, minZ: -12.1, maxZ: 12.1 },  // Aisle 11
+];
+
 const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item, index }) => {
   // Clean 3x4 grid inside the shopping cart: 3 columns across X, 4 rows across Z
   const col = index % 3;
@@ -122,7 +140,7 @@ TrolleyProductItem.displayName = 'TrolleyProductItem';
 
 const staticTargetPos = new THREE.Vector3();
 
-export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) => {
+const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) => {
   const trolleyRef = useRef<THREE.Group>(null);
   const items = useCartStore((state) => state.items);
   const resetTrigger = useMartStore((state) => state.resetTrigger);
@@ -228,14 +246,40 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
 
     // Strict Shelf & Obstacle Clamping: Trolley mesh NEVER enters inside shelf racks, edges, or balustrades
     const currentFloor = actualPos[1] > 4.5 ? 2 : 1;
-    const cartHalfW = 0.46;
-    const cartHalfD = 0.58;
+    const sinYaw = Math.sin(actualYaw);
+    const cosYaw = Math.cos(actualYaw);
+    // Real rotated envelope for 1.18x scaled trolley with generous physical clearance margin
+    const cartHalfW = Math.abs(cosYaw) * 0.54 + Math.abs(sinYaw) * 0.78 + 0.12;
+    const cartHalfD = Math.abs(sinYaw) * 0.54 + Math.abs(cosYaw) * 0.78 + 0.12;
 
     // 1. Store Outer Perimeter Walls Clamping (Harmonized with PlayerController)
     desiredX = THREE.MathUtils.clamp(desiredX, -16.8, 16.8);
     desiredZ = THREE.MathUtils.clamp(desiredZ, -24.2, 24.2);
 
-    // 2. Strict Escalator lateral & side containment:
+    // 2. Strict Shelf Obstacle Clamping:
+    // Guarantees the 3D trolley mesh edges, handlebar, and basket never penetrate shelf planks, posts, or ESL tags
+    const shelfBoxes = currentFloor === 1 ? SHELF_OBSTACLES_FLOOR1 : SHELF_OBSTACLES_FLOOR2;
+    for (let i = 0; i < shelfBoxes.length; i++) {
+      const b = shelfBoxes[i];
+      if (desiredZ + cartHalfD > b.minZ && desiredZ - cartHalfD < b.maxZ) {
+        const shelfMidX = (b.minX + b.maxX) * 0.5;
+        if (desiredX < shelfMidX && desiredX + cartHalfW > b.minX) {
+          desiredX = b.minX - cartHalfW;
+        } else if (desiredX >= shelfMidX && desiredX - cartHalfW < b.maxX) {
+          desiredX = b.maxX + cartHalfW;
+        }
+      }
+      // Longitudinal shelf head & tail edge clamping
+      if (desiredX + cartHalfW > b.minX && desiredX - cartHalfW < b.maxX) {
+        if (desiredZ < b.minZ && desiredZ + cartHalfD > b.minZ) {
+          desiredZ = b.minZ - cartHalfD;
+        } else if (desiredZ > b.maxZ && desiredZ - cartHalfD < b.maxZ) {
+          desiredZ = b.maxZ + cartHalfD;
+        }
+      }
+    }
+
+    // 3. Strict Escalator lateral & side containment:
     // Escalator centerline is at x = 14.70.
     const isOnEscalatorRamp =
       actualPos[2] >= -7.4 &&
@@ -583,3 +627,5 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     </group>
   );
 };
+
+export const TrolleyModel = React.memo(TrolleyModelComponent);

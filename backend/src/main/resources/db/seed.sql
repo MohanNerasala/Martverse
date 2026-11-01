@@ -31,13 +31,7 @@ INSERT INTO categories (id, name, description, floor_number, display_order) VALU
 ('c0000000-0000-0000-0000-000000000002', 'Sweets & Confectionery', 'Chocolates, candies, toffees, and festive sweets', 1, 2),
 ('c0000000-0000-0000-0000-000000000003', 'Groceries & Staples', 'Atta, rice, cooking oils, dals, and spices', 1, 3),
 ('c0000000-0000-0000-0000-000000000004', 'Personal Care & Toiletries', 'Oral care, soaps, shampoos, and skincare', 1, 4),
-('c0000000-0000-0000-0000-000000000005', 'Household & Cleaning Products', 'Detergents, dishwash gels, and floor cleaners', 1, 5),
-('c0000000-0000-0000-0000-000000000006', 'Women''s Ethnic Wear & Kurtas', 'Straight kurtas, anarkalis, and palazzos', 2, 6),
-('c0000000-0000-0000-0000-000000000007', 'Women''s Sarees & Traditional Wear', 'Silk, banarasi, and embroidered sarees', 2, 7),
-('c0000000-0000-0000-0000-000000000008', 'Women''s Western Tops & Dresses', 'Casual tops, floral dresses, and jeans', 2, 8),
-('c0000000-0000-0000-0000-000000000009', 'Men''s Formal & Casual Shirts', 'Executive shirts, linen shirts, and button-downs', 2, 9),
-('c0000000-0000-0000-0000-000000000010', 'Men''s T-Shirts & Polos', 'Pique polos, graphic tees, and henleys', 2, 10),
-('c0000000-0000-0000-0000-000000000011', 'Men''s Denim Jeans & Trousers', 'Slim fit stretch jeans, chinos, and trousers', 2, 11)
+('c0000000-0000-0000-0000-000000000005', 'Household & Cleaning Products', 'Detergents, dishwash gels, and floor cleaners', 1, 5)
 ON CONFLICT DO NOTHING;
 
 -- ── AISLES ───────────────────────────────────────────────────
@@ -47,15 +41,7 @@ INSERT INTO supermarket_aisles (id, floor_id, aisle_number, name, category_id, p
 ('a0000000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000001', 2, 'Sweets & Confectionery', 'c0000000-0000-0000-0000-000000000002', -5.00, 0, -5.00, -12.00, -5.00, 12.00, 2.80, 3, '#ec4899', 'AISLE 2 • SWEETS & CHOCOLATES • FESTIVE DELIGHT'),
 ('a0000000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', 3, 'Groceries & Staples', 'c0000000-0000-0000-0000-000000000003', 0.00, 0, 0.00, -12.00, 0.00, 12.00, 2.80, 3, '#10b981', 'AISLE 3 • ATTA, RICE, OILS & SPICES • DMART BACHAT'),
 ('a0000000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', 4, 'Personal Care & Toiletries', 'c0000000-0000-0000-0000-000000000004', 5.00, 0, 5.00, -12.00, 5.00, 12.00, 2.80, 3, '#06b6d4', 'AISLE 4 • SKINCARE, SHAMPOO & DENTAL CARE'),
-('a0000000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', 5, 'Household & Cleaning Products', 'c0000000-0000-0000-0000-000000000005', 10.00, 0, 10.00, -12.00, 10.00, 12.00, 2.80, 3, '#8b5cf6', 'AISLE 5 • DETERGENTS & HOME CLEANING'),
-
--- Floor 2: 6 Clothing Aisles (3 Women, 3 Men)
-('a0000000-0000-0000-0000-000000000006', 'f0000000-0000-0000-0000-000000000002', 6, 'Women''s Ethnic Wear & Kurtas', 'c0000000-0000-0000-0000-000000000006', -11.00, 0, -11.00, -12.00, -11.00, 12.00, 2.80, 3, '#db2777', 'ROW 6 • WOMEN''S ETHNIC KURTAS & PALAZZOS'),
-('a0000000-0000-0000-0000-000000000007', 'f0000000-0000-0000-0000-000000000002', 7, 'Women''s Sarees & Traditional Wear', 'c0000000-0000-0000-0000-000000000007', -6.50, 0, -6.50, -12.00, -6.50, 12.00, 2.80, 3, '#f43f5e', 'ROW 7 • SILK & BANARASI SAREES'),
-('a0000000-0000-0000-0000-000000000008', 'f0000000-0000-0000-0000-000000000002', 8, 'Women''s Western Tops & Dresses', 'c0000000-0000-0000-0000-000000000008', -2.00, 0, -2.00, -12.00, -2.00, 12.00, 2.80, 3, '#e11d48', 'ROW 8 • TRENDING WESTERN TOPS & JEANS'),
-('a0000000-0000-0000-0000-000000000009', 'f0000000-0000-0000-0000-000000000002', 9, 'Men''s Formal & Casual Shirts', 'c0000000-0000-0000-0000-000000000009', 2.50, 0, 2.50, -12.00, 2.50, 12.00, 2.80, 3, '#3b82f6', 'ROW 9 • EXECUTIVE FORMAL & CASUAL SHIRTS'),
-('a0000000-0000-0000-0000-000000000010', 'f0000000-0000-0000-0000-000000000002', 10, 'Men''s T-Shirts & Polos', 'c0000000-0000-0000-0000-000000000010', 7.00, 0, 7.00, -12.00, 7.00, 12.00, 2.80, 3, '#6366f1', 'ROW 10 • CASUAL POLOS & PRINTED TEES'),
-('a0000000-0000-0000-0000-000000000011', 'f0000000-0000-0000-0000-000000000002', 11, 'Men''s Denim Jeans & Trousers', 'c0000000-0000-0000-0000-000000000011', 11.50, 0, 11.50, -12.00, 11.50, 12.00, 2.80, 3, '#1d4ed8', 'ROW 11 • SLIM FIT DENIMS & CHINOS')
+('a0000000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', 5, 'Household & Cleaning Products', 'c0000000-0000-0000-0000-000000000005', 10.00, 0, 10.00, -12.00, 10.00, 12.00, 2.80, 3, '#8b5cf6', 'AISLE 5 • DETERGENTS & HOME CLEANING')
 ON CONFLICT (floor_id, aisle_number) DO UPDATE SET
   name = EXCLUDED.name,
   position_x = EXCLUDED.position_x,
@@ -105,15 +91,7 @@ INSERT INTO products (id, sku, name, slug, description, brand, category_id, pric
 
 -- Floor 1: Fresh Harvest / Additional Snacks
 ('b0000000-0000-0000-0000-000000000032', 'SNK-006', 'Doritos Nacho Cheese Tortilla Chips', 'doritos-nacho-cheese-150g', 'Crunchy triangles packed with bold, fiery cheesy nacho flavor.', 'Doritos', 'c0000000-0000-0000-0000-000000000001', 75.00, 60.00, false, '150g', 'Pouch', '/products/snacks/doritos-nacho-cheese.svg'),
-('b0000000-0000-0000-0000-000000000033', 'SNK-007', 'Lay''s Classic Salted Potato Chips', 'lays-classic-salted-115g', 'Golden crispy sliced farm-grown potatoes simply seasoned with a touch of pure salt.', 'Lay''s', 'c0000000-0000-0000-0000-000000000001', 60.00, 50.00, false, '115g', 'Party Pack', '/products/snacks/lays-classic-salted.svg'),
-
--- Floor 2 Clothing
-('b0000000-0000-0000-0000-000000000011', 'APP-001', 'FabIndia Pure Cotton Straight Kurta', 'fabindia-cotton-straight-kurta', 'Handcrafted pure breathable cotton straight-cut ethnic kurta with elegant side slits.', 'FabIndia', 'c0000000-0000-0000-0000-000000000006', 1999.00, 1499.00, true, 'Regular Fit', 'Piece', 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&auto=format&fit=crop&q=80'),
-('b0000000-0000-0000-0000-000000000012', 'APP-002', 'Kanjivaram Art Silk Traditional Saree', 'kanjivaram-art-silk-saree-red', 'Opulent woven jacquard gold zari border art silk saree with unstitched matching blouse piece.', 'Nalli', 'c0000000-0000-0000-0000-000000000007', 3999.00, 2499.00, false, '6.2m', 'Piece', 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&auto=format&fit=crop&q=80'),
-('b0000000-0000-0000-0000-000000000013', 'APP-003', 'Vero Moda Women Floral Tiered Midi Dress', 'vero-moda-floral-midi-dress', 'Chic Parisian floral printed chiffon dress with square neckline and flared hem.', 'Vero Moda', 'c0000000-0000-0000-0000-000000000008', 2799.00, 1899.00, true, 'A-Line Fit', 'Piece', 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&auto=format&fit=crop&q=80'),
-('b0000000-0000-0000-0000-000000000014', 'APP-004', 'Peter England Men Slim Fit Formal Shirt', 'peter-england-formal-shirt-white', 'Crisp poly-cotton wrinkle-resistant formal shirt tailored for comfortable executive wear.', 'Peter England', 'c0000000-0000-0000-0000-000000000009', 1499.00, 999.00, true, 'Slim Fit', 'Piece', 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&auto=format&fit=crop&q=80'),
-('b0000000-0000-0000-0000-000000000015', 'APP-005', 'US Polo Assn Men Solid Pique Polo T-Shirt', 'us-polo-assn-pique-polo', 'Authentic breathable cotton pique polo with signature embroidered crest and ribbed collar.', 'U.S. Polo Assn.', 'c0000000-0000-0000-0000-000000000010', 1899.00, 1199.00, true, 'Classic Fit', 'Piece', 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=500&auto=format&fit=crop&q=80'),
-('b0000000-0000-0000-0000-000000000016', 'APP-006', 'Levi''s 511 Slim Fit Stretchable Denim Jeans', 'levis-511-slim-fit-jeans', 'Modern slim cut with room to move. Premium dark indigo wash with built-in stretch.', 'Levi''s', 'c0000000-0000-0000-0000-000000000011', 3499.00, 2199.00, true, 'Stretch Denim', 'Piece', 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?w=500&auto=format&fit=crop&q=80')
+('b0000000-0000-0000-0000-000000000033', 'SNK-007', 'Lay''s Classic Salted Potato Chips', 'lays-classic-salted-115g', 'Golden crispy sliced farm-grown potatoes simply seasoned with a touch of pure salt.', 'Lay''s', 'c0000000-0000-0000-0000-000000000001', 60.00, 50.00, false, '115g', 'Party Pack', '/products/snacks/lays-classic-salted.svg')
 ON CONFLICT (sku) DO UPDATE SET
   name = EXCLUDED.name,
   slug = EXCLUDED.slug,
@@ -123,28 +101,7 @@ ON CONFLICT (sku) DO UPDATE SET
   image_url = EXCLUDED.image_url;
 
 -- ── PRODUCT VARIANTS ─────────────────────────────────────────
-INSERT INTO product_variants (id, product_id, size, color, color_hex, sku_suffix, price_override, active) VALUES
--- FabIndia Kurta
-('e0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000011', 'S', 'Royal Navy', '#1e3a8a', '-S', 1499.00, true),
-('e0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000011', 'M', 'Royal Navy', '#1e3a8a', '-M', 1499.00, true),
-('e0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000011', 'L', 'Royal Navy', '#1e3a8a', '-L', 1499.00, true),
-
--- Vero Moda Dress
-('e0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000013', 'S', 'Coral Blush', '#fb7185', '-S', 1899.00, true),
-('e0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000013', 'M', 'Coral Blush', '#fb7185', '-M', 1899.00, true),
-
--- Peter England Shirt
-('e0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000014', '39 (M)', 'Crisp White', '#ffffff', '-39', 999.00, true),
-('e0000000-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000014', '40 (L)', 'Crisp White', '#ffffff', '-40', 999.00, true),
-
--- US Polo T-Shirt
-('e0000000-0000-0000-0000-000000000008', 'b0000000-0000-0000-0000-000000000015', 'M', 'Forest Green', '#15803d', '-M', 1199.00, true),
-('e0000000-0000-0000-0000-000000000009', 'b0000000-0000-0000-0000-000000000015', 'L', 'Forest Green', '#15803d', '-L', 1199.00, true),
-
--- Levi's Jeans
-('e0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000016', '32W x 32L', 'Dark Indigo', '#1e3a8a', '-32', 2199.00, true),
-('e0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000016', '34W x 32L', 'Dark Indigo', '#1e3a8a', '-34', 2199.00, true)
-ON CONFLICT (product_id, sku_suffix) DO NOTHING;
+-- (Floor 2 variants removed - to be added later by user)
 
 -- ── INVENTORY ────────────────────────────────────────────────
 -- Floor 1 standard products (All 27 products)
@@ -180,27 +137,7 @@ INSERT INTO inventory (id, product_id, variant_id, stock_quantity, low_stock_thr
 ('d0000000-0000-0000-0000-000000000038', 'b0000000-0000-0000-0000-000000000031', NULL, 95, 10),
 
 ('d0000000-0000-0000-0000-000000000039', 'b0000000-0000-0000-0000-000000000032', NULL, 50, 5),
-('d0000000-0000-0000-0000-000000000040', 'b0000000-0000-0000-0000-000000000033', NULL, 80, 8),
-
--- Floor 2 Clothing Products
-('d0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000012', NULL, 30, 5),
-
--- Clothing Variants Inventory
-('d0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000011', 'e0000000-0000-0000-0000-000000000001', 15, 3),
-('d0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000011', 'e0000000-0000-0000-0000-000000000002', 20, 3),
-('d0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000011', 'e0000000-0000-0000-0000-000000000003', 15, 3),
-
-('d0000000-0000-0000-0000-000000000016', 'b0000000-0000-0000-0000-000000000013', 'e0000000-0000-0000-0000-000000000004', 10, 2),
-('d0000000-0000-0000-0000-000000000017', 'b0000000-0000-0000-0000-000000000013', 'e0000000-0000-0000-0000-000000000005', 15, 2),
-
-('d0000000-0000-0000-0000-000000000018', 'b0000000-0000-0000-0000-000000000014', 'e0000000-0000-0000-0000-000000000006', 15, 3),
-('d0000000-0000-0000-0000-000000000019', 'b0000000-0000-0000-0000-000000000014', 'e0000000-0000-0000-0000-000000000007', 20, 3),
-
-('d0000000-0000-0000-0000-000000000020', 'b0000000-0000-0000-0000-000000000015', 'e0000000-0000-0000-0000-000000000008', 20, 4),
-('d0000000-0000-0000-0000-000000000021', 'b0000000-0000-0000-0000-000000000015', 'e0000000-0000-0000-0000-000000000009', 15, 4),
-
-('d0000000-0000-0000-0000-000000000022', 'b0000000-0000-0000-0000-000000000016', 'e0000000-0000-0000-0000-000000000010', 15, 3),
-('d0000000-0000-0000-0000-000000000023', 'b0000000-0000-0000-0000-000000000016', 'e0000000-0000-0000-0000-000000000011', 20, 3)
+('d0000000-0000-0000-0000-000000000040', 'b0000000-0000-0000-0000-000000000033', NULL, 80, 8)
 ON CONFLICT (product_id, variant_id) DO NOTHING;
 
 -- ── 3D PRODUCT PLACEMENTS ────────────────────────────────────
@@ -243,15 +180,5 @@ INSERT INTO product_placements (id, product_id, floor_id, aisle_id, shelf_side, 
 
 -- Floor 1: Aisle 1 (Additional Real Snacks: Doritos & Lay's Classic Salted)
 ('ba000000-0000-0000-0000-000000000032', 'b0000000-0000-0000-0000-000000000032', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'LEFT', 2, 4, 'PACKET', -10.80, 1.50, -10.00, 1.5708, '#dc2626', 'bag'),
-('ba000000-0000-0000-0000-000000000033', 'b0000000-0000-0000-0000-000000000033', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'RIGHT', 2, 4, 'PACKET', -9.20, 1.50, -10.00, -1.5708, '#ca8a04', 'bag'),
-
--- Floor 2: 3 Women's Apparel Aisles (Rows 6, 7, 8)
-('ba000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000011', 'f0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000006', 'LEFT', 2, 1, 'SHIRT', -11.80, 6.50, -4.00, 1.5708, '#db2777', 'shirt'),
-('ba000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000012', 'f0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000007', 'LEFT', 2, 1, 'BAG', -7.30, 6.50, -2.00, 1.5708, '#b91c1c', 'bag'),
-('ba000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000013', 'f0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000008', 'RIGHT', 2, 1, 'HANGER', -1.20, 6.50, 4.00, -1.5708, '#f43f5e', 'hanger'),
-
--- Floor 2: 3 Men's Apparel Aisles (Rows 9, 10, 11)
-('ba000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000014', 'f0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000009', 'LEFT', 2, 1, 'SHIRT', 1.70, 6.50, -4.00, 1.5708, '#f8fafc', 'shirt'),
-('ba000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000015', 'f0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000010', 'RIGHT', 2, 1, 'SHIRT', 7.80, 6.50, 2.00, -1.5708, '#15803d', 'shirt'),
-('ba000000-0000-0000-0000-000000000016', 'b0000000-0000-0000-0000-000000000016', 'f0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000011', 'LEFT', 2, 1, 'HANGER', 10.70, 6.50, -4.00, 1.5708, '#1d4ed8', 'hanger')
+('ba000000-0000-0000-0000-000000000033', 'b0000000-0000-0000-0000-000000000033', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'RIGHT', 2, 4, 'PACKET', -9.20, 1.50, -10.00, -1.5708, '#ca8a04', 'bag')
 ON CONFLICT DO NOTHING;

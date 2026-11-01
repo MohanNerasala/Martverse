@@ -78,7 +78,7 @@ export const martRuntime = {
 
 export const useMartStore = create<MartStore>((set) => ({
   floors: MOCK_FLOORS,
-  products: [], // Pure empty array initially to guarantee 100% server/client HTML hydration match
+  products: MOCK_PRODUCTS, // Instant 0ms shelf population on initial paint; background revalidation updates live data
   activeFloor: 1,
   playerPos: [0, 1.5, -20], // Spawn at Entrance
   playerYaw: 0,
@@ -101,23 +101,64 @@ export const useMartStore = create<MartStore>((set) => ({
   unpaidExitAlertOpen: false,
   toast: null,
 
-  hasEnteredStore: false,
+  hasEnteredStore:
+    typeof window !== 'undefined'
+      ? Boolean(
+          sessionStorage.getItem('martverse_entered') ||
+            localStorage.getItem('martverse_entered') ||
+            localStorage.getItem('martverse_intro_completed')
+        )
+      : false,
   setHasEnteredStore: (hasEnteredStore) => set({ hasEnteredStore }),
 
   setHasMovedTrolley: (hasMovedTrolley) => set({ hasMovedTrolley }),
 
   hydrateProductsFromCache: () => {
-    // Products only load from live backend; no fake items when backend is not running
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('martverse_products_cache');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Strictly exclude Floor 2 / Apparel items
+            const sanitized = parsed.filter(
+              (p: any) =>
+                !(
+                  p.placement?.floorNumber === 2 ||
+                  (p.sku && p.sku.startsWith('APP-')) ||
+                  (p.placement?.aisleNumber && p.placement.aisleNumber >= 6)
+                )
+            );
+            if (sanitized.length > 0) {
+              set({ products: sanitized });
+              localStorage.setItem('martverse_products_cache', JSON.stringify(sanitized));
+              return;
+            }
+          }
+        }
+      } catch {}
+      set((state) => (state.products.length === 0 ? { products: MOCK_PRODUCTS } : {}));
+    }
   },
 
   setFloors: (floors) => set({ floors }),
   setProducts: (products) => {
-    if (typeof window !== 'undefined' && products && products.length > 0) {
+    const sanitized = Array.isArray(products)
+      ? products.filter(
+          (p: any) =>
+            !(
+              p.placement?.floorNumber === 2 ||
+              (p.sku && p.sku.startsWith('APP-')) ||
+              (p.placement?.aisleNumber && p.placement.aisleNumber >= 6)
+            )
+        )
+      : products;
+    if (typeof window !== 'undefined' && sanitized && sanitized.length > 0) {
       try {
-        localStorage.setItem('martverse_products_cache', JSON.stringify(products));
+        localStorage.setItem('martverse_products_cache', JSON.stringify(sanitized));
       } catch {}
     }
-    set({ products });
+    set({ products: sanitized });
   },
   setActiveFloor: (floorNumber) => set({ activeFloor: floorNumber, hoveredProduct: null }),
   setPlayerPos: (playerPos, yaw) => {
@@ -176,7 +217,7 @@ export const useMartStore = create<MartStore>((set) => ({
 
   showToast: (title, subtitle, type = 'success', imageUrl) => {
     let resolvedImage = imageUrl;
-    if (!resolvedImage && subtitle && (title.includes('Trolley') || title.includes('Cart') || title.includes('Added'))) {
+    if (!resolvedImage && subtitle && (title.includes('Trolley') || title.includes('Cart') || title.includes('Added') || title.includes('Wishlist'))) {
       const state = useMartStore.getState();
       const match = state.products.find((p) =>
         subtitle.toLowerCase().includes(p.name.toLowerCase()) ||

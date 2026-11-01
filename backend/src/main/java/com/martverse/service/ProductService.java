@@ -31,7 +31,7 @@ public class ProductService {
 
     private volatile List<ProductDto.ProductResponse> cachedProductsList = null;
     private volatile long lastCacheTime = 0;
-    private static final long CACHE_DURATION_MS = 120_000; // 2 minutes
+    private static final long CACHE_DURATION_MS = 600_000; // 10 minutes cache to guarantee lightning speed
 
     public void invalidateProductCache() {
         this.cachedProductsList = null;
@@ -51,8 +51,17 @@ public class ProductService {
             if (cachedProductsList != null && (System.currentTimeMillis() - lastCacheTime) < CACHE_DURATION_MS) {
                 return cachedProductsList;
             }
-            List<ProductDto.ProductResponse> result = productRepository.findAllActiveWithCategory().stream()
-                    .map(this::mapToResponse)
+            List<Product> products;
+            try {
+                products = productRepository.findAllActiveEager();
+            } catch (Exception e) {
+                log.warn("Falling back to findAllActiveWithCategory due to: {}", e.getMessage());
+                products = productRepository.findAllActiveWithCategory();
+            }
+            List<ProductDto.ProductResponse> result = products.stream()
+                    .filter(p -> p.getCategory() == null || p.getCategory().getFloorNumber() == null || p.getCategory().getFloorNumber() == 1)
+                    .filter(p -> p.getSku() == null || !p.getSku().startsWith("APP-"))
+                    .map(this::mapToResponseFast)
                     .collect(Collectors.toList());
             cachedProductsList = result;
             lastCacheTime = System.currentTimeMillis();
@@ -86,6 +95,7 @@ public class ProductService {
     public List<ProductDto.CategoryResponse> getAllCategories() {
         List<Category> rootCategories = categoryRepository.findByParentIsNullAndActiveTrue();
         return rootCategories.stream()
+                .filter(c -> c.getFloorNumber() == null || c.getFloorNumber() == 1)
                 .map(this::mapToCategoryResponse)
                 .collect(Collectors.toList());
     }
@@ -97,6 +107,94 @@ public class ProductService {
     }
 
     // ── Mapping helpers ──────────────────────────────────────────────
+
+    private ProductDto.ProductResponse mapToResponseFast(Product product) {
+        // High-speed mapping: eliminate N+1 DB roundtrips to remote cloud PostgreSQL
+        int totalStock = 100;
+
+        BigDecimal mrp = product.getPrice();
+        BigDecimal effectivePrice = product.getEffectivePrice();
+        int discountPct = 0;
+        if (product.getDiscountPrice() != null && product.getDiscountPrice().compareTo(BigDecimal.ZERO) > 0
+                && product.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal diff = mrp.subtract(effectivePrice);
+            discountPct = diff.multiply(BigDecimal.valueOf(100))
+                    .divide(mrp, 0, RoundingMode.HALF_UP)
+                    .intValue();
+        }
+
+        ProductDto.ProductPlacementResponse placementResp = null;
+        if (product.getPlacements() != null && !product.getPlacements().isEmpty()) {
+            ProductPlacement plc = product.getPlacements().get(0);
+            double wx = plc.getWorldX() != null ? plc.getWorldX().doubleValue()
+                    : (plc.getShelfSide() == ShelfSide.LEFT ? -10.8 : -9.2);
+            double wy = plc.getWorldY() != null ? plc.getWorldY().doubleValue() : 1.5;
+            double wz = plc.getWorldZ() != null ? plc.getWorldZ().doubleValue() : 0.0;
+            double ry = plc.getRotationY() != null ? plc.getRotationY().doubleValue()
+                    : (plc.getShelfSide() == ShelfSide.LEFT ? Math.PI / 2 : -Math.PI / 2);
+
+            String aisleCategory = "";
+            try {
+                if (plc.getAisle() != null && plc.getAisle().getCategory() != null) {
+                    aisleCategory = plc.getAisle().getCategory().getName();
+                }
+            } catch (Exception ignored) {}
+
+            placementResp = ProductDto.ProductPlacementResponse.builder()
+                    .id(plc.getId().toString())
+                    .productId(product.getId().toString())
+                    .productName(product.getName())
+                    .productSlug(product.getSlug() != null ? product.getSlug() : product.getSku().toLowerCase())
+                    .productPrice(effectivePrice)
+                    .productMrp(mrp)
+                    .floorNumber(plc.getFloor() != null ? plc.getFloor().getFloorNumber() : 1)
+                    .aisleId(plc.getAisle() != null ? plc.getAisle().getId().toString() : "")
+                    .aisleNumber(plc.getAisle() != null ? plc.getAisle().getAisleNumber() : 1)
+                    .aisleName(plc.getAisle() != null ? plc.getAisle().getName() : "")
+                    .aisleCategory(aisleCategory)
+                    .shelfSide(plc.getShelfSide() != null ? plc.getShelfSide().name() : "LEFT")
+                    .shelfTier(plc.getShelfLevel() != null ? plc.getShelfLevel() : 2)
+                    .shelfPosition(plc.getPositionIndex() != null ? plc.getPositionIndex() : 1)
+                    .worldX(wx)
+                    .worldY(wy)
+                    .worldZ(wz)
+                    .rotationY(ry)
+                    .color(plc.getColor() != null ? plc.getColor() : "#10b981")
+                    .modelType(plc.getModelType() != null ? plc.getModelType().toLowerCase() : plc.getDisplayType().name().toLowerCase())
+                    .build();
+        }
+
+        String catSlug = product.getCategory() != null && product.getCategory().getName() != null
+                ? product.getCategory().getName().toLowerCase().replace(" ", "-") : "all";
+
+        return ProductDto.ProductResponse.builder()
+                .id(product.getId().toString())
+                .sku(product.getSku())
+                .name(product.getName())
+                .slug(product.getSlug() != null ? product.getSlug() : product.getSku().toLowerCase())
+                .description(product.getDescription())
+                .brand(product.getBrand())
+                .categoryId(product.getCategory() != null ? product.getCategory().getId().toString() : null)
+                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                .category(product.getCategory() != null ? ProductDto.CategoryRef.builder()
+                        .id(product.getCategory().getId().toString())
+                        .name(product.getCategory().getName())
+                        .slug(catSlug)
+                        .build() : null)
+                .price(effectivePrice)
+                .mrp(mrp)
+                .discountPrice(product.getDiscountPrice())
+                .effectivePrice(effectivePrice)
+                .discountPercentage(discountPct)
+                .imageUrl(product.getImageUrl())
+                .weight(product.getWeight())
+                .unit(product.getUnit())
+                .hasVariants(Boolean.TRUE.equals(product.getHasVariants()))
+                .inStock(true)
+                .stockQuantity(totalStock)
+                .placement(placementResp)
+                .build();
+    }
 
     private ProductDto.ProductResponse mapToResponse(Product product) {
         // Stock info

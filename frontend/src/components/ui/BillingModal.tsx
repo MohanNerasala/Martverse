@@ -128,13 +128,59 @@ export const BillingModal: React.FC = () => {
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const authPhone = useAuthStore((state) => state.phone);
 
-  // Customer Contact State (Starts empty so Pay button stays disabled until filled)
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState(authPhone || '');
+  // Customer Contact State — Instant 0ms Hydration
+  const [customerName, setCustomerName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('martverse_customer_name');
+        if (saved) return saved;
+        const userRaw = localStorage.getItem('martverse_user');
+        if (userRaw) {
+          const u = JSON.parse(userRaw);
+          if (u.name || u.fullName) return u.name || u.fullName;
+        }
+      } catch {}
+    }
+    return '';
+  });
 
-  // Address Management State (Clean start — no dummy addresses)
-  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [customerPhone, setCustomerPhone] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const p = localStorage.getItem('martverse_phone');
+      if (p) return p;
+    }
+    return authPhone || '';
+  });
+
+  // Address Management State — Instant 0ms Hydration from localStorage
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        const valid = (Array.isArray(raw) ? raw : []).filter(
+          (a: SavedAddress) => a.id !== 'addr-1' && a.id !== 'addr-2'
+        );
+        return valid;
+      } catch {}
+    }
+    return [];
+  });
+
+  const [selectedAddressId, setSelectedAddressId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = JSON.parse(localStorage.getItem('martverse_saved_addresses') || '[]');
+        const valid = (Array.isArray(raw) ? raw : []).filter(
+          (a: SavedAddress) => a.id !== 'addr-1' && a.id !== 'addr-2'
+        );
+        if (valid.length > 0) {
+          const def = valid.find((a: SavedAddress) => a.isDefault) || valid[0];
+          return def.id;
+        }
+      } catch {}
+    }
+    return '';
+  });
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationSuccessMsg, setLocationSuccessMsg] = useState<string | null>(null);
@@ -199,34 +245,31 @@ export const BillingModal: React.FC = () => {
   // When billing enters review phase, automatically route directly to dedicated separate /checkout page
   useEffect(() => {
     if (phase === 'review' || phase === 'checkout_details' || phase === 'payment_methods') {
+      useBillingStore.getState().resetBilling();
       router.push('/checkout');
     }
   }, [phase, router]);
 
-  // Load saved addresses from backend database & sync with localStorage (strips out old dummy addresses)
+  // Background sync for saved addresses from backend database
   useEffect(() => {
     let isMounted = true;
     const fetchSavedAddresses = async () => {
       try {
         const list = await api.getAddresses(customerPhone);
-        if (isMounted) {
-          const valid = (Array.isArray(list) ? list : []).filter(
+        if (isMounted && Array.isArray(list)) {
+          const valid = list.filter(
             (a: SavedAddress) => a.id !== 'addr-1' && a.id !== 'addr-2'
           );
-          setSavedAddresses(valid);
           if (valid.length > 0) {
-            const def = valid.find((a: SavedAddress) => a.isDefault) || valid[0];
-            setSelectedAddressId(def.id);
-          } else {
-            setSelectedAddressId('');
+            setSavedAddresses(valid);
+            setSelectedAddressId((curr) => {
+              if (curr && valid.some((a) => a.id === curr)) return curr;
+              const def = valid.find((a: SavedAddress) => a.isDefault) || valid[0];
+              return def.id;
+            });
           }
         }
-      } catch {
-        if (isMounted) {
-          setSavedAddresses([]);
-          setSelectedAddressId('');
-        }
-      }
+      } catch {}
     };
     fetchSavedAddresses();
     return () => {
@@ -234,12 +277,6 @@ export const BillingModal: React.FC = () => {
     };
   }, [customerPhone]);
 
-  // Redirect to dedicated standalone /checkout page when review or checkout phase begins
-  useEffect(() => {
-    if (phase === 'review' || phase === 'checkout_details' || phase === 'payment_methods') {
-      router.push('/checkout');
-    }
-  }, [phase, router]);
 
   // Trigger celebration confetti on payment success
   useEffect(() => {
@@ -452,12 +489,8 @@ export const BillingModal: React.FC = () => {
   const handleCancelBilling = () => {
     resetBilling();
     setCameraMode('third_person');
-    martRuntime.billingCooldownUntil = Date.now() + 5000;
-    const currentX = martRuntime.playerPos[0];
-    let safeX = -1.9;
-    if (currentX < -3.5) safeX = -5.7;
-    else if (currentX > 0.0) safeX = 1.9;
-    setPlayerPos([safeX, 1.5, 13.8], 0);
+    martRuntime.billingCooldownUntil = Date.now() + 20000;
+    setPlayerPos([0, 1.5, 12.0], Math.PI);
   };
 
   // --- Proceed to Payment & Trigger Real Backend / Local Storage Persistence ---
@@ -536,10 +569,9 @@ export const BillingModal: React.FC = () => {
 
   // --- Continue Shopping Action ---
   const handleContinueShopping = () => {
-    const orderNo = completedOrder?.orderNumber || 'MV' + Math.floor(10000000 + Math.random() * 90000000);
     resetBilling();
     useCartStore.getState().clearCart();
-    startExitAnimation(orderNo);
+    useMartStore.getState().resetToOriginalState();
   };
 
   // --- View in Orders Page Action ---
@@ -645,259 +677,7 @@ export const BillingModal: React.FC = () => {
     );
   }
 
-  // ==============================================================
-  // STEP 4: PROCESSING PAYMENT ANIMATION (High-End Tactile Animation)
-  // ==============================================================
-  if (phase === 'processing') {
-    return (
-      <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xl flex flex-col items-center justify-center text-center p-6 space-y-6 animate-in fade-in duration-300 select-none">
-        {/* Animated Biometric Radar Core */}
-        <div className="relative flex items-center justify-center">
-          <div className="w-24 h-24 rounded-full bg-blue-500/10 border border-blue-400/30 flex items-center justify-center animate-pulse shadow-[0_0_50px_rgba(59,130,246,0.35)]" />
-          <div className="absolute w-16 h-16 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
-          <div className="absolute w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center shadow-md">
-            <ShieldCheck className="w-5 h-5 text-white animate-bounce" />
-          </div>
-        </div>
-
-        {/* Progress Text with Dynamic Stages */}
-        <div className="space-y-2 max-w-sm">
-          <h3 className="text-xl font-bold text-white tracking-tight">
-            {selectedPaymentMethod === 'CASH'
-              ? 'Confirming Cash on Delivery Order...'
-              : `Authorizing Payment via ${selectedPaymentMethod}...`}
-          </h3>
-          <p className="text-xs text-slate-400 leading-relaxed font-mono">
-            {processingStep === 1 && 'Step 1/3: Validating items & supermarket stock...'}
-            {processingStep === 2 && 'Step 2/3: Generating secure order token & tax breakdown...'}
-            {processingStep === 3 && 'Step 3/3: Clearing RFID exit turnstiles & saving to database...'}
-          </p>
-        </div>
-
-        {/* Progress bar line */}
-        <div className="w-56 bg-slate-800 rounded-full h-1.5 overflow-hidden">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-emerald-400 h-1.5 rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${processingStep * 33.3}%` }}
-          />
-        </div>
-
-        <span className="text-xs font-mono font-bold text-emerald-400">
-          Payable Total: ₹{activeTotalAmount.toLocaleString('en-IN')}
-        </span>
-      </div>
-    );
-  }
-
-  // ==============================================================
-  // STEP 5: SUCCESSFUL COMPLETION + FEEDBACK & STARS + ACTIONS
-  // ==============================================================
-  if (phase === 'success_popup') {
-    const orderNo = completedOrder?.orderNumber || 'MV' + Math.floor(10000000 + Math.random() * 90000000);
-    const paymentMethodLabel =
-      selectedPaymentMethod === 'UPI'
-        ? `UPI (${selectedUpiApp === 'PAYTM' ? 'Paytm' : selectedUpiApp === 'GPAY' ? 'Google Pay' : 'PhonePe'})`
-        : selectedPaymentMethod === 'CARD'
-        ? `Credit/Debit Card (•••• ${cardNumber.slice(-4)})`
-        : 'Cash on Delivery (+₹20 Handling)';
-
-    return (
-      <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-md overflow-y-auto p-4 sm:p-8 flex items-center justify-center select-none animate-in fade-in duration-300">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-2xl space-y-6 text-slate-900 my-auto">
-          {/* Header Banner */}
-          <div className="flex items-center gap-4 bg-emerald-50 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-xs flex-shrink-0">
-              <Check className="w-6 h-6 stroke-[3]" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-emerald-950 leading-tight">
-                {selectedPaymentMethod === 'CASH'
-                  ? 'Cash on Delivery Order Confirmed! 📦'
-                  : 'Order Placed & Payment Verified! 🎉'}
-              </h2>
-              <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
-                Order <strong className="font-mono">{orderNo}</strong> has been saved directly to the database.
-                RFID supermarket barriers are cleared.
-              </p>
-            </div>
-          </div>
-
-          {/* Order Details Receipt Card */}
-          <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-3.5 text-xs">
-            <div className="flex justify-between items-start pb-3 border-b border-slate-200">
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Order Number</span>
-                <span className="text-sm sm:text-base font-black text-slate-900 font-mono">{orderNo}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">
-                  {selectedPaymentMethod === 'CASH' ? 'Due at Delivery' : 'Total Amount Paid'}
-                </span>
-                <span className="text-base sm:text-lg font-black text-slate-900 font-mono">
-                  ₹{activeTotalAmount.toLocaleString('en-IN')}
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-slate-600">
-              <div>
-                <span className="text-[10px] text-slate-400 block font-semibold">Payment Method</span>
-                <span className="font-bold text-slate-900">{paymentMethodLabel}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 block font-semibold">Customer & Phone</span>
-                <span className="font-bold text-slate-900">{customerName} (+91 {customerPhone})</span>
-              </div>
-              <div className="sm:col-span-2">
-                <span className="text-[10px] text-slate-400 block font-semibold">Delivery Address</span>
-                <span className="font-medium text-slate-800">
-                  {activeSelectedAddress
-                    ? `${activeSelectedAddress.houseNo}, ${activeSelectedAddress.area}, ${activeSelectedAddress.city} - ${activeSelectedAddress.pinCode}`
-                    : 'Customer Delivery'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive Customer Feedback & 5-Star Rating Component */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 space-y-4 shadow-2xs">
-            <div className="text-center space-y-1">
-              <h3 className="text-sm font-bold text-slate-900">How was your checkout experience?</h3>
-              <p className="text-xs text-slate-500">Your feedback helps us continuously improve the 3D supermarket</p>
-            </div>
-
-            {/* 5 Clickable Stars */}
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => {
-                  const isFilled = (hoverStar !== null ? hoverStar : starRating) >= star;
-                  return (
-                    <button
-                      key={star}
-                      type="button"
-                      onMouseEnter={() => setHoverStar(star)}
-                      onMouseLeave={() => setHoverStar(null)}
-                      onClick={() => setStarRating(star)}
-                      className="p-1 text-slate-300 hover:scale-110 active:scale-95 transition-all cursor-pointer"
-                      aria-label={`Rate ${star} stars`}
-                    >
-                      <Star
-                        className={`w-7 h-7 transition-colors ${
-                          isFilled
-                            ? 'fill-amber-400 text-amber-400 filter drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)]'
-                            : 'text-slate-300 fill-slate-100'
-                        }`}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-              <span className="text-xs font-bold text-amber-600 h-4">
-                {ratingLabels[hoverStar !== null ? hoverStar : starRating]}
-              </span>
-            </div>
-
-            {/* Feedback Form / Submitted Confirmation */}
-            {!feedbackSubmitted ? (
-              <form onSubmit={handleSubmitFeedback} className="space-y-3 pt-2 border-t border-slate-100">
-                {/* Quick Feedback Tags */}
-                <div className="flex flex-wrap items-center justify-center gap-1.5">
-                  {feedbackTagOptions.map((tag) => {
-                    const isSelected = selectedTags.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => toggleFeedbackTag(tag)}
-                        className={`text-[11px] px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {tag}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Comment Box */}
-                <div>
-                  <input
-                    type="text"
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                    placeholder="Tell us what you liked about your shopping experience..."
-                    className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-slate-900 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none transition-all"
-                  />
-                </div>
-
-                <div className="text-center">
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer active:scale-95"
-                  >
-                    Submit Feedback
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold p-3 rounded-xl text-center">
-                ✓ Thank you! Your review has been recorded.
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons: Continue Shopping & View Orders Page */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <button
-              type="button"
-              onClick={handleContinueShopping}
-              className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs sm:text-sm shadow-md cursor-pointer transition-all active:scale-98"
-            >
-              <span>Continue Shopping in Mart</span>
-              <Store className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={handleViewOrdersPage}
-              className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs sm:text-sm shadow-2xs cursor-pointer transition-all active:scale-98"
-            >
-              <span>View in Orders Page</span>
-              <ExternalLink className="w-4 h-4 text-slate-500" />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ==============================================================
-  // DEDICATED SEPARATE PAGE REDIRECTION:
-  // Transfer directly to the standalone /checkout page with zero 3D canvas
-  // ==============================================================
-  if (phase === 'review' || phase === 'checkout_details' || phase === 'payment_methods') {
-    return (
-      <div
-        className="fixed inset-0 z-[99999] w-screen h-screen flex flex-col items-center justify-center text-white space-y-4 animate-in fade-in duration-150"
-        style={{ backgroundColor: '#090d16' }}
-      >
-        <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-400/40 flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(56,189,248,0.35)]">
-          <Store className="w-7 h-7 text-sky-400" />
-        </div>
-        <div className="text-center space-y-1">
-          <p className="text-sm font-extrabold tracking-wide text-white">
-            Entering Martverse Express Checkout
-          </p>
-          <p className="text-xs text-slate-400 font-mono">
-            Redirecting to dedicated billing invoice terminal...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback safety (100% solid backdrop with style override)
+  // Dedicated Checkout Routing:
+  // After scanning finishes, review/payment happens on standalone /checkout with zero black screens
   return null;
 };
