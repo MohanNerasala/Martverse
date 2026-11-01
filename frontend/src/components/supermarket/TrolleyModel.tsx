@@ -13,6 +13,20 @@ interface TrolleyProps {
   targetYaw?: number;
 }
 
+// Pre-allocated shared geometries for all trolley basket items (eliminates 1,000+ GC geometry allocations per add)
+const sharedTrolleyGeometries = {
+  boxChocolate: new THREE.BoxGeometry(0.16, 0.018, 0.08),
+  boxChocolateEdge: new THREE.BoxGeometry(0.005, 0.016, 0.076),
+  cylBottleBody: new THREE.CylinderGeometry(0.042, 0.048, 0.14, 12),
+  cylBottleShoulder: new THREE.CylinderGeometry(0.02, 0.042, 0.03, 12),
+  cylBottleCap: new THREE.CylinderGeometry(0.018, 0.018, 0.02, 10),
+  cylBottleLabel: new THREE.CylinderGeometry(0.043, 0.043, 0.08, 12),
+  boxGarment: new THREE.BoxGeometry(0.16, 0.05, 0.16),
+  boxCollar: new THREE.BoxGeometry(0.12, 0.006, 0.05),
+  boxCarton: new THREE.BoxGeometry(0.13, 0.12, 0.09),
+  boxFaceplate: new THREE.BoxGeometry(0.11, 0.09, 0.004),
+};
+
 const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item, index }) => {
   const col = index % 3;
   const row = Math.floor(index / 3) % 4;
@@ -39,16 +53,13 @@ const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item
   if (isChocolate) {
     return (
       <group position={[px, py - 0.02, pz]} rotation={[0.04, index * 0.4, -0.02]}>
-        <mesh>
-          <boxGeometry args={[0.16, 0.018, 0.08]} />
+        <mesh geometry={sharedTrolleyGeometries.boxChocolate}>
           <meshStandardMaterial color={color} roughness={0.25} metalness={0.15} />
         </mesh>
-        <mesh position={[-0.082, 0, 0]}>
-          <boxGeometry args={[0.005, 0.016, 0.076]} />
+        <mesh position={[-0.082, 0, 0]} geometry={sharedTrolleyGeometries.boxChocolateEdge}>
           <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
         </mesh>
-        <mesh position={[0.082, 0, 0]}>
-          <boxGeometry args={[0.005, 0.016, 0.076]} />
+        <mesh position={[0.082, 0, 0]} geometry={sharedTrolleyGeometries.boxChocolateEdge}>
           <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
         </mesh>
       </group>
@@ -59,23 +70,19 @@ const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item
     return (
       <group position={[px, py + 0.04, pz]} rotation={[0.08, index * 0.5, 0.04]}>
         {/* Solid Realistic Product Bottle */}
-        <mesh>
-          <cylinderGeometry args={[0.042, 0.048, 0.14, 14]} />
+        <mesh geometry={sharedTrolleyGeometries.cylBottleBody}>
           <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
         </mesh>
         {/* Tapered Shoulder */}
-        <mesh position={[0, 0.085, 0]}>
-          <cylinderGeometry args={[0.02, 0.042, 0.03, 14]} />
+        <mesh position={[0, 0.085, 0]} geometry={sharedTrolleyGeometries.cylBottleShoulder}>
           <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
         </mesh>
         {/* White Bottle Cap */}
-        <mesh position={[0, 0.11, 0]}>
-          <cylinderGeometry args={[0.018, 0.018, 0.02, 12]} />
+        <mesh position={[0, 0.11, 0]} geometry={sharedTrolleyGeometries.cylBottleCap}>
           <meshStandardMaterial color="#ffffff" roughness={0.3} />
         </mesh>
         {/* Printed Label */}
-        <mesh position={[0, 0.01, 0]}>
-          <cylinderGeometry args={[0.043, 0.043, 0.08, 14]} />
+        <mesh position={[0, 0.01, 0]} geometry={sharedTrolleyGeometries.cylBottleLabel}>
           <meshStandardMaterial color="#ffffff" roughness={0.4} />
         </mesh>
       </group>
@@ -86,13 +93,11 @@ const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item
     return (
       <group position={[px, py, pz]} rotation={[0, index * 0.3, 0]}>
         {/* Folded garment */}
-        <mesh>
-          <boxGeometry args={[0.16, 0.05, 0.16]} />
+        <mesh geometry={sharedTrolleyGeometries.boxGarment}>
           <meshStandardMaterial color={color} roughness={0.8} />
         </mesh>
         {/* Crisp Collar Seam */}
-        <mesh position={[0, 0.028, 0]}>
-          <boxGeometry args={[0.12, 0.006, 0.05]} />
+        <mesh position={[0, 0.028, 0]} geometry={sharedTrolleyGeometries.boxCollar}>
           <meshStandardMaterial color="#ffffff" roughness={0.4} />
         </mesh>
       </group>
@@ -102,13 +107,11 @@ const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item
   // Grocery Box / Carton (Atta, Biscuits, Cereal, Chocolate, etc.)
   return (
     <group position={[px, py + 0.02, pz]} rotation={[0, index * 0.4, index % 2 === 0 ? 0.05 : -0.05]}>
-      <mesh>
-        <boxGeometry args={[0.13, 0.12, 0.09]} />
+      <mesh geometry={sharedTrolleyGeometries.boxCarton}>
         <meshStandardMaterial color={color} roughness={0.3} metalness={0.08} />
       </mesh>
       {/* Front Faceplate */}
-      <mesh position={[0, 0, 0.048]}>
-        <boxGeometry args={[0.11, 0.09, 0.004]} />
+      <mesh position={[0, 0, 0.048]} geometry={sharedTrolleyGeometries.boxFaceplate}>
         <meshBasicMaterial color="#ffffff" />
       </mesh>
     </group>
@@ -121,7 +124,6 @@ const staticTargetPos = new THREE.Vector3();
 export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) => {
   const trolleyRef = useRef<THREE.Group>(null);
   const items = useCartStore((state) => state.items);
-  const flyAnimations = useCartStore((state) => state.flyAnimations);
   const resetTrigger = useMartStore((state) => state.resetTrigger);
   const teleportTrigger = useMartStore((state) => state.teleportTrigger);
 
@@ -226,8 +228,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
       currentYaw.current = actualYaw;
     }
 
-    // Check if an incoming 3D item is landing to trigger physical suspension compression bump!
-    const isLanding = flyAnimations.some((a) => {
+    // Check if an incoming 3D item is landing to trigger physical suspension compression bump (zero React re-render)
+    const currentFlies = useCartStore.getState().flyAnimations;
+    const isLanding = currentFlies.some((a) => {
       const elapsed = Date.now() - a.createdAt;
       const d = a.duration || 1100;
       return elapsed > d * 0.75 && elapsed < d * 0.98;

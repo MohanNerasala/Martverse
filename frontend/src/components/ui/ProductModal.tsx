@@ -82,7 +82,7 @@ export const ProductModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
       {/* Luxury White Modal Box with Black Text */}
       <div className="bg-white rounded-3xl max-w-3xl w-full shadow-[0_25px_80px_rgba(0,0,0,0.28)] overflow-hidden flex flex-col md:flex-row relative animate-in fade-in zoom-in-95 duration-200 border border-slate-200/90">
         

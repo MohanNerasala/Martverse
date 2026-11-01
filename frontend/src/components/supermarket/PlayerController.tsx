@@ -14,6 +14,7 @@ interface KeyState {
   left: boolean;
   right: boolean;
   interact: boolean;
+  sprint: boolean;
 }
 
 interface ObstacleBox {
@@ -32,12 +33,12 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 3.8, maxX: 22.0, minZ: -28.0, maxZ: -24.8 },  // Front Entrance Wall (Right of door)
   { minX: -3.8, maxX: 3.8, minZ: -28.0, maxZ: -25.8 },  // Front Doorway Backstop
 
-  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 0.85, z from -12.0 to 12.0
-  { minX: -10.85, maxX: -9.15, minZ: -12.0, maxZ: 12.0 },
-  { minX: -5.85, maxX: -4.15, minZ: -12.0, maxZ: 12.0 },
-  { minX: -0.85, maxX: 0.85, minZ: -12.0, maxZ: 12.0 },
-  { minX: 4.15, maxX: 5.85, minZ: -12.0, maxZ: 12.0 },
-  { minX: 9.15, maxX: 10.85, minZ: -12.0, maxZ: 12.0 },
+  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 0.72 (generous aisle clearance, zero edge snags)
+  { minX: -10.72, maxX: -9.28, minZ: -11.8, maxZ: 11.8 },
+  { minX: -5.72, maxX: -4.28, minZ: -11.8, maxZ: 11.8 },
+  { minX: -0.72, maxX: 0.72, minZ: -11.8, maxZ: 11.8 },
+  { minX: 4.28, maxX: 5.72, minZ: -11.8, maxZ: 11.8 },
+  { minX: 9.28, maxX: 10.72, minZ: -11.8, maxZ: 11.8 },
 
   // Billing Counter Desks at [-3.8, 0, 3.8]
   { minX: -4.45, maxX: -3.15, minZ: 16.5, maxZ: 19.5 },
@@ -60,13 +61,13 @@ const STATIC_OBSTACLES_FLOOR2: ObstacleBox[] = [
   { minX: -22.0, maxX: 22.0, minZ: 24.6, maxZ: 28.0 },   // Back Wall
   { minX: -22.0, maxX: 22.0, minZ: -28.0, maxZ: -24.8 }, // Front Wall
 
-  // Shelves Floor 2: [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5]
-  { minX: -11.85, maxX: -10.15, minZ: -12.0, maxZ: 12.0 },
-  { minX: -7.35, maxX: -5.65, minZ: -12.0, maxZ: 12.0 },
-  { minX: -2.85, maxX: -1.15, minZ: -12.0, maxZ: 12.0 },
-  { minX: 1.65, maxX: 3.35, minZ: -12.0, maxZ: 12.0 },
-  { minX: 6.15, maxX: 7.85, minZ: -12.0, maxZ: 12.0 },
-  { minX: 10.65, maxX: 12.35, minZ: -12.0, maxZ: 12.0 },
+  // Shelves Floor 2: [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5], halfW = 0.72
+  { minX: -11.72, maxX: -10.28, minZ: -11.8, maxZ: 11.8 },
+  { minX: -7.22, maxX: -5.78, minZ: -11.8, maxZ: 11.8 },
+  { minX: -2.72, maxX: -1.28, minZ: -11.8, maxZ: 11.8 },
+  { minX: 1.78, maxX: 3.22, minZ: -11.8, maxZ: 11.8 },
+  { minX: 6.28, maxX: 7.72, minZ: -11.8, maxZ: 11.8 },
+  { minX: 10.78, maxX: 12.22, minZ: -11.8, maxZ: 11.8 },
 
   // Floor 2 Escalator void opening guardrails
   { minX: 13.0, maxX: 13.4, minZ: -6.5, maxZ: 5.2 },
@@ -164,6 +165,7 @@ export const PlayerController: React.FC = () => {
     left: false,
     right: false,
     interact: false,
+    sprint: false,
   });
 
   const activeFloor = useMartStore((state) => state.activeFloor);
@@ -180,8 +182,6 @@ export const PlayerController: React.FC = () => {
   const teleportTrigger = useMartStore((state) => state.teleportTrigger);
 
   const startCheckout = useBillingStore((state) => state.startCheckout);
-  const cartItems = useCartStore((state) => state.items);
-  const isPaid = useCartStore((state) => state.isPaid);
 
   // Motion physics refs
   const posRef = useRef(new THREE.Vector3(...martRuntime.playerPos));
@@ -262,6 +262,10 @@ export const PlayerController: React.FC = () => {
         case 'ArrowRight':
           keys.current.right = true;
           break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          keys.current.sprint = true;
+          break;
         case 'KeyE':
           keys.current.interact = true;
           handleInteract();
@@ -292,6 +296,10 @@ export const PlayerController: React.FC = () => {
         case 'KeyD':
         case 'ArrowRight':
           keys.current.right = false;
+          break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          keys.current.sprint = false;
           break;
         case 'KeyE':
           keys.current.interact = false;
@@ -367,12 +375,12 @@ export const PlayerController: React.FC = () => {
       // deltaY > 0 is rolling down / swiping down -> move backward (-Z)
       // deltaX < 0 is swiping left -> move left
       // deltaX > 0 is swiping right -> move right
-      const factor = 0.0075;
+      const factor = 0.012;
       wheelMomentum.current.z -= e.deltaY * factor;
       wheelMomentum.current.x += e.deltaX * factor;
 
-      wheelMomentum.current.z = THREE.MathUtils.clamp(wheelMomentum.current.z, -1.2, 1.2);
-      wheelMomentum.current.x = THREE.MathUtils.clamp(wheelMomentum.current.x, -1.2, 1.2);
+      wheelMomentum.current.z = THREE.MathUtils.clamp(wheelMomentum.current.z, -3.5, 3.5);
+      wheelMomentum.current.x = THREE.MathUtils.clamp(wheelMomentum.current.x, -3.5, 3.5);
 
       if (Math.abs(e.deltaY) > 2 || Math.abs(e.deltaX) > 2) {
         if (!hasMovedTrolley) {
@@ -405,7 +413,7 @@ export const PlayerController: React.FC = () => {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [products, cartItems, isPaid]);
+  }, []);
 
   // Handle 'E' or Interaction
   const handleInteract = () => {
@@ -413,16 +421,19 @@ export const PlayerController: React.FC = () => {
     const pz = posRef.current.z;
 
     // Check Billing Counter (around z = 15.0 to 19.5, across lanes 1-3 from x = -6.8 to 3.5)
+    const currentCart = useCartStore.getState().items;
+    const currentPaid = useCartStore.getState().isPaid;
+
     if (pz >= 15.0 && pz <= 19.5 && px >= -6.8 && px <= 3.5) {
-      if (cartItems.length > 0 && useBillingStore.getState().phase === 'idle') {
-        startCheckout(cartItems);
+      if (currentCart.length > 0 && useBillingStore.getState().phase === 'idle') {
+        startCheckout(currentCart);
       }
       return;
     }
 
     // Check Exit Gate (around z = -22, x between -3 and 3)
     if (Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5) {
-      if (cartItems.length === 0 || isPaid) {
+      if (currentCart.length === 0 || currentPaid) {
         sounds.playGateOpen();
         setCameraMode('exit');
       } else {
@@ -498,10 +509,11 @@ export const PlayerController: React.FC = () => {
       }
     } else {
       // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation (only mouse-look modifies target angles)
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 75, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 75, delta);
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 90, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 90, delta);
 
-      const speed = 14.5; // Fast, responsive, ultra-smooth movement speed
+      // Fast, ultra-smooth movement speed (22.0 base, 32.0 on Shift turbo push)
+      const speed = keys.current.sprint ? 32.0 : 22.0;
       staticMoveVector.set(0, 0, 0);
 
       const isLeft = keys.current.left || martRuntime.virtualKeys.left;
@@ -509,7 +521,7 @@ export const PlayerController: React.FC = () => {
       const isForward = keys.current.forward || martRuntime.virtualKeys.forward;
       const isBackward = keys.current.backward || martRuntime.virtualKeys.backward;
 
-      // 1. Forward & Backward motion (Up / Down Arrows)
+      // 1. Forward & Backward motion (Up / Down Arrows / W / S)
       if (isForward) staticMoveVector.z += 1;
       if (isBackward) staticMoveVector.z -= 1;
 
@@ -522,8 +534,8 @@ export const PlayerController: React.FC = () => {
       staticMoveVector.x += wheelMomentum.current.x;
 
       // Smoothly damp wheel momentum
-      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 16, delta);
-      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 16, delta);
+      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 10, delta);
+      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 10, delta);
 
       const isMoving = staticMoveVector.lengthSq() > 0.001;
       if (isMoving) {
@@ -538,13 +550,13 @@ export const PlayerController: React.FC = () => {
       // Camera-relative velocity projection:
       // Forward vector F = (sin(yaw), 0, cos(yaw))
       // Right vector R = (-cos(yaw), 0, sin(yaw))
-      // Pressing Left Arrow moves Left Side, Pressing Right Arrow moves Right Side without rotating perspective
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
       const targetVelX = (-staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
       const targetVelZ = (staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
 
-      const accelRate = isMoving ? 75 : 55;
+      // Instant 0ms acceleration for immediate, punchy pickup without sluggish delay
+      const accelRate = isMoving ? 120 : 65;
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -555,7 +567,7 @@ export const PlayerController: React.FC = () => {
 
       // -------------------------------------------------------------
       // AAA Buttery-Smooth Unified Character Capsule Sliding
-      // 3 overlapping convex spheres: Front Bumper, Cart Center, Player Body
+      // 2 streamlined convex spheres: Front Basket Nose, Player/Trolley Center
       // Eliminates internal friction, edge catching, corner snags, and collision chatter
       // -------------------------------------------------------------
       const onRampCorridor =
@@ -575,11 +587,10 @@ export const PlayerController: React.FC = () => {
         let nextX = posRef.current.x + worldDX;
         let nextZ = posRef.current.z + worldDZ;
 
-        // 3-Sphere continuous capsule covering the entire trolley and player footprint (tapered nose for smooth cornering)
+        // Slender 2-sphere footprint (compact nose glides freely past shelf corners and aisle edges)
         const spheres = [
-          { dist: 1.05, radius: 0.35 }, // Front bumper and basket nose (slender tapered nose glides around corners)
-          { dist: 0.60, radius: 0.38 }, // Mid basket chassis and wheels
-          { dist: 0.05, radius: 0.26 }, // Rear handle and player body
+          { dist: 0.65, radius: 0.28 }, // Front basket and wheel casters
+          { dist: 0.10, radius: 0.30 }, // Rear handle and player body
         ];
 
         for (let iter = 0; iter < 2; iter++) {
@@ -602,14 +613,15 @@ export const PlayerController: React.FC = () => {
                   velocityRef.current.x -= vn * res.normalX;
                   velocityRef.current.z -= vn * res.normalZ;
 
-                  // Corner-rounding slide assist: if hitting an obstacle corner, assist tangential gliding so it never gets stuck
-                  if (Math.abs(res.normalX) > 0.2 && Math.abs(res.normalZ) > 0.2 && isMoving) {
+                  // Tangential slide assist: if glancing off a shelf or corner, glide effortlessly along the open tangent
+                  if (isMoving) {
                     const tangentX = -res.normalZ;
                     const tangentZ = res.normalX;
                     const vt = velocityRef.current.x * tangentX + velocityRef.current.z * tangentZ;
-                    if (Math.abs(vt) < 1.0) {
-                      velocityRef.current.x += tangentX * 1.2;
-                      velocityRef.current.z += tangentZ * 1.2;
+                    if (Math.abs(vt) < speed * 0.5) {
+                      const pushDir = vt >= 0 ? 1 : -1;
+                      velocityRef.current.x += tangentX * pushDir * 3.0;
+                      velocityRef.current.z += tangentZ * pushDir * 3.0;
                     }
                   }
                 }
@@ -618,7 +630,9 @@ export const PlayerController: React.FC = () => {
           }
 
           // Unpaid exit barrier check
-          if (cartItems.length > 0 && !isPaid && currentFloor === 1) {
+          const activeCart = useCartStore.getState().items;
+          const activePaid = useCartStore.getState().isPaid;
+          if (activeCart.length > 0 && !activePaid && currentFloor === 1) {
             const frontSp = spheres[0];
             let fx = nextX + sinYaw * frontSp.dist;
             let fz = nextZ + cosYaw * frontSp.dist;
@@ -655,14 +669,17 @@ export const PlayerController: React.FC = () => {
           (posRef.current.x >= 1.1 && posRef.current.x <= 2.7)      // Box 3 (Left of Bench 3)
         );
 
+      const activeCartItems = useCartStore.getState().items;
+      const isCartPaid = useCartStore.getState().isPaid;
+
       if (
         inCheckoutQueueBox &&
-        cartItems.length > 0 &&
-        !isPaid &&
+        activeCartItems.length > 0 &&
+        !isCartPaid &&
         billingPhase === 'idle' &&
         Date.now() > martRuntime.billingCooldownUntil
       ) {
-        startCheckout(cartItems);
+        startCheckout(activeCartItems);
       }
     }
 
@@ -779,7 +796,9 @@ export const PlayerController: React.FC = () => {
     } else if (nearBilling) {
       prompt = null; // Do NOT show prompt banner per user request
     } else if (nearExit) {
-      prompt = isPaid || cartItems.length === 0 ? 'Press [E] to Exit Supermarket' : 'Exit Locked: Please pay at the billing counter!';
+      const activeCart = useCartStore.getState().items;
+      const isCartPaid = useCartStore.getState().isPaid;
+      prompt = isCartPaid || activeCart.length === 0 ? 'Press [E] to Exit Supermarket' : 'Exit Locked: Please pay at the billing counter!';
     } else if (now - lastProximityCheck.current > 80) {
       lastProximityCheck.current = now;
       const nearbyProd = products.find((p) => {
@@ -866,14 +885,14 @@ export const PlayerController: React.FC = () => {
       const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
       const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.3;
 
-      // Ultra-smooth high-frequency camera and look-target interpolation
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 60, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 60, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 60, delta);
+      // Ultra-smooth high-frequency camera and look-target interpolation (fast 90 damping for zero camera lag behind trolley)
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 90, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 90, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 90, delta);
 
-      currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, lookTargetX, 60, delta);
-      currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, lookTargetY, 60, delta);
-      currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, lookTargetZ, 60, delta);
+      currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, lookTargetX, 90, delta);
+      currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, lookTargetY, 90, delta);
+      currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, lookTargetZ, 90, delta);
 
       camera.lookAt(currentLookTarget.current);
     }

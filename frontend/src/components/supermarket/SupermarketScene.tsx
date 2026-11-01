@@ -2,6 +2,7 @@
 
 import React, { Suspense, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
 import { StoreArchitecture } from './StoreArchitecture';
 import { ShelfUnit } from './ShelfUnit';
 import { BillingCounter3D } from './BillingCounter3D';
@@ -93,19 +94,23 @@ export const SupermarketScene: React.FC = () => {
           powerPreference: 'high-performance',
           stencil: false,
           depth: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.15,
         }}
       >
-        <color attach="background" args={['#0f172a']} />
-        <fog attach="fog" args={['#0f172a', 55, 120]} />
+        <color attach="background" args={['#0a0f1d']} />
+        <fog attach="fog" args={['#0a0f1d', 55, 135]} />
 
-        {/* --- High-Efficiency Commercial Retail Global Illumination (Silky 60+ FPS on all devices) --- */}
-        <ambientLight intensity={1.3} />
-        <hemisphereLight args={['#ffffff', '#64748b', 0.95]} />
+        {/* --- Commercial Retail Lighting: Rich Contrast, Lustrous Metallic Sheen & Crisp Packaging --- */}
+        <ambientLight intensity={1.05} />
+        <hemisphereLight args={['#ffffff', '#475569', 0.85]} />
 
-        {/* Primary Crisp Ceiling Retail Light (Zero shadow map overhead) */}
-        <directionalLight position={[12, 24, 8]} intensity={1.1} />
-        {/* Fill Retail Illumination */}
-        <directionalLight position={[-12, 20, -8]} intensity={0.65} />
+        {/* Primary Crisp Ceiling Retail Light with Specular Sheen */}
+        <directionalLight position={[10, 26, 8]} intensity={1.3} />
+        {/* Soft Cool-Tint Aisle Fill */}
+        <directionalLight position={[-10, 20, -8]} intensity={0.7} />
+        {/* Central Aisle Ambiance */}
+        <directionalLight position={[0, 18, 0]} intensity={0.35} />
 
         <Suspense fallback={null}>
           {/* Store Shell */}

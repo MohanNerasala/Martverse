@@ -16,13 +16,27 @@ function easeInOutCubic(x: number): number {
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
 
+// Pre-allocated shared geometries for flying projectile meshes (zero GC pauses)
+const sharedFlyGeometries = {
+  bottleBody: new THREE.CylinderGeometry(0.065, 0.07, 0.20, 12),
+  bottleShoulder: new THREE.CylinderGeometry(0.03, 0.065, 0.05, 12),
+  bottleCap: new THREE.CylinderGeometry(0.025, 0.025, 0.04, 10),
+  bottleLabel: new THREE.CylinderGeometry(0.072, 0.072, 0.12, 12),
+  garment: new THREE.BoxGeometry(0.22, 0.07, 0.22),
+  collar: new THREE.BoxGeometry(0.16, 0.01, 0.06),
+  chocolate: new THREE.BoxGeometry(0.24, 0.11, 0.022),
+  chocolateEdge: new THREE.BoxGeometry(0.008, 0.105, 0.004),
+  box: new THREE.BoxGeometry(0.2, 0.2, 0.15),
+  boxLabel: new THREE.BoxGeometry(0.17, 0.16, 0.005),
+};
+
 const SingleFlyArc: React.FC<{
   anim: FlyAnimation;
   trolleyPos?: [number, number, number];
   playerYaw?: number;
 }> = ({ anim, trolleyPos, playerYaw }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const duration = anim.duration || 950;
+  const duration = anim.duration || 480;
   const productColor = anim.color || '#3b82f6';
 
   useFrame(() => {
@@ -108,65 +122,54 @@ const SingleFlyArc: React.FC<{
       {anim.modelType === 'bottle' ? (
         <group position={[0, -0.06, 0]}>
           {/* Main Bottle Body */}
-          <mesh position={[0, 0.09, 0]}>
-            <cylinderGeometry args={[0.065, 0.07, 0.20, 16]} />
+          <mesh position={[0, 0.09, 0]} geometry={sharedFlyGeometries.bottleBody}>
             <meshStandardMaterial color={productColor} roughness={0.2} metalness={0.1} />
           </mesh>
           {/* Tapered Shoulder */}
-          <mesh position={[0, 0.21, 0]}>
-            <cylinderGeometry args={[0.03, 0.065, 0.05, 16]} />
+          <mesh position={[0, 0.21, 0]} geometry={sharedFlyGeometries.bottleShoulder}>
             <meshStandardMaterial color={productColor} roughness={0.2} metalness={0.1} />
           </mesh>
           {/* Neck & Cap */}
-          <mesh position={[0, 0.25, 0]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.04, 14]} />
+          <mesh position={[0, 0.25, 0]} geometry={sharedFlyGeometries.bottleCap}>
             <meshStandardMaterial color="#ffffff" roughness={0.3} />
           </mesh>
           {/* Printed Label Band */}
-          <mesh position={[0, 0.09, 0]}>
-            <cylinderGeometry args={[0.072, 0.072, 0.12, 16]} />
+          <mesh position={[0, 0.09, 0]} geometry={sharedFlyGeometries.bottleLabel}>
             <meshStandardMaterial color="#ffffff" roughness={0.3} />
           </mesh>
         </group>
       ) : anim.modelType === 'shirt' || anim.modelType === 'hanger' ? (
         <group>
           {/* Folded garment */}
-          <mesh>
-            <boxGeometry args={[0.22, 0.07, 0.22]} />
+          <mesh geometry={sharedFlyGeometries.garment}>
             <meshStandardMaterial color={productColor} roughness={0.8} />
           </mesh>
           {/* Contrasting Collar Band */}
-          <mesh position={[0, 0.04, 0]}>
-            <boxGeometry args={[0.16, 0.01, 0.06]} />
+          <mesh position={[0, 0.04, 0]} geometry={sharedFlyGeometries.collar}>
             <meshStandardMaterial color="#ffffff" roughness={0.4} />
           </mesh>
         </group>
       ) : anim.modelType === 'chocolate' || anim.modelType === 'bar' ? (
         <group>
           {/* Chocolate Bar Packet */}
-          <mesh>
-            <boxGeometry args={[0.24, 0.11, 0.022]} />
+          <mesh geometry={sharedFlyGeometries.chocolate}>
             <meshStandardMaterial color={productColor} roughness={0.25} metalness={0.15} />
           </mesh>
-          <mesh position={[-0.125, 0, 0]}>
-            <boxGeometry args={[0.008, 0.105, 0.004]} />
+          <mesh position={[-0.125, 0, 0]} geometry={sharedFlyGeometries.chocolateEdge}>
             <meshStandardMaterial color={productColor} roughness={0.4} metalness={0.2} />
           </mesh>
-          <mesh position={[0.125, 0, 0]}>
-            <boxGeometry args={[0.008, 0.105, 0.004]} />
+          <mesh position={[0.125, 0, 0]} geometry={sharedFlyGeometries.chocolateEdge}>
             <meshStandardMaterial color={productColor} roughness={0.4} metalness={0.2} />
           </mesh>
         </group>
       ) : (
         /* Box / Package (Atta, Cereals, Biscuits, Chocolates, Staples) */
         <group>
-          <mesh>
-            <boxGeometry args={[0.2, 0.2, 0.15]} />
+          <mesh geometry={sharedFlyGeometries.box}>
             <meshStandardMaterial color={productColor} roughness={0.3} metalness={0.05} />
           </mesh>
           {/* Front Clean Product Label Badge */}
-          <mesh position={[0, 0, 0.078]}>
-            <boxGeometry args={[0.17, 0.16, 0.005]} />
+          <mesh position={[0, 0, 0.078]} geometry={sharedFlyGeometries.boxLabel}>
             <meshBasicMaterial color="#ffffff" />
           </mesh>
         </group>

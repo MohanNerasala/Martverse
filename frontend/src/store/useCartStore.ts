@@ -81,7 +81,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     const animId = 'fly-' + Math.random().toString(36).substring(2, 9);
     const color = variant?.colorCode || variant?.color || product.placement?.color || '#3b82f6';
     const modelType = product.placement?.modelType || 'box';
-    const duration = 650; // Snappy, ultra-responsive 650ms parabolic glide
+    const duration = 480; // Fast, snappy 480ms parabolic arc directly into trolley basket
 
     // Check if 3D scene canvas is active in the DOM
     const has3DCanvas = typeof document !== 'undefined' && !!document.querySelector('canvas');
