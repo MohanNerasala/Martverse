@@ -15,6 +15,7 @@ import { api } from '@/lib/api';
 export const SupermarketScene: React.FC = () => {
   const floors = useMartStore((state) => state.floors);
   const products = useMartStore((state) => state.products);
+  const activeFloor = useMartStore((state) => state.activeFloor);
   const setFloors = useMartStore((state) => state.setFloors);
   const setProducts = useMartStore((state) => state.setProducts);
 
@@ -71,7 +72,7 @@ export const SupermarketScene: React.FC = () => {
   return (
     <div className="w-full h-full relative select-none">
       <Canvas
-        dpr={[1, 1.25]}
+        dpr={1}
         camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
         gl={{
           antialias: true,
@@ -79,6 +80,7 @@ export const SupermarketScene: React.FC = () => {
           powerPreference: 'high-performance',
           stencil: false,
           depth: true,
+          precision: 'mediump',
         }}
       >
         <color attach="background" args={['#0f172a']} />
@@ -97,8 +99,8 @@ export const SupermarketScene: React.FC = () => {
           {/* Store Shell */}
           <StoreArchitecture />
 
-          {/* Ground Floor Aisles (Aisles 1 - 5) */}
-          {groundFloor?.aisles.map((aisle) => (
+          {/* Ground Floor Aisles (Aisles 1 - 5) - Active Floor Culling */}
+          {activeFloor === 1 && groundFloor?.aisles.map((aisle) => (
             <ShelfUnit
               key={aisle.id}
               aisle={aisle}
@@ -107,8 +109,8 @@ export const SupermarketScene: React.FC = () => {
             />
           ))}
 
-          {/* First Floor Aisles (Aisles 6 - 10) */}
-          {firstFloor?.aisles.map((aisle) => (
+          {/* First Floor Aisles (Aisles 6 - 10) - Active Floor Culling */}
+          {activeFloor === 2 && firstFloor?.aisles.map((aisle) => (
             <ShelfUnit
               key={aisle.id}
               aisle={aisle}

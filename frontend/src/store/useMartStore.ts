@@ -108,9 +108,12 @@ export const useMartStore = create<MartStore>((set) => ({
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             set({ products: parsed });
+            return;
           }
         }
       } catch {}
+      // Fallback to MOCK_PRODUCTS so shelves are vibrant from second zero
+      set((state) => (state.products.length === 0 ? { products: MOCK_PRODUCTS } : {}));
     }
   },
 

@@ -140,13 +140,14 @@ export const api = {
         }
       }
     } catch {
-      // Backend is offline: return cached real products if previously loaded, else empty array
+      // Backend is offline: return cached real products if previously loaded, else fallback to MOCK_PRODUCTS
+      isBackendOffline = true;
       if (cachedBackendProducts.length > 0) {
         return cachedBackendProducts;
       }
-      return [];
+      return MOCK_PRODUCTS;
     }
-    return cachedBackendProducts.length > 0 ? cachedBackendProducts : [];
+    return cachedBackendProducts.length > 0 ? cachedBackendProducts : MOCK_PRODUCTS;
   },
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {

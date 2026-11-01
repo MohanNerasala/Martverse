@@ -80,6 +80,7 @@ export const SupermarketHUD: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const hydrateProductsFromCache = useMartStore((state) => state.hydrateProductsFromCache);
@@ -87,6 +88,19 @@ export const SupermarketHUD: React.FC = () => {
   useEffect(() => {
     setIsMounted(true);
     hydrateProductsFromCache();
+
+    let isSubscribed = true;
+    async function checkHealth() {
+      const ok = await api.checkBackendHealth();
+      if (isSubscribed) setIsBackendOnline(ok);
+    }
+    checkHealth();
+    const interval = setInterval(checkHealth, 5000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
   }, [hydrateProductsFromCache]);
 
   // Filter products by starting letters or word-start in name/brand only
@@ -174,12 +188,12 @@ export const SupermarketHUD: React.FC = () => {
                 <span className="font-black tracking-tight text-sm sm:text-base leading-none bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
                   MARTVERSE
                 </span>
-                {!isMounted ? (
+                {!isMounted || isBackendOnline === null ? (
                   <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-slate-50 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200/90 shadow-xs">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-pulse" />
                     CONNECTING...
                   </span>
-                ) : products.length > 0 ? (
+                ) : isBackendOnline ? (
                   <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200/90 shadow-xs">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -188,9 +202,9 @@ export const SupermarketHUD: React.FC = () => {
                     BACKEND ONLINE ({products.length})
                   </span>
                 ) : (
-                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-rose-50 text-rose-700 font-bold px-2 py-0.5 rounded-full border border-rose-200/90 shadow-xs">
-                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
-                    BACKEND OFFLINE (:8080)
+                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200/90 shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    OFFLINE (CACHED {products.length})
                   </span>
                 )}
               </div>
