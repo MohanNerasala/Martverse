@@ -303,27 +303,9 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none z-20" />
 
         {/* ============================================================== */}
-        {/* TOP HEADER BAR: Center Luxury Branding + Right Vivid Skip Btn */}
+        {/* TOP HEADER: Right Vivid Skip to Store Button                   */}
         {/* ============================================================== */}
-        <header className="relative z-30 px-6 sm:px-10 py-6 flex items-center justify-between">
-          {/* Left: Spacer (Clean, uncluttered) */}
-          <div className="w-24 sm:w-36 hidden sm:block" />
-
-          {/* Middle: Minimalist Floating Luxury Glass Badge */}
-          <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 shadow-2xl text-white">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center text-white shadow-md shadow-blue-500/30">
-              <Store className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs font-black tracking-widest uppercase">
-              MART<span className="text-blue-400">VERSE</span>
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping" />
-            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider hidden xs:inline">
-              CINEMATIC ENTRANCE
-            </span>
-          </div>
-
-          {/* Right: High-Visibility Premium Skip to Store Button */}
+        <header className="relative z-30 px-6 sm:px-10 py-6 flex items-center justify-end">
           <button
             type="button"
             onClick={triggerCompletion}
@@ -336,45 +318,64 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         </header>
 
         {/* ============================================================== */}
-        {/* BOTTOM INTERACTIVE HUD: High-Contrast Floating Glass Island   */}
+        {/* CENTER HERO DISPLAY: Perfect Screen Center Cinematic Showcase  */}
         {/* ============================================================== */}
-        <footer className="relative z-30 px-4 sm:px-10 py-6 flex flex-col items-center">
-          <div className="w-full max-w-lg px-6 py-4 rounded-3xl bg-black/75 backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.6)] space-y-2.5">
-            {/* Animated Mouse Wheel Scroll Prompt */}
-            <div className="flex items-center justify-center gap-2 text-xs font-black tracking-wider uppercase text-white drop-shadow">
-              <Mouse className="w-4 h-4 text-cyan-400 animate-pulse" />
-              <span>Scroll Mouse Wheel to Enter</span>
-              <ChevronDown className="w-4 h-4 text-cyan-400 animate-bounce" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center text-center pointer-events-none w-full max-w-xl px-5">
+          <div className="relative w-full px-8 py-8 sm:px-12 sm:py-10 rounded-[2.5rem] bg-black/55 backdrop-blur-2xl border border-white/20 shadow-[0_30px_70px_rgba(0,0,0,0.7)] flex flex-col items-center">
+            {/* Ambient Backlight Glow */}
+            <div className="absolute -inset-1 rounded-[2.6rem] bg-gradient-to-r from-blue-500/20 via-cyan-400/25 to-emerald-400/20 blur-2xl -z-10 pointer-events-none" />
+
+            {/* Category Eyebrow Pill */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-black uppercase tracking-widest text-cyan-300 shadow-sm mb-3">
+              <Store className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Virtual 3D Supermarket</span>
             </div>
 
-            {/* Sequence Progress Info */}
-            <div className="flex items-center justify-between text-xs font-mono font-bold text-slate-200">
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                CAMERA MOTION
-              </span>
-              <span ref={frameCounterRef} className="text-cyan-400 font-black tracking-wide">
-                FRAME 001 / {TOTAL_FRAMES}
-              </span>
-              <span ref={percentTextRef} className="text-white font-mono">0%</span>
+            {/* Big Line 1: MARTVERSE */}
+            <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)] uppercase select-none leading-none">
+              MART<span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">VERSE</span>
+            </h1>
+
+            {/* Line 2: Content Subtitle */}
+            <p className="mt-3 text-xs sm:text-sm text-slate-200/90 font-medium tracking-wide max-w-md drop-shadow">
+              India&apos;s first immersive 3D hypermarket — walk the aisles, pick fresh groceries &amp; experience seamless shopping.
+            </p>
+
+            {/* 2 Small Healthy / Fresh Tags */}
+            <div className="flex flex-wrap items-center justify-center gap-2.5 mt-5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 backdrop-blur-xl text-emerald-300 text-xs font-bold tracking-wide shadow-lg shadow-emerald-950/40">
+                <span className="text-sm">🥬</span>
+                <span>100% Farm Fresh &amp; Healthy Living</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 backdrop-blur-xl text-cyan-300 text-xs font-bold tracking-wide shadow-lg shadow-cyan-950/40">
+                <span className="text-sm">✨</span>
+                <span>Interactive 3D Walk &amp; Shop</span>
+              </div>
             </div>
 
-            {/* Progress Track */}
-            <div className="w-full h-2 rounded-full bg-white/15 overflow-hidden p-0.5 border border-white/15 shadow-inner">
-              <div
-                ref={progressBarRef}
-                className="h-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 shadow-md shadow-cyan-400/60 transition-all duration-75"
-                style={{ width: '2%' }}
-              />
-            </div>
+            {/* Minimalist Scroll Cue & Frame Progress */}
+            <div className="mt-6 flex flex-col items-center gap-2 w-full max-w-xs">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-xs font-semibold tracking-wider uppercase shadow-md animate-pulse">
+                <Mouse className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Scroll Down to Enter</span>
+                <ChevronDown className="w-3.5 h-3.5 text-cyan-400 animate-bounce" />
+              </div>
 
-            {/* Footer Subtext */}
-            <div className="flex items-center justify-between text-[10px] text-slate-300 font-semibold pt-0.5">
-              <span>Scroll Down = Enter · Scroll Up = Reverse</span>
-              <span ref={loadedCountRef} className="text-slate-400">Loading frames...</span>
+              <div className="w-full h-1.5 rounded-full bg-white/15 overflow-hidden border border-white/20 mt-1">
+                <div
+                  ref={progressBarRef}
+                  className="h-full rounded-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 shadow-sm shadow-cyan-400/80 transition-all duration-75"
+                  style={{ width: '2%' }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between w-full text-[11px] font-mono text-slate-300/80 px-1">
+                <span ref={frameCounterRef}>FRAME 001 / {TOTAL_FRAMES}</span>
+                <span ref={percentTextRef}>0%</span>
+              </div>
             </div>
           </div>
-        </footer>
+        </div>
       </div>
     </div>
   );
