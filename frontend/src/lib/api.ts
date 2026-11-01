@@ -20,11 +20,12 @@ function getAuthToken(): string | null {
 
 let isBackendOffline = false;
 let lastBackendCheck = 0;
+let cachedBackendProducts: Product[] = [];
 
 async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fallback: T): Promise<T> {
   const now = Date.now();
-  // Circuit breaker: if backend proved unreachable recently, return fallback immediately (0ms refresh lag)
-  if (isBackendOffline && now - lastBackendCheck < 15000) {
+  // Circuit breaker: brief 2s backoff if backend proved unreachable recently
+  if (isBackendOffline && now - lastBackendCheck < 2000) {
     return fallback;
   }
 
@@ -40,7 +41,7 @@ async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fall
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 400); // 400ms rapid probe
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout for WAN pooler
     const res = await fetch(`${API_BASE}${url}`, {
       ...options,
       headers,
@@ -55,7 +56,7 @@ async function fetchWithFallback<T>(url: string, options: RequestInit = {}, fall
     const data = await res.json();
     return data.data !== undefined ? data.data : data;
   } catch {
-    // Backend offline: mark offline to avoid blocking subsequent calls
+    // Backend offline: mark offline with 2s cooldown
     isBackendOffline = true;
     lastBackendCheck = now;
     return fallback;
@@ -71,10 +72,14 @@ export const api = {
   async checkBackendHealth(): Promise<boolean> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 600);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(`${API_BASE}/products/all`, { signal: controller.signal });
       clearTimeout(timeoutId);
-      return res.ok;
+      if (res.ok) {
+        isBackendOffline = false;
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
@@ -83,7 +88,7 @@ export const api = {
   async getProducts(): Promise<Product[]> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1000);
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       const res = await fetch(`${API_BASE}/products/all`, {
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
@@ -93,8 +98,16 @@ export const api = {
       if (res.ok) {
         const json = await res.json();
         const data = json.data !== undefined ? json.data : json;
-        if (Array.isArray(data) && data.length > 0) return data;
-        if (data && Array.isArray(data.content) && data.content.length > 0) return data.content;
+        if (Array.isArray(data) && data.length > 0) {
+          isBackendOffline = false;
+          cachedBackendProducts = data;
+          return data;
+        }
+        if (data && Array.isArray(data.content) && data.content.length > 0) {
+          isBackendOffline = false;
+          cachedBackendProducts = data.content;
+          return data.content;
+        }
       }
 
       const paged = await fetch(`${API_BASE}/products?size=100`, {
@@ -103,14 +116,25 @@ export const api = {
       if (paged.ok) {
         const json = await paged.json();
         const data = json.data !== undefined ? json.data : json;
-        if (Array.isArray(data) && data.length > 0) return data;
-        if (data && Array.isArray(data.content) && data.content.length > 0) return data.content;
+        if (Array.isArray(data) && data.length > 0) {
+          isBackendOffline = false;
+          cachedBackendProducts = data;
+          return data;
+        }
+        if (data && Array.isArray(data.content) && data.content.length > 0) {
+          isBackendOffline = false;
+          cachedBackendProducts = data.content;
+          return data.content;
+        }
       }
     } catch {
-      // Backend is offline: return empty array so shelves don't show fake items!
+      // Backend is offline: return cached real products if previously loaded, else empty array
+      if (cachedBackendProducts.length > 0) {
+        return cachedBackendProducts;
+      }
       return [];
     }
-    return [];
+    return cachedBackendProducts.length > 0 ? cachedBackendProducts : [];
   },
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {

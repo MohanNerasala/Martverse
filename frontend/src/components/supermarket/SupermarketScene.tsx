@@ -29,16 +29,18 @@ export const SupermarketScene: React.FC = () => {
         ]);
         if (!isCancelled) {
           if (floorsData && floorsData.length > 0) setFloors(floorsData);
-          setProducts(productsData || []);
+          if (productsData && productsData.length > 0) {
+            setProducts(productsData);
+          }
         }
       } catch {
-        if (!isCancelled) setProducts([]);
+        // Keep existing loaded state on transient network blip
       }
     }
     loadData();
 
-    // Check backend connection every 4s so starting backend in terminal populates shelves immediately
-    const timer = setInterval(loadData, 4000);
+    // Check backend connection every 3s so starting backend in terminal populates shelves immediately
+    const timer = setInterval(loadData, 3000);
     return () => {
       isCancelled = true;
       clearInterval(timer);
