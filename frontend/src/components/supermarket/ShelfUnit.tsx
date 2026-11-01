@@ -19,7 +19,7 @@ const sharedGeometries = {
 // Shared texture cache to prevent duplicate fetches across shelf units
 const shelfTextureCache = new Map<string, THREE.Texture>();
 
-// Cached Canvas Textures for ESL digital price tags
+// Cached Canvas Textures for ESL digital price tags (High-Res 512x256)
 const eslTextureCache = new Map<string, THREE.CanvasTexture>();
 
 function getEslTexture(price: number, brand: string): THREE.CanvasTexture {
@@ -32,44 +32,44 @@ function getEslTexture(price: number, brand: string): THREE.CanvasTexture {
   }
 
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 128;
+  canvas.width = 512;
+  canvas.height = 256;
   const ctx = canvas.getContext('2d');
   if (ctx) {
     // High-tech dark e-ink background
     ctx.fillStyle = '#090d16';
-    ctx.fillRect(0, 0, 256, 128);
+    ctx.fillRect(0, 0, 512, 256);
 
     // Subtle casing bezel
     ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(6, 6, 244, 116);
+    ctx.lineWidth = 8;
+    ctx.strokeRect(12, 12, 488, 232);
 
     // Glowing electric sapphire accent line
     ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(10, 10, 236, 108);
+    ctx.lineWidth = 4;
+    ctx.strokeRect(20, 20, 472, 216);
 
     // Digital ESL Yellow Price
     ctx.fillStyle = '#facc15';
-    ctx.font = 'bold 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = 'bold 96px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`₹${price}`, 18, 52);
+    ctx.fillText(`₹${price}`, 36, 104);
 
     // Brand Label
     ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    const cleanBrand = brand && brand.length > 12 ? brand.slice(0, 11) + '..' : (brand || 'Martverse');
-    ctx.fillText(cleanBrand, 18, 96);
+    ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const cleanBrand = brand && brand.length > 14 ? brand.slice(0, 13) + '..' : (brand || 'Martverse');
+    ctx.fillText(cleanBrand, 36, 192);
 
     // High-tech Digital Barcode pattern on right
     ctx.fillStyle = '#94a3b8';
-    const barX = 180;
-    const barWidths = [2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 2, 3, 1, 4, 2];
+    const barX = 360;
+    const barWidths = [4, 2, 6, 2, 4, 8, 2, 6, 4, 2, 4, 6, 2, 8, 4];
     let currX = barX;
     for (let i = 0; i < barWidths.length; i++) {
-      ctx.fillRect(currX, 26, barWidths[i], 76);
-      currX += barWidths[i] + (i % 2 === 0 ? 2 : 1.5);
+      ctx.fillRect(currX, 48, barWidths[i], 156);
+      currX += barWidths[i] + (i % 2 === 0 ? 4 : 3);
     }
   }
 
@@ -78,6 +78,7 @@ function getEslTexture(price: number, brand: string): THREE.CanvasTexture {
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
   eslTextureCache.set(key, texture);
   return texture;
 }
@@ -91,7 +92,7 @@ const ProductSmallImage: React.FC<{
   roughness?: number;
   metalness?: number;
   alphaTest?: number;
-}> = React.memo(({ url, position, scale, rotation, materialType = 'basic', roughness = 0.25, metalness = 0.12, alphaTest = 0.02 }) => {
+}> = React.memo(({ url, position, scale, rotation, materialType = 'basic', roughness = 0.25, metalness = 0.12, alphaTest = 0.01 }) => {
   const resolvedUrl: string = typeof url === 'object' && url && 'src' in url ? url.src : (url || '/products/sweets/DairyMilk.png');
 
   const [texture, setTexture] = useState<THREE.Texture | null>(() => {
@@ -113,7 +114,7 @@ const ProductSmallImage: React.FC<{
         tex.generateMipmaps = true;
         tex.minFilter = THREE.LinearMipmapLinearFilter;
         tex.magFilter = THREE.LinearFilter;
-        tex.anisotropy = 4;
+        tex.anisotropy = 16;
         tex.needsUpdate = true;
         shelfTextureCache.set(resolvedUrl, tex);
         setTexture(tex);
@@ -126,6 +127,7 @@ const ProductSmallImage: React.FC<{
             tex.generateMipmaps = true;
             tex.minFilter = THREE.LinearMipmapLinearFilter;
             tex.magFilter = THREE.LinearFilter;
+            tex.anisotropy = 16;
             shelfTextureCache.set(resolvedUrl, tex);
             setTexture(tex);
           });
@@ -145,9 +147,21 @@ const ProductSmallImage: React.FC<{
             roughness={roughness}
             metalness={metalness}
             side={THREE.DoubleSide}
+            polygonOffset
+            polygonOffsetFactor={-4}
+            polygonOffsetUnits={-4}
           />
         ) : (
-          <meshBasicMaterial map={texture} transparent alphaTest={alphaTest} toneMapped={false} side={THREE.DoubleSide} />
+          <meshBasicMaterial
+            map={texture}
+            transparent
+            alphaTest={alphaTest}
+            toneMapped={false}
+            side={THREE.DoubleSide}
+            polygonOffset
+            polygonOffsetFactor={-4}
+            polygonOffsetUnits={-4}
+          />
         )
       ) : (
         <meshBasicMaterial color="#ffffff" transparent opacity={0.7} />
@@ -191,7 +205,9 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
   const isDairyMilk = prod.slug.includes('dairy-milk') ||
                       prod.name.toLowerCase().includes('dairy milk') ||
                       prod.brand?.toLowerCase().includes('cadbury');
-  const packagingUrl = prod.imageUrl || (isDairyMilk ? '/products/sweets/DairyMilk_cropped.png' : '/products/fallback.svg');
+  const packagingUrl = isDairyMilk
+    ? '/products/sweets/DairyMilk_cropped.png'
+    : (prod.imageUrl || '/products/fallback.svg');
 
   const animGroupRef = useRef<THREE.Group>(null);
   const currentScale = useRef(1.0);
@@ -301,7 +317,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
             <mesh position={[0, 0.34, 0]} geometry={sharedGeometries.cyl12} scale={[0.034, 0.06, 0.034]}>
               <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
             </mesh>
-            {/* Product Artwork on Bottle Label */}
+            {/* Product Artwork on Bottle Label (Offset slightly forward to eliminate any z-fighting) */}
             <ProductSmallImage
               url={packagingUrl}
               position={[0, 0.12, 0.088]}
@@ -369,17 +385,17 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
                 />
               </mesh>
 
-              {/* Complete Cadbury Dairy Milk High-Resolution Packaging Artwork Plane */}
+              {/* Complete Cadbury Dairy Milk High-Resolution Packaging Artwork Plane (Offset for crystal clarity) */}
               <ProductSmallImage
                 url={packagingUrl}
-                position={[0, 0, 0.012]}
+                position={[0, 0, 0.016]}
                 scale={[0.66, 0.302]}
                 materialType="basic"
                 alphaTest={0.01}
               />
 
               {/* Subtle Glossy Foil Reflection Sheen Strip */}
-              <mesh position={[0, 0.06, 0.013]} geometry={sharedGeometries.plane} scale={[0.62, 0.03, 1]}>
+              <mesh position={[0, 0.06, 0.018]} geometry={sharedGeometries.plane} scale={[0.62, 0.03, 1]}>
                 <meshBasicMaterial
                   color="#ffffff"
                   transparent
@@ -391,7 +407,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
         ) : (
           // Standard Premium Box (Biscuits, Tea, Atta, Snacks, etc.)
           <group position={[0, 0, 0]}>
-            {/* Premium Carton Box */}
+            {/* Premium Carton Box Body */}
             <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.36, 0.18]}>
               <meshStandardMaterial
                 color={color}
@@ -401,15 +417,11 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
                 emissiveIntensity={isHovered ? 0.35 : 0}
               />
             </mesh>
-            {/* Front White Backer Faceplate */}
-            <mesh position={[0, 0.18, 0.093]} geometry={sharedGeometries.box} scale={[0.24, 0.32, 0.005]}>
-              <meshStandardMaterial color="#ffffff" roughness={0.2} />
-            </mesh>
-            {/* Real Product Image on Carton */}
+            {/* Real Product Image on Carton Face (Clean front surface, no depth-fighting) */}
             <ProductSmallImage
               url={packagingUrl}
               position={[0, 0.18, 0.096]}
-              scale={[0.23, 0.30]}
+              scale={[0.25, 0.34]}
             />
             {/* Top Fold Seal Flap */}
             <mesh position={[0, 0.363, 0]} geometry={sharedGeometries.box} scale={[0.23, 0.008, 0.14]}>
@@ -429,8 +441,8 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslTe
             metalness={0.2}
           />
         </mesh>
-        {/* Digital E-Ink Display Face */}
-        <mesh position={[0, 0, 0.011]} geometry={sharedGeometries.plane} scale={[0.30, 0.10, 1]}>
+        {/* High-Resolution Digital E-Ink Display Face */}
+        <mesh position={[0, 0, 0.012]} geometry={sharedGeometries.plane} scale={[0.30, 0.10, 1]}>
           <meshBasicMaterial map={eslTexture} toneMapped={false} />
         </mesh>
       </group>

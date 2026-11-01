@@ -72,7 +72,7 @@ export const SupermarketScene: React.FC = () => {
   return (
     <div className="w-full h-full relative select-none">
       <Canvas
-        dpr={1}
+        dpr={[1, 2]}
         camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
         gl={{
           antialias: true,
@@ -80,11 +80,10 @@ export const SupermarketScene: React.FC = () => {
           powerPreference: 'high-performance',
           stencil: false,
           depth: true,
-          precision: 'mediump',
         }}
       >
         <color attach="background" args={['#0f172a']} />
-        <fog attach="fog" args={['#0f172a', 40, 75]} />
+        <fog attach="fog" args={['#0f172a', 55, 120]} />
 
         {/* --- High-Efficiency Commercial Retail Global Illumination (Silky 60+ FPS on all devices) --- */}
         <ambientLight intensity={1.3} />
