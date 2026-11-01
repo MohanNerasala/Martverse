@@ -595,24 +595,24 @@ export default function CheckoutPage() {
       <div className="fixed top-0 right-1/4 w-[450px] h-[450px] bg-blue-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="fixed bottom-0 left-1/4 w-[450px] h-[450px] bg-indigo-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      {/* --- Top Glassy Luxury Executive Header (Glassmorphic Hero Navbar) --- */}
-      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-8 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+      {/* --- Top Glassy Luxury White Executive Header (Matches Main Supermarket HUD) --- */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-2xl border-b border-slate-200/90 px-4 sm:px-8 py-3 shadow-[0_4px_25px_rgba(15,23,42,0.06)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 text-white flex items-center justify-center shadow-[0_0_20px_rgba(56,189,248,0.45)] border border-white/20 flex-shrink-0 transform hover:scale-105 transition-transform">
-              <Store className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 border border-white/60 flex-shrink-0 transform hover:scale-105 transition-transform">
+              <Store className="w-5 h-5 text-white stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base tracking-tight font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-200 to-white font-sans drop-shadow-sm">
-                  MARTVERSE EXPRESS CHECKOUT
+                <h1 className="text-sm sm:text-base tracking-tight font-black uppercase text-slate-900 font-sans">
+                  MART<span className="text-blue-600">VERSE</span> EXPRESS CHECKOUT
                 </h1>
-                <span className="text-[10px] bg-sky-950/90 border border-sky-400/50 text-sky-300 font-extrabold px-2.5 py-0.5 rounded-full font-mono shadow-[0_0_12px_rgba(56,189,248,0.35)] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                <span className="text-[10px] bg-blue-50 border border-blue-200/90 text-blue-700 font-extrabold px-2.5 py-0.5 rounded-full font-mono shadow-2xs flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
                   LANE 02
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 font-medium leading-none mt-1">
+              <p className="text-[11px] text-slate-500 font-medium leading-none mt-1">
                 Official In-Store Express Checkout & Invoice
               </p>
             </div>
@@ -622,9 +622,9 @@ export default function CheckoutPage() {
             type="button"
             onClick={() => router.push('/')}
             title="Return to Supermarket Aisle"
-            className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-2 transition-all duration-200 cursor-pointer active:scale-95 border border-white/15 hover:border-white/30 backdrop-blur-md shadow-sm"
+            className="px-3.5 py-2 rounded-xl bg-slate-100/90 hover:bg-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold flex items-center gap-2 transition-all duration-200 cursor-pointer active:scale-95 border border-slate-200 hover:border-slate-300 shadow-2xs"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-sky-300" />
+            <RotateCcw className="w-3.5 h-3.5 text-blue-600" />
             <span>Back to Store</span>
           </button>
         </div>
