@@ -155,6 +155,7 @@ interface ShelfSlotItemProps {
     key: string;
     product: Product;
     side: 'LEFT' | 'RIGHT';
+    tier?: number;
     blockIdx: number;
     slotIdx: number;
     relX: number;
@@ -489,10 +490,21 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   }, [isFloorActive, hoveredSlotKey]);
 
   const aisleProducts = useMemo(() => {
-    return products.filter(
-      (p) => p.placement && p.placement.aisleNumber === aisle.aisleNumber
+    const floorNum = floorYOffset > 2 ? 2 : 1;
+    const directMatches = products.filter(
+      (p) => (p.placement && p.placement.aisleNumber === aisle.aisleNumber) ||
+             (p.category && p.category.name && aisle.categoryName && p.category.name.toLowerCase() === aisle.categoryName.toLowerCase()) ||
+             (p.placement && p.placement.aisleCategory && aisle.categoryName && p.placement.aisleCategory.toLowerCase() === aisle.categoryName.toLowerCase())
     );
-  }, [products, aisle.aisleNumber]);
+    if (directMatches.length > 0) return directMatches;
+
+    // Fallback to active floor products so shelves never stand empty if backend is online
+    const floorProducts = products.filter((p) => {
+      const pFloor = p.placement?.floorNumber ?? 1;
+      return pFloor === floorNum;
+    });
+    return floorProducts.length > 0 ? floorProducts : products;
+  }, [products, aisle.aisleNumber, aisle.categoryName, floorYOffset]);
 
   const length = Math.abs(aisle.endZ - aisle.startZ);
   const centerX = (aisle.startX + aisle.endX) / 2;
@@ -518,10 +530,20 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   // Offsets from block center: -1.15m, 0m, +1.15m (0.85m margin to the poles on either side)
   const itemOffsets = [-1.15, 0, 1.15];
 
-  // Height for products sitting directly on the middle shelf tier (tier 2 at height 1.3m)
-  const shelfTierY = 1.3 - aisle.shelfHeight / 2 + 0.02;
+  // ─────────────────────────────────────────────────────────────
+  // 3 SHELF TIERS:
+  // Tier 1 (Down side / Bottom Plank): 0.5m
+  // Tier 2 (Middle Plank): 1.3m
+  // Tier 3 (Upper side / Top Plank): 2.1m
+  // Matches the physical planks rendered at [0.5, 1.3, 2.1]
+  // ─────────────────────────────────────────────────────────────
+  const SHELF_TIERS = useMemo(() => [
+    { tier: 1, height: 0.5 },
+    { tier: 2, height: 1.3 },
+    { tier: 3, height: 2.1 },
+  ], []);
 
-  // Generate 6 blocks x 3 items = 18 item display positions for both LEFT and RIGHT shelf faces
+  // Generate 6 blocks x 3 items x 3 tiers = 54 items per side (108 items total per aisle)
   const displaySlots = useMemo(() => {
     if (!aisleProducts || aisleProducts.length === 0) return [];
 
@@ -529,6 +551,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
       key: string;
       product: Product;
       side: 'LEFT' | 'RIGHT';
+      tier: number;
       blockIdx: number;
       slotIdx: number;
       relX: number;
@@ -546,77 +569,83 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
     ];
 
     sides.forEach((s) => {
-      for (let b = 0; b < BLOCK_COUNT; b++) {
-        for (let k = 0; k < 3; k++) {
-          const zRel = blockCenters[b] + itemOffsets[k];
-          // Cycle through aisleProducts evenly so each block has 3 distinct, beautiful items
-          const prodIdx = (b * 3 + k + (s.side === 'RIGHT' ? 2 : 0)) % aisleProducts.length;
-          const product = aisleProducts[prodIdx];
+      SHELF_TIERS.forEach((tierInfo, tIdx) => {
+        const shelfTierY = tierInfo.height - aisle.shelfHeight / 2 + 0.02;
 
-          const slotWorldX = centerX + s.relX;
-          const slotWorldY = centerY + shelfTierY;
-          const slotWorldZ = centerZ + zRel;
+        for (let b = 0; b < BLOCK_COUNT; b++) {
+          for (let k = 0; k < 3; k++) {
+            const zRel = blockCenters[b] + itemOffsets[k];
+            // Cycle through aisleProducts evenly across tiers, blocks and sides so every shelf tier is vibrant
+            const prodIdx = (tIdx * 18 + b * 3 + k + (s.side === 'RIGHT' ? 2 : 0)) % aisleProducts.length;
+            const product = aisleProducts[prodIdx];
 
-          // Attach exact physical 3D world placement for this slot so add-to-trolley flies directly from here
-          const slotPlacement: ProductPlacement = product.placement
-            ? {
-                ...product.placement,
-                worldX: slotWorldX,
-                worldY: slotWorldY,
-                worldZ: slotWorldZ,
-                floorNumber: floorYOffset > 2 ? 2 : 1,
-                aisleNumber: aisle.aisleNumber,
-                aisleName: aisle.name,
-                shelfSide: s.side,
-              }
-            : {
-                id: `place-${product.id}-${b}-${k}`,
-                productId: product.id,
-                productName: product.name,
-                productSlug: product.slug,
-                productPrice: product.price,
-                productMrp: product.mrp,
-                floorNumber: floorYOffset > 2 ? 2 : 1,
-                aisleId: aisle.id,
-                aisleNumber: aisle.aisleNumber,
-                aisleName: aisle.name,
-                aisleCategory: aisle.categoryName,
-                shelfSide: s.side,
-                shelfTier: 2,
-                shelfPosition: k + 1,
-                worldX: slotWorldX,
-                worldY: slotWorldY,
-                worldZ: slotWorldZ,
-                rotationY: s.rotationY,
-                color: '#3b82f6',
-                modelType: 'box',
-              };
+            const slotWorldX = centerX + s.relX;
+            const slotWorldY = centerY + shelfTierY;
+            const slotWorldZ = centerZ + zRel;
 
-          const slotProduct: Product = {
-            ...product,
-            placement: slotPlacement,
-          };
+            // Attach exact physical 3D world placement for this slot so add-to-trolley flies directly from here
+            const slotPlacement: ProductPlacement = product.placement
+              ? {
+                  ...product.placement,
+                  worldX: slotWorldX,
+                  worldY: slotWorldY,
+                  worldZ: slotWorldZ,
+                  floorNumber: floorYOffset > 2 ? 2 : 1,
+                  aisleNumber: aisle.aisleNumber,
+                  aisleName: aisle.name,
+                  shelfSide: s.side,
+                  shelfTier: tierInfo.tier,
+                }
+              : {
+                  id: `place-${product.id}-t${tierInfo.tier}-${b}-${k}`,
+                  productId: product.id,
+                  productName: product.name,
+                  productSlug: product.slug,
+                  productPrice: product.price,
+                  productMrp: product.mrp,
+                  floorNumber: floorYOffset > 2 ? 2 : 1,
+                  aisleId: aisle.id,
+                  aisleNumber: aisle.aisleNumber,
+                  aisleName: aisle.name,
+                  aisleCategory: aisle.categoryName,
+                  shelfSide: s.side,
+                  shelfTier: tierInfo.tier,
+                  shelfPosition: b * 3 + k + 1,
+                  worldX: slotWorldX,
+                  worldY: slotWorldY,
+                  worldZ: slotWorldZ,
+                  rotationY: s.rotationY,
+                  color: '#3b82f6',
+                  modelType: 'box',
+                };
 
-          slots.push({
-            key: `${s.side}-b${b}-s${k}-${product.id}`,
-            product: slotProduct,
-            side: s.side,
-            blockIdx: b,
-            slotIdx: k,
-            relX: s.relX,
-            relY: shelfTierY,
-            relZ: zRel,
-            worldX: slotWorldX,
-            worldY: slotWorldY,
-            worldZ: slotWorldZ,
-            rotationY: s.rotationY,
-          });
+            const slotProduct: Product = {
+              ...product,
+              placement: slotPlacement,
+            };
+
+            slots.push({
+              key: `${s.side}-t${tierInfo.tier}-b${b}-s${k}-${product.id}`,
+              product: slotProduct,
+              side: s.side,
+              tier: tierInfo.tier,
+              blockIdx: b,
+              slotIdx: k,
+              relX: s.relX,
+              relY: shelfTierY,
+              relZ: zRel,
+              worldX: slotWorldX,
+              worldY: slotWorldY,
+              worldZ: slotWorldZ,
+              rotationY: s.rotationY,
+            });
+          }
         }
-      }
+      });
     });
 
     return slots;
-  }, [aisleProducts, blockCenters, shelfTierY, centerX, centerY, centerZ, floorYOffset, aisle.aisleNumber, aisle.name]);
+  }, [aisleProducts, blockCenters, SHELF_TIERS, centerX, centerY, centerZ, floorYOffset, aisle.aisleNumber, aisle.name, aisle.shelfHeight, aisle.id, aisle.categoryName]);
 
   return (
     <group position={[centerX, centerY, centerZ]}>
