@@ -442,24 +442,6 @@ export const SupermarketHUD: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* Backend Offline Notice when no backend products are connected */}
-        {products.length === 0 && (
-          <div className="mt-2.5 p-3 rounded-2xl bg-slate-950/90 text-white backdrop-blur-2xl border border-amber-400/40 shadow-2xl flex items-center justify-between gap-3 text-xs animate-in slide-in-from-top-2">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping flex-shrink-0" />
-              <div>
-                <span className="font-extrabold text-amber-300">Backend Server Offline (Port 8080):</span>{' '}
-                <span className="text-slate-200">
-                  Products and trolley are locked until backend runs. Start Spring Boot in your terminal to load the catalog.
-                </span>
-              </div>
-            </div>
-            <span className="hidden sm:inline-block font-mono text-[11px] bg-white/10 text-amber-300 border border-amber-400/30 px-2.5 py-1 rounded-lg whitespace-nowrap">
-              mvn spring-boot:run
-            </span>
-          </div>
-        )}
       </header>
 
       {/* ============================================================== */}
