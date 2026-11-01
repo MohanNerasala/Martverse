@@ -27,13 +27,34 @@ const sharedTrolleyGeometries = {
   boxFaceplate: new THREE.BoxGeometry(0.11, 0.09, 0.004),
 };
 
+// Global material cache to completely eliminate WebGL shader compilations and GC pauses
+const trolleyMaterialCache = new Map<string, THREE.MeshStandardMaterial>();
+function getTrolleyMaterial(color: string, roughness = 0.3, metalness = 0.1): THREE.MeshStandardMaterial {
+  const key = `${color}_${roughness}_${metalness}`;
+  let mat = trolleyMaterialCache.get(key);
+  if (!mat) {
+    mat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(color),
+      roughness,
+      metalness,
+    });
+    trolleyMaterialCache.set(key, mat);
+  }
+  return mat;
+}
+const sharedWhiteCapMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3 });
+const sharedWhiteLabelMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+
+// Maximum visible 3D items displayed inside the basket (Neat, clean 3x4 layout that never overflows or lags)
+const MAX_BASKET_DISPLAY_ITEMS = 12;
+
 const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item, index }) => {
+  // Clean 3x4 grid inside the shopping cart: 3 columns across X, 4 rows across Z
   const col = index % 3;
-  const row = Math.floor(index / 3) % 4;
-  const layer = Math.floor(index / 12);
-  const px = (col - 1) * 0.18 + Math.sin(index * 1.5) * 0.02;
-  const pz = (row - 1.5) * 0.18 + Math.cos(index * 1.5) * 0.02;
-  const py = 0.06 + layer * 0.1;
+  const row = Math.floor(index / 3);
+  const px = (col - 1) * 0.19;
+  const pz = (row - 1.5) * 0.19;
+  const py = 0.05;
 
   const isBottle = item.modelType === 'bottle' || /oil|shampoo|liquid|wash|dishwash/i.test(item.productName);
   const isClothing = item.modelType === 'shirt' || item.modelType === 'hanger' || /shirt|polo|kurta|saree|dress|jeans|apparel/i.test(item.productName) || !!item.size;
@@ -50,70 +71,50 @@ const TrolleyProductItem = React.memo<{ item: CartItem; index: number }>(({ item
     ? '#fbbf24'
     : '#34d399');
 
+  const mainMat = getTrolleyMaterial(color);
+
   if (isChocolate) {
     return (
-      <group position={[px, py - 0.02, pz]} rotation={[0.04, index * 0.4, -0.02]}>
-        <mesh geometry={sharedTrolleyGeometries.boxChocolate}>
-          <meshStandardMaterial color={color} roughness={0.25} metalness={0.15} />
-        </mesh>
-        <mesh position={[-0.082, 0, 0]} geometry={sharedTrolleyGeometries.boxChocolateEdge}>
-          <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
-        </mesh>
-        <mesh position={[0.082, 0, 0]} geometry={sharedTrolleyGeometries.boxChocolateEdge}>
-          <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
-        </mesh>
+      <group position={[px, py - 0.02, pz]} rotation={[0.04, (index * 0.35) % 0.6 - 0.3, -0.02]}>
+        <mesh geometry={sharedTrolleyGeometries.boxChocolate} material={mainMat} />
+        <mesh position={[-0.082, 0, 0]} geometry={sharedTrolleyGeometries.boxChocolateEdge} material={getTrolleyMaterial(color, 0.4, 0.2)} />
+        <mesh position={[0.082, 0, 0]} geometry={sharedTrolleyGeometries.boxChocolateEdge} material={getTrolleyMaterial(color, 0.4, 0.2)} />
       </group>
     );
   }
 
   if (isBottle) {
     return (
-      <group position={[px, py + 0.04, pz]} rotation={[0.08, index * 0.5, 0.04]}>
+      <group position={[px, py + 0.04, pz]} rotation={[0.06, (index * 0.4) % 0.8 - 0.4, 0.04]}>
         {/* Solid Realistic Product Bottle */}
-        <mesh geometry={sharedTrolleyGeometries.cylBottleBody}>
-          <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
-        </mesh>
+        <mesh geometry={sharedTrolleyGeometries.cylBottleBody} material={mainMat} />
         {/* Tapered Shoulder */}
-        <mesh position={[0, 0.085, 0]} geometry={sharedTrolleyGeometries.cylBottleShoulder}>
-          <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
-        </mesh>
+        <mesh position={[0, 0.085, 0]} geometry={sharedTrolleyGeometries.cylBottleShoulder} material={mainMat} />
         {/* White Bottle Cap */}
-        <mesh position={[0, 0.11, 0]} geometry={sharedTrolleyGeometries.cylBottleCap}>
-          <meshStandardMaterial color="#ffffff" roughness={0.3} />
-        </mesh>
+        <mesh position={[0, 0.11, 0]} geometry={sharedTrolleyGeometries.cylBottleCap} material={sharedWhiteCapMat} />
         {/* Printed Label */}
-        <mesh position={[0, 0.01, 0]} geometry={sharedTrolleyGeometries.cylBottleLabel}>
-          <meshStandardMaterial color="#ffffff" roughness={0.4} />
-        </mesh>
+        <mesh position={[0, 0.01, 0]} geometry={sharedTrolleyGeometries.cylBottleLabel} material={sharedWhiteCapMat} />
       </group>
     );
   }
 
   if (isClothing) {
     return (
-      <group position={[px, py, pz]} rotation={[0, index * 0.3, 0]}>
+      <group position={[px, py, pz]} rotation={[0, (index * 0.3) % 0.6 - 0.3, 0]}>
         {/* Folded garment */}
-        <mesh geometry={sharedTrolleyGeometries.boxGarment}>
-          <meshStandardMaterial color={color} roughness={0.8} />
-        </mesh>
+        <mesh geometry={sharedTrolleyGeometries.boxGarment} material={getTrolleyMaterial(color, 0.8, 0)} />
         {/* Crisp Collar Seam */}
-        <mesh position={[0, 0.028, 0]} geometry={sharedTrolleyGeometries.boxCollar}>
-          <meshStandardMaterial color="#ffffff" roughness={0.4} />
-        </mesh>
+        <mesh position={[0, 0.028, 0]} geometry={sharedTrolleyGeometries.boxCollar} material={sharedWhiteCapMat} />
       </group>
     );
   }
 
   // Grocery Box / Carton (Atta, Biscuits, Cereal, Chocolate, etc.)
   return (
-    <group position={[px, py + 0.02, pz]} rotation={[0, index * 0.4, index % 2 === 0 ? 0.05 : -0.05]}>
-      <mesh geometry={sharedTrolleyGeometries.boxCarton}>
-        <meshStandardMaterial color={color} roughness={0.3} metalness={0.08} />
-      </mesh>
+    <group position={[px, py + 0.02, pz]} rotation={[0, (index * 0.3) % 0.5 - 0.25, index % 2 === 0 ? 0.04 : -0.04]}>
+      <mesh geometry={sharedTrolleyGeometries.boxCarton} material={mainMat} />
       {/* Front Faceplate */}
-      <mesh position={[0, 0, 0.048]} geometry={sharedTrolleyGeometries.boxFaceplate}>
-        <meshBasicMaterial color="#ffffff" />
-      </mesh>
+      <mesh position={[0, 0, 0.048]} geometry={sharedTrolleyGeometries.boxFaceplate} material={sharedWhiteLabelMat} />
     </group>
   );
 });
@@ -256,16 +257,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
       currentYaw.current = actualYaw;
     }
 
-    // Check if an incoming 3D item is landing to trigger physical suspension compression bump (zero React re-render)
-    const currentFlies = useCartStore.getState().flyAnimations;
-    const isLanding = currentFlies.some((a) => {
-      const elapsed = Date.now() - a.createdAt;
-      const d = a.duration || 1100;
-      return elapsed > d * 0.75 && elapsed < d * 0.98;
-    });
-
-    if (isLanding) {
-      basketBump.current = 0.04;
+    // Responsive suspension bump when items are added to basket (Zero GC / zero slow searches)
+    if (useCartStore.getState().flyAnimations.length > 0) {
+      basketBump.current = 0.035;
     }
     basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 12, delta);
 
@@ -320,8 +314,20 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
   const billingPhase = useBillingStore((state) => state.phase);
   const transferredToBenchCount = useBillingStore((state) => state.transferredToBenchCount);
 
-  // Flatten items by exact quantity to match unit-by-unit conveyor scanning
-  const displayItems = items.flatMap((it) => Array(it.quantity).fill(it));
+  // Memoize displayed items up to 12 max to prevent performance degradation with large carts
+  const displayItems = React.useMemo(() => {
+    const list: CartItem[] = [];
+    for (const it of items) {
+      const q = it.quantity || 1;
+      for (let i = 0; i < q; i++) {
+        list.push(it);
+        if (list.length >= MAX_BASKET_DISPLAY_ITEMS) break;
+      }
+      if (list.length >= MAX_BASKET_DISPLAY_ITEMS) break;
+    }
+    return list;
+  }, [items]);
+
   const itemsInBasket = billingPhase === 'scanning'
     ? displayItems.slice(Math.min(displayItems.length, transferredToBenchCount))
     : (['review', 'checkout_details', 'processing', 'success_popup'].includes(billingPhase)
@@ -329,7 +335,7 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
       : displayItems);
 
   return (
-    <group ref={trolleyRef} scale={[1.18, 1.18, 1.18]}>
+    <group ref={trolleyRef} scale={[1.18, 1.18, 1.18]} raycast={() => null}>
       {/* --- Trolley Base Chassis (Pearl White Ceramic with Neon Cyan Glow Perimeter - Zero ground glow puddle) --- */}
       <mesh position={[0, 0.15, 0]}>
         <boxGeometry args={[0.7, 0.05, 1.0]} />

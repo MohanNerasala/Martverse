@@ -10,12 +10,9 @@ interface ExitGateProps {
 }
 
 export const ExitGate3D: React.FC<ExitGateProps> = ({ position }) => {
-  const isPaid = useCartStore((state) => state.isPaid);
-  const items = useCartStore((state) => state.items);
+  const canExit = useCartStore((state) => state.items.length === 0 || state.isPaid);
   const leftWingRef = useRef<THREE.Mesh>(null);
   const rightWingRef = useRef<THREE.Mesh>(null);
-
-  const canExit = items.length === 0 || isPaid;
 
   useFrame((_, delta) => {
     // Smooth gate swing/slide open if allowed
