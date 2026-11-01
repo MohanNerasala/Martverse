@@ -58,6 +58,7 @@ interface MartStore {
   teleportTrigger: number;
   teleportTo: (pos: [number, number, number], yaw?: number) => void;
   navigateToProduct: (product: Product) => void;
+  hydrateProductsFromCache: () => void;
 }
 
 export const martRuntime = {
@@ -72,22 +73,9 @@ export const martRuntime = {
   },
 };
 
-function getInitialProducts(): Product[] {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem('martverse_products_cache');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-  }
-  return [];
-}
-
 export const useMartStore = create<MartStore>((set) => ({
   floors: MOCK_FLOORS,
-  products: getInitialProducts(), // Instant 0ms load from persistent cache if available
+  products: [], // Pure empty array initially to guarantee 100% server/client HTML hydration match
   activeFloor: 1,
   playerPos: [0, 1.5, -20], // Spawn at Entrance
   playerYaw: 0,
@@ -111,6 +99,20 @@ export const useMartStore = create<MartStore>((set) => ({
   toast: null,
 
   setHasMovedTrolley: (hasMovedTrolley) => set({ hasMovedTrolley }),
+
+  hydrateProductsFromCache: () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('martverse_products_cache');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            set({ products: parsed });
+          }
+        }
+      } catch {}
+    }
+  },
 
   setFloors: (floors) => set({ floors }),
   setProducts: (products) => {

@@ -79,8 +79,15 @@ export const SupermarketHUD: React.FC = () => {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const hydrateProductsFromCache = useMartStore((state) => state.hydrateProductsFromCache);
+
+  useEffect(() => {
+    setIsMounted(true);
+    hydrateProductsFromCache();
+  }, [hydrateProductsFromCache]);
 
   // Filter products by starting letters or word-start in name/brand only
   const filteredProducts = useMemo(() => {
@@ -167,7 +174,12 @@ export const SupermarketHUD: React.FC = () => {
                 <span className="font-black tracking-tight text-sm sm:text-base leading-none bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
                   MARTVERSE
                 </span>
-                {products.length > 0 ? (
+                {!isMounted ? (
+                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-slate-50 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200/90 shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-pulse" />
+                    CONNECTING...
+                  </span>
+                ) : products.length > 0 ? (
                   <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200/90 shadow-xs">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
