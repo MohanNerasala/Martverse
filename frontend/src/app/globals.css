@@ -128,6 +128,23 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
 }
 
+/* Light theme smooth scrollbar for modals & cart drawer */
+.light-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.light-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+.light-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+.light-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 /* Specular Button Highlights */
 .btn-shine {
   position: relative;
