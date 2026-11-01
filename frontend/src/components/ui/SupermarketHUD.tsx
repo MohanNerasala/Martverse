@@ -167,13 +167,20 @@ export const SupermarketHUD: React.FC = () => {
                 <span className="font-black tracking-tight text-sm sm:text-base leading-none bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
                   MARTVERSE
                 </span>
-                <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded-full border border-sky-200/90 shadow-xs">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500" />
+                {products.length > 0 ? (
+                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200/90 shadow-xs">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                    </span>
+                    BACKEND ONLINE ({products.length})
                   </span>
-                  3D LIVE
-                </span>
+                ) : (
+                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-rose-50 text-rose-700 font-bold px-2 py-0.5 rounded-full border border-rose-200/90 shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    BACKEND OFFLINE (:8080)
+                  </span>
+                )}
               </div>
               <p className="text-[9px] sm:text-[10px] text-sky-600/80 font-bold hidden xs:block leading-tight mt-0.5 tracking-wide">
                 Virtual Hypermarket
@@ -435,6 +442,24 @@ export const SupermarketHUD: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Backend Offline Notice when no backend products are connected */}
+        {products.length === 0 && (
+          <div className="mt-2.5 p-3 rounded-2xl bg-slate-950/90 text-white backdrop-blur-2xl border border-amber-400/40 shadow-2xl flex items-center justify-between gap-3 text-xs animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping flex-shrink-0" />
+              <div>
+                <span className="font-extrabold text-amber-300">Backend Server Offline (Port 8080):</span>{' '}
+                <span className="text-slate-200">
+                  Products and trolley are locked until backend runs. Start Spring Boot in your terminal to load the catalog.
+                </span>
+              </div>
+            </div>
+            <span className="hidden sm:inline-block font-mono text-[11px] bg-white/10 text-amber-300 border border-amber-400/30 px-2.5 py-1 rounded-lg whitespace-nowrap">
+              mvn spring-boot:run
+            </span>
+          </div>
+        )}
       </header>
 
       {/* ============================================================== */}

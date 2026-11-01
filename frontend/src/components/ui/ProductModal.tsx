@@ -47,7 +47,7 @@ export const ProductModal: React.FC = () => {
   const activeMrp = currentVariant?.mrp || selectedProduct.mrp;
   const savings = activeMrp - activePrice;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     // Auth Gate: Only logged in users can add items to cart
     if (!isAuthenticated) {
       showToast(
@@ -80,17 +80,10 @@ export const ProductModal: React.FC = () => {
       ];
     }
 
-    addItem(selectedProduct, quantity, currentVariant || undefined, startPos);
-
-    const variantDesc = currentVariant?.size ? ` (${currentVariant.size})` : '';
-    showToast(
-      'Added to Trolley!',
-      `${quantity}x ${selectedProduct.name}${variantDesc} • ₹${(activePrice * quantity).toLocaleString('en-IN')}`,
-      'success',
-      selectedProduct.imageUrl
-    );
-
-    closeProductModal();
+    const added = await addItem(selectedProduct, quantity, currentVariant || undefined, startPos);
+    if (added) {
+      closeProductModal();
+    }
   };
 
   return (

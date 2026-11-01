@@ -18,21 +18,31 @@ export const SupermarketScene: React.FC = () => {
   const setFloors = useMartStore((state) => state.setFloors);
   const setProducts = useMartStore((state) => state.setProducts);
 
-  // Fetch live layout and products from backend on mount
+  // Fetch live layout and products from backend on mount and poll for backend reconnection
   useEffect(() => {
+    let isCancelled = false;
     async function loadData() {
       try {
         const [floorsData, productsData] = await Promise.all([
           api.getFloors(),
           api.getProducts(),
         ]);
-        if (floorsData && floorsData.length > 0) setFloors(floorsData);
-        if (productsData && productsData.length > 0) setProducts(productsData);
+        if (!isCancelled) {
+          if (floorsData && floorsData.length > 0) setFloors(floorsData);
+          setProducts(productsData || []);
+        }
       } catch {
-        // Fallback silently
+        if (!isCancelled) setProducts([]);
       }
     }
     loadData();
+
+    // Check backend connection every 4s so starting backend in terminal populates shelves immediately
+    const timer = setInterval(loadData, 4000);
+    return () => {
+      isCancelled = true;
+      clearInterval(timer);
+    };
   }, [setFloors, setProducts]);
 
   const groundFloor = floors.find((f) => f.floorNumber === 1);

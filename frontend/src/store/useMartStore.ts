@@ -74,7 +74,7 @@ export const martRuntime = {
 
 export const useMartStore = create<MartStore>((set) => ({
   floors: MOCK_FLOORS,
-  products: MOCK_PRODUCTS,
+  products: [], // Starts empty — real collection loaded from Spring Boot backend on port 8080
   activeFloor: 1,
   playerPos: [0, 1.5, -20], // Spawn at Entrance
   playerYaw: 0,

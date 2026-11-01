@@ -68,25 +68,62 @@ export const api = {
     return fetchWithFallback<SupermarketFloor[]>('/layout/floors', { method: 'GET' }, MOCK_FLOORS);
   },
 
-  async getProducts(): Promise<Product[]> {
-    if (isBackendOffline) return MOCK_PRODUCTS;
+  async checkBackendHealth(): Promise<boolean> {
     try {
-      const raw = await fetchWithFallback<any>('/products/all', { method: 'GET' }, null);
-      if (Array.isArray(raw) && raw.length > 0) return raw;
-      if (raw && Array.isArray(raw.content) && raw.content.length > 0) return raw.content;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 600);
+      const res = await fetch(`${API_BASE}/products/all`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
 
-      if (!isBackendOffline) {
-        const paged = await fetchWithFallback<any>('/products?size=100', { method: 'GET' }, null);
-        if (Array.isArray(paged) && paged.length > 0) return paged;
-        if (paged && Array.isArray(paged.content) && paged.content.length > 0) return paged.content;
+  async getProducts(): Promise<Product[]> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
+      const res = await fetch(`${API_BASE}/products/all`, {
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const json = await res.json();
+        const data = json.data !== undefined ? json.data : json;
+        if (Array.isArray(data) && data.length > 0) return data;
+        if (data && Array.isArray(data.content) && data.content.length > 0) return data.content;
       }
-    } catch {}
-    return MOCK_PRODUCTS;
+
+      const paged = await fetch(`${API_BASE}/products?size=100`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (paged.ok) {
+        const json = await paged.json();
+        const data = json.data !== undefined ? json.data : json;
+        if (Array.isArray(data) && data.length > 0) return data;
+        if (data && Array.isArray(data.content) && data.content.length > 0) return data.content;
+      }
+    } catch {
+      // Backend is offline: return empty array so shelves don't show fake items!
+      return [];
+    }
+    return [];
   },
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {
-    const fallback = MOCK_PRODUCTS.find(p => p.slug === slug);
-    return fetchWithFallback<Product | undefined>(`/products/${slug}`, { method: 'GET' }, fallback);
+    try {
+      const res = await fetch(`${API_BASE}/products/${slug}`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json.data !== undefined ? json.data : json;
+      }
+    } catch {}
+    return undefined;
   },
 
   // Cart API
@@ -101,24 +138,57 @@ export const api = {
       freeDeliveryThreshold: 499,
       deliveryCharge: 0,
     };
-    return fetchWithFallback<Cart>('/cart', { method: 'GET' }, emptyCart);
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Session-Id': getSessionId(),
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/cart`, { method: 'GET', headers });
+      if (res.ok) {
+        const json = await res.json();
+        return json.data !== undefined ? json.data : json;
+      }
+    } catch {}
+    return emptyCart;
   },
 
-  async addToCart(productId: string, quantity: number = 1, variantId?: string): Promise<Cart> {
-    const emptyCart: Cart = {
-      id: 'local-cart',
-      items: [],
-      totalItems: quantity,
-      subtotal: 0,
-      discountTotal: 0,
-      totalAmount: 0,
-      freeDeliveryThreshold: 499,
-      deliveryCharge: 0,
-    };
-    return fetchWithFallback<Cart>('/cart/items', {
-      method: 'POST',
-      body: JSON.stringify({ productId, quantity, variantId }),
-    }, emptyCart);
+  async addToCart(
+    productId: string,
+    quantity: number = 1,
+    variantId?: string
+  ): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Session-Id': getSessionId(),
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${API_BASE}/cart/items`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ productId, quantity, variantId }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        return {
+          success: false,
+          error: errJson?.message || `Backend cart error (status ${res.status})`,
+        };
+      }
+
+      const json = await res.json();
+      return { success: true, data: json.data !== undefined ? json.data : json };
+    } catch {
+      return {
+        success: false,
+        error: 'Backend is offline on port 8080. Start the backend in terminal to add items to cart.',
+      };
+    }
   },
 
   // Authoritative Backend Cart Revalidation (calculates authoritative totals & verifies stock)

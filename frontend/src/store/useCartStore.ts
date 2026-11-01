@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Product, ProductVariant, CartItem } from '@/types';
 import { sounds } from '@/lib/sound';
 import { useMartStore } from './useMartStore';
+import { api } from '@/lib/api';
 
 export interface FlyAnimation {
   id: string;
@@ -24,7 +25,7 @@ interface CartStore {
   flyAnimations: FlyAnimation[];
   
   toggleCart: (open?: boolean) => void;
-  addItem: (product: Product, quantity?: number, variant?: ProductVariant, startPos?: [number, number, number]) => void;
+  addItem: (product: Product, quantity?: number, variant?: ProductVariant, startPos?: [number, number, number]) => Promise<boolean>;
   updateQuantity: (itemId: string, quantity: number) => void;
   removeItem: (itemId: string) => void;
   clearCart: () => void;
@@ -46,7 +47,18 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set((state) => ({ isCartOpen: open !== undefined ? open : !state.isCartOpen }));
   },
 
-  addItem: (product, quantity = 1, variant, customStartPos) => {
+  addItem: async (product, quantity = 1, variant, customStartPos) => {
+    // 1. Strictly verify backend is running on port 8080 before modifying trolley
+    const backendRes = await api.addToCart(product.id, quantity, variant?.id);
+    if (!backendRes.success) {
+      useMartStore.getState().showToast(
+        'Backend Server Offline',
+        backendRes.error || 'Cannot add to trolley. Please run Spring Boot backend on port 8080 in your terminal.',
+        'warning'
+      );
+      return false;
+    }
+
     sounds.playPickSound();
     
     // Determine realistic 3D world start position: custom -> shelf placement -> player hand
@@ -129,6 +141,13 @@ export const useCartStore = create<CartStore>((set, get) => ({
           isPaid: false, // Adding new items resets paid status
         };
       });
+
+      useMartStore.getState().showToast(
+        'Added to Trolley',
+        `${product.name} (Qty: ${quantity}) saved to backend`,
+        'success',
+        product.imageUrl
+      );
     };
 
     if (has3DCanvas) {
@@ -159,6 +178,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       sounds.playScanBeep();
       commitItemToCart();
     }
+    return true;
   },
 
   updateQuantity: (itemId, quantity) => {

@@ -230,10 +230,9 @@ export const BillingModal: React.FC = () => {
   // Redirect to dedicated standalone /checkout page when review or checkout phase begins
   useEffect(() => {
     if (phase === 'review' || phase === 'checkout_details' || phase === 'payment_methods') {
-      revalidateCartWithBackend('DELIVERY');
       router.push('/checkout');
     }
-  }, [phase, router, revalidateCartWithBackend]);
+  }, [phase, router]);
 
   // Trigger celebration confetti on payment success
   useEffect(() => {

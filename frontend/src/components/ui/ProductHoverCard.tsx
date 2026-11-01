@@ -32,7 +32,7 @@ export const ProductHoverCard: React.FC = () => {
   const packageSize = hoveredProduct.unit || 'Standard Pack';
   const categoryName = hoveredProduct.category?.name || 'Sweets & Confectionery';
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
       showToast(
@@ -53,13 +53,7 @@ export const ProductHoverCard: React.FC = () => {
       ];
     }
 
-    addItem(hoveredProduct, 1, undefined, startPos);
-    showToast(
-      'Added to Trolley!',
-      `1x ${hoveredProduct.name} • ₹${activePrice}`,
-      'success',
-      hoveredProduct.imageUrl || '/products/fallback.svg'
-    );
+    await addItem(hoveredProduct, 1, undefined, startPos);
   };
 
   return (
