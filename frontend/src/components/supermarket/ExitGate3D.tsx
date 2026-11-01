@@ -20,19 +20,19 @@ export const ExitGate3D: React.FC<ExitGateProps> = ({ position }) => {
   useFrame((_, delta) => {
     // Smooth gate swing/slide open if allowed
     const targetAngle = canExit ? 1.2 : 0;
-    if (leftWingRef.current) {
+    if (leftWingRef.current && Math.abs(leftWingRef.current.rotation.y - targetAngle) > 0.002) {
       leftWingRef.current.rotation.y = THREE.MathUtils.damp(
         leftWingRef.current.rotation.y,
         targetAngle,
-        4,
+        6,
         delta
       );
     }
-    if (rightWingRef.current) {
+    if (rightWingRef.current && Math.abs(rightWingRef.current.rotation.y - (-targetAngle)) > 0.002) {
       rightWingRef.current.rotation.y = THREE.MathUtils.damp(
         rightWingRef.current.rotation.y,
         -targetAngle,
-        4,
+        6,
         delta
       );
     }

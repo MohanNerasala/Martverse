@@ -934,13 +934,16 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
           </mesh>
         </group>
 
-        {/* High-Intensity Red Scan Illumination Light */}
-        <pointLight
-          position={[0, 0.18, 0]}
-          color="#ef4444"
-          intensity={isScanning ? 2.8 : 0.5}
-          distance={1.4}
-        />
+        {/* High-Efficiency Red Laser Optical Glow Accent */}
+        <mesh position={[0, 0.08, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.015, 12]} />
+          <meshStandardMaterial
+            color="#ef4444"
+            emissive="#ef4444"
+            emissiveIntensity={isScanning ? 3.0 : 0.8}
+            roughness={0.1}
+          />
+        </mesh>
       </group>
 
       {/* ============================================================== */}
@@ -1378,13 +1381,16 @@ const SingleCheckoutCounter: React.FC<SingleCheckoutCounterProps> = ({
             LANE OPEN
           </Text>
 
-          {/* Clean Soft Neutral Work Downlight */}
-          <pointLight
-            position={[0, -0.18, 0]}
-            color="#ffffff"
-            intensity={isActiveDesk ? 0.9 : 0.3}
-            distance={2.2}
-          />
+          {/* Clean Luminous Work Downlight Strip */}
+          <mesh position={[0, -0.19, 0]}>
+            <boxGeometry args={[0.36, 0.016, 0.05]} />
+            <meshStandardMaterial
+              color="#ffffff"
+              emissive="#ffffff"
+              emissiveIntensity={isActiveDesk ? 1.2 : 0.4}
+              roughness={0.1}
+            />
+          </mesh>
         </group>
       </group>
     </group>

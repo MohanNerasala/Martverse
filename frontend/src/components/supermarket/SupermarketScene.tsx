@@ -41,36 +41,27 @@ export const SupermarketScene: React.FC = () => {
   return (
     <div className="w-full h-full relative select-none">
       <Canvas
-        shadows="percentage"
-        dpr={[1, 1.5]}
+        dpr={[1, 1.25]}
         camera={{ position: [0, 4, -24], fov: 60, near: 0.1, far: 140 }}
-        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false }}
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: 'high-performance',
+          stencil: false,
+          depth: true,
+        }}
       >
         <color attach="background" args={['#0f172a']} />
-        <fog attach="fog" args={['#0f172a', 35, 65]} />
+        <fog attach="fog" args={['#0f172a', 40, 75]} />
 
-        {/* --- Global Illumination (High-Efficiency, Uniform Crisp Store Lighting) --- */}
-        <ambientLight intensity={1.1} />
-        <hemisphereLight args={['#ffffff', '#475569', 0.85]} />
+        {/* --- High-Efficiency Commercial Retail Global Illumination (Silky 60+ FPS on all devices) --- */}
+        <ambientLight intensity={1.3} />
+        <hemisphereLight args={['#ffffff', '#64748b', 0.95]} />
 
-        {/* Main Sun Spotlight for soft depth shadows */}
-        <directionalLight
-          position={[10, 20, 10]}
-          intensity={1.2}
-          castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-          shadow-camera-far={60}
-          shadow-camera-left={-20}
-          shadow-camera-right={20}
-          shadow-camera-top={30}
-          shadow-camera-bottom={-30}
-          shadow-bias={-0.0003}
-        />
-
-        {/* High-Performance Balanced Ambient Fixture Lights (60 FPS Guaranteed) */}
-        <pointLight position={[0, 4.4, 0]} intensity={1.4} distance={36} decay={2.0} color="#ffffff" />
-        <pointLight position={[0, 9.4, 0]} intensity={1.4} distance={36} decay={2.0} color="#fef08a" />
+        {/* Primary Crisp Ceiling Retail Light (Zero shadow map overhead) */}
+        <directionalLight position={[12, 24, 8]} intensity={1.1} />
+        {/* Fill Retail Illumination */}
+        <directionalLight position={[-12, 20, -8]} intensity={0.65} />
 
         <Suspense fallback={null}>
           {/* Store Shell */}
