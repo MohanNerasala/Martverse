@@ -188,23 +188,11 @@ export const SupermarketHUD: React.FC = () => {
                 <span className="font-black tracking-tight text-sm sm:text-base leading-none bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
                   MARTVERSE
                 </span>
-                {!isMounted || isBackendOnline === null ? (
-                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-slate-50 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200/90 shadow-xs">
-                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-pulse" />
-                    CONNECTING...
-                  </span>
-                ) : isBackendOnline ? (
-                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200/90 shadow-xs">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-                    </span>
-                    BACKEND ONLINE ({products.length})
-                  </span>
-                ) : (
-                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200/90 shadow-xs">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    OFFLINE (CACHED {products.length})
+                {/* Status Badge: completely hidden when backend is online. Only shows in RED when backend is offline */}
+                {isMounted && isBackendOnline === false && (
+                  <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-rose-50 text-rose-700 font-bold px-2.5 py-0.5 rounded-full border border-rose-200/90 shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    BACKEND OFFLINE
                   </span>
                 )}
               </div>

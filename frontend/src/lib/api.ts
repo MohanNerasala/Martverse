@@ -84,10 +84,17 @@ export const api = {
   async checkBackendHealth(): Promise<boolean> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(`${API_BASE}/categories`, { signal: controller.signal });
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      let res: Response | null = null;
+      try {
+        res = await fetch(`${API_BASE}/categories`, { signal: controller.signal });
+      } catch {
+        if (typeof window !== 'undefined') {
+          res = await fetch('/api/categories', { signal: controller.signal }).catch(() => null);
+        }
+      }
       clearTimeout(timeoutId);
-      if (res.ok) {
+      if (res && res.ok) {
         isBackendOffline = false;
         return true;
       }
@@ -100,14 +107,24 @@ export const api = {
   async getProducts(): Promise<Product[]> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s generous window for remote DB
-      const res = await fetch(`${API_BASE}/products/all`, {
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-      });
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      let res: Response | null = null;
+      try {
+        res = await fetch(`${API_BASE}/products/all`, {
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+        });
+      } catch {
+        if (typeof window !== 'undefined') {
+          res = await fetch('/api/products/all', {
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+          }).catch(() => null);
+        }
+      }
       clearTimeout(timeoutId);
 
-      if (res.ok) {
+      if (res && res.ok) {
         const json = await res.json();
         const data = json.data !== undefined ? json.data : json;
         if (Array.isArray(data) && data.length > 0) {
@@ -122,10 +139,19 @@ export const api = {
         }
       }
 
-      const paged = await fetch(`${API_BASE}/products?size=100`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (paged.ok) {
+      let paged: Response | null = null;
+      try {
+        paged = await fetch(`${API_BASE}/products?size=100`, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch {
+        if (typeof window !== 'undefined') {
+          paged = await fetch('/api/products?size=100', {
+            headers: { 'Content-Type': 'application/json' },
+          }).catch(() => null);
+        }
+      }
+      if (paged && paged.ok) {
         const json = await paged.json();
         const data = json.data !== undefined ? json.data : json;
         if (Array.isArray(data) && data.length > 0) {
