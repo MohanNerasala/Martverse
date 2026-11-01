@@ -11,5 +11,6 @@ public enum DisplayType {
     HANGER,
     FOLDED,
     MANNEQUIN,
-    SHIRT
+    SHIRT,
+    CHOCOLATE
 }
