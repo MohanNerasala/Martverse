@@ -239,6 +239,12 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
       ScrollTrigger.refresh();
     }, 100);
 
+    // Mouse Wheel listener: forwards all wheel events directly to the scroll track
+    const handleWheel = (e: WheelEvent) => {
+      container.scrollTop += e.deltaY;
+    };
+    window.addEventListener('wheel', handleWheel, { passive: true });
+
     // Keyboard navigation: Down/Right/Space/PageDown advances, Up/Left/PageUp reverses, Esc skips
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -260,6 +266,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         cancelAnimationFrame(rafIdRef.current);
       }
       st.kill();
+      window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [renderFrame, triggerCompletion]);
@@ -284,6 +291,15 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
           <canvas
             ref={canvasRef}
             className="absolute inset-0 w-full h-full object-cover"
+          />
+
+          {/* Instant 0ms First-Frame Display (seamlessly hides once canvas is rendered) */}
+          <img
+            src="/frames/ezgif-frame-001.jpg"
+            alt="Supermarket Entrance Cinematic Intro"
+            className={`absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
+              isFirstFrameReady ? 'opacity-0' : 'opacity-100'
+            }`}
           />
 
           {/* Cinematic Letterbox Vignette Shadows */}

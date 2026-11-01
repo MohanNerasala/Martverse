@@ -62,27 +62,11 @@ export default function Home() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const forceIntro = params.get('intro') === 'true' || params.get('intro') === '1' || params.get('cinematic') === '1';
-
-      if (forceIntro) {
-        sessionStorage.removeItem('martverse_entered');
-        setHasEnteredStore(false);
-      } else if (sessionStorage.getItem('martverse_entered') === 'true') {
-        setHasEnteredStore(true);
-      }
+      // Clear entered store flag on fresh reload so the intro always plays first
+      sessionStorage.removeItem('martverse_entered');
+      setHasEnteredStore(false);
 
       useAuthStore.getState().hydrateAuth();
-
-      // Check if user is already authenticated; only prompt if store was already entered
-      const isAuth = useAuthStore.getState().isAuthenticated;
-      const hasSkipped = sessionStorage.getItem('martverse_login_skipped');
-      const alreadyEntered = sessionStorage.getItem('martverse_entered') === 'true' && !forceIntro;
-      if (!isAuth && !hasSkipped && alreadyEntered) {
-        setTimeout(() => {
-          useAuthStore.getState().openLoginModal();
-        }, 500);
-      }
 
       (window as any).__openProductModal = (prod?: any) => {
         const store = (window as any).__martStore || useMartStore.getState();
@@ -95,7 +79,9 @@ export default function Home() {
         setHasEnteredStore(false);
       };
 
+      const params = new URLSearchParams(window.location.search);
       if (params.get('checkout')) {
+        setHasEnteredStore(true);
         router.push('/checkout');
         return;
       }
