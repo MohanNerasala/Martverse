@@ -199,9 +199,9 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     const cartHalfW = 0.46;
     const cartHalfD = 0.58;
 
-    // 1. Store Outer Perimeter Walls Clamping
-    desiredX = THREE.MathUtils.clamp(desiredX, -17.0 + cartHalfW, 17.0 - cartHalfW);
-    desiredZ = THREE.MathUtils.clamp(desiredZ, -24.4 + cartHalfD, 24.4 - cartHalfD);
+    // 1. Store Outer Perimeter Walls Clamping (Harmonized with PlayerController)
+    desiredX = THREE.MathUtils.clamp(desiredX, -16.8, 16.8);
+    desiredZ = THREE.MathUtils.clamp(desiredZ, -24.2, 24.2);
 
     // 2. Strict Escalator lateral & side containment:
     // Escalator centerline is at x = 14.70.
@@ -237,8 +237,10 @@ export const TrolleyModel: React.FC<TrolleyProps> = ({ targetPos, targetYaw }) =
     }
     basketBump.current = THREE.MathUtils.damp(basketBump.current, 0, 12, delta);
 
-    // Instant zero-lag follow: Cart firmly locked to player hands at all times
-    currentPos.current.set(desiredX, desiredY - basketBump.current, desiredZ);
+    // Ultra-smooth zero-lag follow: Cart firmly locked to player hands with silky 75Hz interpolation
+    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, desiredX, 75, delta);
+    currentPos.current.y = desiredY - basketBump.current;
+    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, desiredZ, 75, delta);
 
     // Calculate forward motion direction relative to trolley heading
     const prevP = prevTrolleyPos.current;

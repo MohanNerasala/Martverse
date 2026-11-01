@@ -497,34 +497,51 @@ export const PlayerController: React.FC = () => {
         finishExitAnimation();
       }
     } else {
-      // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 75, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 75, delta);
+      const isLeft = keys.current.left || martRuntime.virtualKeys.left;
+      const isRight = keys.current.right || martRuntime.virtualKeys.right;
+      const isForward = keys.current.forward || martRuntime.virtualKeys.forward;
+      const isBackward = keys.current.backward || martRuntime.virtualKeys.backward;
 
-      const speed = 16.5; // Fast, responsive, ultra-smooth cruising speed with instant reaction
+      // Escalator yaw containment: prevent turning sideways on moving ramp
+      const onRamp =
+        Math.abs(posRef.current.x - 14.7) < 1.4 &&
+        posRef.current.z >= -9.0 &&
+        posRef.current.z <= 7.0;
+
+      if (!onRamp) {
+        // High-precision agile steering: smoothly rotates trolley and camera heading into the turn
+        const turnSpeed = (isForward || isBackward) ? 3.0 : 2.5; // rad/s (snappy, ultra-responsive)
+        if (isLeft) {
+          targetYawRef.current += turnSpeed * delta;
+        }
+        if (isRight) {
+          targetYawRef.current -= turnSpeed * delta;
+        }
+      }
+
+      // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation
+      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 65, delta);
+      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 65, delta);
+
       staticMoveVector.set(0, 0, 0);
 
-      // 1. Keyboard WASD & Arrow Keys — Full 8-direction continuous motion (Straight, Back, Left, Right, Cross)
-      if (keys.current.forward) staticMoveVector.z += 1;
-      if (keys.current.backward) staticMoveVector.z -= 1;
-      if (keys.current.left) staticMoveVector.x -= 1;
-      if (keys.current.right) staticMoveVector.x += 1;
+      // 1. Forward & Backward motion
+      if (isForward) staticMoveVector.z += 1;
+      if (isBackward) staticMoveVector.z -= 1;
 
-      // 2. On-Screen 4-Arrow Navigator (Virtual D-Pad)
-      if (martRuntime.virtualKeys.forward) staticMoveVector.z += 1;
-      if (martRuntime.virtualKeys.backward) staticMoveVector.z -= 1;
-      if (martRuntime.virtualKeys.left) staticMoveVector.x -= 1;
-      if (martRuntime.virtualKeys.right) staticMoveVector.x += 1;
+      // 2. Lateral side-step & quick lane adjustments (Left & Right)
+      if (isLeft) staticMoveVector.x -= 0.85;
+      if (isRight) staticMoveVector.x += 0.85;
 
       // 3. Two-Finger Trackpad / Mouse Scroll Momentum
       staticMoveVector.z += wheelMomentum.current.z;
       staticMoveVector.x += wheelMomentum.current.x;
 
       // Smoothly damp wheel momentum
-      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 16, delta);
-      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 16, delta);
+      wheelMomentum.current.z = THREE.MathUtils.damp(wheelMomentum.current.z, 0, 20, delta);
+      wheelMomentum.current.x = THREE.MathUtils.damp(wheelMomentum.current.x, 0, 20, delta);
 
-      const isMoving = staticMoveVector.lengthSq() > 0.001;
+      const isMoving = staticMoveVector.lengthSq() > 0.001 || isLeft || isRight;
       if (isMoving) {
         if (!hasMovedTrolley) {
           setHasMovedTrolley(true);
@@ -534,15 +551,19 @@ export const PlayerController: React.FC = () => {
         }
       }
 
+      // Dedicated forward and lateral agility speeds: fast traversal with fully controlled lane shifts
+      const forwardSpeed = 11.5;
+      const lateralSpeed = 8.5;
+
       // Camera-relative velocity projection:
       // Forward vector F = (sin(yaw), 0, cos(yaw))
       // Right vector R = (-cos(yaw), 0, sin(yaw))
       const sin = Math.sin(yawRef.current);
       const cos = Math.cos(yawRef.current);
-      const targetVelX = (-staticMoveVector.x * cos + staticMoveVector.z * sin) * speed;
-      const targetVelZ = (staticMoveVector.x * sin + staticMoveVector.z * cos) * speed;
+      const targetVelX = -staticMoveVector.x * cos * lateralSpeed + staticMoveVector.z * sin * forwardSpeed;
+      const targetVelZ = staticMoveVector.x * sin * lateralSpeed + staticMoveVector.z * cos * forwardSpeed;
 
-      const accelRate = isMoving ? 72 : 55;
+      const accelRate = isMoving ? 85 : 65; // Instant 1-frame acceleration, crisp butter-smooth stop
       velocityRef.current.x = THREE.MathUtils.damp(velocityRef.current.x, targetVelX, accelRate, delta);
       velocityRef.current.z = THREE.MathUtils.damp(velocityRef.current.z, targetVelZ, accelRate, delta);
 
@@ -573,11 +594,11 @@ export const PlayerController: React.FC = () => {
         let nextX = posRef.current.x + worldDX;
         let nextZ = posRef.current.z + worldDZ;
 
-        // 3-Sphere continuous capsule covering the entire trolley and player footprint
+        // 3-Sphere continuous capsule covering the entire trolley and player footprint (tapered nose for smooth cornering)
         const spheres = [
-          { dist: 1.15, radius: 0.42 }, // Front bumper and basket nose
-          { dist: 0.65, radius: 0.40 }, // Mid basket chassis and wheels
-          { dist: 0.05, radius: 0.28 }, // Rear handle and player body
+          { dist: 1.05, radius: 0.35 }, // Front bumper and basket nose (slender tapered nose glides around corners)
+          { dist: 0.60, radius: 0.38 }, // Mid basket chassis and wheels
+          { dist: 0.05, radius: 0.26 }, // Rear handle and player body
         ];
 
         for (let iter = 0; iter < 2; iter++) {
@@ -599,6 +620,17 @@ export const PlayerController: React.FC = () => {
                 if (vn < 0) {
                   velocityRef.current.x -= vn * res.normalX;
                   velocityRef.current.z -= vn * res.normalZ;
+
+                  // Corner-rounding slide assist: if hitting an obstacle corner, assist tangential gliding so it never gets stuck
+                  if (Math.abs(res.normalX) > 0.2 && Math.abs(res.normalZ) > 0.2 && isMoving) {
+                    const tangentX = -res.normalZ;
+                    const tangentZ = res.normalX;
+                    const vt = velocityRef.current.x * tangentX + velocityRef.current.z * tangentZ;
+                    if (Math.abs(vt) < 1.0) {
+                      velocityRef.current.x += tangentX * 1.2;
+                      velocityRef.current.z += tangentZ * 1.2;
+                    }
+                  }
                 }
               }
             }
