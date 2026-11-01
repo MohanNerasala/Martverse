@@ -32,6 +32,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
   const lastRenderedIndexRef = useRef<number>(-1);
   const isTransitioningRef = useRef<boolean>(false);
   const isComponentMounted = useRef<boolean>(true);
+  const rafIdRef = useRef<number | null>(null);
 
   // UI state
   const [loadedCount, setLoadedCount] = useState<number>(0);
@@ -48,7 +49,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     // Retrieve target frame or find nearest available loaded frame (guarantees zero blank frames)
     let img = imageCacheRef.current[frameIndex];
     if (!img || !img.complete) {
-      for (let offset = 1; offset < 35; offset++) {
+      for (let offset = 1; offset < TOTAL_FRAMES; offset++) {
         if (frameIndex - offset >= 0 && imageCacheRef.current[frameIndex - offset]?.complete) {
           img = imageCacheRef.current[frameIndex - offset];
           break;
@@ -79,6 +80,16 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     ctx.drawImage(img, 0, 0, iw, ih, cx, cy, nw, nh);
     lastRenderedIndexRef.current = frameIndex;
   }, []);
+
+  // 60fps RequestAnimationFrame Throttled Renderer
+  const scheduleRender = useCallback((frameIndex: number) => {
+    currentFrameRef.current = frameIndex;
+    if (rafIdRef.current !== null) return;
+    rafIdRef.current = requestAnimationFrame(() => {
+      renderFrame(currentFrameRef.current);
+      rafIdRef.current = null;
+    });
+  }, [renderFrame]);
 
   // --- Resize Handler ---
   const handleResize = useCallback(() => {
@@ -209,17 +220,16 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
         );
 
         if (targetFrame !== currentFrameRef.current) {
-          currentFrameRef.current = targetFrame;
-          renderFrame(targetFrame);
+          scheduleRender(targetFrame);
         }
 
         // When user reaches the final frames of the sequence (progress >= 0.99)
-        if (rawProgress >= 0.995 && !isTransitioningRef.current) {
+        if (rawProgress >= 0.99 && !isTransitioningRef.current) {
           currentFrameRef.current = TOTAL_FRAMES - 1;
           renderFrame(TOTAL_FRAMES - 1);
           setTimeout(() => {
             triggerCompletion();
-          }, 120);
+          }, 150);
         }
       },
     });
@@ -246,6 +256,9 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
 
     return () => {
       clearTimeout(refreshTimer);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
       st.kill();
       window.removeEventListener('keydown', handleKeyDown);
     };

@@ -118,24 +118,33 @@ export default function Home() {
 
   return (
     <main className="w-full h-screen overflow-hidden bg-[#080B11] relative">
-      {/* 3D Supermarket Canvas */}
-      <div className="w-full h-full absolute inset-0">
-        <SupermarketScene />
-      </div>
-
-      {/* 2D Interactive HUD & Overlays */}
-      <SupermarketHUD />
-      <ProductModal />
-      <CartDrawer />
-      <BillingModal />
-      <ExitModal />
-      <LoginModal />
-      <WishlistModal />
-
       {/* Full-Screen Scroll-Driven Cinematic Opening Sequence */}
       {!hasEnteredStore && (
         <CinematicIntro onComplete={handleIntroComplete} />
       )}
+
+      {/* 3D Supermarket Application - Hidden during intro, smoothly revealed upon completion */}
+      <div
+        className={`w-full h-full absolute inset-0 transition-opacity duration-700 ${
+          hasEnteredStore
+            ? 'opacity-100 pointer-events-auto z-10'
+            : 'opacity-0 pointer-events-none z-0 invisible'
+        }`}
+      >
+        {/* 3D Supermarket Canvas */}
+        <div className="w-full h-full absolute inset-0">
+          <SupermarketScene />
+        </div>
+
+        {/* 2D Interactive HUD & Overlays */}
+        <SupermarketHUD />
+        <ProductModal />
+        <CartDrawer />
+        <BillingModal />
+        <ExitModal />
+        <LoginModal />
+        <WishlistModal />
+      </div>
     </main>
   );
 }
