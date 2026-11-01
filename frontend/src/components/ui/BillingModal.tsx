@@ -151,9 +151,9 @@ export const BillingModal: React.FC = () => {
     setAsDefault: false,
   });
 
-  // Payment State: UPI (PhonePe, Paytm, GPay - Icons Only), Card, Cash on Delivery (+₹20)
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'UPI' | 'CARD' | 'CASH'>('UPI');
-  const [selectedUpiApp, setSelectedUpiApp] = useState<'PHONEPE' | 'PAYTM' | 'GPAY'>('PHONEPE');
+  // Payment State: UPI (PhonePe, Paytm, GPay - Icons Only), Card, Cash on Delivery (+₹20) (Clean Start: Unselected)
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'UPI' | 'CARD' | 'CASH' | null>(null);
+  const [selectedUpiApp, setSelectedUpiApp] = useState<'PHONEPE' | 'PAYTM' | 'GPAY' | null>(null);
 
   // Card Inputs (Clean Start - User fills details)
   const [cardNumber, setCardNumber] = useState('');
@@ -283,6 +283,7 @@ export const BillingModal: React.FC = () => {
   );
 
   const isPaymentValid = (() => {
+    if (!selectedPaymentMethod) return false;
     if (selectedPaymentMethod === 'UPI') {
       return Boolean(selectedUpiApp);
     }
@@ -310,6 +311,7 @@ export const BillingModal: React.FC = () => {
     if (!isAddressValid) return 'Please add and select a delivery address';
     if (!customerName.trim()) return 'Please enter your Full Name';
     if (customerPhone.replace(/\D/g, '').length !== 10) return 'Please enter a valid 10-digit Mobile Number';
+    if (!selectedPaymentMethod) return 'Please choose a payment method (UPI, Card, or COD)';
     if (!isPaymentValid) {
       if (selectedPaymentMethod === 'CARD') return 'Please complete card number, expiry date, and CVV';
       if (selectedPaymentMethod === 'UPI') return 'Please select a UPI payment app';
@@ -460,7 +462,7 @@ export const BillingModal: React.FC = () => {
 
   // --- Proceed to Payment & Trigger Real Backend / Local Storage Persistence ---
   const handleProceedToPay = async () => {
-    if (!isFormValid || isButtonDisabled) return;
+    if (!isFormValid || isButtonDisabled || !selectedPaymentMethod) return;
     setFormError(null);
     setIsButtonDisabled(true);
     setProcessingStep(1);

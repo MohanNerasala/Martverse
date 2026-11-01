@@ -34,6 +34,10 @@ import {
   Compass,
   PackageCheck,
   ShoppingBag,
+  Check,
+  Phone,
+  Lock,
+  Info,
 } from 'lucide-react';
 
 // --- Authentic Official SVGs for Payment Providers ---
@@ -141,9 +145,9 @@ export default function CheckoutPage() {
     setAsDefault: false,
   });
 
-  // Payment Selection State
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'UPI' | 'CARD' | 'CASH'>('UPI');
-  const [selectedUpiApp, setSelectedUpiApp] = useState<'PHONEPE' | 'PAYTM' | 'GPAY'>('PHONEPE');
+  // Payment Selection State (Clean Initial State: Neither is selected by default)
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'UPI' | 'CARD' | 'CASH' | null>(null);
+  const [selectedUpiApp, setSelectedUpiApp] = useState<'PHONEPE' | 'PAYTM' | 'GPAY' | null>(null);
 
   // Card Inputs
   const [cardNumber, setCardNumber] = useState('');
@@ -250,6 +254,7 @@ export default function CheckoutPage() {
   );
 
   const isPaymentValid = (() => {
+    if (!selectedPaymentMethod) return false;
     if (selectedPaymentMethod === 'UPI') return Boolean(selectedUpiApp);
     if (selectedPaymentMethod === 'CARD') {
       const rawCard = cardNumber.replace(/\s/g, '');
@@ -272,16 +277,16 @@ export default function CheckoutPage() {
     if (!isAddressValid) return 'Please add and select a delivery address';
     if (!customerName.trim()) return 'Please enter your Full Name';
     if (customerPhone.replace(/\D/g, '').length !== 10) return 'Please enter a valid 10-digit Mobile Number';
-    if (!isPaymentValid) {
-      if (selectedPaymentMethod === 'CARD') return 'Please complete card number, expiry date, and CVV';
-      if (selectedPaymentMethod === 'UPI') return 'Please select a UPI payment app';
-    }
+    if (!selectedPaymentMethod) return 'Please select a payment method (UPI, Card, or COD)';
+    if (selectedPaymentMethod === 'UPI' && !selectedUpiApp) return 'Please choose PhonePe, Paytm, or Google Pay';
+    if (selectedPaymentMethod === 'CARD' && !isPaymentValid) return 'Please complete card number, expiry date, and CVV';
     return null;
   })();
 
   // --- BigBasket Style "Use Current Location" GPS Autofill ---
   const handleUseCurrentLocation = () => {
     setIsLocating(true);
+    setIsAddingNewAddress(true);
     setLocationSuccessMsg(null);
 
     setTimeout(() => {
@@ -408,7 +413,7 @@ export default function CheckoutPage() {
 
   // --- Proceed to Pay ---
   const handleProceedToPay = async () => {
-    if (!isFormValid || isProcessing) return;
+    if (!isFormValid || isProcessing || !selectedPaymentMethod) return;
     setFormError(null);
     setIsProcessing(true);
 
@@ -419,6 +424,7 @@ export default function CheckoutPage() {
         if (selectedUpiApp === 'PHONEPE') paymentProviderName = 'UPI (PhonePe)';
         else if (selectedUpiApp === 'PAYTM') paymentProviderName = 'UPI (Paytm)';
         else if (selectedUpiApp === 'GPAY') paymentProviderName = 'UPI (Google Pay)';
+        else paymentProviderName = 'UPI';
       } else if (selectedPaymentMethod === 'CARD') {
         paymentProviderName = `Card (•••• ${cardNumber.replace(/\s/g, '').slice(-4)}) - ${cardHolder}`;
       } else {
@@ -630,6 +636,46 @@ export default function CheckoutPage() {
         </div>
       </header>
 
+      {/* Sub-header Checkout Stepper Navigation */}
+      <div className="bg-white/80 border-b border-slate-200/80 py-2.5 px-4 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto select-none">
+            <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px] flex items-center justify-center">
+                ✓
+              </span>
+              <span>1. Trolley Items</span>
+            </span>
+            <span className="text-slate-300">›</span>
+            <span className="flex items-center gap-1.5 text-blue-700 font-bold">
+              <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center shadow-xs">
+                2
+              </span>
+              <span>2. Delivery & Payment</span>
+            </span>
+            <span className="text-slate-300">›</span>
+            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+              <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center">
+                3
+              </span>
+              <span>3. Order Placed</span>
+            </span>
+          </div>
+
+          <div className="hidden md:flex items-center gap-4 text-[11px] text-slate-500 font-medium">
+            <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              100% Purchase Protection
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="flex items-center gap-1.5 text-slate-600 font-semibold">
+              <PackageCheck className="w-3.5 h-3.5 text-blue-600" />
+              Express 30-Min Delivery
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* --- Main Two-Column Layout --- */}
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
@@ -638,18 +684,18 @@ export default function CheckoutPage() {
           {/* ============================================================== */}
           <div className="lg:col-span-7 space-y-4">
             {/* 1. DELIVERY ADDRESS SECTION */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                    <MapPin className="w-4 h-4" />
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-5 space-y-3.5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/20 text-xs">
+                    1
                   </div>
                   <div>
-                    <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+                    <h2 className="font-bold text-slate-900 text-base">
                       1. Delivery Address
                     </h2>
-                    <p className="text-[11px] text-slate-500 leading-none">
-                      Select delivery location or add another address
+                    <p className="text-xs text-slate-500">
+                      Where should we deliver your order?
                     </p>
                   </div>
                 </div>
@@ -661,7 +707,7 @@ export default function CheckoutPage() {
                       setIsAddingNewAddress(true);
                       setFormError(null);
                     }}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 border border-blue-200/80 shadow-2xs active:scale-95"
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 border border-blue-200/80 shadow-2xs active:scale-95"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add Address</span>
@@ -671,7 +717,7 @@ export default function CheckoutPage() {
 
               {/* View A: Saved Addresses Grid */}
               {!isAddingNewAddress && savedAddresses.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {savedAddresses.map((addr) => {
                     const isSelected = selectedAddressId === addr.id;
                     const TypeIcon = addr.type === 'HOME' ? Home : addr.type === 'WORK' ? Building : MapPin;
@@ -680,20 +726,20 @@ export default function CheckoutPage() {
                       <div
                         key={addr.id}
                         onClick={() => setSelectedAddressId(addr.id)}
-                        className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer relative active:scale-[0.98] ${
+                        className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative active:scale-[0.99] ${
                           isSelected
-                            ? 'bg-blue-50/70 border-blue-600 shadow-xs ring-2 ring-blue-600/30'
+                            ? 'bg-blue-50/60 border-blue-600 shadow-sm ring-2 ring-blue-500/20'
                             : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             <div
-                              className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 transition-all ${
-                                isSelected ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                                isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'
                               }`}
                             >
-                              {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                             </div>
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                               <TypeIcon className="w-3 h-3 text-slate-500" />
@@ -728,15 +774,15 @@ export default function CheckoutPage() {
                           </div>
                         </div>
 
-                        <div className="mt-2 pl-6">
+                        <div className="mt-2.5 pl-7 space-y-0.5">
                           <p className="text-xs font-bold text-slate-900 leading-snug">
                             {addr.houseNo}
                           </p>
-                          <p className="text-[11px] text-slate-500 leading-snug line-clamp-2 mt-0.5">
+                          <p className="text-[11px] text-slate-500 leading-snug line-clamp-2">
                             {addr.area}
                             {addr.landmark ? `, Near ${addr.landmark}` : ''}
                           </p>
-                          <p className="text-[11px] font-mono font-semibold text-slate-600 mt-1">
+                          <p className="text-[11px] font-mono font-semibold text-slate-600 pt-0.5">
                             {addr.city} - {addr.pinCode}
                           </p>
                         </div>
@@ -746,31 +792,47 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* View B: Empty State */}
+              {/* View B: Modern Empty State */}
               {!isAddingNewAddress && savedAddresses.length === 0 && (
-                <div className="text-center py-6 px-4 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
-                    <MapPin className="w-5 h-5" />
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50/50 via-slate-50/50 to-indigo-50/40 border border-blue-100/90 text-center space-y-3 shadow-2xs">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-100/80 text-blue-600 flex items-center justify-center mx-auto shadow-2xs">
+                    <Compass className="w-6 h-6 stroke-[2.2] animate-pulse" />
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-800">No delivery address saved</h3>
-                    <p className="text-[11px] text-slate-500">Add an address to proceed with your order</p>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-bold text-slate-900">Where should we deliver your groceries?</h3>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                      Add your home or office address to enable express delivery in 30 minutes.
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingNewAddress(true)}
-                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-md shadow-blue-500/20 cursor-pointer active:scale-95"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Delivery Address</span>
-                  </button>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleUseCurrentLocation}
+                      disabled={isLocating}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      <Compass className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
+                      <span>{isLocating ? 'Detecting GPS...' : 'Use Current GPS Location'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingNewAddress(true);
+                        setFormError(null);
+                      }}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs border border-slate-200 hover:border-slate-300 shadow-2xs transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Enter Address Manually</span>
+                    </button>
+                  </div>
                 </div>
               )}
 
               {/* View C: Add Address Form */}
               {isAddingNewAddress && (
                 <form onSubmit={handleSaveNewAddress} className="space-y-3 pt-1 animate-in fade-in duration-200">
-                  {/* BigBasket GPS Location Trigger */}
+                  {/* GPS Autofill Trigger */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-blue-50/70 border border-blue-200/80">
                     <div className="flex items-center gap-2">
                       <Compass className={`w-4 h-4 text-blue-600 ${isLocating ? 'animate-spin' : ''}`} />
@@ -892,7 +954,7 @@ export default function CheckoutPage() {
                       id="setDefaultChk"
                       checked={newAddress.setAsDefault}
                       onChange={(e) => setNewAddress((prev) => ({ ...prev, setAsDefault: e.target.checked }))}
-                      className="rounded text-blue-600 focus:ring-blue-500"
+                      className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                     <label htmlFor="setDefaultChk" className="text-xs font-semibold text-slate-700 cursor-pointer">
                       Make this my default delivery address
@@ -902,7 +964,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                     <button
                       type="submit"
-                      className="flex-1 bg-slate-900 hover:bg-black text-white text-xs font-bold py-2 rounded-xl transition-all cursor-pointer shadow-xs active:scale-98"
+                      className="flex-1 bg-slate-900 hover:bg-black text-white text-xs font-bold py-2.5 rounded-xl transition-all cursor-pointer shadow-xs active:scale-98"
                     >
                       Save & Select Address
                     </button>
@@ -912,7 +974,7 @@ export default function CheckoutPage() {
                         setIsAddingNewAddress(false);
                         setFormError(null);
                       }}
-                      className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                      className="px-4 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-xl transition-all cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -922,225 +984,396 @@ export default function CheckoutPage() {
             </div>
 
             {/* 2. CUSTOMER CONTACT DETAILS */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-                    <User className="w-4 h-4" />
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-5 space-y-3.5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-purple-500/20 text-xs">
+                    2
                   </div>
                   <div>
-                    <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+                    <h2 className="font-bold text-slate-900 text-base">
                       2. Customer Contact
                     </h2>
-                    <p className="text-[11px] text-slate-500 leading-none">
-                      For SMS invoice & express delivery updates
+                    <p className="text-xs text-slate-500">
+                      For instant order invoice & live GPS delivery updates
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] text-slate-400">Required</span>
+                {isCustomerValid ? (
+                  <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 shadow-2xs">
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    Verified
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-medium bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
+                    Required
+                  </span>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="text-[11px] font-bold text-slate-700 block mb-1">
                     Full Name <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-xs text-slate-900 font-semibold outline-none transition-all"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="e.g. Rahul Sharma"
+                      className="w-full bg-slate-50/80 hover:bg-white focus:bg-white border border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold text-slate-900 transition-all outline-none"
+                    />
+                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  </div>
                 </div>
 
                 <div>
                   <label className="text-[11px] font-bold text-slate-700 block mb-1">
                     Mobile Number <span className="text-rose-500">*</span>
                   </label>
-                  <div className="flex items-center bg-slate-50 border border-slate-300 focus-within:bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20 rounded-xl px-3 py-2 transition-all">
-                    <span className="text-xs font-bold text-slate-400 mr-2">+91</span>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3 text-xs font-mono font-bold text-slate-500 pointer-events-none select-none">
+                      +91
+                    </span>
                     <input
                       type="tel"
-                      maxLength={10}
                       required
+                      maxLength={10}
                       value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))}
-                      placeholder="10-digit mobile number"
-                      className="w-full bg-transparent text-xs text-slate-900 font-semibold outline-none font-mono"
+                      onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="9876543210"
+                      className="w-full bg-slate-50/80 hover:bg-white focus:bg-white border border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 rounded-xl pl-12 pr-8 py-2.5 text-xs font-semibold text-slate-900 transition-all outline-none font-mono tracking-wide"
                     />
+                    {customerPhone.length === 10 ? (
+                      <Check className="w-4 h-4 text-emerald-600 absolute right-3" />
+                    ) : (
+                      <Phone className="w-3.5 h-3.5 text-slate-400 absolute right-3" />
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 3. PAYMENT METHOD SECTION */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                    <CreditCard className="w-4 h-4" />
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/20 text-xs">
+                    3
                   </div>
                   <div>
-                    <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+                    <h2 className="font-bold text-slate-900 text-base">
                       3. Payment Method
                     </h2>
-                    <p className="text-[11px] text-slate-500 leading-none">Instant order confirmation</p>
+                    <p className="text-xs text-slate-500">Choose how you want to pay</p>
                   </div>
                 </div>
-                <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  Instant Verification
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 shadow-2xs">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  100% Encrypted & Safe
                 </span>
               </div>
 
-              {/* Payment Methods 3 Tabs */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                {[
-                  { id: 'UPI', label: 'UPI Apps', icon: QrCode },
-                  { id: 'CARD', label: 'Debit / Card', icon: CreditCard },
-                  { id: 'CASH', label: 'Cash on Delivery', icon: Banknote },
-                ].map((pm) => {
-                  const Icon = pm.icon;
-                  const isSelected = selectedPaymentMethod === pm.id;
-                  return (
-                    <button
-                      key={pm.id}
-                      type="button"
-                      onClick={() => setSelectedPaymentMethod(pm.id as any)}
-                      className={`py-2.5 px-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 ${
-                        isSelected
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-1 ring-slate-900'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+              {/* 3 Modern Payment Method Cards (Clean, Interactive, Unselected by Default) */}
+              <div className="grid grid-cols-1 gap-2.5">
+                {/* Option 1: UPI Apps */}
+                <div
+                  onClick={() => {
+                    setSelectedPaymentMethod('UPI');
+                    if (!selectedUpiApp) setSelectedUpiApp('PHONEPE');
+                  }}
+                  className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 active:scale-[0.99] ${
+                    selectedPaymentMethod === 'UPI'
+                      ? 'bg-blue-50/60 border-blue-600 shadow-sm ring-2 ring-blue-500/20'
+                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                        selectedPaymentMethod === 'UPI'
+                          ? 'border-blue-600 bg-blue-600 text-white'
+                          : 'border-slate-300 bg-white'
                       }`}
                     >
-                      <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
-                      <span>{pm.label}</span>
-                    </button>
-                  );
-                })}
+                      {selectedPaymentMethod === 'UPI' && <Check className="w-3 h-3 stroke-[3]" />}
+                    </div>
+                    <div className="w-9 h-9 rounded-xl bg-blue-100/70 text-blue-700 flex items-center justify-center flex-shrink-0">
+                      <QrCode className="w-5 h-5 stroke-[2.2]" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">UPI Instant Payment</span>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          ⚡ Instant & Zero Fee
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Pay with PhonePe, Google Pay, Paytm, or BHIM
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Logo Previews */}
+                  <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                    <div className="h-6 px-1.5 rounded-md bg-white border border-slate-200 flex items-center shadow-2xs">
+                      <PhonePeIcon className="h-4 w-auto" />
+                    </div>
+                    <div className="h-6 px-1.5 rounded-md bg-white border border-slate-200 flex items-center shadow-2xs">
+                      <PaytmIcon className="h-3 w-auto" />
+                    </div>
+                    <div className="h-6 px-1.5 rounded-md bg-white border border-slate-200 flex items-center shadow-2xs">
+                      <GooglePayIcon className="h-3 w-auto" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub-view: UPI Providers when UPI is selected */}
+                {selectedPaymentMethod === 'UPI' && (
+                  <div className="ml-8 p-3 rounded-2xl bg-slate-50/80 border border-blue-200/80 space-y-2 animate-in fade-in duration-200">
+                    <span className="text-[11px] font-bold text-slate-700 block">
+                      Select your preferred UPI App:
+                    </span>
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                      {/* PhonePe */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUpiApp('PHONEPE');
+                        }}
+                        className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 ${
+                          selectedUpiApp === 'PHONEPE'
+                            ? 'bg-purple-50 border-[#5F259F] ring-2 ring-[#5F259F]/30 shadow-xs'
+                            : 'bg-white border-slate-200 hover:border-[#5F259F]/40 hover:bg-purple-50/20'
+                        }`}
+                      >
+                        <PhonePeIcon className="h-6 w-auto" />
+                        <span className="text-[11px] font-extrabold text-[#5F259F]">PhonePe</span>
+                        {selectedUpiApp === 'PHONEPE' && (
+                          <span className="text-[9px] font-bold text-purple-700 bg-purple-100/70 px-1.5 py-0.2 rounded-full">
+                            Selected
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Paytm */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUpiApp('PAYTM');
+                        }}
+                        className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 ${
+                          selectedUpiApp === 'PAYTM'
+                            ? 'bg-sky-50 border-[#00BAF2] ring-2 ring-[#00BAF2]/30 shadow-xs'
+                            : 'bg-white border-slate-200 hover:border-[#00BAF2]/40 hover:bg-sky-50/20'
+                        }`}
+                      >
+                        <PaytmIcon className="h-5 w-auto" />
+                        <span className="text-[11px] font-extrabold text-[#002970]">Paytm UPI</span>
+                        {selectedUpiApp === 'PAYTM' && (
+                          <span className="text-[9px] font-bold text-sky-700 bg-sky-100/70 px-1.5 py-0.2 rounded-full">
+                            Selected
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Google Pay */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUpiApp('GPAY');
+                        }}
+                        className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 ${
+                          selectedUpiApp === 'GPAY'
+                            ? 'bg-blue-50 border-blue-600 ring-2 ring-blue-600/30 shadow-xs'
+                            : 'bg-white border-slate-200 hover:border-blue-400 hover:bg-blue-50/20'
+                        }`}
+                      >
+                        <GooglePayIcon className="h-5 w-auto" />
+                        <span className="text-[11px] font-extrabold text-slate-700">Google Pay</span>
+                        {selectedUpiApp === 'GPAY' && (
+                          <span className="text-[9px] font-bold text-blue-700 bg-blue-100/70 px-1.5 py-0.2 rounded-full">
+                            Selected
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Option 2: Credit / Debit Card */}
+                <div
+                  onClick={() => setSelectedPaymentMethod('CARD')}
+                  className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 active:scale-[0.99] ${
+                    selectedPaymentMethod === 'CARD'
+                      ? 'bg-blue-50/60 border-blue-600 shadow-sm ring-2 ring-blue-500/20'
+                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                        selectedPaymentMethod === 'CARD'
+                          ? 'border-blue-600 bg-blue-600 text-white'
+                          : 'border-slate-300 bg-white'
+                      }`}
+                    >
+                      {selectedPaymentMethod === 'CARD' && <Check className="w-3 h-3 stroke-[3]" />}
+                    </div>
+                    <div className="w-9 h-9 rounded-xl bg-indigo-100/70 text-indigo-700 flex items-center justify-center flex-shrink-0">
+                      <CreditCard className="w-5 h-5 stroke-[2.2]" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">Credit / Debit Card</span>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                          Visa / MasterCard / RuPay
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Pay securely with your credit or debit card
+                      </p>
+                    </div>
+                  </div>
+                  <Lock className="w-4 h-4 text-slate-400 flex-shrink-0 hidden sm:block" />
+                </div>
+
+                {/* Sub-view: Card Inputs when Card is selected */}
+                {selectedPaymentMethod === 'CARD' && (
+                  <div className="ml-8 p-3.5 rounded-2xl bg-slate-50/80 border border-blue-200/80 space-y-3 animate-in fade-in duration-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] text-slate-700 font-bold block mb-1">
+                          Card Number <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            maxLength={19}
+                            value={cardNumber}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+                              setCardNumber(val);
+                            }}
+                            placeholder="4532 8920 1204 8821"
+                            className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-slate-900 outline-none"
+                          />
+                          <CreditCard className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-slate-700 font-bold block mb-1">
+                          Name on Card <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={cardHolder}
+                          onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                          placeholder="MOHAN NERASALA"
+                          className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none uppercase"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] text-slate-700 font-bold block mb-1">
+                          Expiry Date (MM/YY) <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={5}
+                          value={cardExpiry}
+                          onChange={(e) => {
+                            let v = e.target.value.replace(/\D/g, '');
+                            if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2, 4);
+                            setCardExpiry(v);
+                          }}
+                          placeholder="MM/YY"
+                          className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 outline-none text-center"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-slate-700 font-bold block mb-1">
+                          CVV (3 Digits) <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="password"
+                            maxLength={3}
+                            value={cardCvv}
+                            onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
+                            placeholder="•••"
+                            className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 outline-none text-center tracking-widest"
+                          />
+                          <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Option 3: Cash on Delivery */}
+                <div
+                  onClick={() => setSelectedPaymentMethod('CASH')}
+                  className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 active:scale-[0.99] ${
+                    selectedPaymentMethod === 'CASH'
+                      ? 'bg-blue-50/60 border-blue-600 shadow-sm ring-2 ring-blue-500/20'
+                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                        selectedPaymentMethod === 'CASH'
+                          ? 'border-blue-600 bg-blue-600 text-white'
+                          : 'border-slate-300 bg-white'
+                      }`}
+                    >
+                      {selectedPaymentMethod === 'CASH' && <Check className="w-3 h-3 stroke-[3]" />}
+                    </div>
+                    <div className="w-9 h-9 rounded-xl bg-amber-100/70 text-amber-700 flex items-center justify-center flex-shrink-0">
+                      <Banknote className="w-5 h-5 stroke-[2.2]" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">Cash on Delivery</span>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                          +₹20 Handling Fee
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Pay cash or UPI to delivery agent at your doorstep
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub-view: Cash on Delivery Note when selected */}
+                {selectedPaymentMethod === 'CASH' && (
+                  <div className="ml-8 p-3 rounded-2xl bg-amber-50/90 border border-amber-200/80 space-y-1 animate-in fade-in duration-200 text-xs text-amber-900">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <Banknote className="w-4 h-4 text-amber-700" />
+                      <span>Cash on Delivery Confirmed (+₹20 added to bill)</span>
+                    </div>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      Please keep exact cash ready (₹{totalPayable.toLocaleString('en-IN')}) upon express arrival.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Sub-view: UPI Providers */}
-              {selectedPaymentMethod === 'UPI' && (
-                <div className="bg-slate-50/70 rounded-2xl p-3 border border-slate-200/80 animate-in fade-in duration-150">
-                  <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-                    {/* PhonePe Option */}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedUpiApp('PHONEPE')}
-                      title="PhonePe"
-                      className={`h-12 rounded-xl border flex items-center justify-center gap-2 px-2 sm:px-3 transition-all duration-200 cursor-pointer active:scale-95 ${
-                        selectedUpiApp === 'PHONEPE'
-                          ? 'bg-purple-50/90 border-[#5F259F] ring-2 ring-[#5F259F]/30 shadow-xs scale-[1.02]'
-                          : 'bg-white border-slate-200 hover:border-[#5F259F]/40 hover:bg-purple-50/30'
-                      }`}
-                    >
-                      <PhonePeIcon className="h-7 w-auto" />
-                      <span className="text-xs font-extrabold text-[#5F259F] tracking-tight">PhonePe</span>
-                    </button>
-
-                    {/* Paytm Option */}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedUpiApp('PAYTM')}
-                      title="Paytm"
-                      className={`h-12 rounded-xl border flex items-center justify-center px-2 sm:px-3 transition-all duration-200 cursor-pointer active:scale-95 ${
-                        selectedUpiApp === 'PAYTM'
-                          ? 'bg-sky-50/90 border-[#00BAF2] ring-2 ring-[#00BAF2]/30 shadow-xs scale-[1.02]'
-                          : 'bg-white border-slate-200 hover:border-[#00BAF2]/40 hover:bg-sky-50/30'
-                      }`}
-                    >
-                      <PaytmIcon className="h-5.5 w-auto" />
-                    </button>
-
-                    {/* Google Pay Option */}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedUpiApp('GPAY')}
-                      title="Google Pay"
-                      className={`h-12 rounded-xl border flex items-center justify-center px-2 sm:px-3 transition-all duration-200 cursor-pointer active:scale-95 ${
-                        selectedUpiApp === 'GPAY'
-                          ? 'bg-blue-50/90 border-blue-600 ring-2 ring-blue-600/30 shadow-xs scale-[1.02]'
-                          : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50/30'
-                      }`}
-                    >
-                      <GooglePayIcon className="h-5.5 w-auto" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Sub-view: Card Inputs */}
-              {selectedPaymentMethod === 'CARD' && (
-                <div className="bg-slate-50/70 rounded-2xl p-3 border border-slate-200/80 space-y-2.5 animate-in fade-in duration-150">
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="text-[11px] text-slate-700 font-bold block mb-1">Card Number</label>
-                      <input
-                        type="text"
-                        maxLength={19}
-                        value={cardNumber}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
-                          setCardNumber(val);
-                        }}
-                        placeholder="4532 8920 1204 8821"
-                        className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-700 font-bold block mb-1">Cardholder Name</label>
-                      <input
-                        type="text"
-                        value={cardHolder}
-                        onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                        placeholder="NAME ON CARD"
-                        className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="text-[11px] text-slate-700 font-bold block mb-1">Expiry Date</label>
-                      <input
-                        type="text"
-                        maxLength={5}
-                        value={cardExpiry}
-                        onChange={(e) => {
-                          let v = e.target.value.replace(/\D/g, '');
-                          if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2, 4);
-                          setCardExpiry(v);
-                        }}
-                        placeholder="MM/YY"
-                        className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-700 font-bold block mb-1">CVV</label>
-                      <input
-                        type="password"
-                        maxLength={3}
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
-                        placeholder="•••"
-                        className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Sub-view: Cash on Delivery Note */}
-              {selectedPaymentMethod === 'CASH' && (
-                <div className="bg-amber-50/80 rounded-2xl p-3 border border-amber-200/80 space-y-1 animate-in fade-in duration-150">
-                  <div className="flex items-center gap-2">
-                    <Banknote className="w-4 h-4 text-amber-700" />
-                    <span className="text-xs font-bold text-amber-950">Cash on Delivery (+₹20 COD Verification Fee)</span>
-                  </div>
-                  <p className="text-[11px] text-amber-800">
-                    Pay cash at your doorstep upon express delivery. Please keep exact change ready.
+              {/* Guidance message when no payment method is chosen */}
+              {!selectedPaymentMethod && (
+                <div className="p-3 rounded-xl bg-slate-50/90 border border-dashed border-slate-200 text-center">
+                  <p className="text-xs text-slate-500 font-medium flex items-center justify-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 text-blue-600" />
+                    Please click UPI, Card, or Cash on Delivery above to select your payment mode
                   </p>
                 </div>
               )}
@@ -1159,15 +1392,15 @@ export default function CheckoutPage() {
           {/* ============================================================== */}
           <div className="lg:col-span-5 space-y-4">
             {/* Scanned Items Card */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-5 space-y-3.5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <Barcode className="w-4 h-4 text-blue-600" />
                   <h3 className="font-bold text-slate-900 text-sm sm:text-base">
                     Scanned Items ({activeItems.length})
                   </h3>
                 </div>
-                <span className="text-xs font-mono font-bold text-slate-500">
+                <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
                   {activeItems.reduce((acc, it) => acc + it.quantity, 0)} units
                 </span>
               </div>
@@ -1181,9 +1414,9 @@ export default function CheckoutPage() {
                   </div>
                 ) : (
                   activeItems.map((item) => (
-                    <div key={item.id} className="py-2 flex items-center justify-between gap-3 text-xs">
+                    <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1 flex-shrink-0 shadow-2xs">
                           <img
                             src={item.productImage || '/products/fallback.svg'}
                             alt={item.productName}
@@ -1244,15 +1477,15 @@ export default function CheckoutPage() {
             </div>
 
             {/* Order Summary & Calculations */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 p-5 space-y-3.5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <Receipt className="w-4 h-4 text-emerald-600" />
                   <h3 className="font-bold text-slate-900 text-sm sm:text-base tracking-tight">
                     Order Summary
                   </h3>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
                   Exact Calculation
                 </span>
               </div>
@@ -1269,7 +1502,7 @@ export default function CheckoutPage() {
                 {savingsOnMrp > 0 && (
                   <div className="flex justify-between text-slate-600">
                     <span>Savings on MRP:</span>
-                    <span className="font-mono text-emerald-700 font-semibold">
+                    <span className="font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
                       - ₹{savingsOnMrp.toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -1281,7 +1514,9 @@ export default function CheckoutPage() {
                     {deliveryCharge === 0 ? (
                       <span className="flex items-center gap-1.5">
                         <span className="line-through text-slate-400 text-xs">₹40</span>
-                        <span className="text-emerald-600 font-bold text-xs">FREE</span>
+                        <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 font-extrabold text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
+                          FREE DELIVERY
+                        </span>
                       </span>
                     ) : (
                       `₹${deliveryCharge}`
@@ -1296,10 +1531,10 @@ export default function CheckoutPage() {
 
                 {/* COD Handling Fee */}
                 {selectedPaymentMethod === 'CASH' && (
-                  <div className="flex justify-between text-amber-900 bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200 font-bold text-xs">
+                  <div className="flex justify-between text-amber-900 bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200 font-bold text-xs animate-in fade-in">
                     <span className="flex items-center gap-1.5">
                       <Banknote className="w-3.5 h-3.5 text-amber-700" />
-                      COD Handling:
+                      COD Verification Fee:
                     </span>
                     <span className="font-mono">+ ₹20</span>
                   </div>
@@ -1336,26 +1571,50 @@ export default function CheckoutPage() {
                 disabled={!isFormValid || isProcessing}
                 className={`w-full py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2.5 text-xs font-black uppercase tracking-wider transition-all duration-300 select-none ${
                   isFormValid && !isProcessing
-                    ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-700 hover:via-indigo-700 hover:to-sky-700 text-white shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/35 hover:scale-[1.01] cursor-pointer active:scale-98'
+                    ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-700 hover:via-indigo-700 hover:to-sky-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 hover:scale-[1.01] cursor-pointer active:scale-98'
                     : 'bg-slate-100 text-slate-400 border border-slate-200/90 cursor-not-allowed opacity-75 shadow-none'
                 }`}
               >
                 {isProcessing ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Processing Payment...</span>
+                    <span>Authorizing Payment...</span>
                   </div>
                 ) : (
                   <>
                     <ShieldCheck className="w-4.5 h-4.5" />
                     <span>
-                      {selectedPaymentMethod === 'CASH'
+                      {!isAddressValid
+                        ? 'Add Delivery Address to Pay'
+                        : !isCustomerValid
+                        ? 'Enter Customer Contact to Pay'
+                        : !selectedPaymentMethod
+                        ? `Select Payment Method (₹${totalPayable.toLocaleString('en-IN')})`
+                        : selectedPaymentMethod === 'UPI' && !selectedUpiApp
+                        ? 'Choose PhonePe, Paytm, or Google Pay'
+                        : selectedPaymentMethod === 'CASH'
                         ? `Place COD Order • ₹${totalPayable.toLocaleString('en-IN')}`
                         : `Pay ₹${totalPayable.toLocaleString('en-IN')}`}
                     </span>
                   </>
                 )}
               </button>
+
+              {/* Security and Trust Badges */}
+              <div className="pt-1 grid grid-cols-3 gap-2 text-center text-[10px] text-slate-500">
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1 shadow-3xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="font-semibold text-slate-700 leading-tight">100% Genuine</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1 shadow-3xs">
+                  <Lock className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="font-semibold text-slate-700 leading-tight">256-Bit SSL</span>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1 shadow-3xs">
+                  <RotateCcw className="w-3.5 h-3.5 text-purple-600" />
+                  <span className="font-semibold text-slate-700 leading-tight">Instant Refund</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
