@@ -166,14 +166,11 @@ export const api = {
         }
       }
     } catch {
-      // Backend is offline: return cached real products if previously loaded, else fallback to MOCK_PRODUCTS
+      // Backend is offline: return empty array so items are not visible when backend is not running
       isBackendOffline = true;
-      if (cachedBackendProducts.length > 0) {
-        return cachedBackendProducts;
-      }
-      return MOCK_PRODUCTS;
+      return [];
     }
-    return cachedBackendProducts.length > 0 ? cachedBackendProducts : MOCK_PRODUCTS;
+    return [];
   },
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {

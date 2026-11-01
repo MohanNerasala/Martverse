@@ -36,29 +36,34 @@ export const SupermarketScene: React.FC = () => {
           if (floorsData && floorsData.length > 0) setFloors(floorsData);
           if (productsData && productsData.length > 0) {
             const currentProds = useMartStore.getState().products;
-            // Only update store if products changed or wasn't set, avoiding heavy Three.js re-renders!
             if (currentProds.length !== productsData.length || currentProds[0]?.id !== productsData[0]?.id) {
               setProducts(productsData);
+            }
+          } else {
+            // Backend offline / no products: clear products so items are not visible
+            const currentProds = useMartStore.getState().products;
+            if (currentProds.length > 0) {
+              setProducts([]);
             }
           }
         }
       } catch {
-        // Keep existing loaded state on transient network blip
+        if (!isCancelled) {
+          const currentProds = useMartStore.getState().products;
+          if (currentProds.length > 0) {
+            setProducts([]);
+          }
+        }
       } finally {
         isFetching = false;
       }
     }
     loadData();
 
-    // Check backend connection:
-    // If products are loaded, keep polling dormant (zero lag & zero FPS drops).
-    // If products are empty (backend was offline), poll every 3s until loaded.
+    // Check backend connection: poll every 4s to sync products and status
     const timer = setInterval(() => {
-      const hasProducts = useMartStore.getState().products.length > 0;
-      if (!hasProducts) {
-        loadData();
-      }
-    }, 3000);
+      loadData();
+    }, 4000);
 
     return () => {
       isCancelled = true;

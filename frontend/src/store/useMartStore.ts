@@ -101,20 +101,7 @@ export const useMartStore = create<MartStore>((set) => ({
   setHasMovedTrolley: (hasMovedTrolley) => set({ hasMovedTrolley }),
 
   hydrateProductsFromCache: () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('martverse_products_cache');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            set({ products: parsed });
-            return;
-          }
-        }
-      } catch {}
-      // Fallback to MOCK_PRODUCTS so shelves are vibrant from second zero
-      set((state) => (state.products.length === 0 ? { products: MOCK_PRODUCTS } : {}));
-    }
+    // Products only load from live backend; no fake items when backend is not running
   },
 
   setFloors: (floors) => set({ floors }),

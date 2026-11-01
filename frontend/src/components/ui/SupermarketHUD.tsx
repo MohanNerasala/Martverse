@@ -189,7 +189,7 @@ export const SupermarketHUD: React.FC = () => {
                   MARTVERSE
                 </span>
                 {/* Status Badge: completely hidden when backend is online. Only shows in RED when backend is offline */}
-                {isMounted && isBackendOnline === false && (
+                {isMounted && (isBackendOnline === false || products.length === 0) && (
                   <span className="hidden md:inline-flex items-center gap-1.5 text-[9px] bg-rose-50 text-rose-700 font-bold px-2.5 py-0.5 rounded-full border border-rose-200/90 shadow-xs">
                     <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
                     BACKEND OFFLINE
