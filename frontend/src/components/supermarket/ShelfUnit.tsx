@@ -24,6 +24,423 @@ export const shelfTextureCache = new Map<string, THREE.Texture>();
 // Cached Canvas Textures for ESL digital price tags (Ultra-Fast 256x128)
 export const eslTextureCache = new Map<string, THREE.CanvasTexture>();
 export const eslMaterialCache = new Map<string, THREE.MeshBasicMaterial>();
+// =========================================================================
+// Photorealistic Indian Supermarket Branded Packaging Texture Generator
+// Produces 512x640 crisp CanvasTextures for all 73 catalog items (0ms cache)
+// =========================================================================
+export function getProductPackagingTexture(product: Product): THREE.Texture {
+  const cacheKey = `pkg-${product.slug || product.id}`;
+  if (shelfTextureCache.has(cacheKey)) {
+    return shelfTextureCache.get(cacheKey)!;
+  }
+
+  if (typeof document === 'undefined') {
+    return new THREE.CanvasTexture({} as HTMLCanvasElement);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 640;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    drawBrandedPackagingArtwork(ctx, product);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.generateMipmaps = false;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+  shelfTextureCache.set(cacheKey, texture);
+
+  return texture;
+}
+
+function drawBrandedPackagingArtwork(ctx: CanvasRenderingContext2D, prod: Product) {
+  const name = (prod.name || '').toLowerCase();
+  const slug = (prod.slug || '').toLowerCase();
+  const brand = prod.brand || 'MARTVERSE';
+  const price = prod.price;
+  const mrp = prod.mrp || Math.round(price * 1.2);
+  const unit = prod.unit || 'Standard Pack';
+
+  // Determine Brand Palette & Styling
+  let bgGradient: [string, string, string] = ['#1e293b', '#334155', '#0f172a'];
+  let brandColor = '#facc15';
+  let headerTitle = brand.toUpperCase();
+  let subHeadline = (prod.name || '').toUpperCase();
+  let graphicType = 'generic';
+
+  if (slug.includes('tata-tea') || name.includes('tata tea')) {
+    bgGradient = ['#0a0a0a', '#1c1917', '#78350f'];
+    brandColor = '#facc15';
+    headerTitle = 'TATA TEA';
+    subHeadline = 'GOLD • 100% ASSAM LEAF';
+    graphicType = 'tea';
+  } else if (slug.includes('red-label') || name.includes('red label')) {
+    bgGradient = ['#991b1b', '#dc2626', '#7f1d1d'];
+    brandColor = '#ffffff';
+    headerTitle = 'Brooke Bond';
+    subHeadline = 'RED LABEL • NATURAL CARE';
+    graphicType = 'tea';
+  } else if (slug.includes('taj-mahal') || name.includes('taj mahal')) {
+    bgGradient = ['#0f172a', '#1e3a8a', '#172554'];
+    brandColor = '#facc15';
+    headerTitle = 'Taj Mahal';
+    subHeadline = 'WAH TAJ! • GOLDEN TEA';
+    graphicType = 'tea';
+  } else if (slug.includes('twinings') || name.includes('twinings')) {
+    bgGradient = ['#365314', '#65a30d', '#1a2e05'];
+    brandColor = '#fef08a';
+    headerTitle = 'TWININGS';
+    subHeadline = 'OF LONDON • PURE GREEN TEA';
+    graphicType = 'greentea';
+  } else if (slug.includes('ahmad-tea') || slug.includes('earl-grey') || name.includes('ahmad')) {
+    bgGradient = ['#0c1427', '#1e3a8a', '#080c18'];
+    brandColor = '#facc15';
+    headerTitle = 'AHMAD TEA';
+    subHeadline = 'LONDON • CLASSIC EARL GREY';
+    graphicType = 'earlgrey';
+  } else if (slug.includes('nescafe') || name.includes('nescafe')) {
+    bgGradient = ['#1a0505', '#7f1d1d', '#450a0a'];
+    brandColor = '#ffffff';
+    headerTitle = 'NESCAFE';
+    subHeadline = 'CLASSIC • 100% PURE COFFEE';
+    graphicType = 'coffee';
+  } else if (slug.includes('bru') || name.includes('bru')) {
+    bgGradient = ['#064e3b', '#047857', '#022c22'];
+    brandColor = '#fde047';
+    headerTitle = 'BRU';
+    subHeadline = 'INSTANT • ROASTED CHICORY';
+    graphicType = 'coffee';
+  } else if (slug.includes('parle-g') || name.includes('parle-g')) {
+    bgGradient = ['#fef08a', '#facc15', '#eab308'];
+    brandColor = '#dc2626';
+    headerTitle = 'Parle-G';
+    subHeadline = 'ORIGINAL GLUCOSE BISCUITS';
+    graphicType = 'biscuit';
+  } else if (slug.includes('good-day') || name.includes('good day')) {
+    bgGradient = ['#fef08a', '#f59e0b', '#d97706'];
+    brandColor = '#991b1b';
+    headerTitle = 'BRITANNIA';
+    subHeadline = 'Good Day • CASHEW SMILE';
+    graphicType = 'biscuit';
+  } else if (slug.includes('oreo') || name.includes('oreo')) {
+    bgGradient = ['#0284c7', '#1e3a8a', '#0f172a'];
+    brandColor = '#ffffff';
+    headerTitle = 'OREO';
+    subHeadline = 'VANILLA CREME SANDWICH';
+    graphicType = 'oreo';
+  } else if (slug.includes('hide-and-seek') || name.includes('hide & seek')) {
+    bgGradient = ['#1c1917', '#451a03', '#292524'];
+    brandColor = '#fde68a';
+    headerTitle = 'Parle';
+    subHeadline = 'Hide & Seek • CHOCO CHIP';
+    graphicType = 'chocochip';
+  } else if (slug.includes('lays-indias-magic') || name.includes('magic masala')) {
+    bgGradient = ['#1e3a8a', '#2563eb', '#1d4ed8'];
+    brandColor = '#facc15';
+    headerTitle = "Lay's";
+    subHeadline = "INDIA'S MAGIC MASALA";
+    graphicType = 'chips';
+  } else if (slug.includes('lays-classic') || name.includes('classic salted')) {
+    bgGradient = ['#fef08a', '#facc15', '#ca8a04'];
+    brandColor = '#dc2626';
+    headerTitle = "Lay's";
+    subHeadline = 'CLASSIC SALTED POTATO CHIPS';
+    graphicType = 'chips';
+  } else if (slug.includes('kurkure') || name.includes('kurkure')) {
+    bgGradient = ['#ea580c', '#f97316', '#c2410c'];
+    brandColor = '#facc15';
+    headerTitle = 'Kurkure';
+    subHeadline = 'MASALA MUNCH CHATPATA';
+    graphicType = 'puffed';
+  } else if (slug.includes('bingo') || name.includes('bingo')) {
+    bgGradient = ['#fde047', '#f59e0b', '#ea580c'];
+    brandColor = '#dc2626';
+    headerTitle = 'BINGO!';
+    subHeadline = 'Mad Angles • ACHAARI MASTI';
+    graphicType = 'triangle';
+  } else if (slug.includes('doritos') || name.includes('doritos')) {
+    bgGradient = ['#991b1b', '#dc2626', '#7f1d1d'];
+    brandColor = '#ffffff';
+    headerTitle = 'Doritos';
+    subHeadline = 'NACHO CHEESE CRUNCH';
+    graphicType = 'triangle';
+  } else if (slug.includes('aashirvaad') || name.includes('aashirvaad')) {
+    bgGradient = ['#14532d', '#15803d', '#166534'];
+    brandColor = '#facc15';
+    headerTitle = 'AASHIRVAAD';
+    subHeadline = 'SHUDH CHAKKI 100% ATTA';
+    graphicType = 'wheat';
+  } else if (slug.includes('fortune') || name.includes('fortune')) {
+    bgGradient = ['#fef08a', '#eab308', '#ca8a04'];
+    brandColor = '#dc2626';
+    headerTitle = 'Fortune';
+    subHeadline = 'SUNLITE SUNFLOWER OIL';
+    graphicType = 'sunflower';
+  } else if (slug.includes('india-gate') || name.includes('india gate')) {
+    bgGradient = ['#7f1d1d', '#991b1b', '#450a0a'];
+    brandColor = '#facc15';
+    headerTitle = 'INDIA GATE';
+    subHeadline = 'CLASSIC AGED BASMATI RICE';
+    graphicType = 'rice';
+  } else if (slug.includes('tata-salt') || name.includes('tata salt')) {
+    bgGradient = ['#ffffff', '#f1f5f9', '#e2e8f0'];
+    brandColor = '#1d4ed8';
+    headerTitle = 'TATA SALT';
+    subHeadline = 'DESH KA NAMAK • IODIZED';
+    graphicType = 'salt';
+  } else if (slug.includes('maggi') || name.includes('maggi')) {
+    bgGradient = ['#fef08a', '#facc15', '#eab308'];
+    brandColor = '#dc2626';
+    headerTitle = 'Maggi';
+    subHeadline = '2-MINUTE MASALA NOODLES';
+    graphicType = 'noodles';
+  } else if (slug.includes('kellogg') || name.includes('kellogg')) {
+    bgGradient = ['#ffffff', '#fee2e2', '#fef2f2'];
+    brandColor = '#dc2626';
+    headerTitle = "Kellogg's";
+    subHeadline = 'CORN FLAKES TOASTED';
+    graphicType = 'cereal';
+  } else if (slug.includes('colgate') || name.includes('colgate')) {
+    bgGradient = ['#991b1b', '#dc2626', '#b91c1c'];
+    brandColor = '#ffffff';
+    headerTitle = 'Colgate';
+    subHeadline = 'STRONG TEETH • CALCIUM';
+    graphicType = 'smile';
+  } else if (slug.includes('dove') || name.includes('dove')) {
+    bgGradient = ['#f8fafc', '#ffffff', '#e2e8f0'];
+    brandColor = '#1e3a8a';
+    headerTitle = 'Dove';
+    subHeadline = 'DEEP MOISTURE BODY WASH';
+    graphicType = 'milk';
+  } else if (slug.includes('dettol') || name.includes('dettol')) {
+    bgGradient = ['#ffffff', '#f0fdf4', '#dcfce7'];
+    brandColor = '#15803d';
+    headerTitle = 'Dettol';
+    subHeadline = 'ORIGINAL 99.9% GERM DEFENSE';
+    graphicType = 'shield';
+  } else if (slug.includes('head-and-shoulders') || name.includes('head & shoulders')) {
+    bgGradient = ['#ffffff', '#eff6ff', '#dbeafe'];
+    brandColor = '#1e3a8a';
+    headerTitle = 'head & shoulders';
+    subHeadline = 'COOL MENTHOL ANTI-DANDRUFF';
+    graphicType = 'menthol';
+  } else if (slug.includes('surf-excel') || name.includes('surf excel')) {
+    bgGradient = ['#3b0764', '#1e1b4b', '#4338ca'];
+    brandColor = '#facc15';
+    headerTitle = 'Surf Excel';
+    subHeadline = 'MATIC FRONT LOAD 4KG';
+    graphicType = 'washing';
+  } else if (slug.includes('vim') || name.includes('vim')) {
+    bgGradient = ['#15803d', '#65a30d', '#84cc16'];
+    brandColor = '#facc15';
+    headerTitle = 'Vim';
+    subHeadline = 'LEMON DISHWASH GEL 2L';
+    graphicType = 'lemon';
+  } else if (slug.includes('harpic') || name.includes('harpic')) {
+    bgGradient = ['#172554', '#1e3a8a', '#1e1b4b'];
+    brandColor = '#ef4444';
+    headerTitle = 'HARPIC';
+    subHeadline = 'POWER PLUS 10X MAX';
+    graphicType = 'toilet';
+  } else if (slug.includes('lizol') || name.includes('lizol')) {
+    bgGradient = ['#ea580c', '#f97316', '#f59e0b'];
+    brandColor = '#ffffff';
+    headerTitle = 'Lizol';
+    subHeadline = 'DISINFECTANT FLOOR CLEANER';
+    graphicType = 'lemon';
+  } else if (slug.includes('colin') || name.includes('colin')) {
+    bgGradient = ['#0284c7', '#38bdf8', '#0ea5e9'];
+    brandColor = '#ffffff';
+    headerTitle = 'Colin';
+    subHeadline = 'ULTRA ADVANCED GLASS CLEANER';
+    graphicType = 'spray';
+  } else if (slug.includes('lindt') || name.includes('lindt')) {
+    bgGradient = ['#09090b', '#18181b', '#09090b'];
+    brandColor = '#facc15';
+    headerTitle = 'Lindt';
+    subHeadline = 'EXCELLENCE 70% COCOA';
+    graphicType = 'chocolate';
+  } else if (slug.includes('silk') || name.includes('silk')) {
+    bgGradient = ['#2e1065', '#3b0764', '#581c87'];
+    brandColor = '#fbbf24';
+    headerTitle = 'Cadbury Silk';
+    subHeadline = 'PURE CHOCOLATE INDULGENCE';
+    graphicType = 'chocolate';
+  } else if (slug.includes('dairy-milk') || name.includes('dairy milk')) {
+    bgGradient = ['#3b0764', '#4c1d95', '#2e1065'];
+    brandColor = '#fde047';
+    headerTitle = 'Cadbury';
+    subHeadline = 'Dairy Milk • GLASS & A HALF';
+    graphicType = 'chocolate';
+  }
+
+  // 1. Draw Background Gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, 640);
+  grad.addColorStop(0, bgGradient[0]);
+  grad.addColorStop(0.5, bgGradient[1]);
+  grad.addColorStop(1, bgGradient[2]);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 640);
+
+  // Decorative Border / Inner Foil Rim
+  ctx.strokeStyle = brandColor;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(16, 16, 480, 608);
+
+  // 2. FSSAI Green Veg Square Dot
+  ctx.strokeStyle = '#15803d';
+  ctx.lineWidth = 3;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(440, 32, 36, 36);
+  ctx.strokeRect(440, 32, 36, 36);
+  ctx.fillStyle = '#15803d';
+  ctx.beginPath();
+  ctx.arc(458, 50, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3. Top Brand Name Header
+  ctx.fillStyle = brandColor;
+  ctx.font = '900 46px "Arial Black", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(headerTitle, 256, 75);
+
+  // 4. Product Sub-Headline Pill Banner
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+  ctx.fillRect(32, 115, 448, 48);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 20px system-ui, sans-serif';
+  ctx.fillText(subHeadline, 256, 139);
+
+  // 5. Center Photorealistic Artwork Illustration
+  ctx.save();
+  ctx.translate(256, 310);
+
+  if (graphicType === 'tea' || graphicType === 'greentea' || graphicType === 'earlgrey') {
+    // Ceramic Teacup with Saucer & Steaming Brew
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.beginPath();
+    ctx.ellipse(0, 85, 140, 30, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // White Cup Body
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.moveTo(-90, 0);
+    ctx.bezierCurveTo(-90, 80, 90, 80, 90, 0);
+    ctx.closePath();
+    ctx.fill();
+    // Tea Liquor
+    ctx.fillStyle = graphicType === 'greentea' ? '#65a30d' : '#b45309';
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 80, 24, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Fresh Green Leaf
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath();
+    ctx.ellipse(70, -20, 35, 16, Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (graphicType === 'coffee') {
+    // Red Coffee Mug with Roasted Beans
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(-70, -30, 140, 110);
+    ctx.fillStyle = '#78350f';
+    ctx.beginPath();
+    ctx.ellipse(0, -30, 70, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Foam Crema
+    ctx.fillStyle = '#d97706';
+    ctx.beginPath();
+    ctx.ellipse(0, -30, 56, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (graphicType === 'biscuit') {
+    // Golden Baked Glucose Cookie
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(-110, -55, 220, 110);
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(-102, -47, 204, 94);
+    ctx.fillStyle = '#92400e';
+    ctx.font = '900 32px "Arial Black", sans-serif';
+    ctx.fillText('Parle-G', 0, 5);
+  } else if (graphicType === 'oreo') {
+    // Dark Cocoa Cookie with Cream
+    ctx.fillStyle = '#18181b';
+    ctx.beginPath();
+    ctx.arc(0, 0, 85, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 36px "Arial Black", sans-serif';
+    ctx.fillText('OREO', 0, 10);
+  } else if (graphicType === 'chips' || graphicType === 'triangle' || graphicType === 'puffed') {
+    // Crispy Golden Chips / Nachos
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.moveTo(0, -80);
+    ctx.lineTo(85, 70);
+    ctx.lineTo(-85, 70);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(15, -10, 6, 0, Math.PI * 2);
+    ctx.arc(-25, 25, 5, 0, Math.PI * 2);
+    ctx.arc(35, 35, 7, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (graphicType === 'chocolate') {
+    // Chocolate Squares
+    ctx.fillStyle = '#3b0764';
+    ctx.fillRect(-90, -60, 180, 120);
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-80, -50, 160, 100);
+    ctx.fillStyle = '#facc15';
+    ctx.font = '900 28px "Arial Black", sans-serif';
+    ctx.fillText('PURE COCOA', 0, 8);
+  } else {
+    // Supermarket Quality Seal
+    ctx.fillStyle = brandColor;
+    ctx.beginPath();
+    ctx.arc(0, 0, 75, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '900 24px "Arial Black", sans-serif';
+    ctx.fillText('100% PURE', 0, -8);
+    ctx.font = '800 16px sans-serif';
+    ctx.fillText('GUARANTEE', 0, 20);
+  }
+  ctx.restore();
+
+  // 6. Pack Size & Weight Badge (Bottom Left)
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+  ctx.fillRect(36, 485, 170, 48);
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(36, 485, 170, 48);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 22px system-ui, sans-serif';
+  ctx.fillText(unit, 121, 509);
+
+  // 7. D-Mart Yellow Savings Price Pill (Bottom Right)
+  ctx.fillStyle = '#fde047';
+  ctx.fillRect(296, 485, 180, 48);
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '900 26px "Arial Black", system-ui, sans-serif';
+  ctx.fillText(`₹${price}`, 386, 509);
+
+  // 8. Authentic Product Barcode at Bottom
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(40, 560, 432, 54);
+  ctx.fillStyle = '#0f172a';
+  for (let x = 60; x < 450; x += 9) {
+    const barW = (x * 13) % 7 > 3 ? 5 : 2;
+    ctx.fillRect(x, 568, barW, 38);
+  }
+}
+
 export const shelfMaterialCache = new Map<string, THREE.Material>();
 
 // Static shared materials for all 5 aisles to eliminate redundant WebGL shader switches
@@ -166,7 +583,8 @@ export function getShelfMaterial(tex: THREE.Texture, key: string, materialType: 
 }
 
 const ProductSmallImage: React.FC<{
-  url: string | any;
+  url?: string | any;
+  product?: Product;
   position: [number, number, number];
   scale: [number, number];
   rotation?: [number, number, number];
@@ -174,51 +592,17 @@ const ProductSmallImage: React.FC<{
   roughness?: number;
   metalness?: number;
   alphaTest?: number;
-}> = React.memo(({ url, position, scale, rotation, materialType = 'basic' }) => {
-  const resolvedUrl: string = typeof url === 'object' && url && 'src' in url ? url.src : (url || '/products/sweets/DairyMilk.png');
+}> = React.memo(({ url, product, position, scale, rotation, materialType = 'basic' }) => {
+  // Synchronous instant packaging texture (0ms paint, crisp branded vector artwork)
+  const texture = useMemo(() => {
+    if (product) return getProductPackagingTexture(product);
+    const resolvedUrl: string = typeof url === 'object' && url && 'src' in url ? url.src : (url || '/products/sweets/DairyMilk.png');
+    return shelfTextureCache.get(resolvedUrl) || null;
+  }, [product, url]);
 
-  // Synchronous texture lookup from pre-warmed cache (0ms instant render)
-  const [texture, setTexture] = useState<THREE.Texture | null>(() => {
-    return resolvedUrl ? (shelfTextureCache.get(resolvedUrl) || null) : null;
-  });
-
-  useEffect(() => {
-    if (!resolvedUrl) return;
-    if (shelfTextureCache.has(resolvedUrl)) {
-      const cached = shelfTextureCache.get(resolvedUrl)!;
-      if (texture !== cached) setTexture(cached);
-      return;
-    }
-
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      resolvedUrl,
-      (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.generateMipmaps = false;
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.needsUpdate = true;
-        shelfTextureCache.set(resolvedUrl, tex);
-        setTexture(tex);
-      },
-      undefined,
-      () => {
-        if (resolvedUrl !== '/products/sweets/DairyMilk.png') {
-          loader.load('/products/sweets/DairyMilk.png', (tex) => {
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.generateMipmaps = false;
-            tex.minFilter = THREE.LinearFilter;
-            tex.magFilter = THREE.LinearFilter;
-            shelfTextureCache.set(resolvedUrl, tex);
-            setTexture(tex);
-          });
-        }
-      }
-    );
-  }, [resolvedUrl, texture]);
-
-  const mat = texture ? getShelfMaterial(texture, resolvedUrl, materialType) : null;
+  const mat = texture
+    ? getShelfMaterial(texture, product ? `pkg-${product.slug || product.id}` : (url || 'default'), materialType)
+    : null;
 
   return (
     <mesh
@@ -396,7 +780,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
               {/* Dispenser Pump Mechanism */}
               <mesh position={[0, 0.29, 0]} geometry={sharedGeometries.cyl12} scale={[0.024, 0.04, 0.024]} material={shelfRackMaterials.pumpChrome} />
               <mesh position={[0, 0.315, 0.015]} geometry={sharedGeometries.box} scale={[0.022, 0.014, 0.045]} material={shelfRackMaterials.whiteCap} />
-              <ProductSmallImage url={packagingUrl} position={[0, 0.12, 0.082]} scale={[0.13, 0.14]} />
+              <ProductSmallImage product={prod} position={[0, 0.12, 0.082]} scale={[0.13, 0.14]} />
             </group>
             {/* Back Row Stock Bottle for Retail Density */}
             <group position={[0, 0, -0.12]}>
@@ -421,7 +805,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
               <mesh position={[0.065, 0.25, 0]} geometry={sharedGeometries.box} scale={[0.025, 0.12, 0.04]} material={shelfRackMaterials.plank} />
               {/* Spout Cap */}
               <mesh position={[-0.05, 0.34, 0]} geometry={sharedGeometries.cyl12} scale={[0.028, 0.03, 0.028]} material={shelfRackMaterials.neon} />
-              <ProductSmallImage url={packagingUrl} position={[0, 0.16, 0.07]} scale={[0.19, 0.25]} />
+              <ProductSmallImage product={prod} position={[0, 0.16, 0.07]} scale={[0.19, 0.25]} />
             </group>
             {/* Back Row Stock Canister */}
             <group position={[0, 0, -0.13]}>
@@ -443,7 +827,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
               </mesh>
               {/* Stitched Top Seam Hem */}
               <mesh position={[0, 0.36, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.016, 0.02]} material={shelfRackMaterials.sackStitch} />
-              <ProductSmallImage url={packagingUrl} position={[0, 0.18, 0.086]} scale={[0.24, 0.31]} />
+              <ProductSmallImage product={prod} position={[0, 0.18, 0.086]} scale={[0.24, 0.31]} />
             </group>
             {/* Back Row Stored Sack */}
             <group position={[0, 0, -0.15]}>
@@ -467,7 +851,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
               <mesh position={[0, 0.33, 0]} geometry={sharedGeometries.crimpRib} scale={[0.23, 0.016, 0.008]} material={shelfRackMaterials.crimpSilver} />
               {/* Bottom Crimped Metallic Seal */}
               <mesh position={[0, 0.01, 0]} geometry={sharedGeometries.crimpRib} scale={[0.23, 0.014, 0.008]} material={shelfRackMaterials.crimpSilver} />
-              <ProductSmallImage url={packagingUrl} position={[0, 0.17, 0.06]} scale={[0.23, 0.28]} />
+              <ProductSmallImage product={prod} position={[0, 0.17, 0.06]} scale={[0.23, 0.28]} />
             </group>
             {/* Back Row Stock Snack Bag */}
             <group position={[0, 0, -0.12]} rotation={[-0.03, 0, 0]}>
@@ -501,7 +885,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
               <mesh geometry={sharedGeometries.box} scale={[0.65, 0.296, 0.022]}>
                 <meshStandardMaterial ref={mainMatRef} color="#4a044e" roughness={0.3} metalness={0.15} />
               </mesh>
-              <ProductSmallImage url={packagingUrl} position={[0, 0, 0.016]} scale={[0.66, 0.302]} materialType="basic" />
+              <ProductSmallImage product={prod} position={[0, 0, 0.016]} scale={[0.66, 0.302]} materialType="basic" />
             </group>
             {/* Back Stacked Bar */}
             <group position={[0, 0.155, -0.04]} rotation={[-0.06, 0, 0]}>
@@ -520,7 +904,7 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
               <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.35, 0.14]}>
                 <meshStandardMaterial ref={mainMatRef} color={color} roughness={0.3} metalness={0.06} />
               </mesh>
-              <ProductSmallImage url={packagingUrl} position={[0, 0.18, 0.076]} scale={[0.25, 0.33]} />
+              <ProductSmallImage product={prod} position={[0, 0.18, 0.076]} scale={[0.25, 0.33]} />
             </group>
             {/* Back Row Stock Carton */}
             <group position={[0, 0, -0.13]}>
@@ -558,8 +942,8 @@ const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; h
   const subtitle = subtitleMap[aisleNumber] || 'Daily Groceries & Essentials';
 
   const titleMap: Record<number, string> = {
-    1: 'SNACKS & BISCUITS',
-    2: 'SWEETS & CONFECTIONERY',
+    1: 'BISCUITS & SNACKS',
+    2: 'TEA, COFFEE & SWEETS',
     3: 'GROCERIES & STAPLES',
     4: 'PERSONAL CARE',
     5: 'HOUSEHOLD & CLEANING',
@@ -706,7 +1090,7 @@ const AisleShelves: React.FC<{ length: number; height: number }> = React.memo(({
   useEffect(() => {
     if (!planksRef.current || !ledsRef.current || !railsRef.current || !neonsRef.current) return;
     const dummy = new THREE.Object3D();
-    const shelfHeights = [0.5, 1.3, 2.1];
+    const shelfHeights = [0.45, 1.05, 1.65, 2.25];
     let idx = 0;
 
     shelfHeights.forEach((shelfH) => {
@@ -765,10 +1149,10 @@ const AisleShelves: React.FC<{ length: number; height: number }> = React.memo(({
 
   return (
     <group raycast={() => null}>
-      <instancedMesh ref={planksRef} args={[sharedGeometries.box, shelfRackMaterials.plank, 6]} raycast={() => null} />
-      <instancedMesh ref={ledsRef} args={[sharedGeometries.box, shelfRackMaterials.led, 6]} raycast={() => null} />
-      <instancedMesh ref={railsRef} args={[sharedGeometries.box, shelfRackMaterials.rail, 6]} raycast={() => null} />
-      <instancedMesh ref={neonsRef} args={[sharedGeometries.box, shelfRackMaterials.neon, 6]} raycast={() => null} />
+      <instancedMesh ref={planksRef} args={[sharedGeometries.box, shelfRackMaterials.plank, 8]} raycast={() => null} />
+      <instancedMesh ref={ledsRef} args={[sharedGeometries.box, shelfRackMaterials.led, 8]} raycast={() => null} />
+      <instancedMesh ref={railsRef} args={[sharedGeometries.box, shelfRackMaterials.rail, 8]} raycast={() => null} />
+      <instancedMesh ref={neonsRef} args={[sharedGeometries.box, shelfRackMaterials.neon, 8]} raycast={() => null} />
     </group>
   );
 });
@@ -872,9 +1256,10 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   const itemOffsets = [-1.15, 0, 1.15];
 
   const SHELF_TIERS = useMemo(() => [
-    { tier: 1, height: 0.5 },
-    { tier: 2, height: 1.3 },
-    { tier: 3, height: 2.1 },
+    { tier: 1, height: 0.45 },
+    { tier: 2, height: 1.05 },
+    { tier: 3, height: 1.65 },
+    { tier: 4, height: 2.25 },
   ], []);
 
   // Generate 6 blocks x 3 items x 3 tiers = 54 items per side (108 items total per aisle)
@@ -909,8 +1294,10 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
         for (let b = 0; b < BLOCK_COUNT; b++) {
           for (let k = 0; k < 3; k++) {
             const zRel = blockCenters[b] + itemOffsets[k];
-            const prodIdx = (tIdx * 18 + b * 3 + k + (s.side === 'RIGHT' ? 2 : 0)) % aisleProducts.length;
-            const product = aisleProducts[prodIdx];
+            const tierProducts = aisleProducts.filter((p) => p.placement?.shelfTier === tierInfo.tier);
+            const pool = tierProducts.length > 0 ? tierProducts : aisleProducts;
+            const prodIdx = (b * 3 + k + (s.side === 'RIGHT' ? 1 : 0)) % pool.length;
+            const product = pool[prodIdx];
 
             const slotWorldX = centerX + s.relX;
             const slotWorldY = centerY + shelfTierY;

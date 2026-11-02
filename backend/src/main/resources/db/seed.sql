@@ -27,8 +27,8 @@ ON CONFLICT (floor_number) DO UPDATE SET
 
 -- ── CATEGORIES ───────────────────────────────────────────────
 INSERT INTO categories (id, name, description, floor_number, display_order) VALUES
-('c0000000-0000-0000-0000-000000000001', 'Snacks & Biscuits', 'Crunchy namkeens, chips, crackers, and biscuits', 1, 1),
-('c0000000-0000-0000-0000-000000000002', 'Sweets & Confectionery', 'Chocolates, candies, toffees, and festive sweets', 1, 2),
+('c0000000-0000-0000-0000-000000000001', 'Biscuits & Snacks', 'Crunchy namkeens, chips, crackers, and biscuits', 1, 1),
+('c0000000-0000-0000-0000-000000000002', 'Tea, Coffee & Sweets', 'Premium teas, instant coffees, chocolates, and confectionery', 1, 2),
 ('c0000000-0000-0000-0000-000000000003', 'Groceries & Staples', 'Atta, rice, cooking oils, dals, and spices', 1, 3),
 ('c0000000-0000-0000-0000-000000000004', 'Personal Care & Toiletries', 'Oral care, soaps, shampoos, and skincare', 1, 4),
 ('c0000000-0000-0000-0000-000000000005', 'Household & Cleaning Products', 'Detergents, dishwash gels, and floor cleaners', 1, 5)
@@ -37,11 +37,11 @@ ON CONFLICT DO NOTHING;
 -- ── AISLES ───────────────────────────────────────────────────
 -- Floor 1: 5 Aisles at X = -10, -5, 0, 5, 10
 INSERT INTO supermarket_aisles (id, floor_id, aisle_number, name, category_id, position_x, position_z, start_x, start_z, end_x, end_z, shelf_height, shelf_tiers, color_code, banner_text) VALUES
-('a0000000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', 1, 'Snacks & Biscuits', 'c0000000-0000-0000-0000-000000000001', -10.00, 0, -10.00, -12.00, -10.00, 12.00, 2.80, 3, '#f59e0b', 'AISLE 1 • SNACKS & BISCUITS • BEST SAVINGS'),
-('a0000000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000001', 2, 'Sweets & Confectionery', 'c0000000-0000-0000-0000-000000000002', -5.00, 0, -5.00, -12.00, -5.00, 12.00, 2.80, 3, '#ec4899', 'AISLE 2 • SWEETS & CHOCOLATES • FESTIVE DELIGHT'),
-('a0000000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', 3, 'Groceries & Staples', 'c0000000-0000-0000-0000-000000000003', 0.00, 0, 0.00, -12.00, 0.00, 12.00, 2.80, 3, '#10b981', 'AISLE 3 • ATTA, RICE, OILS & SPICES • DMART BACHAT'),
-('a0000000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', 4, 'Personal Care & Toiletries', 'c0000000-0000-0000-0000-000000000004', 5.00, 0, 5.00, -12.00, 5.00, 12.00, 2.80, 3, '#06b6d4', 'AISLE 4 • SKINCARE, SHAMPOO & DENTAL CARE'),
-('a0000000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', 5, 'Household & Cleaning Products', 'c0000000-0000-0000-0000-000000000005', 10.00, 0, 10.00, -12.00, 10.00, 12.00, 2.80, 3, '#8b5cf6', 'AISLE 5 • DETERGENTS & HOME CLEANING')
+('a0000000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', 1, 'Biscuits & Snacks', 'c0000000-0000-0000-0000-000000000001', -10.00, 0, -10.00, -12.00, -10.00, 12.00, 2.80, 4, '#f59e0b', 'AISLE 1 • BISCUITS, COOKIES & SAVORY SNACKS • BEST SAVINGS'),
+('a0000000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000001', 2, 'Tea, Coffee & Sweets', 'c0000000-0000-0000-0000-000000000002', -5.00, 0, -5.00, -12.00, -5.00, 12.00, 2.80, 4, '#059669', 'AISLE 2 • TEA, COFFEE, SWEETS & CHOCOLATES • PREMIUM SELECTION'),
+('a0000000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', 3, 'Groceries & Staples', 'c0000000-0000-0000-0000-000000000003', 0.00, 0, 0.00, -12.00, 0.00, 12.00, 2.80, 4, '#10b981', 'AISLE 3 • ATTA, RICE, OILS & SPICES • MARTVERSE SPECIAL'),
+('a0000000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', 4, 'Personal Care & Toiletries', 'c0000000-0000-0000-0000-000000000004', 5.00, 0, 5.00, -12.00, 5.00, 12.00, 2.80, 4, '#06b6d4', 'AISLE 4 • SKINCARE, SHAMPOO & DENTAL CARE'),
+('a0000000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', 5, 'Household & Cleaning Products', 'c0000000-0000-0000-0000-000000000005', 10.00, 0, 10.00, -12.00, 10.00, 12.00, 2.80, 4, '#8b5cf6', 'AISLE 5 • DETERGENTS & HOME CLEANING')
 ON CONFLICT (floor_id, aisle_number) DO UPDATE SET
   name = EXCLUDED.name,
   position_x = EXCLUDED.position_x,
@@ -61,12 +61,16 @@ INSERT INTO products (id, sku, name, slug, description, brand, category_id, pric
 ('b0000000-0000-0000-0000-000000000018', 'SNK-004', 'Britannia Good Day Cashew Cookies', 'britannia-good-day-cashew-200g', 'Rich buttery cookies studded with crunchy roasted cashew nuts.', 'Britannia', 'c0000000-0000-0000-0000-000000000001', 55.00, 45.00, false, '200g', 'Saver Pack', '/products/snacks/britannia-good-day.svg'),
 ('b0000000-0000-0000-0000-000000000019', 'SNK-005', 'Kurkure Masala Munch Crunchy Snacks', 'kurkure-masala-munch-160g', 'Irresistibly spicy corn-rice puffs bursting with chatpata Indian masala flavor.', 'Kurkure', 'c0000000-0000-0000-0000-000000000001', 50.00, 40.00, false, '160g', 'Pouch', '/products/snacks/kurkure-masala-munch.svg'),
 
--- Floor 1: Aisle 2 (Sweets & Confectionery)
-('b0000000-0000-0000-0000-000000000003', 'CHO-001', 'Cadbury Dairy Milk', 'cadbury-dairy-milk-chocolate', 'Classic rich, smooth and creamy Cadbury milk chocolate bar that melts in your mouth with pure joy.', 'Cadbury', 'c0000000-0000-0000-0000-000000000002', 45.00, 40.00, false, '50g', 'Bar', '/products/sweets/DairyMilk.png'),
-('b0000000-0000-0000-0000-000000000004', 'CHO-002', 'Cadbury Dairy Milk Silk Chocolate', 'cadbury-dairy-milk-silk', 'Pure melt-in-the-mouth smoother, silkier chocolate indulgence.', 'Cadbury', 'c0000000-0000-0000-0000-000000000002', 95.00, 80.00, false, '60g', 'Bar', '/products/sweets/DairyMilk.png'),
-('b0000000-0000-0000-0000-000000000020', 'CHO-003', 'Cadbury Dairy Milk Roast Almond', 'cadbury-dairy-milk-roast-almond', 'Whole crunchy roasted almonds blended with creamy Cadbury milk chocolate.', 'Cadbury', 'c0000000-0000-0000-0000-000000000002', 105.00, 90.00, false, '55g', 'Bar', '/products/sweets/DairyMilk.png'),
-('b0000000-0000-0000-0000-000000000021', 'CHO-004', 'Cadbury Dairy Milk Fruit & Nut', 'cadbury-dairy-milk-fruit-nut', 'Delicious Cadbury milk chocolate studded with plump raisins and crunchy almonds.', 'Cadbury', 'c0000000-0000-0000-0000-000000000002', 100.00, 85.00, false, '55g', 'Bar', '/products/sweets/DairyMilk.png'),
-('b0000000-0000-0000-0000-000000000022', 'CHO-005', 'Cadbury Dairy Milk Family Pack', 'cadbury-dairy-milk-family-pack', 'Large sharing pack of delicious creamy Cadbury milk chocolate.', 'Cadbury', 'c0000000-0000-0000-0000-000000000002', 175.00, 150.00, false, '130g', 'Family Bar', '/products/sweets/DairyMilk.png'),
+-- Floor 1: Aisle 2 (Tea, Coffee & Sweets)
+('b0000000-0000-0000-0000-000000000003', 'TEA-001', 'Tata Tea Gold Pure Assam Leaf & Aroma Pearls', 'tata-tea-gold-assam-500g', 'Finest handpicked Assam tea leaves with gently rolled golden aroma balls for unmatched taste.', 'Tata Tea', 'c0000000-0000-0000-0000-000000000002', 440.00, 380.00, false, '500g', 'Bag', '/products/tea/tata-tea-gold.svg'),
+('b0000000-0000-0000-0000-000000000004', 'TEA-002', 'Brooke Bond Red Label Natural Care Tea', 'brooke-bond-red-label-tea-500g', 'Infused with the Ayurvedic goodness of Tulsi, Ashwagandha, Mulethi, Ginger and Cardamom.', 'Brooke Bond', 'c0000000-0000-0000-0000-000000000002', 370.00, 320.00, false, '500g', 'Box', '/products/tea/brooke-bond-red-label.svg'),
+('b0000000-0000-0000-0000-000000000020', 'TEA-003', 'Brooke Bond Taj Mahal Rich Golden Tea', 'brooke-bond-taj-mahal-tea-500g', 'Precious golden orange pekoe blend offering rare balance of strength and exquisite aroma. Wah Taj!', 'Brooke Bond Taj Mahal', 'c0000000-0000-0000-0000-000000000002', 525.00, 460.00, false, '500g', 'Royal Box', '/products/tea/taj-mahal-tea.svg'),
+('b0000000-0000-0000-0000-000000000021', 'TEA-004', 'Twinings of London Pure Green Tea', 'twinings-pure-green-tea-100g', 'Delicately steamed oriental green tea leaves creating smooth, refreshing antioxidant brew.', 'Twinings', 'c0000000-0000-0000-0000-000000000002', 395.00, 340.00, false, '100g', '50 Bags', '/products/tea/twinings-pure-green-tea.svg'),
+('b0000000-0000-0000-0000-000000000022', 'COF-001', 'Nescafe Classic 100% Pure Instant Coffee Jar', 'nescafe-classic-instant-coffee-200g', 'Signature roast Arabica and Robusta beans delivering unmistakable rich coffee aroma and taste.', 'Nescafe', 'c0000000-0000-0000-0000-000000000002', 560.00, 485.00, false, '200g', 'Glass Jar', '/products/tea/nescafe-classic-coffee.svg'),
+('b0000000-0000-0000-0000-000000000034', 'COF-002', 'Bru Instant Coffee with Roasted Chicory', 'bru-instant-coffee-200g', 'Perfect blend of 70% selected coffee beans and 30% chicory for rich South Indian filter flavor.', 'Bru', 'c0000000-0000-0000-0000-000000000002', 450.00, 390.00, false, '200g', 'Pouch', '/products/tea/bru-instant-coffee.svg'),
+('b0000000-0000-0000-0000-000000000035', 'CHO-001', 'Lindt Excellence 70% Cocoa Dark Chocolate Bar', 'lindt-excellence-70-percent-cocoa-100g', 'Expertly crafted intensely rich dark chocolate with balanced floral notes.', 'Lindt', 'c0000000-0000-0000-0000-000000000002', 330.00, 285.00, false, '100g', 'Bar', '/products/sweets/lindt-excellence-70.svg'),
+('b0000000-0000-0000-0000-000000000036', 'CHO-002', 'Ferrero Rocher Hazelnut & Chocolate Pralines Box', 'ferrero-rocher-16-pieces-200g', 'Whole crunchy hazelnut in delicious creamy chocolate cream enclosed in crisp wafer sphere.', 'Ferrero Rocher', 'c0000000-0000-0000-0000-000000000002', 575.00, 495.00, false, '200g', '16 Pcs Box', '/products/sweets/ferrero-rocher.svg'),
+('b0000000-0000-0000-0000-000000000037', 'CHO-003', 'Cadbury Dairy Milk Silk Pure Chocolate Bar', 'cadbury-dairy-milk-silk-60g', 'Pure melt-in-the-mouth smoother, silkier chocolate indulgence.', 'Cadbury', 'c0000000-0000-0000-0000-000000000002', 95.00, 80.00, false, '60g', 'Bar', '/products/sweets/cadbury-dairy-milk-silk.svg'),
 
 -- Floor 1: Aisle 3 (Groceries & Staples)
 ('b0000000-0000-0000-0000-000000000005', 'GRO-001', 'Aashirvaad Shudh Chakki Atta', 'aashirvaad-shudh-chakki-atta-10kg', '100% pure whole wheat grain flour ensuring softer and nutrient-rich rotis.', 'Aashirvaad', 'c0000000-0000-0000-0000-000000000003', 495.00, 420.00, false, '10kg', 'Eco Bag', '/products/groceries/aashirvaad-shudh-chakki-atta.svg'),
@@ -150,12 +154,12 @@ INSERT INTO product_placements (id, product_id, floor_id, aisle_id, shelf_side, 
 ('ba000000-0000-0000-0000-000000000018', 'b0000000-0000-0000-0000-000000000018', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'RIGHT', 2, 2, 'BOX', -9.20, 1.50, 2.00, -1.5708, '#eab308', 'box'),
 ('ba000000-0000-0000-0000-000000000019', 'b0000000-0000-0000-0000-000000000019', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'LEFT', 2, 3, 'PACKET', -10.80, 1.50, 6.00, 1.5708, '#ea580c', 'bag'),
 
--- Floor 1: Aisle 2 (Sweets & Confectionery) - 6 Blocks (-10, -6, -2, 2, 6, 10)
-('ba000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'LEFT', 2, 1, 'CHOCOLATE', -5.80, 1.32, -10.00, -1.5708, '#28074d', 'chocolate'),
-('ba000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'RIGHT', 2, 1, 'CHOCOLATE', -4.20, 1.32, -6.00, 1.5708, '#28074d', 'chocolate'),
-('ba000000-0000-0000-0000-000000000020', 'b0000000-0000-0000-0000-000000000020', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'LEFT', 2, 2, 'CHOCOLATE', -5.80, 1.32, -2.00, -1.5708, '#28074d', 'chocolate'),
-('ba000000-0000-0000-0000-000000000021', 'b0000000-0000-0000-0000-000000000021', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'RIGHT', 2, 2, 'CHOCOLATE', -4.20, 1.32, 2.00, 1.5708, '#28074d', 'chocolate'),
-('ba000000-0000-0000-0000-000000000022', 'b0000000-0000-0000-0000-000000000022', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'LEFT', 2, 3, 'CHOCOLATE', -5.80, 1.32, 6.00, -1.5708, '#28074d', 'chocolate'),
+-- Floor 1: Aisle 2 (Tea, Coffee & Sweets) - 6 Blocks (-10, -6, -2, 2, 6, 10)
+('ba000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'LEFT', 3, 1, 'BOX', -5.80, 1.65, -10.00, -1.5708, '#171717', 'box'),
+('ba000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'RIGHT', 3, 1, 'BOX', -4.20, 1.65, -6.00, 1.5708, '#dc2626', 'box'),
+('ba000000-0000-0000-0000-000000000020', 'b0000000-0000-0000-0000-000000000020', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'LEFT', 3, 2, 'BOX', -5.80, 1.65, -2.00, -1.5708, '#1e3a8a', 'box'),
+('ba000000-0000-0000-0000-000000000021', 'b0000000-0000-0000-0000-000000000021', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'RIGHT', 2, 2, 'BOX', -4.20, 1.05, 2.00, 1.5708, '#65a30d', 'box'),
+('ba000000-0000-0000-0000-000000000022', 'b0000000-0000-0000-0000-000000000022', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'LEFT', 1, 3, 'BOTTLE', -5.80, 0.45, 6.00, -1.5708, '#991b1b', 'bottle'),
 
 -- Floor 1: Aisle 3 (Groceries & Staples) - 6 Blocks (-10, -6, -2, 2, 6, 10)
 ('ba000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003', 'LEFT', 1, 1, 'BAG', -0.80, 0.70, -10.00, 1.5708, '#ea580c', 'bag'),
