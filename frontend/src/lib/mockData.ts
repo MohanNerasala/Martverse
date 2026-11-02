@@ -1,4 +1,6 @@
 import { SupermarketFloor, Product } from '@/types';
+import { REFRIGERATOR_PRODUCTS } from './refrigeratorData';
+export { REFRIGERATOR_PRODUCTS };
 
 export const MOCK_FLOORS: SupermarketFloor[] = [
   {
@@ -105,6 +107,7 @@ export const MOCK_FLOORS: SupermarketFloor[] = [
 ];
 
 export const MOCK_PRODUCTS: Product[] = [
+  ...REFRIGERATOR_PRODUCTS,
   // =========================================================================
   // FLOOR 1: AISLE 1 — SNACKS & BISCUITS
   // =========================================================================

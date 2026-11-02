@@ -159,69 +159,7 @@ export const EscalatorPromptCard: React.FC = React.memo(() => {
   );
 });
 
-export const IntroBrandBanner: React.FC = React.memo(() => {
-  const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
-  const [shouldShow, setShouldShow] = useState(false);
-  const [hasDismissed, setHasDismissed] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const alreadySeen =
-      sessionStorage.getItem('martverse_intro_card_seen') === 'true' ||
-      localStorage.getItem('martverse_intro_card_seen') === 'true' ||
-      sessionStorage.getItem('martverse_return_target') !== null;
-
-    if (!alreadySeen && !hasMovedTrolley) {
-      setShouldShow(true);
-    } else {
-      setHasDismissed(true);
-    }
-  }, [hasMovedTrolley]);
-
-  useEffect(() => {
-    if (hasMovedTrolley && shouldShow) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('martverse_intro_card_seen', 'true');
-        localStorage.setItem('martverse_intro_card_seen', 'true');
-      }
-      const timer = setTimeout(() => {
-        setHasDismissed(true);
-      }, 700);
-      return () => clearTimeout(timer);
-    }
-  }, [hasMovedTrolley, shouldShow]);
-
-  if (hasDismissed || !shouldShow) return null;
-
-  return (
-    <div
-      className={`fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-700 ease-out transform ${
-        hasMovedTrolley
-          ? 'opacity-0 -translate-y-8 scale-95 pointer-events-none'
-          : 'opacity-100 translate-y-0 scale-100'
-      }`}
-    >
-      <div className="bg-gradient-to-b from-sky-50/98 via-white/98 to-blue-50/95 px-8 py-4 rounded-3xl border border-sky-200/90 shadow-[0_20px_50px_rgba(2,132,199,0.18),0_4px_16px_rgba(15,23,42,0.06)] text-center flex flex-col items-center gap-1.5 backdrop-blur-2xl">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white flex items-center justify-center shadow-md shadow-blue-500/25">
-            <Store className="w-5 h-5 text-white" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-slate-900">
-            MART<span className="text-blue-600">VERSE</span>
-          </h1>
-        </div>
-        <p className="text-xs text-sky-800 font-semibold tracking-wide">
-          3D Virtual Hypermarket
-        </p>
-        <div className="flex items-center gap-2 text-[11px] text-slate-700 font-mono mt-1 bg-sky-100/80 px-3.5 py-1 rounded-full border border-sky-200/90 shadow-2xs">
-          <span className="bg-white text-blue-700 font-black px-1.5 py-0.5 rounded border border-blue-200/60 shadow-2xs">W A S D</span>
-          <span className="text-sky-400 font-bold">•</span>
-          <span className="text-slate-700 font-bold">Push Trolley to Explore</span>
-        </div>
-      </div>
-    </div>
-  );
-});
+export const IntroBrandBanner: React.FC = () => null;
 
 export const SupermarketHUD: React.FC = () => {
   const router = useRouter();

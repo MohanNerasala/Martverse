@@ -10,6 +10,7 @@ import { ExitGate3D } from './ExitGate3D';
 import { TrolleyModel } from './TrolleyModel';
 import { FlyingProductArc } from './FlyingProductArc';
 import { PlayerController } from './PlayerController';
+import { RefrigeratorSection3D } from './RefrigeratorSection3D';
 import { useMartStore } from '@/store/useMartStore';
 import { api } from '@/lib/api';
 
@@ -134,6 +135,9 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           <ScenePerformanceMonitor />
           {/* Store Shell */}
           <StoreArchitecture />
+
+          {/* Commercial Refrigerated Reach-in Display Sections on Ground Floor Left Wall */}
+          {activeFloor === 1 && <RefrigeratorSection3D />}
 
           {/* Ground Floor Aisles (Aisles 1 - 5) - Active Floor Culling */}
           {activeFloor === 1 && groundFloor?.aisles.map((aisle) => (

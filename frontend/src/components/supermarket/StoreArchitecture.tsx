@@ -1,273 +1,373 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import * as THREE from 'three';
+import { Text } from '@react-three/drei';
+
+// Procedural seamless commercial supermarket tile texture cache
+let tileTextureCache: THREE.CanvasTexture | null = null;
+function getVitrifiedTileTexture(): THREE.CanvasTexture {
+  if (tileTextureCache) return tileTextureCache;
+  if (typeof document === 'undefined') {
+    return new THREE.CanvasTexture({} as HTMLCanvasElement);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // 2x2 vitrified commercial supermarket porcelain tile pattern (pearl off-white)
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Realistic grout joints (soft warm grey)
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(254, 0, 4, 512);
+    ctx.fillRect(0, 254, 512, 4);
+
+    // Subtle natural polished porcelain grain variation
+    ctx.fillStyle = '#f1f5f9';
+    for (let i = 0; i < 48; i++) {
+      const rx = (i * 47) % 508;
+      const ry = (i * 71) % 508;
+      ctx.fillRect(rx, ry, 6, 6);
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(18, 26); // Generates realistic 800x800mm tiles across 36x52m floor
+  tileTextureCache = texture;
+  return texture;
+}
 
 // Pre-allocated static materials and geometries to eliminate GPU pipeline re-compilations
 const sharedMaterials = {
-  floor: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.12, metalness: 0.22 }),
   wall: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.6 }),
   slab: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.7 }),
-  ceilingLight: new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: new THREE.Color('#ffffff'), emissiveIntensity: 0.9 }),
+  ceilingBeam: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.35, metalness: 0.2 }),
+  ceilingLight: new THREE.MeshStandardMaterial({
+    color: '#ffffff',
+    emissive: new THREE.Color('#ffffff'),
+    emissiveIntensity: 0.95,
+  }),
   glassRail: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.4, roughness: 0.1 }),
   escalatorBase: new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.7, roughness: 0.3 }),
   escalatorSteps: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.8 }),
   yellowLine: new THREE.MeshBasicMaterial({ color: '#facc15' }),
   escalatorGlass: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.5, roughness: 0.1 }),
+  pillarConcrete: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.25, metalness: 0.1 }),
+  hazardStrip: new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.4 }),
+  hazardBlack: new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.8 }),
   roof: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.9 }),
+  basketRed: new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.3 }),
+  basketBlue: new THREE.MeshStandardMaterial({ color: '#2563eb', roughness: 0.3 }),
+  basketChrome: new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.9, roughness: 0.1 }),
+  bannerGold: new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.3, metalness: 0.2 }),
+  bannerGreen: new THREE.MeshStandardMaterial({ color: '#047857', roughness: 0.3, metalness: 0.2 }),
+  cameraDome: new THREE.MeshStandardMaterial({ color: '#09090b', roughness: 0.1, metalness: 0.8 }),
 };
 
 const sharedGeos = {
+  box: new THREE.BoxGeometry(1, 1, 1),
+  cyl: new THREE.CylinderGeometry(1, 1, 1, 16),
   light1: new THREE.BoxGeometry(0.3, 0.08, 4.0),
   light2: new THREE.BoxGeometry(0.3, 0.08, 6.0),
 };
 
-import { Text } from '@react-three/drei';
+// Reusable D-Mart inspired promotional concrete pillar
+const SupermarketPillar: React.FC<{
+  position: [number, number, number];
+  titleText: string;
+  subText: string;
+  badgeText: string;
+  badgeColor?: string;
+}> = React.memo(({ position, titleText, subText, badgeText, badgeColor = '#0284c7' }) => {
+  const badgeMat = useMemo(() => new THREE.MeshBasicMaterial({ color: badgeColor }), [badgeColor]);
+
+  return (
+    <group position={position}>
+      {/* Heavy-Duty Structural Column */}
+      <mesh position={[0, 2.5, 0]} geometry={sharedGeos.box} scale={[0.74, 5.0, 0.74]} material={sharedMaterials.pillarConcrete} />
+
+      {/* Yellow & Black Safety Hazard Impact Bumper Base (0.48m high) */}
+      <group position={[0, 0.24, 0]}>
+        <mesh geometry={sharedGeos.box} scale={[0.76, 0.48, 0.76]} material={sharedMaterials.hazardStrip} />
+        {/* Diagonal black bumper stripes */}
+        {[-0.14, 0, 0.14].map((yOff, i) => (
+          <mesh key={`hazard-${i}`} position={[0, yOff, 0]} geometry={sharedGeos.box} scale={[0.77, 0.04, 0.77]} material={sharedMaterials.hazardBlack} />
+        ))}
+      </group>
+
+      {/* D-Mart Promotional Wrap Poster Panel facing North (-Z) */}
+      <group position={[0, 2.4, -0.38]}>
+        {/* White Signboard Backing */}
+        <mesh geometry={sharedGeos.box} scale={[0.66, 1.6, 0.02]} material={sharedMaterials.wall} />
+        {/* Promotional Header Badge */}
+        <mesh position={[0, 0.62, 0.015]} geometry={sharedGeos.box} scale={[0.56, 0.18, 0.01]} material={badgeMat} />
+        <Text position={[0, 0.62, 0.025]} fontSize={0.068} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
+          {badgeText}
+        </Text>
+        {/* Main Title */}
+        <Text position={[0, 0.28, 0.02]} fontSize={0.082} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" maxWidth={0.6}>
+          {titleText}
+        </Text>
+        {/* Subtitle */}
+        <Text position={[0, -0.15, 0.02]} fontSize={0.052} color="#475569" anchorX="center" anchorY="middle" fontWeight="semibold" maxWidth={0.58}>
+          {subText}
+        </Text>
+      </group>
+
+      {/* Promotional Wrap Poster Panel facing South (+Z) */}
+      <group position={[0, 2.4, 0.38]} rotation={[0, Math.PI, 0]}>
+        <mesh geometry={sharedGeos.box} scale={[0.66, 1.6, 0.02]} material={sharedMaterials.wall} />
+        <mesh position={[0, 0.62, 0.015]} geometry={sharedGeos.box} scale={[0.56, 0.18, 0.01]} material={badgeMat} />
+        <Text position={[0, 0.62, 0.025]} fontSize={0.068} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
+          {badgeText}
+        </Text>
+        <Text position={[0, 0.28, 0.02]} fontSize={0.082} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" maxWidth={0.6}>
+          {titleText}
+        </Text>
+        <Text position={[0, -0.15, 0.02]} fontSize={0.052} color="#475569" anchorX="center" anchorY="middle" fontWeight="semibold" maxWidth={0.58}>
+          {subText}
+        </Text>
+      </group>
+    </group>
+  );
+});
+SupermarketPillar.displayName = 'SupermarketPillar';
+
+// Chrome rolling hand basket stack station
+const BasketStackStation: React.FC<{ position: [number, number, number]; color: 'red' | 'blue' }> = React.memo(({ position, color }) => {
+  const basketMat = color === 'red' ? sharedMaterials.basketRed : sharedMaterials.basketBlue;
+  return (
+    <group position={position}>
+      {/* Chrome Base Frame on Wheels */}
+      <mesh position={[0, 0.08, 0]} geometry={sharedGeos.box} scale={[0.48, 0.04, 0.38]} material={sharedMaterials.basketChrome} />
+      {/* 4 Rolling Casters */}
+      {[-0.2, 0.2].map((cx, i) =>
+        [-0.15, 0.15].map((cz, j) => (
+          <mesh key={`wheel-${i}-${j}`} position={[cx, 0.03, cz]} geometry={sharedGeos.cyl} scale={[0.025, 0.04, 0.025]} material={sharedMaterials.hazardBlack} />
+        ))
+      )}
+      {/* Vertical Chrome Retaining Wire Guides */}
+      {[-0.22, 0.22].map((gx, i) => (
+        <mesh key={`guide-${i}`} position={[gx, 0.55, 0]} geometry={sharedGeos.cyl} scale={[0.008, 0.9, 0.008]} material={sharedMaterials.basketChrome} />
+      ))}
+      {/* Stack of 8 Nesting Plastic Baskets */}
+      {Array.from({ length: 8 }).map((_, bIdx) => (
+        <group key={`basket-${bIdx}`} position={[0, 0.16 + bIdx * 0.08, 0]}>
+          <mesh geometry={sharedGeos.box} scale={[0.42, 0.12, 0.32]} material={basketMat} />
+          {/* Black fold-down handle */}
+          <mesh position={[0, 0.07, 0]} geometry={sharedGeos.box} scale={[0.38, 0.015, 0.02]} material={sharedMaterials.hazardBlack} />
+        </group>
+      ))}
+    </group>
+  );
+});
+BasketStackStation.displayName = 'BasketStackStation';
 
 interface StoreArchitectureProps {
   activeFloor?: number;
 }
 
 const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
+  const tileTexture = useMemo(() => getVitrifiedTileTexture(), []);
+
   return (
     <group>
       {/* ==============================================================
           GROUND FLOOR (y = 0)
           ============================================================== */}
-      {/* Ground Floor Polished Carrara Porcelain Floor (White & Blue Specular Sheen) */}
+      {/* Ground Floor High-Quality Polished Vitrified Tile Supermarket Flooring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[36, 52]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.12} metalness={0.22} />
+        <meshStandardMaterial
+          map={tileTexture}
+          roughness={0.14}
+          metalness={0.18}
+        />
       </mesh>
 
       {/* Ground Floor Architectural Pristine White Walls */}
       {/* Back Wall (z = 25) */}
-      <mesh position={[0, 2.5, 26]}>
-        <boxGeometry args={[36, 5, 0.4]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
-      </mesh>
+      <mesh position={[0, 2.5, 26]} geometry={sharedGeos.box} scale={[36, 5, 0.4]} material={sharedMaterials.wall} />
       {/* Front Entrance Wall (z = -26) with doorway opening */}
-      <mesh position={[-11, 2.5, -26]}>
-        <boxGeometry args={[14, 5, 0.4]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
-      </mesh>
-      <mesh position={[11, 2.5, -26]}>
-        <boxGeometry args={[14, 5, 0.4]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
-      </mesh>
-      {/* Wall opening lintel over entrance door (Pristine Architectural White) */}
-      <mesh position={[0, 4.2, -26]}>
-        <boxGeometry args={[8, 1.6, 0.4]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
-      </mesh>
+      <mesh position={[-11, 2.5, -26]} geometry={sharedGeos.box} scale={[14, 5, 0.4]} material={sharedMaterials.wall} />
+      <mesh position={[11, 2.5, -26]} geometry={sharedGeos.box} scale={[14, 5, 0.4]} material={sharedMaterials.wall} />
+      {/* Wall opening lintel over entrance door */}
+      <mesh position={[0, 4.2, -26]} geometry={sharedGeos.box} scale={[8, 1.6, 0.4]} material={sharedMaterials.wall} />
 
-      {/* --- Single Luxury White Signboard: 'Welcome to Martverse' --- */}
+      {/* --- Single Luxury Signboard: 'Welcome to Martverse' --- */}
       <group position={[0, 4.25, -25.75]}>
         {/* Sleek Chrome Framing Rim */}
-        <mesh position={[0, 0, -0.015]}>
-          <boxGeometry args={[5.28, 0.93, 0.04]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
-        </mesh>
-        {/* Pure White Acrylic/Porcelain Board */}
-        <mesh position={[0, 0, 0.015]}>
-          <boxGeometry args={[5.2, 0.85, 0.03]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.12} metalness={0.08} />
-        </mesh>
-        {/* Subtle Sapphire Accent Base Strip */}
-        <mesh position={[0, -0.38, 0.038]}>
-          <boxGeometry args={[4.8, 0.02, 0.01]} />
-          <meshBasicMaterial color="#38bdf8" />
-        </mesh>
-        {/* Main Brand Title in Sapphire Blue */}
-        <Text
-          position={[0, 0.08, 0.045]}
-          fontSize={0.34}
-          color="#0284c7"
-          anchorX="center"
-          anchorY="middle"
-        >
+        <mesh position={[0, 0, -0.015]} geometry={sharedGeos.box} scale={[5.28, 0.93, 0.04]} material={sharedMaterials.slab} />
+        {/* Pure White Acrylic Board */}
+        <mesh position={[0, 0, 0.015]} geometry={sharedGeos.box} scale={[5.2, 0.85, 0.03]} material={sharedMaterials.wall} />
+        {/* Cyan Accent Base Strip */}
+        <mesh position={[0, -0.38, 0.038]} geometry={sharedGeos.box} scale={[4.8, 0.02, 0.01]} material={sharedMaterials.yellowLine} />
+        <Text position={[0, 0.08, 0.045]} fontSize={0.34} color="#0284c7" anchorX="center" anchorY="middle" fontWeight="extrabold">
           Welcome to Martverse
         </Text>
-        {/* Elegant Blue-to-White Tagline */}
-        <Text
-          position={[0, -0.22, 0.045]}
-          fontSize={0.14}
-          color="#38bdf8"
-          anchorX="center"
-          anchorY="middle"
-        >
-          3D VIRTUAL HYPERMARKET
+        <Text position={[0, -0.22, 0.045]} fontSize={0.14} color="#0284c7" anchorX="center" anchorY="middle" fontWeight="bold">
+          INDIAN HYPERMARKET & SUPER SAVINGS
         </Text>
       </group>
 
       {/* Left Wall (x = -18) */}
-      <mesh position={[-18, 2.5, 0]}>
-        <boxGeometry args={[0.4, 5, 52]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
-      </mesh>
+      <mesh position={[-18, 2.5, 0]} geometry={sharedGeos.box} scale={[0.4, 5, 52]} material={sharedMaterials.wall} />
       {/* Right Wall (x = 18) */}
-      <mesh position={[18, 2.5, 0]}>
-        <boxGeometry args={[0.4, 5, 52]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
-      </mesh>
+      <mesh position={[18, 2.5, 0]} geometry={sharedGeos.box} scale={[0.4, 5, 52]} material={sharedMaterials.wall} />
 
       {/* Ground Floor Ceiling / Floor 2 Floor Slab (y = 5.0) */}
-      {/* 1. Main Floor Slab covering from x = -18 to x = 13.2 */}
-      <mesh position={[-2.4, 5.0, 0]}>
-        <boxGeometry args={[31.2, 0.3, 52]} />
-        <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
-      </mesh>
-      {/* 2. Front Slab (z = 5.4 to 26 - escalator top landing platform) */}
-      <mesh position={[15.6, 5.0, 15.7]}>
-        <boxGeometry args={[4.8, 0.3, 20.6]} />
-        <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
-      </mesh>
-      {/* 3. Back Slab (z = -26 to -6.5) */}
-      <mesh position={[15.6, 5.0, -16.25]}>
-        <boxGeometry args={[4.8, 0.3, 19.5]} />
-        <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
-      </mesh>
-      {/* 4. Side Walkway slab next to right wall */}
-      <mesh position={[17.1, 5.0, 0]}>
-        <boxGeometry args={[1.8, 0.3, 13]} />
-        <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
-      </mesh>
+      <mesh position={[-2.4, 5.0, 0]} geometry={sharedGeos.box} scale={[31.2, 0.3, 52]} material={sharedMaterials.slab} />
+      <mesh position={[15.6, 5.0, 15.7]} geometry={sharedGeos.box} scale={[4.8, 0.3, 20.6]} material={sharedMaterials.slab} />
+      <mesh position={[15.6, 5.0, -16.25]} geometry={sharedGeos.box} scale={[4.8, 0.3, 19.5]} material={sharedMaterials.slab} />
+      <mesh position={[17.1, 5.0, 0]} geometry={sharedGeos.box} scale={[1.8, 0.3, 13]} material={sharedMaterials.slab} />
+
+      {/* Industrial White Steel Ceiling Beams spanning across Ground Floor */}
+      {[-20, -12, -4, 4, 12, 20].map((zBeam, i) => (
+        <mesh key={`beam-${i}`} position={[-2.4, 4.88, zBeam]} geometry={sharedGeos.box} scale={[31.2, 0.22, 0.25]} material={sharedMaterials.ceilingBeam} />
+      ))}
 
       {/* Escalator Shaft Glass Guardrails on Floor 2 */}
-      {/* Left side safety guardrail protecting the atrium void (x = 13.2, z from -6.5 to 5.4) */}
-      <mesh position={[13.2, 5.5, -0.55]}>
-        <boxGeometry args={[0.08, 1.0, 11.9]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.4} roughness={0.1} />
-      </mesh>
-      {/* Back end safety guardrail protecting against drop behind escalator shaft (z = -6.5, x from 13.2 to 16.2) */}
-      <mesh position={[14.7, 5.5, -6.5]}>
-        <boxGeometry args={[3.0, 1.0, 0.08]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.4} roughness={0.1} />
-      </mesh>
+      <mesh position={[13.2, 5.5, -0.55]} geometry={sharedGeos.box} scale={[0.08, 1.0, 11.9]} material={sharedMaterials.glassRail} />
+      <mesh position={[14.7, 5.5, -6.5]} geometry={sharedGeos.box} scale={[3.0, 1.0, 0.08]} material={sharedMaterials.glassRail} />
+
+      {/* ==============================================================
+          STRUCTURAL CONCRETE PILLARS WITH D-MART PROMOTIONAL WRAPS
+          ============================================================== */}
+      <SupermarketPillar
+        position={[-5, 0, -8]}
+        titleText={'D-MART BACHAT BAZAAR\nMAXIMUM SAVINGS'}
+        subText="Unbeatable Everyday Low Prices on Groceries & Staples"
+        badgeText="EVERYDAY LOW PRICE"
+        badgeColor="#dc2626"
+      />
+      <SupermarketPillar
+        position={[5, 0, -8]}
+        titleText={'FARM DIRECT ORGANICS\n100% PURE & FRESH'}
+        subText="Finest Quality Flours, Pure Ghee, Cold-Pressed Oils & Spices"
+        badgeText="QUALITY GUARANTEE"
+        badgeColor="#059669"
+      />
+      <SupermarketPillar
+        position={[-5, 0, 8]}
+        titleText={'SUPER SAVER PACKS\nFLAT 20% TO 50% OFF'}
+        subText="Special Family Packs • Buy More, Save More Every Day"
+        badgeText="SPECIAL VALUE"
+        badgeColor="#b45309"
+      />
+      <SupermarketPillar
+        position={[5, 0, 8]}
+        titleText={'BRAND MEGA OFFERS\nBEST PRICE PROMISE'}
+        subText="Top FMCG Brands at India's Lowest Supermarket Rates"
+        badgeText="BEST PRICE"
+        badgeColor="#0284c7"
+      />
+
+      {/* ==============================================================
+          OVERHEAD CEILING PROMOTIONAL BANNERS (Suspended Between Aisles)
+          ============================================================== */}
+      {/* Banner 1: Front Concourse */}
+      <group position={[0, 4.1, -4]}>
+        <mesh geometry={sharedGeos.box} scale={[6.2, 0.9, 0.04]} material={sharedMaterials.bannerGold} />
+        {/* Suspension Rods */}
+        <mesh position={[-2.8, 0.45, 0]} geometry={sharedGeos.cyl} scale={[0.012, 0.9, 0.012]} material={sharedMaterials.basketChrome} />
+        <mesh position={[2.8, 0.45, 0]} geometry={sharedGeos.cyl} scale={[0.012, 0.9, 0.012]} material={sharedMaterials.basketChrome} />
+        <Text position={[0, 0.16, 0.025]} fontSize={0.24} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
+          D-MART BACHAT BAZAAR • DAILY SAVINGS
+        </Text>
+        <Text position={[0, -0.16, 0.025]} fontSize={0.13} color="#fef08a" anchorX="center" anchorY="middle" fontWeight="bold">
+          ★ FLAT 20% TO 50% OFF ON ALL DAILY ESSENTIALS ★
+        </Text>
+        {/* Back side */}
+        <group rotation={[0, Math.PI, 0]}>
+          <Text position={[0, 0.16, 0.025]} fontSize={0.24} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
+            D-MART BACHAT BAZAAR • DAILY SAVINGS
+          </Text>
+          <Text position={[0, -0.16, 0.025]} fontSize={0.13} color="#fef08a" anchorX="center" anchorY="middle" fontWeight="bold">
+            ★ FLAT 20% TO 50% OFF ON ALL DAILY ESSENTIALS ★
+          </Text>
+        </group>
+      </group>
+
+      {/* Banner 2: Rear Concourse */}
+      <group position={[0, 4.1, 8]}>
+        <mesh geometry={sharedGeos.box} scale={[6.2, 0.9, 0.04]} material={sharedMaterials.bannerGreen} />
+        <mesh position={[-2.8, 0.45, 0]} geometry={sharedGeos.cyl} scale={[0.012, 0.9, 0.012]} material={sharedMaterials.basketChrome} />
+        <mesh position={[2.8, 0.45, 0]} geometry={sharedGeos.cyl} scale={[0.012, 0.9, 0.012]} material={sharedMaterials.basketChrome} />
+        <Text position={[0, 0.16, 0.025]} fontSize={0.24} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
+          SUPER SAVER COMBOS • BUY MORE SAVE MORE
+        </Text>
+        <Text position={[0, -0.16, 0.025]} fontSize={0.13} color="#a7f3d0" anchorX="center" anchorY="middle" fontWeight="bold">
+          ✓ 100% Quality Assurance • Instant Conveyor Checkout
+        </Text>
+        <group rotation={[0, Math.PI, 0]}>
+          <Text position={[0, 0.16, 0.025]} fontSize={0.24} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
+            SUPER SAVER COMBOS • BUY MORE SAVE MORE
+          </Text>
+          <Text position={[0, -0.16, 0.025]} fontSize={0.13} color="#a7f3d0" anchorX="center" anchorY="middle" fontWeight="bold">
+            ✓ 100% Quality Assurance • Instant Conveyor Checkout
+          </Text>
+        </group>
+      </group>
+
+      {/* ==============================================================
+          ENTRANCE SHOPPING BASKET STATIONS
+          ============================================================== */}
+      <BasketStackStation position={[-3.4, 0, -22.5]} color="red" />
+      <BasketStackStation position={[3.4, 0, -22.5]} color="blue" />
+
+      {/* Ceiling Security Cameras */}
+      {[-16, 0, 16].map((zCam, i) => (
+        <group key={`cctv-${i}`} position={[0, 4.9, zCam]}>
+          <mesh geometry={sharedGeos.cyl} scale={[0.1, 0.06, 0.1]} material={sharedMaterials.hazardBlack} />
+          <mesh position={[0, -0.04, 0]} geometry={sharedGeos.cyl} scale={[0.07, 0.08, 0.07]} material={sharedMaterials.cameraDome} />
+        </group>
+      ))}
 
       {/* ==============================================================
           ESCALATOR CONNECTING GROUND & FIRST FLOOR (x = 14.7, z = 0)
           ============================================================== */}
       <group position={[14.7, 0, 0]}>
-        {/* Slanted Escalator Ramp (from z = -8, y = 0 up to z = 6, y = 5.0) */}
         <group position={[0, 2.5, -1]} rotation={[-0.34, 0, 0]}>
-          {/* Moving steps base */}
-          <mesh>
-            <boxGeometry args={[2.2, 0.4, 15]} />
-            <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.3} />
-          </mesh>
-          {/* Step groves / Yellow safety borders */}
-          <mesh position={[0, 0.22, 0]}>
-            <boxGeometry args={[1.8, 0.02, 14.8]} />
-            <meshStandardMaterial color="#334155" roughness={0.8} />
-          </mesh>
-          {/* Left Yellow Line */}
-          <mesh position={[-0.92, 0.23, 0]}>
-            <boxGeometry args={[0.04, 0.01, 14.8]} />
-            <meshBasicMaterial color="#facc15" />
-          </mesh>
-          {/* Right Yellow Line */}
-          <mesh position={[0.92, 0.23, 0]}>
-            <boxGeometry args={[0.04, 0.01, 14.8]} />
-            <meshBasicMaterial color="#facc15" />
-          </mesh>
+          <mesh geometry={sharedGeos.box} scale={[2.2, 0.4, 15]} material={sharedMaterials.escalatorBase} />
+          <mesh position={[0, 0.22, 0]} geometry={sharedGeos.box} scale={[1.8, 0.02, 14.8]} material={sharedMaterials.escalatorSteps} />
+          <mesh position={[-0.92, 0.23, 0]} geometry={sharedGeos.box} scale={[0.04, 0.01, 14.8]} material={sharedMaterials.yellowLine} />
+          <mesh position={[0.92, 0.23, 0]} geometry={sharedGeos.box} scale={[0.04, 0.01, 14.8]} material={sharedMaterials.yellowLine} />
 
-          {/* Left Glass Balustrade & Rubber Handrail */}
-          <mesh position={[-1.05, 0.6, 0]}>
-            <boxGeometry args={[0.04, 0.9, 15]} />
-            <meshStandardMaterial color="#38bdf8" transparent opacity={0.5} roughness={0.1} />
-          </mesh>
-          <mesh position={[-1.05, 1.05, 0]}>
-            <boxGeometry args={[0.08, 0.06, 15]} />
-            <meshStandardMaterial color="#09090b" roughness={0.9} />
-          </mesh>
+          <mesh position={[-1.05, 0.6, 0]} geometry={sharedGeos.box} scale={[0.04, 0.9, 15]} material={sharedMaterials.escalatorGlass} />
+          <mesh position={[-1.05, 1.05, 0]} geometry={sharedGeos.box} scale={[0.08, 0.06, 15]} material={sharedMaterials.hazardBlack} />
 
-          {/* Right Glass Balustrade & Rubber Handrail */}
-          <mesh position={[1.05, 0.6, 0]}>
-            <boxGeometry args={[0.04, 0.9, 15]} />
-            <meshStandardMaterial color="#38bdf8" transparent opacity={0.5} roughness={0.1} />
-          </mesh>
-          <mesh position={[1.05, 1.05, 0]}>
-            <boxGeometry args={[0.08, 0.06, 15]} />
-            <meshStandardMaterial color="#09090b" roughness={0.9} />
-          </mesh>
+          <mesh position={[1.05, 0.6, 0]} geometry={sharedGeos.box} scale={[0.04, 0.9, 15]} material={sharedMaterials.escalatorGlass} />
+          <mesh position={[1.05, 1.05, 0]} geometry={sharedGeos.box} scale={[0.08, 0.06, 15]} material={sharedMaterials.hazardBlack} />
         </group>
 
-        {/* Overhead Escalator Navigation Signboard (White Board with Black Text - Double Sided) */}
+        {/* Overhead Escalator Navigation Signboard */}
         <group position={[0, 3.85, -8.5]}>
-          {/* Chrome Vertical Suspension Rods to Ceiling */}
-          <mesh position={[-1.15, 0.6, 0]}>
-            <cylinderGeometry args={[0.015, 0.015, 1.2, 8]} />
-            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
-          </mesh>
-          <mesh position={[1.15, 0.6, 0]}>
-            <cylinderGeometry args={[0.015, 0.015, 1.2, 8]} />
-            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
-          </mesh>
+          <mesh position={[-1.15, 0.6, 0]} geometry={sharedGeos.cyl} scale={[0.015, 1.2, 0.015]} material={sharedMaterials.slab} />
+          <mesh position={[1.15, 0.6, 0]} geometry={sharedGeos.cyl} scale={[0.015, 1.2, 0.015]} material={sharedMaterials.slab} />
 
-          {/* Chrome Outer Rim Frame */}
-          <mesh>
-            <boxGeometry args={[2.88, 0.88, 0.08]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.15} />
-          </mesh>
-          {/* Pure White Acrylic/Porcelain Board */}
-          <mesh>
-            <boxGeometry args={[2.8, 0.8, 0.09]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.1} metalness={0.05} />
-          </mesh>
+          <mesh geometry={sharedGeos.box} scale={[2.88, 0.88, 0.08]} material={sharedMaterials.slab} />
+          <mesh geometry={sharedGeos.box} scale={[2.8, 0.8, 0.09]} material={sharedMaterials.wall} />
 
-          {/* FRONT FACE (Approaching from Ground Floor) */}
-          {/* Option 1: 2nd Floor (Top in Black Text) */}
-          <Text
-            position={[0, 0.18, 0.05]}
-            fontSize={0.16}
-            color="#0f172a"
-            anchorX="center"
-            anchorY="middle"
-          >
+          {/* FRONT FACE */}
+          <Text position={[0, 0.18, 0.05]} fontSize={0.16} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold">
             {'↑ 2ND FLOOR • UPPER LEVEL'}
           </Text>
-          {/* Divider Line */}
-          <mesh position={[0, 0.02, 0.05]}>
-            <boxGeometry args={[2.4, 0.015, 0.005]} />
-            <meshBasicMaterial color="#cbd5e1" />
-          </mesh>
-          {/* Option 2: Ground Floor (Bottom in Black Text) */}
-          <Text
-            position={[0, -0.18, 0.05]}
-            fontSize={0.13}
-            color="#334155"
-            anchorX="center"
-            anchorY="middle"
-          >
+          <mesh position={[0, 0.02, 0.05]} geometry={sharedGeos.box} scale={[2.4, 0.015, 0.005]} material={sharedMaterials.yellowLine} />
+          <Text position={[0, -0.18, 0.05]} fontSize={0.13} color="#334155" anchorX="center" anchorY="middle" fontWeight="bold">
             {'↓ GROUND FLOOR • GROCERIES & BILLING'}
           </Text>
 
-          {/* BACK FACE (Approaching from 2nd Floor / Escalator Top) */}
+          {/* BACK FACE */}
           <group rotation={[0, Math.PI, 0]}>
-            {/* Option 1: 2nd Floor */}
-            <Text
-              position={[0, 0.18, 0.05]}
-              fontSize={0.16}
-              color="#0f172a"
-              anchorX="center"
-              anchorY="middle"
-            >
+            <Text position={[0, 0.18, 0.05]} fontSize={0.16} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold">
               {'↑ 2ND FLOOR • UPPER LEVEL'}
             </Text>
-            {/* Divider Line */}
-            <mesh position={[0, 0.02, 0.05]}>
-              <boxGeometry args={[2.4, 0.015, 0.005]} />
-              <meshBasicMaterial color="#cbd5e1" />
-            </mesh>
-            {/* Option 2: Ground Floor */}
-            <Text
-              position={[0, -0.18, 0.05]}
-              fontSize={0.13}
-              color="#334155"
-              anchorX="center"
-              anchorY="middle"
-            >
+            <mesh position={[0, 0.02, 0.05]} geometry={sharedGeos.box} scale={[2.4, 0.015, 0.005]} material={sharedMaterials.yellowLine} />
+            <Text position={[0, -0.18, 0.05]} fontSize={0.13} color="#334155" anchorX="center" anchorY="middle" fontWeight="bold">
               {'↓ GROUND FLOOR • GROCERIES & BILLING'}
             </Text>
           </group>
@@ -277,34 +377,15 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       {/* ==============================================================
           FIRST FLOOR (FASHION) (y = 5.0)
           ============================================================== */}
-      {/* Upper Floor Walls */}
-      <mesh position={[0, 7.5, 26]}>
-        <boxGeometry args={[36, 5, 0.4]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.8} />
-      </mesh>
-      <mesh position={[0, 7.5, -26]}>
-        <boxGeometry args={[36, 5, 0.4]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.8} />
-      </mesh>
-      <mesh position={[-18, 7.5, 0]}>
-        <boxGeometry args={[0.4, 5, 52]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.8} />
-      </mesh>
-      <mesh position={[18, 7.5, 0]}>
-        <boxGeometry args={[0.4, 5, 52]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.8} />
-      </mesh>
-
-      {/* Store Roof (y = 10.0) */}
-      <mesh position={[0, 10.0, 0]}>
-        <boxGeometry args={[36, 0.4, 52]} />
-        <meshStandardMaterial color="#334155" roughness={0.9} />
-      </mesh>
+      <mesh position={[0, 7.5, 26]} geometry={sharedGeos.box} scale={[36, 5, 0.4]} material={sharedMaterials.wall} />
+      <mesh position={[0, 7.5, -26]} geometry={sharedGeos.box} scale={[36, 5, 0.4]} material={sharedMaterials.wall} />
+      <mesh position={[-18, 7.5, 0]} geometry={sharedGeos.box} scale={[0.4, 5, 52]} material={sharedMaterials.wall} />
+      <mesh position={[18, 7.5, 0]} geometry={sharedGeos.box} scale={[0.4, 5, 52]} material={sharedMaterials.wall} />
+      <mesh position={[0, 10.0, 0]} geometry={sharedGeos.box} scale={[36, 0.4, 52]} material={sharedMaterials.roof} />
 
       {/* ==============================================================
-          LIGHTING FIXTURES & PROMOTIONAL BANNERS
+          LIGHTING FIXTURES
           ============================================================== */}
-      {/* Fluorescent Light Fixture Rows on Ground Floor Ceiling (y = 4.8) */}
       {[-12, -6, 0, 6].map((xL, idx) => (
         <group key={`light-row-1-${idx}`}>
           {[-15, -5, 5, 15].map((zL, jdx) => (
@@ -313,7 +394,6 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
         </group>
       ))}
 
-      {/* Fluorescent Light Fixture Rows on Roof (y = 9.8) */}
       {[-10, 0, 10].map((xL, idx) => (
         <group key={`light-row-2-${idx}`}>
           {[-15, 0, 15].map((zL, jdx) => (
@@ -321,119 +401,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
           ))}
         </group>
       ))}
-
-      {/* Wall Promotional Lightboxes on Left Wall (100% Martverse Branding) */}
-      {/* Lightbox 1: Martverse Mega Savings */}
-      <group position={[-17.65, 2.5, -6]} rotation={[0, Math.PI / 2, 0]}>
-        {/* Backing Frame */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[6.7, 2.3, 0.04]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
-        </mesh>
-        {/* Deep Sapphire Poster Panel (Raised in front of frame) */}
-        <mesh position={[0, 0, 0.03]}>
-          <boxGeometry args={[6.5, 2.1, 0.02]} />
-          <meshStandardMaterial color="#0c4a6e" roughness={0.25} metalness={0.1} />
-        </mesh>
-        {/* Top Gold Category Pill */}
-        <mesh position={[0, 0.65, 0.05]}>
-          <boxGeometry args={[3.2, 0.28, 0.01]} />
-          <meshBasicMaterial color="#0284c7" />
-        </mesh>
-        <Text
-          position={[0, 0.65, 0.065]}
-          fontSize={0.14}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-        >
-          SUPERMARKET SPECIAL DEALS
-        </Text>
-        <Text
-          position={[0, 0.25, 0.065]}
-          fontSize={0.32}
-          color="#38bdf8"
-          anchorX="center"
-          anchorY="middle"
-        >
-          MARTVERSE MEGA SAVINGS
-        </Text>
-        <Text
-          position={[0, -0.22, 0.065]}
-          fontSize={0.16}
-          color="#f8fafc"
-          anchorX="center"
-          anchorY="middle"
-        >
-          Up to 50% Off On Daily Groceries, Staples & Spices
-        </Text>
-        <Text
-          position={[0, -0.58, 0.065]}
-          fontSize={0.12}
-          color="#94a3b8"
-          anchorX="center"
-          anchorY="middle"
-        >
-          ★ 100% Quality Assurance • Instant Delivery
-        </Text>
-      </group>
-
-      {/* Lightbox 2: Martverse Fresh Harvest */}
-      <group position={[-17.65, 2.5, 8]} rotation={[0, Math.PI / 2, 0]}>
-        {/* Backing Frame */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[6.7, 2.3, 0.04]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
-        </mesh>
-        {/* Fresh Jade/Emerald Poster Panel (Raised in front of frame) */}
-        <mesh position={[0, 0, 0.03]}>
-          <boxGeometry args={[6.5, 2.1, 0.02]} />
-          <meshStandardMaterial color="#064e3b" roughness={0.25} metalness={0.1} />
-        </mesh>
-        {/* Top Emerald Category Pill */}
-        <mesh position={[0, 0.65, 0.05]}>
-          <boxGeometry args={[3.2, 0.28, 0.01]} />
-          <meshBasicMaterial color="#059669" />
-        </mesh>
-        <Text
-          position={[0, 0.65, 0.065]}
-          fontSize={0.14}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-        >
-          FARM DIRECT ORGANICS
-        </Text>
-        <Text
-          position={[0, 0.25, 0.065]}
-          fontSize={0.32}
-          color="#6ee7b7"
-          anchorX="center"
-          anchorY="middle"
-        >
-          MARTVERSE FRESH HARVEST
-        </Text>
-        <Text
-          position={[0, -0.22, 0.065]}
-          fontSize={0.16}
-          color="#f8fafc"
-          anchorX="center"
-          anchorY="middle"
-        >
-          Farm-Picked Fresh Produce, Gourmet Dairy & Pure Oils
-        </Text>
-        <Text
-          position={[0, -0.58, 0.065]}
-          fontSize={0.12}
-          color="#a7f3d0"
-          anchorX="center"
-          anchorY="middle"
-        >
-          ✓ 100% Organic Certified • Fresh Daily Stock
-        </Text>
-      </group>
-
-          </group>
+    </group>
   );
 };
 

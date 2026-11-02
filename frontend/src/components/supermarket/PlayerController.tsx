@@ -33,14 +33,17 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 3.8, maxX: 22.0, minZ: -28.0, maxZ: -24.8 },  // Front Entrance Wall (Right of door)
   { minX: -3.8, maxX: 3.8, minZ: -28.0, maxZ: -25.8 },  // Front Doorway Backstop
 
-  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 1.15, Z: [-12.55, 12.55]
+  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 1.20, Z: [-12.60, 12.60]
   // Physical shelf planks extend to +-0.89m, support posts and ESL price tags extend to +-0.92m.
-  // halfW = 1.15m and Z: [-12.55, 12.55] guarantees absolute zero clipping of trolley edges, corners, and handlebar!
-  { minX: -11.15, maxX: -8.85, minZ: -12.55, maxZ: 12.55 }, // Aisle 1
-  { minX: -6.15, maxX: -3.85, minZ: -12.55, maxZ: 12.55 },  // Aisle 2
-  { minX: -1.15, maxX: 1.15, minZ: -12.55, maxZ: 12.55 },   // Aisle 3
-  { minX: 3.85, maxX: 6.15, minZ: -12.55, maxZ: 12.55 },    // Aisle 4
-  { minX: 8.85, maxX: 11.15, minZ: -12.55, maxZ: 12.55 },   // Aisle 5
+  // halfW = 1.20m and Z: [-12.60, 12.60] guarantees absolute zero clipping of trolley edges, corners, and handlebar!
+  { minX: -11.20, maxX: -8.80, minZ: -12.60, maxZ: 12.60 }, // Aisle 1
+  { minX: -6.20, maxX: -3.80, minZ: -12.60, maxZ: 12.60 },  // Aisle 2
+  { minX: -1.20, maxX: 1.20, minZ: -12.60, maxZ: 12.60 },   // Aisle 3
+  { minX: 3.80, maxX: 6.20, minZ: -12.60, maxZ: 12.60 },    // Aisle 4
+  { minX: 8.80, maxX: 11.20, minZ: -12.60, maxZ: 12.60 },   // Aisle 5
+
+  // Commercial Refrigerator Reach-in Sections on Left Wall
+  { minX: -17.60, maxX: -16.20, minZ: -14.20, maxZ: 14.20 },
 
   // Billing Counter Desks at [-3.8, 0, 3.8]
   { minX: -4.45, maxX: -3.15, minZ: 16.5, maxZ: 19.5 },
@@ -164,22 +167,22 @@ const staticMoveVector = new THREE.Vector3();
 // Completely prevents any part of the trolley edges, corners, or handlebar from clipping into shelves!
 const STATIC_SPHERES = [
   // Front Bumper & Front Wheels (Foremost reach of trolley)
-  { fwdDist: 1.54, latDist: 0.0, radius: 0.28 },     // Front-Center Bumper Nose
-  { fwdDist: 1.40, latDist: -0.38, radius: 0.26 },   // Front-Left Basket Corner
-  { fwdDist: 1.40, latDist: 0.38, radius: 0.26 },    // Front-Right Basket Corner
+  { fwdDist: 1.56, latDist: 0.0, radius: 0.30 },     // Front-Center Bumper Nose
+  { fwdDist: 1.40, latDist: -0.42, radius: 0.30 },   // Front-Left Basket Corner
+  { fwdDist: 1.40, latDist: 0.42, radius: 0.30 },    // Front-Right Basket Corner
   // Mid Basket Walls & Frame
-  { fwdDist: 1.05, latDist: -0.40, radius: 0.26 },   // Upper-Mid Left Wall
-  { fwdDist: 1.05, latDist: 0.40, radius: 0.26 },    // Upper-Mid Right Wall
-  { fwdDist: 0.70, latDist: -0.42, radius: 0.26 },   // Lower-Mid Left Wall
-  { fwdDist: 0.70, latDist: 0.42, radius: 0.26 },    // Lower-Mid Right Wall
+  { fwdDist: 1.05, latDist: -0.44, radius: 0.30 },   // Upper-Mid Left Wall
+  { fwdDist: 1.05, latDist: 0.44, radius: 0.30 },    // Upper-Mid Right Wall
+  { fwdDist: 0.70, latDist: -0.46, radius: 0.30 },   // Lower-Mid Left Wall
+  { fwdDist: 0.70, latDist: 0.46, radius: 0.30 },    // Lower-Mid Right Wall
   // Rear Handlebar, Grips & Rear Wheels (Crucial contact zone protecting shelf edges & corners)
-  { fwdDist: 0.32, latDist: -0.46, radius: 0.28 },   // Rear-Left Handlebar Grip & Outer Edge
-  { fwdDist: 0.32, latDist: 0.46, radius: 0.28 },    // Rear-Right Handlebar Grip & Outer Edge
-  { fwdDist: 0.32, latDist: 0.0, radius: 0.26 },     // Rear-Center Handlebar Display
+  { fwdDist: 0.32, latDist: -0.50, radius: 0.32 },   // Rear-Left Handlebar Grip & Outer Edge
+  { fwdDist: 0.32, latDist: 0.50, radius: 0.32 },    // Rear-Right Handlebar Grip & Outer Edge
+  { fwdDist: 0.32, latDist: 0.0, radius: 0.30 },     // Rear-Center Handlebar Display
   // Player Body & Flanks
-  { fwdDist: 0.0, latDist: 0.0, radius: 0.34 },      // Player Body Core
-  { fwdDist: 0.08, latDist: -0.30, radius: 0.26 },   // Player Left Flank
-  { fwdDist: 0.08, latDist: 0.30, radius: 0.26 },    // Player Right Flank
+  { fwdDist: 0.0, latDist: 0.0, radius: 0.36 },      // Player Body Core
+  { fwdDist: 0.08, latDist: -0.34, radius: 0.30 },   // Player Left Flank
+  { fwdDist: 0.08, latDist: 0.34, radius: 0.30 },    // Player Right Flank
 ] as const;
 
 export const PlayerController: React.FC = () => {
@@ -687,16 +690,16 @@ export const PlayerController: React.FC = () => {
         for (let iter = 0; iter < 3; iter++) {
           for (let s = 0; s < spheres.length; s++) {
             const sp = spheres[s];
-            let sx = nextX + sinYaw * sp.fwdDist + cosYaw * sp.latDist;
-            let sz = nextZ + cosYaw * sp.fwdDist - sinYaw * sp.latDist;
+            let sx = nextX + sinYaw * sp.fwdDist - cosYaw * sp.latDist;
+            let sz = nextZ + cosYaw * sp.fwdDist + sinYaw * sp.latDist;
 
             for (let i = 0; i < boxes.length; i++) {
               const res = getCircleBoxDepenetration(sx, sz, sp.radius, boxes[i]);
               if (res.overlap) {
                 nextX += res.pX;
                 nextZ += res.pZ;
-                sx = nextX + sinYaw * sp.fwdDist + cosYaw * sp.latDist;
-                sz = nextZ + cosYaw * sp.fwdDist - sinYaw * sp.latDist;
+                sx = nextX + sinYaw * sp.fwdDist - cosYaw * sp.latDist;
+                sz = nextZ + cosYaw * sp.fwdDist + sinYaw * sp.latDist;
 
                 // Slide smoothly along obstacle surface: deflect only velocity penetrating into obstacle
                 const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;

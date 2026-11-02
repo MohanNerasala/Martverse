@@ -50,11 +50,13 @@ const MAX_BASKET_DISPLAY_ITEMS = 12;
 
 // Strict Physical Shelf Obstacle Bounds (Planks, Uprights, & ESL Digital Price Tag Rails)
 const SHELF_OBSTACLES_FLOOR1 = [
-  { minX: -11.15, maxX: -8.85, minZ: -12.55, maxZ: 12.55 }, // Aisle 1
-  { minX: -6.15, maxX: -3.85, minZ: -12.55, maxZ: 12.55 },  // Aisle 2
-  { minX: -1.15, maxX: 1.15, minZ: -12.55, maxZ: 12.55 },   // Aisle 3
-  { minX: 3.85, maxX: 6.15, minZ: -12.55, maxZ: 12.55 },    // Aisle 4
-  { minX: 8.85, maxX: 11.15, minZ: -12.55, maxZ: 12.55 },   // Aisle 5
+  { minX: -11.20, maxX: -8.80, minZ: -12.60, maxZ: 12.60 }, // Aisle 1
+  { minX: -6.20, maxX: -3.80, minZ: -12.60, maxZ: 12.60 },  // Aisle 2
+  { minX: -1.20, maxX: 1.20, minZ: -12.60, maxZ: 12.60 },   // Aisle 3
+  { minX: 3.80, maxX: 6.20, minZ: -12.60, maxZ: 12.60 },    // Aisle 4
+  { minX: 8.80, maxX: 11.20, minZ: -12.60, maxZ: 12.60 },   // Aisle 5
+  // Commercial Refrigerator Reach-in Sections on Left Wall
+  { minX: -17.60, maxX: -16.20, minZ: -14.20, maxZ: 14.20 },
 ];
 
 const SHELF_OBSTACLES_FLOOR2 = [
@@ -249,8 +251,8 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
     const sinYaw = Math.sin(actualYaw);
     const cosYaw = Math.cos(actualYaw);
     // Real rotated envelope for 1.18x scaled trolley with generous physical clearance margin
-    const cartHalfW = Math.abs(cosYaw) * 0.54 + Math.abs(sinYaw) * 0.78 + 0.12;
-    const cartHalfD = Math.abs(sinYaw) * 0.54 + Math.abs(cosYaw) * 0.78 + 0.12;
+    const cartHalfW = Math.abs(cosYaw) * 0.54 + Math.abs(sinYaw) * 0.80 + 0.16;
+    const cartHalfD = Math.abs(sinYaw) * 0.54 + Math.abs(cosYaw) * 0.80 + 0.16;
 
     // 1. Store Outer Perimeter Walls Clamping (Harmonized with PlayerController)
     desiredX = THREE.MathUtils.clamp(desiredX, -16.8, 16.8);
@@ -261,19 +263,25 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
     const shelfBoxes = currentFloor === 1 ? SHELF_OBSTACLES_FLOOR1 : SHELF_OBSTACLES_FLOOR2;
     for (let i = 0; i < shelfBoxes.length; i++) {
       const b = shelfBoxes[i];
-      if (desiredZ + cartHalfD > b.minZ && desiredZ - cartHalfD < b.maxZ) {
-        const shelfMidX = (b.minX + b.maxX) * 0.5;
-        if (desiredX < shelfMidX && desiredX + cartHalfW > b.minX) {
+      if (
+        desiredX + cartHalfW > b.minX &&
+        desiredX - cartHalfW < b.maxX &&
+        desiredZ + cartHalfD > b.minZ &&
+        desiredZ - cartHalfD < b.maxZ
+      ) {
+        const dLeft = (desiredX + cartHalfW) - b.minX;
+        const dRight = b.maxX - (desiredX - cartHalfW);
+        const dFront = (desiredZ + cartHalfD) - b.minZ;
+        const dBack = b.maxZ - (desiredZ - cartHalfD);
+        const minPen = Math.min(dLeft, dRight, dFront, dBack);
+
+        if (minPen === dLeft) {
           desiredX = b.minX - cartHalfW;
-        } else if (desiredX >= shelfMidX && desiredX - cartHalfW < b.maxX) {
+        } else if (minPen === dRight) {
           desiredX = b.maxX + cartHalfW;
-        }
-      }
-      // Longitudinal shelf head & tail edge clamping
-      if (desiredX + cartHalfW > b.minX && desiredX - cartHalfW < b.maxX) {
-        if (desiredZ < b.minZ && desiredZ + cartHalfD > b.minZ) {
+        } else if (minPen === dFront) {
           desiredZ = b.minZ - cartHalfD;
-        } else if (desiredZ > b.maxZ && desiredZ - cartHalfD < b.maxZ) {
+        } else {
           desiredZ = b.maxZ + cartHalfD;
         }
       }

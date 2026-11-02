@@ -26,14 +26,16 @@ export const shelfMaterialCache = new Map<string, THREE.Material>();
 
 // Static shared materials for all 5 aisles to eliminate redundant WebGL shader switches
 const shelfRackMaterials = {
-  divider: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.1, roughness: 0.3 }),
-  plank: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.15, roughness: 0.2 }),
-  led: new THREE.MeshStandardMaterial({ color: '#bae6fd', emissive: new THREE.Color('#0284c7'), emissiveIntensity: 0.75, roughness: 0.1 }),
-  rail: new THREE.MeshStandardMaterial({ color: '#0284c7', emissive: new THREE.Color('#0284c7'), emissiveIntensity: 0.55 }),
-  neon: new THREE.MeshBasicMaterial({ color: '#38bdf8' }),
-  post: new THREE.MeshStandardMaterial({ color: '#0f172a', metalness: 0.85, roughness: 0.2 }),
-  postNeon: new THREE.MeshStandardMaterial({ color: '#38bdf8', emissive: new THREE.Color('#0284c7'), emissiveIntensity: 0.85 }),
-  eslCasing: new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.4, metalness: 0.2 }),
+  divider: new THREE.MeshStandardMaterial({ color: '#f1f5f9', metalness: 0.1, roughness: 0.4 }),
+  plank: new THREE.MeshStandardMaterial({ color: '#f8fafc', metalness: 0.12, roughness: 0.25 }),
+  led: new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: new THREE.Color('#f8fafc'), emissiveIntensity: 0.45, roughness: 0.1 }),
+  rail: new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.4 }), // D-Mart signature red price rail
+  neon: new THREE.MeshBasicMaterial({ color: '#facc15' }), // D-Mart yellow accent
+  post: new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.4, roughness: 0.4 }), // Commercial ivory powder-coated steel uprights
+  postNeon: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.5 }),
+  eslCasing: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3, metalness: 0.1 }),
+  kickplate: new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.8, roughness: 0.3 }),
+  endCapSign: new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.3, roughness: 0.2 }),
   acrylicTray: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.05 }),
   acrylicLip: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.35, roughness: 0.1 }),
   cartonFlap: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.5 }),
@@ -41,7 +43,6 @@ const shelfRackMaterials = {
   hangerBar: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.5 }),
   hangerHook: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.95, roughness: 0.1 }),
 };
-
 
 export function getEslTexture(price: number, brand: string): THREE.CanvasTexture {
   const key = `${price}-${brand}`;
@@ -57,39 +58,47 @@ export function getEslTexture(price: number, brand: string): THREE.CanvasTexture
   canvas.height = 128;
   const ctx = canvas.getContext('2d');
   if (ctx) {
-    // High-tech dark e-ink background
-    ctx.fillStyle = '#090d16';
+    // D-Mart style vibrant yellow promotional retail price tag
+    ctx.fillStyle = '#fef08a';
     ctx.fillRect(0, 0, 256, 128);
 
-    // Subtle casing bezel
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(6, 6, 244, 116);
-
-    // Glowing electric sapphire accent line
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(10, 10, 236, 108);
-
-    // Digital ESL Yellow Price
-    ctx.fillStyle = '#facc15';
-    ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    // Red promotional header pill
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(8, 8, 140, 26);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`₹${price}`, 18, 52);
+    ctx.fillText('D-MART PRICE', 14, 21);
 
-    // Brand Label
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    const cleanBrand = brand && brand.length > 14 ? brand.slice(0, 13) + '..' : (brand || 'Martverse');
-    ctx.fillText(cleanBrand, 18, 96);
+    // Bold Price
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`₹${price}`, 12, 66);
 
-    // High-tech Digital Barcode pattern on right
-    ctx.fillStyle = '#94a3b8';
-    const barX = 180;
-    const barWidths = [2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 2, 3, 1, 4, 2];
+    // Strikethrough MRP
+    const mrp = Math.round(price * 1.2);
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`MRP ₹${mrp}`, 12, 104);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(12, 104);
+    ctx.lineTo(92, 104);
+    ctx.stroke();
+
+    // Green savings label
+    ctx.fillStyle = '#15803d';
+    ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`SAVE ₹${mrp - price}`, 106, 104);
+
+    // Retail Barcode pattern on right
+    ctx.fillStyle = '#1e293b';
+    const barX = 188;
+    const barWidths = [2, 1, 3, 1, 2, 3, 1, 3, 2, 1, 2, 3, 1, 3];
     let currX = barX;
     for (let i = 0; i < barWidths.length; i++) {
-      ctx.fillRect(currX, 24, barWidths[i], 78);
+      ctx.fillRect(currX, 16, barWidths[i], 88);
       currX += barWidths[i] + (i % 2 === 0 ? 2 : 1.5);
     }
   }
@@ -466,32 +475,233 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
               position={[0, 0.18, 0.096]}
               scale={[0.25, 0.34]}
             />
-            {/* Top Fold Seal Flap */}
-            <mesh position={[0, 0.363, 0]} geometry={sharedGeometries.box} scale={[0.23, 0.008, 0.14]} raycast={() => null}>
-              <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
-            </mesh>
           </group>
         )}
       </group>
 
-      {/* Shelf Edge ESL (Electronic Shelf Label) Tag mounted directly on blue LED rail */}
-      <group position={[0, -0.01, 0.44]} raycast={() => null}>
-        {/* Sleek Digital ESL Casing */}
-        <mesh geometry={sharedGeometries.box} scale={[0.32, 0.12, 0.018]} raycast={() => null} material={shelfRackMaterials.eslCasing} />
-        {/* High-Resolution Digital E-Ink Display Face */}
-        <mesh
-          position={[0, 0, 0.012]}
-          geometry={sharedGeometries.plane}
-          scale={[0.30, 0.10, 1]}
-          raycast={() => null}
-          material={eslMaterial}
-        />
-      </group>
+      {/* Shelf Edge ESL Digital Display Face (Casing is batched via InstancedMesh for 60FPS) */}
+      <mesh
+        position={[0, -0.01, 0.45]}
+        geometry={sharedGeometries.plane}
+        scale={[0.30, 0.10, 1]}
+        raycast={() => null}
+        material={eslMaterial}
+      />
     </group>
   );
 });
 
 ShelfProductItem.displayName = 'ShelfProductItem';
+
+// High-Performance Instanced ESL Casings (Turns 540 draw calls into 5)
+const AisleEslCasings: React.FC<{ slots: ShelfSlotItemProps['slot'][] }> = React.memo(({ slots }) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  useEffect(() => {
+    if (!meshRef.current || slots.length === 0) return;
+    const dummy = new THREE.Object3D();
+    slots.forEach((slot, idx) => {
+      const isLeft = slot.side === 'LEFT';
+      const eslX = isLeft ? -0.89 : 0.89;
+      dummy.position.set(eslX, slot.relY - 0.01, slot.relZ);
+      dummy.rotation.set(0, slot.rotationY, 0);
+      dummy.scale.set(0.32, 0.12, 0.018);
+      dummy.updateMatrix();
+      meshRef.current!.setMatrixAt(idx, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [slots]);
+
+  if (slots.length === 0) return null;
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[sharedGeometries.box, shelfRackMaterials.eslCasing, slots.length]}
+      raycast={() => null}
+    />
+  );
+});
+
+// High-Performance Instanced Support Posts (Turns 140 draw calls into 10)
+const AisleSupportPosts: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
+  const postsRef = useRef<THREE.InstancedMesh>(null);
+  const neonsRef = useRef<THREE.InstancedMesh>(null);
+  const zPositions = useMemo(
+    () => [-length / 2, -length / 3, -length / 6, 0, length / 6, length / 3, length / 2],
+    [length]
+  );
+
+  useEffect(() => {
+    if (!postsRef.current || !neonsRef.current) return;
+    const dummy = new THREE.Object3D();
+    let idx = 0;
+
+    zPositions.forEach((zPos) => {
+      // Left post
+      dummy.position.set(-0.86, 0, zPos);
+      dummy.scale.set(0.05, height, 0.05);
+      dummy.updateMatrix();
+      postsRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      dummy.position.set(-0.888, 0, zPos);
+      dummy.scale.set(0.006, height * 0.94, 0.02);
+      dummy.updateMatrix();
+      neonsRef.current!.setMatrixAt(idx, dummy.matrix);
+      idx++;
+
+      // Right post
+      dummy.position.set(0.86, 0, zPos);
+      dummy.scale.set(0.05, height, 0.05);
+      dummy.updateMatrix();
+      postsRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      dummy.position.set(0.888, 0, zPos);
+      dummy.scale.set(0.006, height * 0.94, 0.02);
+      dummy.updateMatrix();
+      neonsRef.current!.setMatrixAt(idx, dummy.matrix);
+      idx++;
+    });
+
+    postsRef.current.instanceMatrix.needsUpdate = true;
+    neonsRef.current.instanceMatrix.needsUpdate = true;
+  }, [zPositions, height]);
+
+  return (
+    <group raycast={() => null}>
+      <instancedMesh ref={postsRef} args={[sharedGeometries.box, shelfRackMaterials.post, 14]} raycast={() => null} />
+      <instancedMesh ref={neonsRef} args={[sharedGeometries.box, shelfRackMaterials.postNeon, 14]} raycast={() => null} />
+    </group>
+  );
+});
+
+// High-Performance Instanced Shelf Planks & Rails (Turns 120 draw calls into 20)
+const AisleShelves: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
+  const planksRef = useRef<THREE.InstancedMesh>(null);
+  const ledsRef = useRef<THREE.InstancedMesh>(null);
+  const railsRef = useRef<THREE.InstancedMesh>(null);
+  const neonsRef = useRef<THREE.InstancedMesh>(null);
+
+  useEffect(() => {
+    if (!planksRef.current || !ledsRef.current || !railsRef.current || !neonsRef.current) return;
+    const dummy = new THREE.Object3D();
+    const shelfHeights = [0.5, 1.3, 2.1];
+    let idx = 0;
+
+    shelfHeights.forEach((shelfH) => {
+      const yRel = shelfH - height / 2;
+
+      // Left side
+      dummy.position.set(-0.45, yRel, 0);
+      dummy.scale.set(0.85, 0.04, length);
+      dummy.updateMatrix();
+      planksRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      dummy.position.set(-0.45, yRel - 0.024, 0);
+      dummy.scale.set(0.06, 0.012, length);
+      dummy.updateMatrix();
+      ledsRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      dummy.position.set(-0.88, yRel, 0);
+      dummy.scale.set(0.02, 0.06, length);
+      dummy.updateMatrix();
+      railsRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      dummy.position.set(-0.892, yRel, 0);
+      dummy.scale.set(0.004, 0.018, length);
+      dummy.updateMatrix();
+      neonsRef.current!.setMatrixAt(idx, dummy.matrix);
+      idx++;
+
+      // Right side
+      dummy.position.set(0.45, yRel, 0);
+      dummy.scale.set(0.85, 0.04, length);
+      dummy.updateMatrix();
+      planksRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      dummy.position.set(0.45, yRel - 0.024, 0);
+      dummy.scale.set(0.06, 0.012, length);
+      dummy.updateMatrix();
+      ledsRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      dummy.position.set(0.88, yRel, 0);
+      dummy.scale.set(0.02, 0.06, length);
+      dummy.updateMatrix();
+      railsRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      dummy.position.set(0.892, yRel, 0);
+      dummy.scale.set(0.004, 0.018, length);
+      dummy.updateMatrix();
+      neonsRef.current!.setMatrixAt(idx, dummy.matrix);
+      idx++;
+    });
+
+    planksRef.current.instanceMatrix.needsUpdate = true;
+    ledsRef.current.instanceMatrix.needsUpdate = true;
+    railsRef.current.instanceMatrix.needsUpdate = true;
+    neonsRef.current.instanceMatrix.needsUpdate = true;
+  }, [length, height]);
+
+  return (
+    <group raycast={() => null}>
+      <instancedMesh ref={planksRef} args={[sharedGeometries.box, shelfRackMaterials.plank, 6]} raycast={() => null} />
+      <instancedMesh ref={ledsRef} args={[sharedGeometries.box, shelfRackMaterials.led, 6]} raycast={() => null} />
+      <instancedMesh ref={railsRef} args={[sharedGeometries.box, shelfRackMaterials.rail, 6]} raycast={() => null} />
+      <instancedMesh ref={neonsRef} args={[sharedGeometries.box, shelfRackMaterials.neon, 6]} raycast={() => null} />
+    </group>
+  );
+});
+
+// Aisle Base Kickplates (Dust & Trolley Protection)
+const AisleKickplates: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
+  const yBase = -height / 2 + 0.10;
+  return (
+    <group raycast={() => null}>
+      <mesh position={[-0.45, yBase, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.20, length]} material={shelfRackMaterials.kickplate} />
+      <mesh position={[0.45, yBase, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.20, length]} material={shelfRackMaterials.kickplate} />
+    </group>
+  );
+});
+
+// Promotional Gondola End-Caps at Aisle Entrances
+const AisleGondolaEndCaps: React.FC<{ length: number; height: number; aisleNumber: number; categoryName: string }> = React.memo(({ length, height, aisleNumber, categoryName }) => {
+  return (
+    <group raycast={() => null}>
+      {/* North End-Cap (Facing -Z) */}
+      <group position={[0, 0, -length / 2 - 0.04]}>
+        <mesh geometry={sharedGeometries.box} scale={[1.74, height, 0.08]} material={shelfRackMaterials.kickplate} />
+        <mesh position={[0, height / 2 - 0.45, -0.05]} geometry={sharedGeometries.box} scale={[1.60, 0.70, 0.02]} material={shelfRackMaterials.endCapSign} />
+        <Text
+          position={[0, height / 2 - 0.45, -0.07]}
+          rotation={[0, Math.PI, 0]}
+          fontSize={0.16}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+          fontWeight="bold"
+        >
+          {`D-MART SPECIAL\n${categoryName.toUpperCase()}`}
+        </Text>
+      </group>
+
+      {/* South End-Cap (Facing +Z) */}
+      <group position={[0, 0, length / 2 + 0.04]}>
+        <mesh geometry={sharedGeometries.box} scale={[1.74, height, 0.08]} material={shelfRackMaterials.kickplate} />
+        <mesh position={[0, height / 2 - 0.45, 0.05]} geometry={sharedGeometries.box} scale={[1.60, 0.70, 0.02]} material={shelfRackMaterials.endCapSign} />
+        <Text
+          position={[0, height / 2 - 0.45, 0.07]}
+          fontSize={0.16}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+          fontWeight="bold"
+        >
+          {`D-MART SPECIAL\n${categoryName.toUpperCase()}`}
+        </Text>
+      </group>
+    </group>
+  );
+});
 
 interface ShelfUnitProps {
   aisle: SupermarketAisle;
@@ -699,54 +909,28 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
         </Text>
       </group>
 
-      {/* Central Shelving Rack - Raycast bypassed to keep hover 60+ FPS responsive */}
+      {/* Central Shelving Rack - High-Performance Instanced Rendering (60+ FPS) */}
       <group raycast={() => null}>
         {/* Central Back Divider Wall */}
         <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[0.08, aisle.shelfHeight, length]} material={shelfRackMaterials.divider} />
 
-        {/* 3 Horizontal Shelves for LEFT and RIGHT sides */}
-        {[0.5, 1.3, 2.1].map((shelfH, sIdx) => {
-          const yRel = shelfH - aisle.shelfHeight / 2;
-          return (
-            <group key={`shelf-tier-${sIdx}`} position={[0, yRel, 0]}>
-              {/* Left Shelf Plank */}
-              <mesh position={[-0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]} material={shelfRackMaterials.plank} />
-              {/* Left Under-Shelf Linear LED Glow Strip */}
-              <mesh position={[-0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]} material={shelfRackMaterials.led} />
-              {/* Left Price Tag Rail */}
-              <mesh position={[-0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]} material={shelfRackMaterials.rail} />
-              {/* Left Slim Cyan Neon Accent Edge Line */}
-              <mesh position={[-0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]} material={shelfRackMaterials.neon} />
+        {/* Instanced Shelf Planks, LED Glow Strips & Price Rails */}
+        <AisleShelves length={length} height={aisle.shelfHeight} />
 
-              {/* Right Shelf Plank */}
-              <mesh position={[0.45, 0, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.04, length]} material={shelfRackMaterials.plank} />
-              {/* Right Under-Shelf Linear LED Glow Strip */}
-              <mesh position={[0.45, -0.024, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.012, length]} material={shelfRackMaterials.led} />
-              {/* Right Price Tag Rail */}
-              <mesh position={[0.88, 0, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.06, length]} material={shelfRackMaterials.rail} />
-              {/* Right Slim Cyan Neon Accent Edge Line */}
-              <mesh position={[0.892, 0, 0]} geometry={sharedGeometries.box} scale={[0.004, 0.018, length]} material={shelfRackMaterials.neon} />
-            </group>
-          );
-        })}
+        {/* Instanced Commercial Powder-Coated Upright Posts */}
+        <AisleSupportPosts length={length} height={aisle.shelfHeight} />
 
-        {/* Upright Support Poles */}
-        {[-length / 2, -length / 3, -length / 6, 0, length / 6, length / 3, length / 2].map((zPos, pIdx) => (
-          <group key={`post-${pIdx}`} position={[0, 0, zPos]}>
-            <group position={[-0.86, 0, 0]}>
-              <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]} material={shelfRackMaterials.post} />
-              <mesh position={[-0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]} material={shelfRackMaterials.postNeon} />
-            </group>
+        {/* Base Kickplates for Retail Realism */}
+        <AisleKickplates length={length} height={aisle.shelfHeight} />
 
-            <group position={[0.86, 0, 0]}>
-              <mesh geometry={sharedGeometries.box} scale={[0.05, aisle.shelfHeight, 0.05]} material={shelfRackMaterials.post} />
-              <mesh position={[0.028, 0, 0]} geometry={sharedGeometries.box} scale={[0.006, aisle.shelfHeight * 0.94, 0.02]} material={shelfRackMaterials.postNeon} />
-            </group>
-          </group>
-        ))}
+        {/* Promotional Gondola End-Caps */}
+        <AisleGondolaEndCaps length={length} height={aisle.shelfHeight} aisleNumber={aisle.aisleNumber} categoryName={aisle.categoryName} />
       </group>
 
-      {/* 6 Blocks x 3 Items per Block */}
+      {/* Instanced ESL Digital Price Tag Casings (1 draw call per aisle instead of 108) */}
+      <AisleEslCasings slots={displaySlots} />
+
+      {/* Interactive 3D Product Facings & High-Resolution ESL Price Displays */}
       <group>
         {displaySlots.map((slot) => {
           const eslMaterial = getEslMaterial(slot.product.price, slot.product.brand || 'Cadbury');
