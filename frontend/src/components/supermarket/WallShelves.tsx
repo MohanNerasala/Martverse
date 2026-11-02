@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
-import { useMartStore } from '@/store/useMartStore';
+import { useMartStore, martRuntime } from '@/store/useMartStore';
 import { Product, ProductPlacement } from '@/types';
 import {
   getProductPackagingTexture,
@@ -45,6 +46,12 @@ const LeftWallRetailShelving: React.FC = React.memo(() => {
   const startZ = -18.0;
   const endZ = 18.0;
   const wallX = -34.8;
+
+  const [isNear, setIsNear] = useState(false);
+  useFrame(() => {
+    const near = (martRuntime.playerPos[0] || 0) < -12.0;
+    if (near !== isNear) setIsNear(near);
+  });
 
   // Filter household & personal care products
   const leftWallProducts = useMemo(() => {
@@ -298,12 +305,14 @@ const LeftWallRetailShelving: React.FC = React.memo(() => {
         </Text>
       </group>
 
-      {/* Instanced Product Facings (High-Performance Instancing by Unique Product) */}
-      <group>
-        {productBatches.map((batch) => (
-          <WallProductBatch key={`left-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} />
-        ))}
-      </group>
+      {/* Instanced Product Facings (High-Performance Instancing by Unique Product, distance LOD) */}
+      {isNear && (
+        <group>
+          {productBatches.map((batch) => (
+            <WallProductBatch key={`left-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} />
+          ))}
+        </group>
+      )}
     </group>
   );
 });
@@ -394,6 +403,12 @@ const BackWallWarehouseRacks: React.FC = React.memo(() => {
   const height = 3.8;
   const startX = -27.0;
   const backZ = 33.8;
+
+  const [isNear, setIsNear] = useState(false);
+  useFrame(() => {
+    const near = (martRuntime.playerPos[2] || 0) > 8.0;
+    if (near !== isNear) setIsNear(near);
+  });
 
   // Bulk staples: Atta, Rice, Oil, Salt
   const bulkProducts = useMemo(() => {
@@ -588,12 +603,14 @@ const BackWallWarehouseRacks: React.FC = React.memo(() => {
         </Text>
       </group>
 
-      {/* Interactive Bulk Sacks and Cans on Pallets */}
-      <group>
-        {bulkBatches.map((batch) => (
-          <BulkPalletBatch key={`bulk-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} />
-        ))}
-      </group>
+      {/* Interactive Bulk Sacks and Cans on Pallets (distance LOD) */}
+      {isNear && (
+        <group>
+          {bulkBatches.map((batch) => (
+            <BulkPalletBatch key={`bulk-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} />
+          ))}
+        </group>
+      )}
     </group>
   );
 });

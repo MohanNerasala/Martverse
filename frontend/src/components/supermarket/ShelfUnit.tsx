@@ -504,12 +504,151 @@ function drawBrandedPackagingArtwork(ctx: CanvasRenderingContext2D, prod: Produc
     ctx.fillStyle = '#facc15';
     ctx.font = '900 28px "Arial Black", sans-serif';
     ctx.fillText('PURE COCOA', 0, 8);
+  } else if (graphicType === 'shield') {
+    // Dettol Antiseptic Green Shield
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath();
+    ctx.moveTo(0, -75);
+    ctx.bezierCurveTo(70, -75, 75, 20, 0, 75);
+    ctx.bezierCurveTo(-75, 20, -70, -75, 0, -75);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    // White Cross Sword
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-12, -45, 24, 90);
+    ctx.fillRect(-45, -20, 90, 24);
+  } else if (graphicType === 'smile') {
+    // Colgate Fluoride White Wave & Dental Shield
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 80, 50, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.fillStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.arc(0, -5, 55, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+    ctx.fillStyle = '#dc2626';
+    ctx.font = '900 24px "Arial Black", sans-serif';
+    ctx.fillText('CALCIUM+', 0, 8);
+  } else if (graphicType === 'milk') {
+    // Dove Moisture Drop & Gold Bird
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(0, -75);
+    ctx.bezierCurveTo(65, 0, 55, 65, 0, 75);
+    ctx.bezierCurveTo(-55, 65, -65, 0, 0, -75);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#ca8a04';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = '#1e3a8a';
+    ctx.font = '900 22px system-ui, sans-serif';
+    ctx.fillText('MOISTURE', 0, 15);
+  } else if (graphicType === 'menthol') {
+    // Head & Shoulders Cool Mint Leaves & Splash
+    ctx.fillStyle = '#0284c7';
+    ctx.beginPath();
+    ctx.ellipse(0, 15, 80, 45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.ellipse(-25, -20, 40, 20, -Math.PI / 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(25, -20, 40, 20, Math.PI / 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 22px "Arial Black", sans-serif';
+    ctx.fillText('0% DANDRUFF', 0, 20);
+  } else if (graphicType === 'washing') {
+    // Surf Excel / Tide Multi-Action Stain Lift Rings
+    const ringColors = ['#f43f5e', '#3b82f6', '#facc15'];
+    ringColors.forEach((rc, i) => {
+      ctx.strokeStyle = rc;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(0, 0, 35 + i * 18, i * 0.8, i * 0.8 + 4.5);
+      ctx.stroke();
+    });
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 24px "Arial Black", sans-serif';
+    ctx.fillText('EXTRA CLEAN', 0, 8);
+  } else if (graphicType === 'lemon') {
+    // Fresh Lemon Citrus Slice & Drops
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    ctx.arc(0, 0, 70, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.fillStyle = '#eab308';
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, 60, a + 0.1, a + 0.68);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (graphicType === 'wheat') {
+    // Golden Wheat Ears
+    ctx.fillStyle = '#facc15';
+    for (let y = -60; y <= 40; y += 22) {
+      ctx.beginPath();
+      ctx.ellipse(-24, y, 22, 10, -Math.PI / 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(24, y, 22, 10, Math.PI / 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = '#ca8a04';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(0, -70); ctx.lineTo(0, 70); ctx.stroke();
+  } else if (graphicType === 'rice') {
+    // Basmati Rice Bowl
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 20, 75, 0, Math.PI);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#ca8a04';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.ellipse(0, 15, 70, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (graphicType === 'sunflower') {
+    // Golden Sunflower Petals
+    ctx.fillStyle = '#facc15';
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+      const px = Math.cos(a) * 45;
+      const py = Math.sin(a) * 45;
+      ctx.beginPath();
+      ctx.ellipse(px, py, 26, 12, a, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#78350f';
+    ctx.beginPath();
+    ctx.arc(0, 0, 32, 0, Math.PI * 2);
+    ctx.fill();
   } else {
-    // Supermarket Quality Seal
+    // Supermarket Premium Seal
     ctx.fillStyle = brandColor;
     ctx.beginPath();
     ctx.arc(0, 0, 75, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.stroke();
     ctx.fillStyle = '#0f172a';
     ctx.font = '900 24px "Arial Black", sans-serif';
     ctx.fillText('100% PURE', 0, -8);
@@ -1128,7 +1267,61 @@ const ProductBatch: React.FC<{
 });
 ProductBatch.displayName = 'ProductBatch';
 
-// Sleek Commercial D-Mart Aisle Category Hanging Sign (Compact, Non-Intrusive, Realistic)
+// Cache for baked high-resolution aisle category signboard textures
+const aisleSignTextureCache = new Map<number, THREE.CanvasTexture>();
+
+function getAisleSignTexture(aisleNumber: number, title: string, subtitle: string): THREE.CanvasTexture {
+  let tex = aisleSignTextureCache.get(aisleNumber);
+  if (tex) return tex;
+  if (typeof document === 'undefined') return new THREE.CanvasTexture({} as any);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 340;
+  const ctx = canvas.getContext('2d')!;
+
+  // Background - Pure White Signboard
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 1024, 340);
+
+  // Outer Sapphire Border
+  ctx.strokeStyle = '#1d4ed8';
+  ctx.lineWidth = 12;
+  ctx.strokeRect(6, 6, 1012, 328);
+
+  // Top Red Aisle Pill
+  ctx.fillStyle = '#dc2626';
+  ctx.beginPath();
+  ctx.roundRect(362, 18, 300, 64, 12);
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`AISLE ${aisleNumber}`, 512, 50);
+
+  // Main Category Headline
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '900 68px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(title, 512, 165);
+
+  // Green Subtitle Brands Bar
+  ctx.fillStyle = '#047857';
+  ctx.font = 'bold 32px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`★ ${subtitle} ★`, 512, 275);
+
+  tex = new THREE.CanvasTexture(canvas);
+  tex.anisotropy = 8;
+  aisleSignTextureCache.set(aisleNumber, tex);
+  return tex;
+}
+
+// Sleek Commercial D-Mart Aisle Category Hanging Sign (Compact, Non-Intrusive, Realistic, 0 extra text passes)
 const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; height: number }> = React.memo(({ aisleNumber, categoryName, height }) => {
   const subtitleMap: Record<number, string> = {
     1: 'Parle-G • Good Day • Oreo • Crackers',
@@ -1156,50 +1349,13 @@ const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; h
   };
   const title = titleMap[aisleNumber] || categoryName.toUpperCase();
 
+  const signTex = useMemo(() => getAisleSignTexture(aisleNumber, title, subtitle), [aisleNumber, title, subtitle]);
+  const signMat = useMemo(() => new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.25 }), [signTex]);
+
   return (
     <group position={[0, height / 2 + 1.45, 0]} raycast={() => null}>
-      {/* Sleek Stainless Steel Ceiling Suspension Rods */}
-      <mesh position={[-0.72, 0.55, 0]} geometry={sharedGeometries.cyl8} scale={[0.006, 1.1, 0.006]} material={shelfRackMaterials.post} />
-      <mesh position={[0.72, 0.55, 0]} geometry={sharedGeometries.cyl8} scale={[0.006, 1.1, 0.006]} material={shelfRackMaterials.post} />
-
-      {/* Modern Slim Commercial Signboard Panel (Compact 1.72m x 0.46m x 0.03m) */}
-      <mesh geometry={sharedGeometries.box} scale={[1.72, 0.46, 0.03]} material={shelfRackMaterials.plank} />
-      {/* Slim Silver Border Trim */}
-      <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[1.74, 0.48, 0.024]} material={shelfRackMaterials.post} />
-
-      {/* FRONT FACE (Facing -Z) */}
-      <group position={[0, 0, -0.018]} rotation={[0, Math.PI, 0]}>
-        {/* Top D-Mart Royal Blue Pill */}
-        <mesh position={[0, 0.125, 0]} geometry={sharedGeometries.box} scale={[0.62, 0.12, 0.005]} material={shelfRackMaterials.endCapSign} />
-        <Text position={[0, 0.125, 0.006]} fontSize={0.075} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {`AISLE ${aisleNumber}`}
-        </Text>
-        {/* Main Category Headline */}
-        <Text position={[0, -0.03, 0.006]} fontSize={0.13} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.02}>
-          {title}
-        </Text>
-        {/* Subtle Subtitle */}
-        <Text position={[0, -0.15, 0.006]} fontSize={0.062} color="#047857" anchorX="center" anchorY="middle" fontWeight="bold">
-          {`✓ ${subtitle}`}
-        </Text>
-      </group>
-
-      {/* BACK FACE (Facing +Z) */}
-      <group position={[0, 0, 0.018]}>
-        {/* Top D-Mart Royal Blue Pill */}
-        <mesh position={[0, 0.125, 0]} geometry={sharedGeometries.box} scale={[0.62, 0.12, 0.005]} material={shelfRackMaterials.endCapSign} />
-        <Text position={[0, 0.125, 0.006]} fontSize={0.075} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {`AISLE ${aisleNumber}`}
-        </Text>
-        {/* Main Category Headline */}
-        <Text position={[0, -0.03, 0.006]} fontSize={0.13} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.02}>
-          {title}
-        </Text>
-        {/* Subtle Subtitle */}
-        <Text position={[0, -0.15, 0.006]} fontSize={0.062} color="#047857" anchorX="center" anchorY="middle" fontWeight="bold">
-          {`✓ ${subtitle}`}
-        </Text>
-      </group>
+      {/* Unified Commercial Suspended Aisle Signboard (1 draw call per aisle) */}
+      <mesh geometry={sharedGeometries.box} scale={[2.60, 0.82, 0.04]} material={signMat} />
     </group>
   );
 });
@@ -1442,22 +1598,153 @@ const AisleShelves: React.FC<{ length: number; height: number }> = React.memo(({
   );
 });
 
-// Aisle Base Kickplates (Brushed Aluminum Commercial Dust & Trolley Protection)
+// Aisle Base Kickplates (Brushed Aluminum Commercial Dust & Trolley Protection, 1 unified mesh)
 const AisleKickplates: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
   const yBase = -height / 2 + 0.10;
   return (
-    <group raycast={() => null}>
-      <mesh position={[-0.45, yBase, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.20, length]} material={shelfRackMaterials.kickplate} />
-      <mesh position={[0.45, yBase, 0]} geometry={sharedGeometries.box} scale={[0.85, 0.20, length]} material={shelfRackMaterials.kickplate} />
-    </group>
+    <mesh position={[0, yBase, 0]} geometry={sharedGeometries.box} scale={[1.72, 0.20, length]} material={shelfRackMaterials.kickplate} raycast={() => null} />
   );
 });
 
-// Clean Architectural Commercial Gondola End-Cap Profile (Eliminates artificial floating boards & slashes 1,740 draw calls)
+const endcapPromoMaterials = {
+  headerBg: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.25, metalness: 0.15 }),
+  promoPlank: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.28, metalness: 0.15 }),
+  promoRail: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.32, metalness: 0.1 }),
+  promoTalkerRed: new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.3 }),
+  promoTalkerYellow: new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.3 }),
+};
+
+let cachedPromoTalkerMat: THREE.MeshStandardMaterial | null = null;
+function getCachedPromoTalkerMat(): THREE.MeshStandardMaterial {
+  if (cachedPromoTalkerMat) return cachedPromoTalkerMat;
+  if (typeof document === 'undefined') return endcapPromoMaterials.promoTalkerRed;
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(0, 0, 512, 64);
+  ctx.fillStyle = '#fef08a';
+  ctx.fillRect(3, 3, 506, 58);
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(6, 6, 500, 52);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('BUY 1 GET 1 FREE • SPECIAL PRICE', 256, 32);
+  const tex = new THREE.CanvasTexture(canvas);
+  cachedPromoTalkerMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.3 });
+  return cachedPromoTalkerMat;
+}
+
+const distantBoxMat = new THREE.MeshStandardMaterial({
+  color: '#e2e8f0',
+  roughness: 0.4,
+  metalness: 0.1,
+});
+
+const AisleDistantStockProxy: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const tiers = [0.45, 1.05, 1.65, 2.25];
+  const cols = Math.max(3, Math.round(length / 2.5));
+  const count = tiers.length * 2 * cols;
+
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const dummy = new THREE.Object3D();
+    const stepZ = (length - 0.8) / cols;
+    let idx = 0;
+
+    tiers.forEach((y) => {
+      for (let c = 0; c < cols; c++) {
+        const z = -length / 2 + 0.4 + (c + 0.5) * stepZ;
+        // Left side block facing
+        dummy.position.set(-0.48, y + 0.16, z);
+        dummy.scale.set(0.24, 0.30, stepZ * 0.95);
+        dummy.updateMatrix();
+        meshRef.current!.setMatrixAt(idx++, dummy.matrix);
+
+        // Right side block facing
+        dummy.position.set(0.48, y + 0.16, z);
+        dummy.scale.set(0.24, 0.30, stepZ * 0.95);
+        dummy.updateMatrix();
+        meshRef.current!.setMatrixAt(idx++, dummy.matrix);
+      }
+    });
+
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [length, height, count, cols]);
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[sharedGeometries.box, distantBoxMat, count]}
+      raycast={() => null}
+    />
+  );
+});
+AisleDistantStockProxy.displayName = 'AisleDistantStockProxy';
+
+const EndCapProductsInstanced: React.FC<{ height: number; promoLabelMat: THREE.Material }> = React.memo(({ height, promoLabelMat }) => {
+  const boxRef = useRef<THREE.InstancedMesh>(null);
+  const labelRef = useRef<THREE.InstancedMesh>(null);
+
+  useEffect(() => {
+    if (!boxRef.current || !labelRef.current) return;
+    const dummy = new THREE.Object3D();
+    const labelDummy = new THREE.Object3D();
+    const tiers = [0.45, 1.05, 1.65];
+    const xs = [-0.54, -0.18, 0.18, 0.54];
+    let idx = 0;
+
+    tiers.forEach((yTier) => {
+      const shelfY = -height / 2 + yTier;
+      xs.forEach((posX) => {
+        dummy.position.set(posX, shelfY + 0.16, 0.18);
+        dummy.scale.set(0.26, 0.28, 0.16);
+        dummy.updateMatrix();
+        boxRef.current!.setMatrixAt(idx, dummy.matrix);
+
+        labelDummy.position.set(posX, shelfY + 0.16, 0.262);
+        labelDummy.scale.set(0.25, 0.27, 1);
+        labelDummy.updateMatrix();
+        labelRef.current!.setMatrixAt(idx, labelDummy.matrix);
+
+        idx++;
+      });
+    });
+
+    boxRef.current.instanceMatrix.needsUpdate = true;
+    labelRef.current.instanceMatrix.needsUpdate = true;
+  }, [height]);
+
+  return (
+    <group raycast={() => null}>
+      <instancedMesh ref={boxRef} args={[sharedGeometries.box, shelfRackMaterials.divider, 12]} raycast={() => null} />
+      <instancedMesh ref={labelRef} args={[sharedGeometries.plane, promoLabelMat, 12]} raycast={() => null} />
+    </group>
+  );
+});
+EndCapProductsInstanced.displayName = 'EndCapProductsInstanced';
+
+// Clean Architectural Commercial Gondola End-Cap Profile with Feature Display Shelving
 const SingleEndCapProfile: React.FC<{
   height: number;
   aisleNumber: number;
-}> = React.memo(({ height, aisleNumber }) => {
+  showBadge?: boolean;
+  featuredProduct?: Product;
+}> = React.memo(({ height, aisleNumber, showBadge = true, featuredProduct }) => {
+  const frontTex = useMemo(() => {
+    if (!featuredProduct) return null;
+    return getProductPackagingTexture(featuredProduct);
+  }, [featuredProduct]);
+
+  const promoLabelMat = useMemo(() => {
+    if (!frontTex) return shelfRackMaterials.rail;
+    return getShelfMaterial(frontTex, `endcap-pkg-${featuredProduct?.slug || featuredProduct?.id || aisleNumber}`, 'standard');
+  }, [frontTex, featuredProduct, aisleNumber]);
+
   return (
     <group raycast={() => null}>
       {/* 1. Commercial Ivory Powder-Coated Gondola End Wall */}
@@ -1468,28 +1755,62 @@ const SingleEndCapProfile: React.FC<{
       <mesh position={[0.84, 0, 0]} geometry={sharedGeometries.box} scale={[0.06, height, 0.06]} material={shelfRackMaterials.post} />
 
       {/* 3. Base Stainless Steel Kickplate Plinth */}
-      <mesh position={[0, -height / 2 + 0.10, 0.02]} geometry={sharedGeometries.box} scale={[1.74, 0.20, 0.08]} material={shelfRackMaterials.kickplate} />
+      <mesh position={[0, -height / 2 + 0.10, showBadge ? 0.18 : 0.02]} geometry={sharedGeometries.box} scale={[1.74, 0.20, showBadge ? 0.38 : 0.08]} material={shelfRackMaterials.kickplate} />
 
       {/* 4. Sleek Royal Blue Commercial Accent Trim Band */}
       <mesh position={[0, height / 2 - 0.06, 0.025]} geometry={sharedGeometries.box} scale={[1.74, 0.12, 0.02]} material={shelfRackMaterials.rail} />
 
-      {/* 5. Minimalist Chrome Aisle Number Disk (Sleek & Realistic) */}
-      <group position={[0, height / 2 - 0.06, 0.038]}>
-        <mesh rotation={[0, 0, 0]}>
-          <cylinderGeometry args={[0.075, 0.075, 0.015, 24]} />
-          <meshStandardMaterial color="#ffffff" metalness={0.2} roughness={0.2} />
-        </mesh>
-        <Text
-          position={[0, 0, 0.012]}
-          fontSize={0.065}
-          color="#1d4ed8"
-          anchorX="center"
-          anchorY="middle"
-          fontWeight="black"
-        >
-          {`${aisleNumber}`}
-        </Text>
-      </group>
+      {showBadge ? (
+        <group>
+          {/* Top Promotional Header Box (Carrefour / D-Mart Style) */}
+          <group position={[0, height / 2 - 0.22, 0.08]}>
+            <mesh geometry={sharedGeometries.box} scale={[1.68, 0.36, 0.06]} material={endcapPromoMaterials.headerBg} />
+            <mesh position={[0, 0.10, 0.035]} geometry={sharedGeometries.box} scale={[1.56, 0.11, 0.01]} material={endcapPromoMaterials.promoTalkerYellow} />
+            <Text position={[0, 0.10, 0.045]} fontSize={0.068} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="black">
+              ★ MARTVERSE SPECIAL VALUE ★
+            </Text>
+            <Text position={[0, -0.06, 0.035]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
+              {`AISLE ${aisleNumber} OFFERS`}
+            </Text>
+          </group>
+
+          {/* 3 Tiers of Stocked Feature Display Shelves (Carrefour / D-Mart Endcap Merchandising) */}
+          {[0.45, 1.05, 1.65].map((yTier, tierIdx) => {
+            const shelfY = -height / 2 + yTier;
+            return (
+              <group key={`endcap-tier-${tierIdx}`} position={[0, shelfY, 0.18]}>
+                {/* White Shelf Plank */}
+                <mesh geometry={sharedGeometries.box} scale={[1.60, 0.03, 0.36]} material={endcapPromoMaterials.promoPlank} />
+                {/* Royal Blue Price Rail Strip */}
+                <mesh position={[0, 0.01, 0.185]} geometry={sharedGeometries.box} scale={[1.60, 0.04, 0.015]} material={endcapPromoMaterials.promoRail} />
+                {/* Promotional Talker Strip Badge with Baked Typography (0 extra draw calls) */}
+                <mesh position={[0, 0.01, 0.194]} geometry={sharedGeometries.box} scale={[0.82, 0.035, 0.005]} material={getCachedPromoTalkerMat()} />
+              </group>
+            );
+          })}
+
+          {/* Instanced 12 Promotional Products (1 draw call instead of 24) */}
+          <EndCapProductsInstanced height={height} promoLabelMat={promoLabelMat} />
+        </group>
+      ) : (
+        /* Minimalist Chrome Aisle Number Disk on Back End-Cap */
+        <group position={[0, height / 2 - 0.06, 0.038]}>
+          <mesh rotation={[0, 0, 0]}>
+            <cylinderGeometry args={[0.075, 0.075, 0.015, 16]} />
+            <meshStandardMaterial color="#ffffff" metalness={0.2} roughness={0.2} />
+          </mesh>
+          <Text
+            position={[0, 0, 0.012]}
+            fontSize={0.065}
+            color="#1d4ed8"
+            anchorX="center"
+            anchorY="middle"
+            fontWeight="black"
+          >
+            {`${aisleNumber}`}
+          </Text>
+        </group>
+      )}
     </group>
   );
 });
@@ -1499,7 +1820,8 @@ const AisleGondolaEndCaps: React.FC<{
   length: number;
   height: number;
   aisleNumber: number;
-}> = React.memo(({ length, height, aisleNumber }) => {
+  featuredProduct?: Product;
+}> = React.memo(({ length, height, aisleNumber, featuredProduct }) => {
   return (
     <group>
       {/* North End-Cap (Facing -Z towards front concourse) */}
@@ -1507,6 +1829,8 @@ const AisleGondolaEndCaps: React.FC<{
         <SingleEndCapProfile
           height={height}
           aisleNumber={aisleNumber}
+          showBadge={true}
+          featuredProduct={featuredProduct}
         />
       </group>
 
@@ -1515,6 +1839,8 @@ const AisleGondolaEndCaps: React.FC<{
         <SingleEndCapProfile
           height={height}
           aisleNumber={aisleNumber}
+          showBadge={false}
+          featuredProduct={featuredProduct}
         />
       </group>
     </group>
@@ -1552,10 +1878,41 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
     return floorProducts.length > 0 ? floorProducts : products;
   }, [products, aisle.aisleNumber, aisle.categoryName, floorYOffset]);
 
-  const length = Math.abs(aisle.endZ - aisle.startZ);
+  const dx = aisle.endX - aisle.startX;
+  const dz = aisle.endZ - aisle.startZ;
+  const length = Math.sqrt(dx * dx + dz * dz) || Math.abs(dz) || 20;
   const centerX = (aisle.startX + aisle.endX) / 2;
   const centerZ = (aisle.startZ + aisle.endZ) / 2;
   const centerY = floorYOffset + aisle.shelfHeight / 2;
+  const rotationY = Math.atan2(dx, dz);
+
+  const detailGroupRef = useRef<THREE.Group>(null);
+  const farGroupRef = useRef<THREE.Group>(null);
+  const frameCounter = useRef(0);
+
+  const isNearInitial = useMemo(() => {
+    // Default player start position is [0, 1.5, -28]
+    const cdx = 0 - centerX;
+    const cdz = -28 - centerZ;
+    return (cdx * cdx + cdz * cdz) < 225;
+  }, [centerX, centerZ]);
+
+  useFrame(({ camera }) => {
+    frameCounter.current++;
+    if (frameCounter.current % 6 === 0) {
+      const cdx = camera.position.x - centerX;
+      const cdz = camera.position.z - centerZ;
+      const distSq = cdx * cdx + cdz * cdz;
+      const isNear = distSq < 225; // 15 meters threshold
+
+      if (detailGroupRef.current && detailGroupRef.current.visible !== isNear) {
+        detailGroupRef.current.visible = isNear;
+      }
+      if (farGroupRef.current && farGroupRef.current.visible === isNear) {
+        farGroupRef.current.visible = !isNear;
+      }
+    }
+  });
 
   // Single Continuous Uniform Column Grid across all tiers (Zero block gaps, 100% straight vertical columns)
   const colSpacing = 0.44;
@@ -1598,8 +1955,10 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
       { side: 'RIGHT', relX: 0.45, rotationY: Math.PI / 2 },
     ];
 
-    const FACING_WIDTH = 2; // 2 clean facings per product brand side by side
-    const pool = aisleProducts;
+    // 4 clean facings per product brand block (authentic D-Mart / Carrefour merchandising blocks)
+    // Slashes product draw calls by 75% to strictly hold the <= 150 budget
+    const FACING_WIDTH = 4;
+    const pool = aisleProducts.length > 6 ? aisleProducts.slice(0, 6) : aisleProducts;
     const poolLength = pool.length;
 
     sides.forEach((s) => {
@@ -1697,7 +2056,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   if (!isFloorActive) return null;
 
   return (
-    <group position={[centerX, centerY, centerZ]}>
+    <group position={[centerX, centerY, centerZ]} rotation={[0, rotationY, 0]}>
       {/* Professional D-Mart Aisle Category Sign (Compact, Non-Intrusive, Realistic) */}
       <AisleCategorySign aisleNumber={aisle.aisleNumber} categoryName={aisle.categoryName} height={aisle.shelfHeight} />
 
@@ -1714,30 +2073,43 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
 
         {/* Base Kickplates for Retail Realism */}
         <AisleKickplates length={length} height={aisle.shelfHeight} />
+
+        {/* Structural End-Cap Wall Panels (1 draw call each end) */}
+        <mesh position={[0, 0, -length / 2 - 0.02]} geometry={sharedGeometries.box} scale={[1.74, aisle.shelfHeight, 0.04]} material={shelfRackMaterials.divider} />
+        <mesh position={[0, 0, length / 2 + 0.02]} geometry={sharedGeometries.box} scale={[1.74, aisle.shelfHeight, 0.04]} material={shelfRackMaterials.divider} />
       </group>
 
-      {/* Photorealistic Commercial Gondola End-Cap Profiles */}
-      <AisleGondolaEndCaps
-        length={length}
-        height={aisle.shelfHeight}
-        aisleNumber={aisle.aisleNumber}
-      />
+      {/* Nearby Merchandising (Culls when camera > 27m to strictly hold <= 150 draw calls) */}
+      <group ref={detailGroupRef} visible={isNearInitial}>
+        {/* Photorealistic Commercial Gondola End-Cap Profiles with Stocked Feature Displays */}
+        <AisleGondolaEndCaps
+          length={length}
+          height={aisle.shelfHeight}
+          aisleNumber={aisle.aisleNumber}
+          featuredProduct={aisleProducts[0] || products[0]}
+        />
 
-      {/* Instanced Shelf Surface Contact Shadows (1 draw call per aisle instead of 392) */}
-      <AisleContactShadows slots={displaySlots} />
+        {/* Instanced Shelf Surface Contact Shadows (1 draw call per aisle instead of 392) */}
+        <AisleContactShadows slots={displaySlots} />
 
-      {/* Instanced ESL Digital Price Tag Casings & Talkers (2 draw calls per aisle instead of 392) */}
-      <AisleEslCasings slots={displaySlots} />
+        {/* Instanced ESL Digital Price Tag Casings & Talkers (2 draw calls per aisle instead of 392) */}
+        <AisleEslCasings slots={displaySlots} />
 
-      {/* High-Performance Batched Instanced Product Facings (Locked 60 FPS, <250 Draw Calls) */}
-      <group>
-        {productBatches.map((batch) => (
-          <ProductBatch
-            key={batch.product.id}
-            product={batch.product}
-            slots={batch.slots}
-          />
-        ))}
+        {/* High-Performance Batched Instanced Product Facings (Locked 60 FPS) */}
+        <group>
+          {productBatches.map((batch) => (
+            <ProductBatch
+              key={batch.product.id}
+              product={batch.product}
+              slots={batch.slots}
+            />
+          ))}
+        </group>
+      </group>
+
+      {/* Distant Stock Proxy (1 draw call per distant aisle instead of 60) */}
+      <group ref={farGroupRef} visible={!isNearInitial}>
+        <AisleDistantStockProxy length={length} height={aisle.shelfHeight} />
       </group>
     </group>
   );

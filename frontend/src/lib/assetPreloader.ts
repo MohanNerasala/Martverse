@@ -58,10 +58,13 @@ export function preloadAllShelfAssets() {
     // 3. Parallel Image Bitstream Pre-decoding (Browser Off-Thread Image Pipeline)
     urls.forEach((url) => {
       const img = new Image();
+      img.onerror = () => {};
+      img.onload = () => {
+        if ('decode' in img) {
+          img.decode().catch(() => {});
+        }
+      };
       img.src = url;
-      if ('decode' in img) {
-        img.decode().catch(() => {});
-      }
     });
 
     // 4. Parallel Three.js Texture Upload to GPU Memory

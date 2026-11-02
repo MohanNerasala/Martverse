@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
 
@@ -41,112 +41,94 @@ function getVitrifiedTileTextures(): VitrifiedTileSet {
   bCanvas.height = S;
   const bCtx = bCanvas.getContext('2d')!;
 
-  // Default neutral backgrounds
-  ctx.fillStyle = '#e2e8f0';
+  // Default clean grout background (subtle light slate #cbd5e1)
+  ctx.fillStyle = '#cbd5e1';
   ctx.fillRect(0, 0, S, S);
 
-  rCtx.fillStyle = '#1e1e1e'; // High porcelain polish (roughness ~0.12)
+  rCtx.fillStyle = '#64748b'; // Matte grout (roughness ~0.7)
   rCtx.fillRect(0, 0, S, S);
 
-  bCtx.fillStyle = '#808080'; // Neutral height
+  bCtx.fillStyle = '#505050'; // Recessed grout depth
   bCtx.fillRect(0, 0, S, S);
 
-  // 2x2 Large-Format Commercial Vitrified Porcelain Tiles with Alternating Tones
+  // 2x2 Large-Format Commercial Vitrified Porcelain Tiles with Subtle Warm Tones (800x800mm D-Mart/Smart Bazaar style)
   const tileBounds = [
-    { x: 0, y: 0, tone: '#f8fafc' },       // Crisp Ivory porcelain
-    { x: HALF, y: 0, tone: '#e2e8f0' },   // Cool Slate-Grey porcelain
-    { x: 0, y: HALF, tone: '#e2e8f0' },   // Cool Slate-Grey porcelain
-    { x: HALF, y: HALF, tone: '#f8fafc' }, // Crisp Ivory porcelain
+    { x: 0, y: 0, tone: '#fdfdfd' },       // Warm Pearl-Ivory porcelain
+    { x: HALF, y: 0, tone: '#f8fafc' },   // Pristine Light-Grey porcelain
+    { x: 0, y: HALF, tone: '#f8fafc' },   // Pristine Light-Grey porcelain
+    { x: HALF, y: HALF, tone: '#fdfdfd' }, // Warm Pearl-Ivory porcelain
   ];
 
   tileBounds.forEach(({ x, y, tone }) => {
-    // Tile base fill
+    // Tile base fill with 2.5mm subtle grout spacing (3px in 1024 texture)
     ctx.fillStyle = tone;
-    ctx.fillRect(x + 10, y + 10, HALF - 20, HALF - 20);
+    ctx.fillRect(x + 3, y + 3, HALF - 6, HALF - 6);
 
-    // Natural subtle porcelain cloud veining
+    // Bump map: raised tile
+    bCtx.fillStyle = '#c8c8c8';
+    bCtx.fillRect(x + 3, y + 3, HALF - 6, HALF - 6);
+
+    // Roughness map: high gloss for tile
+    rCtx.fillStyle = '#1e1e1e'; // 0.12 roughness
+    rCtx.fillRect(x + 3, y + 3, HALF - 6, HALF - 6);
+
+    // Natural subtle porcelain cloud veining (ultra low-contrast realistic stone look)
     ctx.save();
     ctx.beginPath();
-    ctx.rect(x + 10, y + 10, HALF - 20, HALF - 20);
+    ctx.rect(x + 3, y + 3, HALF - 6, HALF - 6);
     ctx.clip();
 
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.16)';
-    ctx.lineWidth = 16;
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
+    ctx.lineWidth = 14;
     ctx.beginPath();
-    ctx.moveTo(x + 50, y + HALF - 60);
-    ctx.bezierCurveTo(x + 160, y + 280, x + 340, y + 160, x + HALF - 50, y + 60);
+    ctx.moveTo(x + 40, y + HALF - 50);
+    ctx.bezierCurveTo(x + 150, y + 260, x + 320, y + 150, x + HALF - 40, y + 50);
     ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
-    ctx.lineWidth = 9;
+    ctx.strokeStyle = 'rgba(203, 213, 225, 0.08)';
+    ctx.lineWidth = 8;
     ctx.beginPath();
-    ctx.moveTo(x + 100, y + HALF - 30);
-    ctx.bezierCurveTo(x + 220, y + 340, x + 300, y + 210, x + HALF - 100, y + 120);
+    ctx.moveTo(x + 90, y + HALF - 20);
+    ctx.bezierCurveTo(x + 200, y + 320, x + 280, y + 190, x + HALF - 90, y + 100);
     ctx.stroke();
 
-    // Micro-crystalline granite and quartz terrazzo speckles
-    for (let i = 0; i < 110; i++) {
-      const rx = x + 12 + ((i * 47) % (HALF - 24));
-      const ry = y + 12 + ((i * 79) % (HALF - 24));
-      const rw = 2 + (i % 3);
-      ctx.fillStyle = i % 2 === 0 ? 'rgba(71, 85, 105, 0.28)' : 'rgba(148, 163, 184, 0.35)';
+    // Micro-crystalline quartz & granite flecks (subtle, non-distracting)
+    for (let i = 0; i < 90; i++) {
+      const rx = x + 4 + ((i * 47) % (HALF - 8));
+      const ry = y + 4 + ((i * 79) % (HALF - 8));
+      const rw = 1.5;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(148, 163, 184, 0.09)' : 'rgba(203, 213, 225, 0.12)';
       ctx.fillRect(rx, ry, rw, rw);
     }
     ctx.restore();
 
-    // Soft Ambient Occlusion vignette towards tile edges
-    ctx.strokeStyle = 'rgba(15, 23, 42, 0.12)';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(x + 12, y + 12, HALF - 24, HALF - 24);
-
-    // Beveled Tile Edge Specular Highlight (Catches directional lighting)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.lineWidth = 3.5;
-    ctx.strokeRect(x + 10, y + 10, HALF - 20, HALF - 20);
-
-    // Bump Map: raised beveled rim around tile
-    bCtx.strokeStyle = '#d4d4d4';
-    bCtx.lineWidth = 4;
-    bCtx.strokeRect(x + 10, y + 10, HALF - 20, HALF - 20);
+    // Soft porcelain tile edge bevel (highlights directional lighting)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 3, y + 3, HALF - 6, HALF - 6);
   });
 
-  // Architectural Deep Recessed Slate Grout Seams (22px wide)
+  // Architectural 2mm Low-Contrast Grout Lines (Fine 2px-3px width on 1024 canvas; NO black lines!)
   const drawGroutLine = (x1: number, y1: number, x2: number, y2: number) => {
-    // 1. Soft grout drop shadow
-    ctx.strokeStyle = 'rgba(15, 23, 42, 0.35)';
-    ctx.lineWidth = 26;
+    // 1. Subtle, low-contrast grout seam in soft light-grey (matches Kajaria/Somany commercial installations)
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.stroke();
 
-    // 2. Medium slate grout body
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 20;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-
-    // 3. Deep center recessed seam
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-
-    // Roughness: Completely matte porous cement grout
-    rCtx.strokeStyle = '#ffffff';
-    rCtx.lineWidth = 24;
+    // Roughness: Slightly matte grout seam vs polished porcelain body
+    rCtx.strokeStyle = '#475569';
+    rCtx.lineWidth = 2.5;
     rCtx.beginPath();
     rCtx.moveTo(x1, y1);
     rCtx.lineTo(x2, y2);
     rCtx.stroke();
 
-    // Bump: Deep recessed physical groove
-    bCtx.strokeStyle = '#0a0a0a';
-    bCtx.lineWidth = 20;
+    // Bump: Barely recessed seam (retains perfectly flat floor feel, eliminates graph-paper grids)
+    bCtx.strokeStyle = '#767676';
+    bCtx.lineWidth = 2.0;
     bCtx.beginPath();
     bCtx.moveTo(x1, y1);
     bCtx.lineTo(x2, y2);
@@ -196,13 +178,24 @@ function getVitrifiedTileTextures(): VitrifiedTileSet {
 
 // Pre-allocated static materials and geometries to eliminate GPU pipeline re-compilations
 const sharedMaterials = {
-  wall: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.6 }),
-  slab: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.7 }),
-  ceilingBeam: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.35, metalness: 0.2 }),
+  wall: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.5 }),
+  slab: new THREE.MeshStandardMaterial({
+    color: '#f8fafc',
+    emissive: new THREE.Color('#f1f5f9'),
+    emissiveIntensity: 0.52,
+    roughness: 0.6,
+  }),
+  ceilingBeam: new THREE.MeshStandardMaterial({
+    color: '#ffffff',
+    emissive: new THREE.Color('#f8fafc'),
+    emissiveIntensity: 0.35,
+    roughness: 0.25,
+    metalness: 0.1,
+  }),
   ceilingLight: new THREE.MeshStandardMaterial({
     color: '#ffffff',
     emissive: new THREE.Color('#ffffff'),
-    emissiveIntensity: 0.95,
+    emissiveIntensity: 1.5,
   }),
   glassRail: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.4, roughness: 0.1 }),
   escalatorBase: new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.7, roughness: 0.3 }),
@@ -219,10 +212,6 @@ const sharedMaterials = {
   bannerGold: new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.3, metalness: 0.2 }),
   bannerGreen: new THREE.MeshStandardMaterial({ color: '#047857', roughness: 0.3, metalness: 0.2 }),
   cameraDome: new THREE.MeshStandardMaterial({ color: '#09090b', roughness: 0.1, metalness: 0.8 }),
-  acDuct: new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.82, roughness: 0.28 }),
-  acDiffuser: new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.3, roughness: 0.4 }),
-  sprinklerPipe: new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.4, metalness: 0.2 }),
-  sprinklerBrass: new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.9, roughness: 0.2 }),
   baseboard: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.85 }),
   cctvLed: new THREE.MeshBasicMaterial({ color: '#22c55e' }),
 };
@@ -234,7 +223,81 @@ const sharedGeos = {
   light2: new THREE.BoxGeometry(0.3, 0.08, 6.0),
 };
 
-// Reusable D-Mart inspired promotional concrete pillar
+// Cache for baked high-resolution promotional pillar poster textures
+const pillarPosterCache = new Map<string, THREE.CanvasTexture>();
+
+function getPillarPosterTexture(titleText: string, subText: string, badgeText: string, badgeColor: string): THREE.CanvasTexture {
+  const key = `${titleText}_${badgeText}_${badgeColor}`;
+  let tex = pillarPosterCache.get(key);
+  if (tex) return tex;
+  if (typeof document === 'undefined') return new THREE.CanvasTexture({} as any);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  // Pure White Poster Surface
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 512, 1024);
+
+  // Sleek Commercial Border
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.lineWidth = 12;
+  ctx.strokeRect(6, 6, 500, 1012);
+
+  // Top Retail Offer Badge Pill
+  ctx.fillStyle = badgeColor;
+  ctx.beginPath();
+  ctx.roundRect(40, 48, 432, 100, 16);
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(badgeText, 256, 98);
+
+  // Main Headline
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '900 46px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lines = titleText.split('\n');
+  lines.forEach((line, i) => {
+    ctx.fillText(line, 256, 260 + i * 65);
+  });
+
+  // Clean Separator
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(80, 470);
+  ctx.lineTo(432, 470);
+  ctx.stroke();
+
+  // Subtext
+  ctx.fillStyle = '#475569';
+  ctx.font = 'bold 30px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const words = subText.split(' ');
+  let l1 = '';
+  let l2 = '';
+  words.forEach((w) => {
+    if ((l1 + ' ' + w).length < 26) l1 += (l1 ? ' ' : '') + w;
+    else l2 += (l2 ? ' ' : '') + w;
+  });
+  ctx.fillText(l1, 256, 560);
+  if (l2) ctx.fillText(l2, 256, 620);
+
+  tex = new THREE.CanvasTexture(canvas);
+  tex.anisotropy = 8;
+  pillarPosterCache.set(key, tex);
+  return tex;
+}
+
+// Reusable D-Mart inspired promotional concrete pillar with baked poster texture (0 extra draw calls)
 const SupermarketPillar: React.FC<{
   position: [number, number, number];
   titleText: string;
@@ -242,7 +305,14 @@ const SupermarketPillar: React.FC<{
   badgeText: string;
   badgeColor?: string;
 }> = React.memo(({ position, titleText, subText, badgeText, badgeColor = '#0284c7' }) => {
-  const badgeMat = useMemo(() => new THREE.MeshBasicMaterial({ color: badgeColor }), [badgeColor]);
+  const posterTex = useMemo(
+    () => getPillarPosterTexture(titleText, subText, badgeText, badgeColor),
+    [titleText, subText, badgeText, badgeColor]
+  );
+  const posterMat = useMemo(
+    () => new THREE.MeshStandardMaterial({ map: posterTex, roughness: 0.3 }),
+    [posterTex]
+  );
 
   return (
     <group position={position}>
@@ -250,47 +320,13 @@ const SupermarketPillar: React.FC<{
       <mesh position={[0, 2.5, 0]} geometry={sharedGeos.box} scale={[0.74, 5.0, 0.74]} material={sharedMaterials.pillarConcrete} />
 
       {/* Yellow & Black Safety Hazard Impact Bumper Base (0.48m high) */}
-      <group position={[0, 0.24, 0]}>
-        <mesh geometry={sharedGeos.box} scale={[0.76, 0.48, 0.76]} material={sharedMaterials.hazardStrip} />
-        {/* Diagonal black bumper stripes */}
-        {[-0.14, 0, 0.14].map((yOff, i) => (
-          <mesh key={`hazard-${i}`} position={[0, yOff, 0]} geometry={sharedGeos.box} scale={[0.77, 0.04, 0.77]} material={sharedMaterials.hazardBlack} />
-        ))}
-      </group>
+      <mesh position={[0, 0.24, 0]} geometry={sharedGeos.box} scale={[0.76, 0.48, 0.76]} material={sharedMaterials.hazardStrip} />
 
       {/* D-Mart Promotional Wrap Poster Panel facing North (-Z) */}
-      <group position={[0, 2.4, -0.38]}>
-        {/* White Signboard Backing */}
-        <mesh geometry={sharedGeos.box} scale={[0.66, 1.6, 0.02]} material={sharedMaterials.wall} />
-        {/* Promotional Header Badge */}
-        <mesh position={[0, 0.62, 0.015]} geometry={sharedGeos.box} scale={[0.56, 0.18, 0.01]} material={badgeMat} />
-        <Text position={[0, 0.62, 0.025]} fontSize={0.068} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {badgeText}
-        </Text>
-        {/* Main Title */}
-        <Text position={[0, 0.28, 0.02]} fontSize={0.082} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" maxWidth={0.6}>
-          {titleText}
-        </Text>
-        {/* Subtitle */}
-        <Text position={[0, -0.15, 0.02]} fontSize={0.052} color="#475569" anchorX="center" anchorY="middle" fontWeight="semibold" maxWidth={0.58}>
-          {subText}
-        </Text>
-      </group>
+      <mesh position={[0, 2.4, -0.375]} geometry={sharedGeos.box} scale={[0.66, 1.6, 0.01]} material={posterMat} />
 
       {/* Promotional Wrap Poster Panel facing South (+Z) */}
-      <group position={[0, 2.4, 0.38]} rotation={[0, Math.PI, 0]}>
-        <mesh geometry={sharedGeos.box} scale={[0.66, 1.6, 0.02]} material={sharedMaterials.wall} />
-        <mesh position={[0, 0.62, 0.015]} geometry={sharedGeos.box} scale={[0.56, 0.18, 0.01]} material={badgeMat} />
-        <Text position={[0, 0.62, 0.025]} fontSize={0.068} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {badgeText}
-        </Text>
-        <Text position={[0, 0.28, 0.02]} fontSize={0.082} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" maxWidth={0.6}>
-          {titleText}
-        </Text>
-        <Text position={[0, -0.15, 0.02]} fontSize={0.052} color="#475569" anchorX="center" anchorY="middle" fontWeight="semibold" maxWidth={0.58}>
-          {subText}
-        </Text>
-      </group>
+      <mesh position={[0, 2.4, 0.375]} rotation={[0, Math.PI, 0]} geometry={sharedGeos.box} scale={[0.66, 1.6, 0.01]} material={posterMat} />
     </group>
   );
 });
@@ -303,116 +339,70 @@ const BasketStackStation: React.FC<{ position: [number, number, number]; color: 
     <group position={position}>
       {/* Chrome Base Frame on Wheels */}
       <mesh position={[0, 0.08, 0]} geometry={sharedGeos.box} scale={[0.48, 0.04, 0.38]} material={sharedMaterials.basketChrome} />
-      {/* 4 Rolling Casters */}
-      {[-0.2, 0.2].map((cx, i) =>
-        [-0.15, 0.15].map((cz, j) => (
-          <mesh key={`wheel-${i}-${j}`} position={[cx, 0.03, cz]} geometry={sharedGeos.cyl} scale={[0.025, 0.04, 0.025]} material={sharedMaterials.hazardBlack} />
-        ))
-      )}
-      {/* Vertical Chrome Retaining Wire Guides */}
-      {[-0.22, 0.22].map((gx, i) => (
-        <mesh key={`guide-${i}`} position={[gx, 0.55, 0]} geometry={sharedGeos.cyl} scale={[0.008, 0.9, 0.008]} material={sharedMaterials.basketChrome} />
-      ))}
-      {/* Stack of 8 Nesting Plastic Baskets */}
-      {Array.from({ length: 8 }).map((_, bIdx) => (
-        <group key={`basket-${bIdx}`} position={[0, 0.16 + bIdx * 0.08, 0]}>
-          <mesh geometry={sharedGeos.box} scale={[0.42, 0.12, 0.32]} material={basketMat} />
-          {/* Black fold-down handle */}
-          <mesh position={[0, 0.07, 0]} geometry={sharedGeos.box} scale={[0.38, 0.015, 0.02]} material={sharedMaterials.hazardBlack} />
-        </group>
-      ))}
+      {/* Chrome Wire Guides */}
+      <mesh position={[-0.22, 0.55, 0]} geometry={sharedGeos.cyl} scale={[0.008, 0.9, 0.008]} material={sharedMaterials.basketChrome} />
+      <mesh position={[0.22, 0.55, 0]} geometry={sharedGeos.cyl} scale={[0.008, 0.9, 0.008]} material={sharedMaterials.basketChrome} />
+      {/* High-Fidelity Stack of Hand Baskets */}
+      <mesh position={[0, 0.50, 0]} geometry={sharedGeos.box} scale={[0.42, 0.76, 0.32]} material={basketMat} />
+      {/* Chrome Top Handle */}
+      <mesh position={[0, 0.92, 0]} geometry={sharedGeos.box} scale={[0.38, 0.04, 0.04]} material={sharedMaterials.basketChrome} />
     </group>
   );
 });
 BasketStackStation.displayName = 'BasketStackStation';
 
-// Industrial Open Ceiling Galvanized Spiral HVAC Ducts & Diffusers
-const IndustrialHvacSystem: React.FC = React.memo(() => {
-  const ductXPositions = [-16, 0, 16];
-  const diffuserZPositions = [-26, -18, -10, -2, 6, 14, 22, 30];
+// Modern Commercial Clip-In Modular Ceiling Network (Clean White/Off-White Finishes, Flush LED Troffers, Thin High Services)
+const CommercialCeilingServices: React.FC = React.memo(() => {
+  // Thin high electrical raceway conduits (slim painted off-white rails flush at y = 5.14)
+  const conduitX = [-20, -10, 0, 10, 20];
+  const sprinklersRef = useRef<THREE.InstancedMesh>(null);
+
+  const sprinklerCoords = useMemo(() => {
+    const list: [number, number][] = [];
+    const sprinklerZ = [-26, -18, -10, -2, 6, 14, 22, 30];
+    const sprinklerX = [-24, -16, -8, 0, 8, 16, 24];
+    sprinklerZ.forEach((sz) => {
+      sprinklerX.forEach((sx) => {
+        list.push([sx, sz]);
+      });
+    });
+    return list;
+  }, []);
+
+  useEffect(() => {
+    if (!sprinklersRef.current) return;
+    const dummy = new THREE.Object3D();
+    sprinklerCoords.forEach(([sx, sz], idx) => {
+      dummy.position.set(sx, 5.18, sz);
+      dummy.scale.set(0.064, 0.008, 0.064);
+      dummy.updateMatrix();
+      sprinklersRef.current!.setMatrixAt(idx, dummy.matrix);
+    });
+    sprinklersRef.current.instanceMatrix.needsUpdate = true;
+  }, [sprinklerCoords]);
 
   return (
     <group raycast={() => null}>
-      {ductXPositions.map((xDuct, dIdx) => (
-        <group key={`hvac-run-${dIdx}`} position={[xDuct, 4.80, 0]}>
-          {/* Main Spiral Air Duct Cylindrical Trunk */}
+      {/* High Slim White Painted Utility Conduits (No thick black ducts!) */}
+      {conduitX.map((cx, idx) => (
+        <group key={`conduit-${idx}`} position={[cx, 5.14, 0]}>
           <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.24, 0.24, 64, 16]} />
-            <primitive object={sharedMaterials.acDuct} attach="material" />
+            <cylinderGeometry args={[0.02, 0.02, 68, 8]} />
+            <meshStandardMaterial color="#e2e8f0" metalness={0.4} roughness={0.3} />
           </mesh>
-
-          {/* Galvanized Suspension Hangers from Ceiling Slab */}
-          {[-28, -20, -12, -4, 4, 12, 20, 28].map((zH, hIdx) => (
-            <group key={`hanger-${hIdx}`} position={[0, 0.22, zH]}>
-              <mesh>
-                <cylinderGeometry args={[0.01, 0.01, 0.44, 8]} />
-                <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.2} />
-              </mesh>
-              {/* Duct Collar Ring */}
-              <mesh position={[0, -0.22, 0]} rotation={[Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[0.25, 0.015, 8, 16]} />
-                <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.3} />
-              </mesh>
-            </group>
-          ))}
-
-          {/* Drop Air Supply Diffusers with Louver Grilles */}
-          {diffuserZPositions.map((zDiff, dfIdx) => (
-            <group key={`diff-${dfIdx}`} position={[0, -0.24, zDiff]}>
-              <mesh>
-                <cylinderGeometry args={[0.08, 0.08, 0.16, 12]} />
-                <primitive object={sharedMaterials.acDuct} attach="material" />
-              </mesh>
-              <mesh position={[0, -0.09, 0]}>
-                <boxGeometry args={[0.48, 0.03, 0.48]} />
-                <primitive object={sharedMaterials.acDiffuser} attach="material" />
-              </mesh>
-              <mesh position={[0, -0.11, 0]}>
-                <boxGeometry args={[0.38, 0.01, 0.38]} />
-                <meshStandardMaterial color="#1e293b" roughness={0.9} />
-              </mesh>
-            </group>
-          ))}
         </group>
       ))}
+
+      {/* Concealed Fire Safety Sprinkler Escutcheons (1 draw call instead of 56) */}
+      <instancedMesh
+        ref={sprinklersRef}
+        args={[sharedGeos.cyl, sharedMaterials.wall, sprinklerCoords.length]}
+        raycast={() => null}
+      />
     </group>
   );
 });
-IndustrialHvacSystem.displayName = 'IndustrialHvacSystem';
-
-// Mandatory Fire Safety Sprinkler Network
-const FireSprinklerSystem: React.FC = React.memo(() => {
-  const branchZ = [-26, -18, -10, -2, 6, 14, 22, 30];
-  const headX = [-24, -16, -8, 0, 8, 16, 24];
-
-  return (
-    <group raycast={() => null}>
-      {branchZ.map((zLine, bIdx) => (
-        <group key={`sprinkler-branch-${bIdx}`} position={[0, 4.96, zLine]}>
-          {/* Main Red Pipe Branch Running Transversely */}
-          <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.02, 0.02, 56, 10]} />
-            <primitive object={sharedMaterials.sprinklerPipe} attach="material" />
-          </mesh>
-          {/* Pendent Sprinkler Heads */}
-          {headX.map((xH, hIdx) => (
-            <group key={`head-${hIdx}`} position={[xH, -0.05, 0]}>
-              <mesh>
-                <cylinderGeometry args={[0.008, 0.008, 0.08, 8]} />
-                <primitive object={sharedMaterials.sprinklerPipe} attach="material" />
-              </mesh>
-              <mesh position={[0, -0.045, 0]}>
-                <cylinderGeometry args={[0.028, 0.005, 0.01, 10]} />
-                <primitive object={sharedMaterials.sprinklerBrass} attach="material" />
-              </mesh>
-            </group>
-          ))}
-        </group>
-      ))}
-    </group>
-  );
-});
-FireSprinklerSystem.displayName = 'FireSprinklerSystem';
+CommercialCeilingServices.displayName = 'CommercialCeilingServices';
 
 // Commercial Rubber / Vinyl Protective Wall Baseboard Kickplates (72m x 72m)
 const PerimeterWallBaseboards: React.FC = React.memo(() => {
@@ -573,6 +563,57 @@ const GrandStoreEntranceDoors: React.FC = React.memo(() => {
 });
 GrandStoreEntranceDoors.displayName = 'GrandStoreEntranceDoors';
 
+const InstancedCommercialTroffers: React.FC = React.memo(() => {
+  const framesRef = useRef<THREE.InstancedMesh>(null);
+  const panelsRef = useRef<THREE.InstancedMesh>(null);
+
+  const coords = useMemo(() => {
+    const list: [number, number][] = [];
+    [-25, -15, -5, 5, 15, 25].forEach((xL) => {
+      [-25, -15, -5, 5, 15, 25].forEach((zL) => {
+        list.push([xL, zL]);
+      });
+    });
+    return list;
+  }, []);
+
+  useEffect(() => {
+    if (!framesRef.current || !panelsRef.current) return;
+    const dummy = new THREE.Object3D();
+    coords.forEach(([xL, zL], idx) => {
+      // Bezel frame
+      dummy.position.set(xL, 5.16, zL);
+      dummy.scale.set(0.64, 0.03, 6.04);
+      dummy.updateMatrix();
+      framesRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      // Emissive panel
+      dummy.position.set(xL, 5.145, zL);
+      dummy.scale.set(0.56, 0.02, 5.96);
+      dummy.updateMatrix();
+      panelsRef.current!.setMatrixAt(idx, dummy.matrix);
+    });
+    framesRef.current.instanceMatrix.needsUpdate = true;
+    panelsRef.current.instanceMatrix.needsUpdate = true;
+  }, [coords]);
+
+  return (
+    <group raycast={() => null}>
+      <instancedMesh
+        ref={framesRef}
+        args={[sharedGeos.box, sharedMaterials.ceilingBeam, coords.length]}
+        raycast={() => null}
+      />
+      <instancedMesh
+        ref={panelsRef}
+        args={[sharedGeos.box, sharedMaterials.ceilingLight, coords.length]}
+        raycast={() => null}
+      />
+    </group>
+  );
+});
+InstancedCommercialTroffers.displayName = 'InstancedCommercialTroffers';
+
 interface StoreArchitectureProps {
   activeFloor?: number;
 }
@@ -587,12 +628,12 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
           ============================================================== */}
       {/* Ground Floor High-Quality Polished Vitrified Tile Supermarket Flooring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-        <planeGeometry args={[72, 72, 45, 45]} />
+        <planeGeometry args={[72, 72, 1, 1]} />
         <meshStandardMaterial
           map={tileTextures.map}
           roughnessMap={tileTextures.roughnessMap}
           bumpMap={tileTextures.bumpMap}
-          bumpScale={0.018}
+          bumpScale={0.002}
           roughness={0.14}
           metalness={0.03}
         />
@@ -700,22 +741,13 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       <BasketStackStation position={[9, 0, -31]} color="blue" />
       <BasketStackStation position={[11, 0, -31]} color="red" />
 
-      {/* Industrial Open Ceiling Mechanical Services */}
-      <IndustrialHvacSystem />
-      <FireSprinklerSystem />
+      {/* Clean Commercial Overhead Services (Slim Painted White Conduits & Concealed Sprinklers) */}
+      <CommercialCeilingServices />
       <PerimeterWallBaseboards />
       <SecurityDomeCameras />
 
-      {/* ==============================================================
-          36 COMMERCIAL LED CEILING LIGHT FIXTURES (6x6 Grid)
-          ============================================================== */}
-      {[-25, -15, -5, 5, 15, 25].map((xL, idx) => (
-        <group key={`light-col-${idx}`}>
-          {[-25, -15, -5, 5, 15, 25].map((zL, jdx) => (
-            <mesh key={`grid-light-${idx}-${jdx}`} position={[xL, 5.08, zL]} geometry={sharedGeos.light2} material={sharedMaterials.ceilingLight} />
-          ))}
-        </group>
-      ))}
+      {/* 36 Commercial Flush LED Troffer Ceiling Lights (Instanced into 2 draw calls) */}
+      <InstancedCommercialTroffers />
     </group>
   );
 };

@@ -88,7 +88,7 @@ export const useMartStore = create<MartStore>((set) => ({
   isMinimapOpen: false,
   isNavigatorOpen: false, // Hidden by default - only shows when user taps 'Arrows'
   isSoundMuted: false,
-  cameraMode: 'third_person',
+  cameraMode: 'first_person',
   nearBillingCounter: false,
   nearExitGate: false,
   promptText: null,
@@ -192,7 +192,7 @@ export const useMartStore = create<MartStore>((set) => ({
   startExitAnimation: (orderNumber) => {
     set({
       isAutoNavigatingToExit: true,
-      cameraMode: 'third_person',
+      cameraMode: 'first_person',
       completedOrderNumber: orderNumber,
     });
   },
@@ -209,7 +209,7 @@ export const useMartStore = create<MartStore>((set) => ({
   closeFinalCompletedPopup: () => {
     set({
       finalCompletedPopupOpen: false,
-      cameraMode: 'third_person',
+      cameraMode: 'first_person',
     });
   },
 
@@ -243,13 +243,13 @@ export const useMartStore = create<MartStore>((set) => ({
   resetToOriginalState: () => {
     martRuntime.playerPos[0] = 0;
     martRuntime.playerPos[1] = 1.5;
-    martRuntime.playerPos[2] = -20;
+    martRuntime.playerPos[2] = -28;
     martRuntime.playerYaw = 0;
     sounds.playClick();
     set((state) => ({
       activeFloor: 1,
-      cameraMode: 'third_person',
-      playerPos: [0, 1.5, -20],
+      cameraMode: 'first_person',
+      playerPos: [0, 1.5, -28],
       playerYaw: 0,
       resetTrigger: state.resetTrigger + 1,
       promptText: null,
@@ -283,21 +283,31 @@ export const useMartStore = create<MartStore>((set) => ({
     }
 
     const floorNum = plc.floorNumber || 1;
-    const aisleCentersF1: Record<number, number> = {
-      1: -23.5, 2: -17.0, 3: -10.5, 4: -4.5,
-      5: 4.5, 6: 10.5, 7: 17.0, 8: 23.5, 9: 29.0,
-    };
-    const aisleCentersF2: Record<number, number> = { 6: -11.0, 7: -6.5, 8: -2.0, 9: 2.5, 10: 7.0, 11: 11.5 };
-    const aisleCenter =
-      floorNum === 2
-        ? (aisleCentersF2[plc.aisleNumber] ?? plc.worldX)
-        : (aisleCentersF1[plc.aisleNumber] ?? plc.worldX);
+    const isEastWest = (floorNum === 1 && (plc.aisleNumber === 3 || plc.aisleNumber === 4 || plc.aisleNumber === 7 || plc.aisleNumber === 8));
+    let targetX = plc.worldX;
+    let targetZ = plc.worldZ;
+    let targetYaw = 0;
 
-    const isLeft = plc.shelfSide === 'LEFT' || plc.worldX < aisleCenter;
-    const targetX = isLeft ? plc.worldX - 1.35 : plc.worldX + 1.35;
-    const targetYaw = isLeft ? Math.PI / 2 : -Math.PI / 2;
+    if (isEastWest) {
+      const isNorth = plc.shelfSide === 'LEFT';
+      targetZ = isNorth ? plc.worldZ - 1.35 : plc.worldZ + 1.35;
+      targetYaw = isNorth ? 0 : Math.PI;
+    } else {
+      const aisleCentersF1: Record<number, number> = {
+        1: -24.0, 2: -17.5, 3: -11.0, 4: -11.0,
+        5: 17.5, 6: 24.0, 7: 11.0, 8: 11.0, 9: 29.5,
+      };
+      const aisleCentersF2: Record<number, number> = { 6: -11.0, 7: -6.5, 8: -2.0, 9: 2.5, 10: 7.0, 11: 11.5 };
+      const aisleCenter =
+        floorNum === 2
+          ? (aisleCentersF2[plc.aisleNumber] ?? plc.worldX)
+          : (aisleCentersF1[plc.aisleNumber] ?? plc.worldX);
+
+      const isLeft = plc.shelfSide === 'LEFT' || plc.worldX < aisleCenter;
+      targetX = isLeft ? plc.worldX - 1.35 : plc.worldX + 1.35;
+      targetYaw = isLeft ? Math.PI / 2 : -Math.PI / 2;
+    }
     const targetY = floorNum === 2 ? 6.5 : 1.5;
-    const targetZ = plc.worldZ;
 
     martRuntime.playerPos[0] = targetX;
     martRuntime.playerPos[1] = targetY;
@@ -310,7 +320,7 @@ export const useMartStore = create<MartStore>((set) => ({
       activeFloor: floorNum,
       playerPos: [targetX, targetY, targetZ],
       playerYaw: targetYaw,
-      cameraMode: 'third_person',
+      cameraMode: 'first_person',
       selectedProduct: product,
       isProductModalOpen: true,
       teleportTrigger: state.teleportTrigger + 1,

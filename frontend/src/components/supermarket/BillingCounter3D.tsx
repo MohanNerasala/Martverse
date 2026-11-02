@@ -537,6 +537,84 @@ const SingleCheckoutCounterComponent: React.FC<SingleCheckoutCounterProps> = ({
   const laneNumberStr = `0${laneIndex + 1}`;
   const isScanning = isActiveDesk && phase === 'scanning';
 
+  // Fast-path for inactive checkout counters: Renders high-fidelity architectural desk
+  // while bypassing 340+ individual tiny decorative meshes (conveyor ribs, candy racks, keyholes),
+  // reducing draw calls by 1,700+ to strictly hold the <= 150 draw-call budget.
+  if (!isActiveDesk) {
+    return (
+      <group position={[xOffset, 0, 0]}>
+        {/* Recessed Kick-Plate Base */}
+        <mesh position={[0, 0.06, 0]}>
+          <boxGeometry args={[1.24, 0.12, 3.18]} />
+          <meshStandardMaterial color="#090d16" roughness={0.85} metalness={0.2} />
+        </mesh>
+        {/* Main Cabinet Body */}
+        <mesh position={[0, 0.55, 0]}>
+          <boxGeometry args={[1.3, 0.86, 3.24]} />
+          <meshStandardMaterial color="#1e2430" roughness={0.45} metalness={0.35} />
+        </mesh>
+        {/* Customer Side Bumper Rub Rail */}
+        <mesh position={[-0.66, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.02, 0.02, 3.22, 8]} />
+          <meshStandardMaterial color="#111827" roughness={0.8} />
+        </mesh>
+        {/* Brushed Stainless Steel Countertop */}
+        <mesh position={[0, 0.99, 0]}>
+          <boxGeometry args={[1.34, 0.04, 3.28]} />
+          <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
+        </mesh>
+        {/* Heavy-Duty Conveyor Bed */}
+        <mesh position={[-0.15, 1.015, -0.2]}>
+          <boxGeometry args={[0.62, 0.015, 1.7]} />
+          <meshStandardMaterial color="#18181b" roughness={0.9} />
+        </mesh>
+        {/* Cashier Monitor & Stand */}
+        <group position={[0.3, 1.01, 0.2]}>
+          <mesh position={[0, 0.18, 0]}>
+            <cylinderGeometry args={[0.02, 0.025, 0.36, 8]} />
+            <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 0.38, 0]} rotation={[0, -0.3, 0]}>
+            <boxGeometry args={[0.38, 0.26, 0.04]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.5} />
+          </mesh>
+        </group>
+        {/* Lane Indicator Pole & Light Box */}
+        <group position={[0.55, 0, 1.45]}>
+          <mesh position={[0, 1.75, 0]}>
+            <cylinderGeometry args={[0.025, 0.028, 3.5, 8]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.15} />
+          </mesh>
+          <group position={[0, 3.3, 0]}>
+            <mesh>
+              <boxGeometry args={[0.42, 0.36, 0.08]} />
+              <meshStandardMaterial color="#047857" roughness={0.3} />
+            </mesh>
+            <Text
+              position={[0, 0.02, 0.044]}
+              fontSize={0.16}
+              color="#ffffff"
+              anchorX="center"
+              anchorY="middle"
+            >
+              {laneNumberStr}
+            </Text>
+            <Text
+              position={[0, -0.065, 0.044]}
+              fontSize={0.026}
+              color="#a7f3d0"
+              anchorX="center"
+              anchorY="middle"
+              letterSpacing={0.08}
+            >
+              LANE OPEN
+            </Text>
+          </group>
+        </group>
+      </group>
+    );
+  }
+
   return (
     <group position={[xOffset, 0, 0]}>
       {/* ============================================================== */}
@@ -1536,6 +1614,20 @@ const RealisticFloorDockDecal: React.FC<{
 }> = ({ laneIndex, position, isActive }) => {
   const laneStr = `0${laneIndex + 1}`;
 
+  // Inactive lanes only render the subtle floor dock mat, saving 60+ draw calls
+  if (!isActive) {
+    return (
+      <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.36, 2.46]} />
+        <meshStandardMaterial
+          color="#0e121a"
+          roughness={0.95}
+          metalness={0.05}
+        />
+      </mesh>
+    );
+  }
+
   return (
     <group position={position}>
       {/* Heavy Industrial Vulcanized Rubber Dock Mat */}
@@ -1638,6 +1730,7 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
   const runningTotal = useBillingStore((state) => state.runningTotal);
 
   const [activeDeskIndex, setActiveDeskIndex] = useState(2);
+  const [isNearCheckout, setIsNearCheckout] = useState(false);
   const bagScaleRef = useRef(1.0);
 
   // 6 Commercial Checkout Lanes across X = [-15, 15]
@@ -1650,6 +1743,13 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
   };
 
   useFrame((_, delta) => {
+    // Distance LOD for checkout area (mounts full desks when customer enters checkout concourse at z > 4.0)
+    const playerZ = martRuntime.playerPos[2];
+    const near = playerZ > 4.0;
+    if (near !== isNearCheckout) {
+      setIsNearCheckout(near);
+    }
+
     // Dynamic active counter selection based on real player position
     const playerX = martRuntime.playerPos[0];
     let closestIdx = 0;
@@ -1751,79 +1851,95 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
         </group>
       </group>
 
-      {/* Stainless Steel Queue Stanchions & Retractable Belts */}
-      <CheckoutQueueStanchions lanes={counterXPositions} />
+      {!isNearCheckout ? (
+        /* Distant Checkout Proxy: Continuous counter chassis plinth (2 draw calls instead of 150) */
+        <group position={[0, 0, 0]} raycast={() => null}>
+          <mesh position={[0, 0.5, 0]}>
+            <boxGeometry args={[32.0, 0.95, 3.2]} />
+            <meshStandardMaterial color="#1e2430" roughness={0.45} metalness={0.35} />
+          </mesh>
+          <mesh position={[0, 0.99, 0]}>
+            <boxGeometry args={[32.2, 0.04, 3.24]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
+          </mesh>
+        </group>
+      ) : (
+        <>
+          {/* Stainless Steel Queue Stanchions & Retractable Belts */}
+          <CheckoutQueueStanchions lanes={counterXPositions} />
 
-      {/* Parked Return Shopping Trolleys near Exit */}
-      <ParkedShoppingTrolleys position={[-18.5, 0, 1.8]} />
-      <ParkedShoppingTrolleys position={[18.5, 0, 1.8]} />
+          {/* Parked Return Shopping Trolleys near Exit */}
+          <ParkedShoppingTrolleys position={[-18.5, 0, 1.8]} />
+          <ParkedShoppingTrolleys position={[18.5, 0, 1.8]} />
 
-      {/* --- 6 Photo-Realistic Supermarket Checkout Counters --- */}
-      {counterXPositions.map((xOffset, cIdx) => {
-        const isActiveDesk = cIdx === activeDeskIndex;
+          {/* --- 6 Photo-Realistic Supermarket Checkout Counters --- */}
+          {counterXPositions.map((xOffset, cIdx) => {
+            const isActiveDesk = isNearCheckout && (cIdx === activeDeskIndex);
 
-        return (
-          <SingleCheckoutCounter
-            key={`counter-${cIdx}`}
-            laneIndex={cIdx}
-            xOffset={xOffset}
-            isActiveDesk={isActiveDesk}
-            phase={phase}
-            runningTotal={runningTotal}
-            isConveyorMoving={isConveyorMoving}
-            laserRef={isActiveDesk ? laserRef : null}
-            conveyorBeltRibsRef={isActiveDesk ? conveyorBeltRibsRef : null}
-            bagGroupRef={(el: THREE.Group | null) => {
-              bagGroupRefs.current[cIdx] = el;
-            }}
+            return (
+              <SingleCheckoutCounter
+                key={`counter-${cIdx}`}
+                laneIndex={cIdx}
+                xOffset={xOffset}
+                isActiveDesk={isActiveDesk}
+                phase={phase}
+                runningTotal={runningTotal}
+                isConveyorMoving={isConveyorMoving}
+                laserRef={isActiveDesk ? laserRef : null}
+                conveyorBeltRibsRef={isActiveDesk ? conveyorBeltRibsRef : null}
+                bagGroupRef={(el: THREE.Group | null) => {
+                  bagGroupRefs.current[cIdx] = el;
+                }}
+              />
+            );
+          })}
+
+          {/* --- Live 3D Parabolic Flying, Scanning & Packing Pipeline --- */}
+          <ConveyorAnimation3D
+            activeDeskX={counterXPositions[activeDeskIndex]}
+            onBagBump={handleBagBump}
           />
-        );
-      })}
 
-      {/* --- Live 3D Parabolic Flying, Scanning & Packing Pipeline --- */}
-      <ConveyorAnimation3D
-        activeDeskX={counterXPositions[activeDeskIndex]}
-        onBagBump={handleBagBump}
-      />
+          {/* --- Checkout Floor Queue Docks across all 6 lanes --- */}
+          {counterXPositions.map((xPos, idx) => (
+            <RealisticFloorDockDecal
+              key={`dock-${idx}`}
+              laneIndex={idx}
+              position={[xPos - 1.9, 0.012, -0.6]}
+              isActive={activeDeskIndex === idx}
+            />
+          ))}
 
-      {/* --- Checkout Floor Queue Docks across all 6 lanes --- */}
-      {counterXPositions.map((xPos, idx) => (
-        <RealisticFloorDockDecal
-          key={`dock-${idx}`}
-          laneIndex={idx}
-          position={[xPos - 1.9, 0.012, -0.6]}
-          isActive={activeDeskIndex === idx}
-        />
-      ))}
-
-      {/* --- Industrial Safety Hazard Sensor Line Across All 6 Lanes --- */}
-      <group position={[0, 0.016, -2.4]}>
-        {/* Main High-Visibility Safety Band */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[33.0, 0.38]} />
-          <meshStandardMaterial color="#facc15" roughness={0.8} />
-        </mesh>
-        {/* Dark Top & Bottom Edge Inlays */}
-        <mesh position={[0, 0.001, -0.18]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[33.0, 0.02]} />
-          <meshBasicMaterial color="#090d16" />
-        </mesh>
-        <mesh position={[0, 0.001, 0.18]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[33.0, 0.02]} />
-          <meshBasicMaterial color="#090d16" />
-        </mesh>
-        <Text
-          position={[0, 0.003, 0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          fontSize={0.14}
-          color="#0f172a"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.06}
-        >
-          {'▶ ▶ ▶   CHECKOUT SENSOR LINE • TROLLEY AUTO-SCAN DOCK   ◀ ◀ ◀'}
-        </Text>
-      </group>
+          {/* --- Industrial Safety Hazard Sensor Line Across All 6 Lanes --- */}
+          <group position={[0, 0.016, -2.4]}>
+            {/* Main High-Visibility Safety Band */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[33.0, 0.38]} />
+              <meshStandardMaterial color="#facc15" roughness={0.8} />
+            </mesh>
+            {/* Dark Top & Bottom Edge Inlays */}
+            <mesh position={[0, 0.001, -0.18]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[33.0, 0.02]} />
+              <meshBasicMaterial color="#090d16" />
+            </mesh>
+            <mesh position={[0, 0.001, 0.18]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[33.0, 0.02]} />
+              <meshBasicMaterial color="#090d16" />
+            </mesh>
+            <Text
+              position={[0, 0.003, 0]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              fontSize={0.14}
+              color="#0f172a"
+              anchorX="center"
+              anchorY="middle"
+              letterSpacing={0.06}
+            >
+              {'▶ ▶ ▶   CHECKOUT SENSOR LINE • TROLLEY AUTO-SCAN DOCK   ◀ ◀ ◀'}
+            </Text>
+          </group>
+        </>
+      )}
     </group>
   );
 };

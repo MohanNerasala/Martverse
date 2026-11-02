@@ -42,16 +42,16 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   // Commercial Refrigerator Gallery on Right Wall (Dairy, Sodas, Frozen Foods, X = 34.5, Z = [-14, 14])
   { minX: 33.20, maxX: 35.80, minZ: -14.20, maxZ: 14.20 },
 
-  // 9 Varied Double-Sided Gondola Aisles
-  { minX: -24.45, maxX: -22.55, minZ: -14.5, maxZ: 14.5 }, // Aisle 1: Biscuits & Cookies (X = -23.5, 28m)
-  { minX: -17.95, maxX: -16.05, minZ: -12.5, maxZ: 12.5 }, // Aisle 2: Savory Snacks & Chips (X = -17.0, 24m)
-  { minX: -11.45, maxX: -9.55, minZ: -15.5, maxZ: 7.5 },   // Aisle 3: Leaf Teas & Infusions (X = -10.5, 22m)
-  { minX: -5.45, maxX: -3.55, minZ: -13.5, maxZ: 9.5 },    // Aisle 4: Instant Coffees & Hot Drinks (X = -4.5, 22m)
-  { minX: 3.55, maxX: 5.45, minZ: -9.5, maxZ: 13.5 },      // Aisle 5: Chakki Atta & Flours (X = 4.5, 22m)
-  { minX: 9.55, maxX: 11.45, minZ: -7.5, maxZ: 15.5 },     // Aisle 6: Basmati Rice & Dals (X = 10.5, 22m)
-  { minX: 16.05, maxX: 17.95, minZ: -12.5, maxZ: 12.5 },   // Aisle 7: Cooking Oils & Spices (X = 17.0, 24m)
-  { minX: 22.55, maxX: 24.45, minZ: -14.5, maxZ: 14.5 },   // Aisle 8: Instant Foods & Pasta (X = 23.5, 28m)
-  { minX: 28.10, maxX: 29.90, minZ: -10.5, maxZ: 10.5 },   // Aisle 9: Soft Drinks & Juices (X = 29.0, 20m)
+  // 9 Varied Double-Sided Gondola Aisles (Mixed Orientations: Longitudinal + Perpendicular Cross Aisles)
+  { minX: -24.95, maxX: -23.05, minZ: -14.5, maxZ: 14.5 }, // Aisle 1: Biscuits & Cookies (X = -24.0, 28m)
+  { minX: -18.45, maxX: -16.55, minZ: -14.5, maxZ: 14.5 }, // Aisle 2: Savory Snacks & Chips (X = -17.5, 28m)
+  { minX: -16.0, maxX: -6.0, minZ: -5.95, maxZ: -4.05 },    // Aisle 3: Leaf Teas & Infusions (East-West cross-gondola, Z = -5)
+  { minX: -16.0, maxX: -6.0, minZ: 4.05, maxZ: 5.95 },      // Aisle 4: Instant Coffees & Hot Drinks (East-West cross-gondola, Z = 5)
+  { minX: 16.55, maxX: 18.45, minZ: -14.5, maxZ: 14.5 },    // Aisle 5: Chakki Atta & Flours (X = 17.5, 28m)
+  { minX: 23.05, maxX: 24.95, minZ: -14.5, maxZ: 14.5 },    // Aisle 6: Basmati Rice & Dals (X = 24.0, 28m)
+  { minX: 6.0, maxX: 16.0, minZ: -5.95, maxZ: -4.05 },      // Aisle 7: Cooking Oils & Spices (East-West cross-gondola, Z = -5)
+  { minX: 6.0, maxX: 16.0, minZ: 4.05, maxZ: 5.95 },        // Aisle 8: Instant Foods & Pasta (East-West cross-gondola, Z = 5)
+  { minX: 28.55, maxX: 30.45, minZ: -11.5, maxZ: 11.5 },    // Aisle 9: Soft Drinks & Juices (X = 29.5, 22m)
 
   // 3 Central Grand Promenade Feature Promotional Islands (Low-profile, open 360-deg browsing)
   { minX: -1.5, maxX: 1.5, minZ: -16.5, maxZ: -13.5 },     // Island 1: Luxury Chocolates Showcase (X = 0, Z = -15)
@@ -215,6 +215,15 @@ export const PlayerController: React.FC = () => {
   const currentLookTarget = useRef(new THREE.Vector3(0, 1.85, -17.7));
   const isDragging = useRef(false);
   const prevMouse = useRef({ x: 0, y: 0 });
+  const lastTapTimeRef = useRef(0);
+  const lastTapPosRef = useRef({ x: 0, y: 0 });
+  const turn360Ref = useRef<{
+    active: boolean;
+    startTime: number;
+    duration: number;
+    startYaw: number;
+    targetDelta: number;
+  } | null>(null);
   const lastSyncTime = useRef(0);
   const lastProximityCheck = useRef(0);
   const camDistRef = useRef(3.0);
@@ -369,22 +378,63 @@ export const PlayerController: React.FC = () => {
       }
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
       if (!useMartStore.getState().hasEnteredStore) return;
+      const target = e.target as HTMLElement;
+      if (
+        ['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT'].includes(target?.tagName) ||
+        target?.closest('button') ||
+        target?.closest('[role="dialog"]') ||
+        target?.closest('.fixed')
+      ) {
+        return;
+      }
+
+      const now = performance.now();
+      const dt = now - lastTapTimeRef.current;
+      const dx = e.clientX - lastTapPosRef.current.x;
+      const dy = e.clientY - lastTapPosRef.current.y;
+      const distSq = dx * dx + dy * dy;
+
       if (e.button === 0) {
         isDragging.current = true;
         prevMouse.current = { x: e.clientX, y: e.clientY };
+
+        // Double-tap detection: two taps within 300 ms with movement < 10 px (distSq < 100)
+        if (dt > 40 && dt < 300 && distSq < 100) {
+          // Trigger 1.2s eased 360° turn (easeInOutCubic) inside useFrame; ignore further double taps while active
+          if (!turn360Ref.current?.active) {
+            turn360Ref.current = {
+              active: true,
+              startTime: now,
+              duration: 1200,
+              startYaw: targetYawRef.current,
+              targetDelta: Math.PI * 2,
+            };
+          }
+          lastTapTimeRef.current = 0;
+        } else {
+          lastTapTimeRef.current = now;
+          lastTapPosRef.current = { x: e.clientX, y: e.clientY };
+        }
       } else if (e.button === 2) {
         isRightDragging.current = true;
         prevMouse.current = { x: e.clientX, y: e.clientY };
       }
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       if (!useMartStore.getState().hasEnteredStore) return;
       const dx = e.clientX - prevMouse.current.x;
       const dy = e.clientY - prevMouse.current.y;
       prevMouse.current = { x: e.clientX, y: e.clientY };
+
+      // Any intentional drag cancels the 360 turn immediately!
+      if (isDragging.current && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+        if (turn360Ref.current?.active) {
+          turn360Ref.current = null;
+        }
+      }
 
       if (isRightDragging.current) {
         // Dragging mouse forward (dy < 0) pushes trolley forward
@@ -418,10 +468,15 @@ export const PlayerController: React.FC = () => {
       }
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
+    const handlePointerUp = (e: PointerEvent) => {
       if (!useMartStore.getState().hasEnteredStore) return;
       if (e.button === 0) isDragging.current = false;
       if (e.button === 2) isRightDragging.current = false;
+    };
+
+    const handlePointerCancel = () => {
+      isDragging.current = false;
+      isRightDragging.current = false;
     };
 
     const handleWheel = (e: WheelEvent) => {
@@ -442,19 +497,28 @@ export const PlayerController: React.FC = () => {
       }
       e.preventDefault();
 
-      // Two-finger trackpad swipe or mouse wheel roll:
-      // deltaY < 0 is rolling up / swiping up -> move forward (+Z)
-      // deltaY > 0 is rolling down / swiping down -> move backward (-Z)
-      // deltaX < 0 is swiping left -> move left
-      // deltaX > 0 is swiping right -> move right
-      const factor = 0.012;
-      wheelMomentum.current.z -= e.deltaY * factor;
-      wheelMomentum.current.x += e.deltaX * factor;
+      // Normalize deltas across deltaMode (0: pixels, 1: lines, 2: pages)
+      let deltaX = e.deltaX;
+      let deltaY = e.deltaY;
+      if (e.deltaMode === 1) {
+        deltaX *= 16;
+        deltaY *= 16;
+      } else if (e.deltaMode === 2) {
+        deltaX *= 400;
+        deltaY *= 400;
+      }
 
-      wheelMomentum.current.z = THREE.MathUtils.clamp(wheelMomentum.current.z, -3.5, 3.5);
-      wheelMomentum.current.x = THREE.MathUtils.clamp(wheelMomentum.current.x, -3.5, 3.5);
+      const factor = 0.008;
+      const clampedX = THREE.MathUtils.clamp(deltaX, -100, 100);
+      const clampedY = THREE.MathUtils.clamp(deltaY, -100, 100);
 
-      if (Math.abs(e.deltaY) > 2 || Math.abs(e.deltaX) > 2) {
+      wheelMomentum.current.z -= clampedY * factor;
+      wheelMomentum.current.x += clampedX * factor;
+
+      wheelMomentum.current.z = THREE.MathUtils.clamp(wheelMomentum.current.z, -3.0, 3.0);
+      wheelMomentum.current.x = THREE.MathUtils.clamp(wheelMomentum.current.x, -3.0, 3.0);
+
+      if (Math.abs(clampedY) > 2 || Math.abs(clampedX) > 2) {
         if (!hasMovedTrolley) {
           setHasMovedTrolley(true);
         }
@@ -470,18 +534,20 @@ export const PlayerController: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerCancel);
     window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerCancel);
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('contextmenu', handleContextMenu);
     };
@@ -596,9 +662,26 @@ export const PlayerController: React.FC = () => {
         finishExitAnimation();
       }
     } else {
-      // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation (only mouse-look modifies target angles)
-      yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 90, delta);
-      pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 90, delta);
+      if (turn360Ref.current?.active) {
+        const elapsed = performance.now() - turn360Ref.current.startTime;
+        const progress = Math.min(1, Math.max(0, elapsed / turn360Ref.current.duration));
+        // easeInOutCubic:
+        const eased = progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+        targetYawRef.current = turn360Ref.current.startYaw + eased * turn360Ref.current.targetDelta;
+        yawRef.current = targetYawRef.current;
+        pitchRef.current = THREE.MathUtils.damp(pitchRef.current, 0, 12, delta);
+
+        if (progress >= 1) {
+          turn360Ref.current = null;
+        }
+      } else {
+        // Smoothly damp yaw and pitch towards target angles for butter-smooth camera rotation (only mouse-look modifies target angles)
+        yawRef.current = THREE.MathUtils.damp(yawRef.current, targetYawRef.current, 90, delta);
+        pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 90, delta);
+      }
 
       // Fast, ultra-smooth movement speed (22.0 base, 32.0 on Shift turbo push)
       const speed = keys.current.sprint ? 32.0 : 22.0;
@@ -921,10 +1004,10 @@ export const PlayerController: React.FC = () => {
       camera.position.set(0, 2.2, -26.5);
       camera.lookAt(0, 1.5, -31.0);
     } else if (cameraMode === 'first_person') {
-      camera.position.set(posRef.current.x, posRef.current.y + 0.3, posRef.current.z);
+      camera.position.set(posRef.current.x, posRef.current.y + 0.1, posRef.current.z);
       const lookDist = 5;
       const targetLookX = posRef.current.x + Math.sin(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
-      const targetLookY = posRef.current.y + 0.3 + Math.sin(pitchRef.current) * lookDist;
+      const targetLookY = posRef.current.y + 0.1 + Math.sin(pitchRef.current) * lookDist;
       const targetLookZ = posRef.current.z + Math.cos(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
       camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {

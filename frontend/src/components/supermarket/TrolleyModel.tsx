@@ -46,21 +46,56 @@ function getTrolleyMaterial(color: string, roughness = 0.3, metalness = 0.1): TH
 const sharedWhiteCapMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3 });
 const sharedWhiteLabelMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
 
+let trolleyWireTextureCache: THREE.CanvasTexture | null = null;
+function getTrolleyWireTexture(): THREE.CanvasTexture {
+  if (trolleyWireTextureCache) return trolleyWireTextureCache;
+  if (typeof document === 'undefined') return new THREE.CanvasTexture({} as any);
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, 128, 128);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 14;
+  for (let i = 0; i <= 128; i += 32) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0); ctx.lineTo(i, 128); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, i); ctx.lineTo(128, i); ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(10, 8);
+  trolleyWireTextureCache = tex;
+  return tex;
+}
+
+const sharedTrolleyWireMat = new THREE.MeshStandardMaterial({
+  color: '#e2e8f0',
+  metalness: 0.95,
+  roughness: 0.16,
+  alphaMap: typeof document !== 'undefined' ? getTrolleyWireTexture() : undefined,
+  transparent: true,
+  alphaTest: 0.45,
+  side: THREE.DoubleSide,
+});
+
 // Maximum visible 3D items displayed inside the basket (Neat, clean 3x4 layout that never overflows or lags)
 const MAX_BASKET_DISPLAY_ITEMS = 12;
 
-// Strict Physical Shelf Obstacle Bounds for 10 Hypermarket Aisles & Right Wall Refrigerators
+// Strict Physical Shelf Obstacle Bounds for 9 Hypermarket Aisles (Mixed Orientations) & Refrigerators
 const SHELF_OBSTACLES_FLOOR1 = [
-  { minX: -25.35, maxX: -23.25, minZ: -16.6, maxZ: 16.6 }, // Aisle 1
-  { minX: -19.95, maxX: -17.85, minZ: -16.6, maxZ: 16.6 }, // Aisle 2
-  { minX: -14.55, maxX: -12.45, minZ: -16.6, maxZ: 16.6 }, // Aisle 3
-  { minX: -9.15, maxX: -7.05, minZ: -16.6, maxZ: 16.6 },   // Aisle 4
-  { minX: -3.75, maxX: -1.65, minZ: -16.6, maxZ: 16.6 },   // Aisle 5
-  { minX: 1.65, maxX: 3.75, minZ: -16.6, maxZ: 16.6 },     // Aisle 6
-  { minX: 7.05, maxX: 9.15, minZ: -16.6, maxZ: 16.6 },     // Aisle 7
-  { minX: 12.45, maxX: 14.55, minZ: -16.6, maxZ: 16.6 },   // Aisle 8
-  { minX: 17.85, maxX: 19.95, minZ: -16.6, maxZ: 16.6 },   // Aisle 9
-  { minX: 23.25, maxX: 25.35, minZ: -16.6, maxZ: 16.6 },   // Aisle 10
+  { minX: -24.95, maxX: -23.05, minZ: -14.5, maxZ: 14.5 }, // Aisle 1
+  { minX: -18.45, maxX: -16.55, minZ: -14.5, maxZ: 14.5 }, // Aisle 2
+  { minX: -16.0, maxX: -6.0, minZ: -5.95, maxZ: -4.05 },    // Aisle 3
+  { minX: -16.0, maxX: -6.0, minZ: 4.05, maxZ: 5.95 },      // Aisle 4
+  { minX: 16.55, maxX: 18.45, minZ: -14.5, maxZ: 14.5 },    // Aisle 5
+  { minX: 23.05, maxX: 24.95, minZ: -14.5, maxZ: 14.5 },    // Aisle 6
+  { minX: 6.0, maxX: 16.0, minZ: -5.95, maxZ: -4.05 },      // Aisle 7
+  { minX: 6.0, maxX: 16.0, minZ: 4.05, maxZ: 5.95 },        // Aisle 8
+  { minX: 28.55, maxX: 30.45, minZ: -11.5, maxZ: 11.5 },    // Aisle 9
   // Commercial Refrigerator Reach-in Sections on Right Wall
   { minX: 33.20, maxX: 35.80, minZ: -14.20, maxZ: 14.20 },
 ];
@@ -154,6 +189,23 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
   const resetTrigger = useMartStore((state) => state.resetTrigger);
   const teleportTrigger = useMartStore((state) => state.teleportTrigger);
   const hasEnteredStore = useMartStore((state) => state.hasEnteredStore);
+  const cameraMode = useMartStore((state) => state.cameraMode);
+  const billingPhase = useBillingStore((state) => state.phase);
+  const transferredToBenchCount = useBillingStore((state) => state.transferredToBenchCount);
+
+  // Memoize displayed items up to 12 max to prevent performance degradation with large carts (Hook called unconditionally)
+  const displayItems = React.useMemo(() => {
+    const list: CartItem[] = [];
+    for (const it of items) {
+      const q = it.quantity || 1;
+      for (let i = 0; i < q; i++) {
+        list.push(it);
+        if (list.length >= MAX_BASKET_DISPLAY_ITEMS) break;
+      }
+      if (list.length >= MAX_BASKET_DISPLAY_ITEMS) break;
+    }
+    return list;
+  }, [items]);
 
   const initialPos = targetPos || martRuntime.playerPos;
   const initialYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
@@ -228,6 +280,7 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
 
   useFrame((_, delta) => {
     if (!trolleyRef.current) return;
+    if (cameraMode === 'first_person') return;
 
     // Keep trolley completely stationary at the entrance while cinematic intro is active
     if (!useMartStore.getState().hasEnteredStore) {
@@ -332,23 +385,6 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
 
   // Calculate items to display inside the basket
   // During 3D billing scanning, each item leaves the basket the exact instant it lifts towards the conveyor bench
-  const billingPhase = useBillingStore((state) => state.phase);
-  const transferredToBenchCount = useBillingStore((state) => state.transferredToBenchCount);
-
-  // Memoize displayed items up to 12 max to prevent performance degradation with large carts
-  const displayItems = React.useMemo(() => {
-    const list: CartItem[] = [];
-    for (const it of items) {
-      const q = it.quantity || 1;
-      for (let i = 0; i < q; i++) {
-        list.push(it);
-        if (list.length >= MAX_BASKET_DISPLAY_ITEMS) break;
-      }
-      if (list.length >= MAX_BASKET_DISPLAY_ITEMS) break;
-    }
-    return list;
-  }, [items]);
-
   const itemsInBasket = billingPhase === 'scanning'
     ? displayItems.slice(Math.min(displayItems.length, transferredToBenchCount))
     : (['review', 'checkout_details', 'processing', 'success_popup'].includes(billingPhase)
@@ -356,7 +392,12 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
       : displayItems);
 
   return (
-    <group ref={trolleyRef} scale={[1.18, 1.18, 1.18]} raycast={() => null}>
+    <group
+      ref={trolleyRef}
+      visible={cameraMode !== 'first_person'}
+      scale={[1.18, 1.18, 1.18]}
+      raycast={() => null}
+    >
       {/* ==============================================================
           AUTHENTIC COMMERCIAL SUPERMARKET SHOPPING TROLLEY (CHROME & STEEL)
           ============================================================== */}
@@ -383,10 +424,7 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
         <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.14} />
       </mesh>
       {/* Lower Steel Wire Storage Tray for Bulk Items */}
-      <mesh position={[0, 0.14, 0.02]}>
-        <boxGeometry args={[0.52, 0.012, 0.74]} />
-        <meshStandardMaterial color="#94a3b8" wireframe />
-      </mesh>
+      <mesh position={[0, 0.14, 0.02]} geometry={sharedTrolleyGeometries.boxChocolate} scale={[3.25, 0.6, 9.25]} material={sharedTrolleyWireMat} />
 
       {/* --- 2. 4 Heavy-Duty Industrial Swivel Caster Wheels --- */}
       {/* Front Left Swivel Caster */}
@@ -505,8 +543,8 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
       {/* --- 4. Welded Chrome Steel Wire Mesh Basket --- */}
       {/* Wire Mesh Basket Floor Grid */}
       <mesh position={[0, 0.50, 0.04]}>
-        <boxGeometry args={[0.58, 0.012, 0.84]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} wireframe />
+        <boxGeometry args={[0.58, 0.008, 0.84]} />
+        <primitive object={sharedTrolleyWireMat} attach="material" />
       </mesh>
       {/* Solid Chrome Perimeter Floor Rim */}
       <mesh position={[0, 0.495, 0.04]}>
@@ -536,26 +574,26 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
         <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.12} />
       </mesh>
 
-      {/* Wire Mesh Walls (Real Steel Wire Grids) */}
+      {/* Wire Mesh Walls (Real Steel Wire Grids with Alpha-Test) */}
       {/* Left Wire Mesh Wall */}
-      <mesh position={[-0.29, 0.70, 0.04]} rotation={[-0.095, 0, 0]}>
-        <boxGeometry args={[0.008, 0.38, 0.84]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.16} wireframe />
+      <mesh position={[-0.29, 0.70, 0.04]} rotation={[-0.095, Math.PI / 2, 0]}>
+        <planeGeometry args={[0.84, 0.38]} />
+        <primitive object={sharedTrolleyWireMat} attach="material" />
       </mesh>
       {/* Right Wire Mesh Wall */}
-      <mesh position={[0.29, 0.70, 0.04]} rotation={[-0.095, 0, 0]}>
-        <boxGeometry args={[0.008, 0.38, 0.84]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.16} wireframe />
+      <mesh position={[0.29, 0.70, 0.04]} rotation={[-0.095, -Math.PI / 2, 0]}>
+        <planeGeometry args={[0.84, 0.38]} />
+        <primitive object={sharedTrolleyWireMat} attach="material" />
       </mesh>
       {/* Front Wire Mesh Wall */}
-      <mesh position={[0, 0.68, -0.38]}>
-        <boxGeometry args={[0.56, 0.36, 0.008]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.16} wireframe />
+      <mesh position={[0, 0.68, -0.38]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[0.56, 0.36]} />
+        <primitive object={sharedTrolleyWireMat} attach="material" />
       </mesh>
       {/* Rear Wire Mesh Gate */}
-      <mesh position={[0, 0.72, 0.46]}>
-        <boxGeometry args={[0.58, 0.40, 0.008]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.16} wireframe />
+      <mesh position={[0, 0.72, 0.46]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[0.58, 0.40]} />
+        <primitive object={sharedTrolleyWireMat} attach="material" />
       </mesh>
 
       {/* Fold-Out Rear Child Seat Flap (Indian Supermarket Red Plastic Accent) */}

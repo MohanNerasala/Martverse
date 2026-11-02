@@ -91,6 +91,7 @@ export default function Home() {
       localStorage.getItem('martverse_entered') === 'true' ||
       localStorage.getItem('martverse_intro_completed') === 'true';
     const skipIntro =
+      params.get('skip_intro') === 'true' ||
       sessionStorage.getItem('martverse_skip_intro') === 'true' ||
       localStorage.getItem('martverse_skip_intro') === 'true';
     const isInternalReferrer =
@@ -116,6 +117,16 @@ export default function Home() {
       store.openProductModal(p);
     };
     (window as any).__martStore = useMartStore;
+    (window as any).__martverseTeleport = (x: number, y: number, z: number, yaw: number = 0, mode?: string) => {
+      martRuntime.playerPos[0] = x;
+      martRuntime.playerPos[1] = y;
+      martRuntime.playerPos[2] = z;
+      martRuntime.playerYaw = yaw;
+      const store = useMartStore.getState();
+      store.setPlayerPos([x, y, z], yaw);
+      if (mode) store.setCameraMode(mode as any);
+      useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
+    };
     (window as any).__replayCinematicIntro = () => {
       sessionStorage.removeItem('martverse_entered');
       localStorage.removeItem('martverse_entered');
@@ -150,7 +161,7 @@ export default function Home() {
         martRuntime.playerPos[2] = 14.6;
         martRuntime.playerYaw = 0;
         store.setPlayerPos([0, 1.5, 14.6], 0);
-        store.setCameraMode('third_person');
+        store.setCameraMode('first_person');
         useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
       } else {
         // ANY OTHER PAGE / CONTINUE SHOPPING AFTER ORDER:
@@ -160,7 +171,7 @@ export default function Home() {
         martRuntime.playerPos[2] = -20;
         martRuntime.playerYaw = 0;
         store.setPlayerPos([0, 1.5, -20], 0);
-        store.setCameraMode('third_person');
+        store.setCameraMode('first_person');
         useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
       }
 

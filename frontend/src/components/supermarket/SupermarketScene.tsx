@@ -18,12 +18,27 @@ import { api } from '@/lib/api';
 
 // Real-Time Scene Performance Monitor (Zero-overhead telemetry)
 const ScenePerformanceMonitor: React.FC = () => {
-  const { gl } = useThree();
+  const { gl, scene } = useThree();
   const frameCount = useRef(0);
   const lastTime = useRef(performance.now());
   const fpsHistory = useRef<number[]>([]);
+  const lastCalls = useRef(0);
+  const lastTriangles = useRef(0);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__threeScene = scene;
+      (window as any).__threeRenderer = gl;
+    }
+  }, [scene, gl]);
 
   useFrame(() => {
+    // Capture render calls before autoReset
+    if (gl.info.render.calls > 0) {
+      lastCalls.current = gl.info.render.calls;
+      lastTriangles.current = gl.info.render.triangles;
+    }
+
     frameCount.current++;
     const now = performance.now();
     const elapsed = now - lastTime.current;
@@ -43,8 +58,8 @@ const ScenePerformanceMonitor: React.FC = () => {
           avgFps,
           minFps,
           maxFps,
-          drawCalls: gl.info.render.calls,
-          triangles: gl.info.render.triangles,
+          drawCalls: lastCalls.current || gl.info.render.calls,
+          triangles: lastTriangles.current || gl.info.render.triangles,
           geometries: gl.info.memory.geometries,
           textures: gl.info.memory.textures,
           timestamp: Date.now(),
@@ -103,12 +118,13 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
   const firstFloor = floors.find((f) => f.floorNumber === 2);
 
   return (
-    <div className="w-full h-full relative select-none">
+    <div className="w-full h-full relative select-none touch-none">
       <Canvas
         frameloop={isPaused ? 'never' : 'always'}
-        dpr={[1, 2]}
-        camera={{ position: [0, 4, -28], fov: 60, near: 0.15, far: 110 }}
+        dpr={typeof window !== 'undefined' && window.innerWidth < 768 ? [1, 1.5] : [1, 2]}
+        camera={{ position: [0, 1.6, -28], fov: 62, near: 0.1, far: 200 }}
         raycaster={{ near: 0.2, far: 25 }}
+        style={{ touchAction: 'none' }}
         gl={{
           antialias: true,
           alpha: false,
@@ -116,22 +132,22 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           stencil: false,
           depth: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.02,
+          toneMappingExposure: 1.05,
         }}
       >
-        <color attach="background" args={['#e2e8f0']} />
-        <fog attach="fog" args={['#e2e8f0', 70, 130]} />
+        {/* Architectural Atmosphere: Warm Hypermarket White (Eliminates empty grey void) */}
+        <color attach="background" args={['#f8fafc']} />
+        <fog attach="fog" args={['#f8fafc', 55, 95]} />
 
-        {/* --- Commercial Retail Lighting: Rich Contrast, Lustrous Metallic Sheen & Crisp Packaging --- */}
-        <ambientLight intensity={0.42} />
-        <hemisphereLight args={['#ffffff', '#64748b', 0.38]} />
+        {/* --- Maximum 3 Dynamic Lights: Neutral White (4500K), High Contrast & Crisp Packaging --- */}
+        {/* 1. Balanced Hemisphere Light (Pure sky white, soft neutral floor bounce) */}
+        <hemisphereLight args={['#ffffff', '#cbd5e1', 0.65]} />
 
-        {/* Primary Crisp Ceiling Retail Light with Specular Sheen */}
-        <directionalLight position={[12, 28, 12]} intensity={1.15} />
-        {/* Soft Cool-Tint Aisle Fill */}
-        <directionalLight position={[-12, 22, -12]} intensity={0.42} />
-        {/* Central Aisle Ambiance */}
-        <directionalLight position={[0, 18, 0]} intensity={0.25} />
+        {/* 2. Primary High-Luminance Directional Key Light */}
+        <directionalLight position={[8, 24, 8]} intensity={1.15} />
+
+        {/* 3. Soft Opposite Aisle Fill Light */}
+        <directionalLight position={[-8, 20, -8]} intensity={0.35} />
 
         <Suspense fallback={null}>
           <ScenePerformanceMonitor />
