@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useCartStore } from '@/store/useCartStore';
 import { useBillingStore } from '@/store/useBillingStore';
@@ -244,55 +245,18 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
     const actualPos = targetPos || martRuntime.playerPos;
     let actualYaw = targetYaw !== undefined ? targetYaw : martRuntime.playerYaw;
 
-    // Follow smoothly in front of the player at the exact same position with larger realistic 1.18x scale
+    // Follow smoothly in front of the player at the exact same position
     const offsetX = Math.sin(actualYaw) * 0.95;
     const offsetZ = Math.cos(actualYaw) * 0.95;
     let desiredX = actualPos[0] + offsetX;
     const desiredY = actualPos[1] - 1.5;
     let desiredZ = actualPos[2] + offsetZ;
 
-    // Strict Shelf & Obstacle Clamping: Trolley mesh NEVER enters inside shelf racks, edges, or balustrades
-    const currentFloor = actualPos[1] > 4.5 ? 2 : 1;
-    const sinYaw = Math.sin(actualYaw);
-    const cosYaw = Math.cos(actualYaw);
-    // Real rotated envelope for 1.18x scaled trolley with generous physical clearance margin
-    const cartHalfW = Math.abs(cosYaw) * 0.54 + Math.abs(sinYaw) * 0.80 + 0.16;
-    const cartHalfD = Math.abs(sinYaw) * 0.54 + Math.abs(cosYaw) * 0.80 + 0.16;
+    // Harmonize with 72m x 72m hypermarket bounds (PlayerController governs physical shelf collisions)
+    desiredX = THREE.MathUtils.clamp(desiredX, -34.8, 34.8);
+    desiredZ = THREE.MathUtils.clamp(desiredZ, -34.8, 34.8);
 
-    // 1. Store Outer Perimeter Walls Clamping (Harmonized with PlayerController)
-    desiredX = THREE.MathUtils.clamp(desiredX, -16.8, 16.8);
-    desiredZ = THREE.MathUtils.clamp(desiredZ, -24.2, 24.2);
-
-    // 2. Strict Shelf Obstacle Clamping:
-    // Guarantees the 3D trolley mesh edges, handlebar, and basket never penetrate shelf planks, posts, or ESL tags
-    const shelfBoxes = currentFloor === 1 ? SHELF_OBSTACLES_FLOOR1 : SHELF_OBSTACLES_FLOOR2;
-    for (let i = 0; i < shelfBoxes.length; i++) {
-      const b = shelfBoxes[i];
-      if (
-        desiredX + cartHalfW > b.minX &&
-        desiredX - cartHalfW < b.maxX &&
-        desiredZ + cartHalfD > b.minZ &&
-        desiredZ - cartHalfD < b.maxZ
-      ) {
-        const dLeft = (desiredX + cartHalfW) - b.minX;
-        const dRight = b.maxX - (desiredX - cartHalfW);
-        const dFront = (desiredZ + cartHalfD) - b.minZ;
-        const dBack = b.maxZ - (desiredZ - cartHalfD);
-        const minPen = Math.min(dLeft, dRight, dFront, dBack);
-
-        if (minPen === dLeft) {
-          desiredX = b.minX - cartHalfW;
-        } else if (minPen === dRight) {
-          desiredX = b.maxX + cartHalfW;
-        } else if (minPen === dFront) {
-          desiredZ = b.minZ - cartHalfD;
-        } else {
-          desiredZ = b.maxZ + cartHalfD;
-        }
-      }
-    }
-
-    // 3. Strict Escalator lateral & side containment:
+    // Strict Escalator lateral & side containment:
     // Escalator centerline is at x = 14.70.
     const isOnEscalatorRamp =
       actualPos[2] >= -7.4 &&
@@ -393,246 +357,258 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
 
   return (
     <group ref={trolleyRef} scale={[1.18, 1.18, 1.18]} raycast={() => null}>
-      {/* --- Trolley Base Chassis (Pearl White Ceramic with Neon Cyan Glow Perimeter - Zero ground glow puddle) --- */}
-      <mesh position={[0, 0.15, 0]}>
-        <boxGeometry args={[0.7, 0.05, 1.0]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.15} metalness={0.1} />
+      {/* ==============================================================
+          AUTHENTIC COMMERCIAL SUPERMARKET SHOPPING TROLLEY (CHROME & STEEL)
+          ============================================================== */}
+
+      {/* --- 1. Lower Tubular Steel Chassis Frame --- */}
+      {/* Left Longitudinal Chassis Rail */}
+      <mesh position={[-0.28, 0.12, 0]} rotation={[0, 0, 0]}>
+        <cylinderGeometry args={[0.016, 0.016, 0.88, 12]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.14} />
       </mesh>
-      {/* Perimeter Neon Cyan Contour Strip */}
-      <mesh position={[0, 0.165, 0]}>
-        <boxGeometry args={[0.708, 0.012, 1.008]} />
-        <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
+      {/* Right Longitudinal Chassis Rail */}
+      <mesh position={[0.28, 0.12, 0]} rotation={[0, 0, 0]}>
+        <cylinderGeometry args={[0.016, 0.016, 0.88, 12]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.14} />
+      </mesh>
+      {/* Front Cross Tube */}
+      <mesh position={[0, 0.12, -0.42]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.016, 0.016, 0.56, 12]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.14} />
+      </mesh>
+      {/* Rear Cross Tube */}
+      <mesh position={[0, 0.12, 0.42]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.016, 0.016, 0.58, 12]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.14} />
+      </mesh>
+      {/* Lower Steel Wire Storage Tray for Bulk Items */}
+      <mesh position={[0, 0.14, 0.02]}>
+        <boxGeometry args={[0.52, 0.012, 0.74]} />
+        <meshStandardMaterial color="#94a3b8" wireframe />
       </mesh>
 
-      {/* 4 Realistic Rolling Wheels with Swivel Front Casters */}
-      {/* Front Left Caster & Rolling Wheel */}
-      <group position={[-0.32, 0.08, -0.4]}>
+      {/* --- 2. 4 Heavy-Duty Industrial Swivel Caster Wheels --- */}
+      {/* Front Left Swivel Caster */}
+      <group position={[-0.28, 0.07, -0.38]}>
         <group ref={frontLeftCasterRef}>
-          <mesh position={[0, 0.06, 0]}>
-            <boxGeometry args={[0.04, 0.08, 0.06]} />
-            <meshStandardMaterial color="#ffffff" metalness={0.7} roughness={0.15} />
+          {/* Chrome Swivel Fork Housing */}
+          <mesh position={[0, 0.05, 0]}>
+            <cylinderGeometry args={[0.022, 0.026, 0.04, 12]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
           </mesh>
+          <mesh position={[0, 0.02, 0.01]}>
+            <boxGeometry args={[0.042, 0.05, 0.03]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.18} />
+          </mesh>
+          {/* Rolling Wheel Assembly */}
           <group ref={frontLeftWheelRef}>
             <mesh rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
-              <meshStandardMaterial color="#334155" roughness={0.6} />
+              <cylinderGeometry args={[0.065, 0.065, 0.034, 16]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.8} />
             </mesh>
-            {/* Luminous Wheel Hub Ring */}
+            {/* Chrome Wheel Center Hub */}
             <mesh rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.035, 0.035, 0.054, 16]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.7} />
+              <cylinderGeometry args={[0.032, 0.032, 0.038, 14]} />
+              <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
             </mesh>
           </group>
         </group>
       </group>
 
-      {/* Front Right Caster & Rolling Wheel */}
-      <group position={[0.32, 0.08, -0.4]}>
+      {/* Front Right Swivel Caster */}
+      <group position={[0.28, 0.07, -0.38]}>
         <group ref={frontRightCasterRef}>
-          <mesh position={[0, 0.06, 0]}>
-            <boxGeometry args={[0.04, 0.08, 0.06]} />
-            <meshStandardMaterial color="#ffffff" metalness={0.7} roughness={0.15} />
+          {/* Chrome Swivel Fork Housing */}
+          <mesh position={[0, 0.05, 0]}>
+            <cylinderGeometry args={[0.022, 0.026, 0.04, 12]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
           </mesh>
+          <mesh position={[0, 0.02, 0.01]}>
+            <boxGeometry args={[0.042, 0.05, 0.03]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.18} />
+          </mesh>
+          {/* Rolling Wheel Assembly */}
           <group ref={frontRightWheelRef}>
             <mesh rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
-              <meshStandardMaterial color="#334155" roughness={0.6} />
+              <cylinderGeometry args={[0.065, 0.065, 0.034, 16]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.8} />
             </mesh>
-            {/* Luminous Wheel Hub Ring */}
+            {/* Chrome Wheel Center Hub */}
             <mesh rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.035, 0.035, 0.054, 16]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.7} />
+              <cylinderGeometry args={[0.032, 0.032, 0.038, 14]} />
+              <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
             </mesh>
           </group>
         </group>
       </group>
 
-      {/* Rear Left Rolling Wheel */}
-      <group position={[-0.32, 0.08, 0.4]}>
-        <mesh position={[0, 0.06, 0]}>
-          <boxGeometry args={[0.04, 0.08, 0.06]} />
-          <meshStandardMaterial color="#ffffff" metalness={0.7} roughness={0.15} />
+      {/* Rear Left Wheel */}
+      <group position={[-0.29, 0.07, 0.38]}>
+        {/* Fixed Chrome Wheel Bracket */}
+        <mesh position={[0, 0.04, 0]}>
+          <boxGeometry args={[0.042, 0.07, 0.035]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.15} />
         </mesh>
         <group ref={rearLeftWheelRef}>
           <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
-            <meshStandardMaterial color="#334155" roughness={0.6} />
+            <cylinderGeometry args={[0.065, 0.065, 0.034, 16]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.8} />
           </mesh>
-          {/* Luminous Wheel Hub Ring */}
           <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.035, 0.035, 0.054, 16]} />
-            <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.7} />
+            <cylinderGeometry args={[0.032, 0.032, 0.038, 14]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
           </mesh>
         </group>
       </group>
 
-      {/* Rear Right Rolling Wheel */}
-      <group position={[0.32, 0.08, 0.4]}>
-        <mesh position={[0, 0.06, 0]}>
-          <boxGeometry args={[0.04, 0.08, 0.06]} />
-          <meshStandardMaterial color="#ffffff" metalness={0.7} roughness={0.15} />
+      {/* Rear Right Wheel */}
+      <group position={[0.29, 0.07, 0.38]}>
+        {/* Fixed Chrome Wheel Bracket */}
+        <mesh position={[0, 0.04, 0]}>
+          <boxGeometry args={[0.042, 0.07, 0.035]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.15} />
         </mesh>
         <group ref={rearRightWheelRef}>
           <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.07, 0.07, 0.05, 16]} />
-            <meshStandardMaterial color="#334155" roughness={0.6} />
+            <cylinderGeometry args={[0.065, 0.065, 0.034, 16]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.8} />
           </mesh>
-          {/* Luminous Wheel Hub Ring */}
           <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.035, 0.035, 0.054, 16]} />
-            <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.7} />
+            <cylinderGeometry args={[0.032, 0.032, 0.038, 14]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
           </mesh>
         </group>
       </group>
 
-      {/* Upright Support Struts (Pearl Chrome) */}
-      <mesh position={[-0.3, 0.55, 0.45]} rotation={[0.15, 0, 0]}>
-        <cylinderGeometry args={[0.02, 0.02, 0.85, 12]} />
-        <meshStandardMaterial color="#ffffff" metalness={0.6} roughness={0.15} />
+      {/* --- 3. Sturdy Diagonal Upright Tubular Support Struts --- */}
+      {/* Left Main Upright */}
+      <mesh position={[-0.29, 0.52, 0.40]} rotation={[0.16, 0, 0]}>
+        <cylinderGeometry args={[0.016, 0.016, 0.82, 12]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
       </mesh>
-      <mesh position={[0.3, 0.55, 0.45]} rotation={[0.15, 0, 0]}>
-        <cylinderGeometry args={[0.02, 0.02, 0.85, 12]} />
-        <meshStandardMaterial color="#ffffff" metalness={0.6} roughness={0.15} />
+      {/* Right Main Upright */}
+      <mesh position={[0.29, 0.52, 0.40]} rotation={[0.16, 0, 0]}>
+        <cylinderGeometry args={[0.016, 0.016, 0.82, 12]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
       </mesh>
-
-      {/* --- Ultra-Luxury Illuminated Holographic Basket --- */}
-      {/* Luminous Inner Basket Floor Pad (Clean Ice-Blue Ambient Glow) */}
-      <mesh position={[0, 0.505, 0.05]}>
-        <boxGeometry args={[0.64, 0.012, 0.86]} />
-        <meshStandardMaterial
-          color="#bae6fd"
-          emissive="#0284c7"
-          emissiveIntensity={0.65}
-          roughness={0.15}
-          metalness={0.1}
-        />
+      {/* Front Struts connecting chassis to basket front */}
+      <mesh position={[-0.25, 0.32, -0.25]} rotation={[-0.32, 0, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.44, 10]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.14} />
       </mesh>
-      {/* Solid Chrome Base Plate Under Basket Floor (Zero diagonal cross lines) */}
-      <mesh position={[0, 0.498, 0.05]}>
-        <boxGeometry args={[0.655, 0.010, 0.875]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.25} />
+      <mesh position={[0.25, 0.32, -0.25]} rotation={[-0.32, 0, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.44, 10]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.14} />
       </mesh>
 
-      {/* 4 Vertical Corner Struts with Glowing Neon Strips */}
-      {[-0.33, 0.33].map((cx, i) =>
-        [-0.39, 0.49].map((cz, j) => (
-          <mesh key={`corner-strut-${i}-${j}`} position={[cx, 0.72, cz]}>
-            <cylinderGeometry args={[0.008, 0.008, 0.44, 8]} />
-            <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.85} />
-          </mesh>
-        ))
-      )}
+      {/* --- 4. Welded Chrome Steel Wire Mesh Basket --- */}
+      {/* Wire Mesh Basket Floor Grid */}
+      <mesh position={[0, 0.50, 0.04]}>
+        <boxGeometry args={[0.58, 0.012, 0.84]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} wireframe />
+      </mesh>
+      {/* Solid Chrome Perimeter Floor Rim */}
+      <mesh position={[0, 0.495, 0.04]}>
+        <boxGeometry args={[0.59, 0.008, 0.85]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
+      </mesh>
 
-      {/* Left Wall - Icy Frosted Glass with Glowing Neon Top Rim */}
-      <group position={[-0.33, 0.72, 0.05]}>
-        <mesh>
-          <boxGeometry args={[0.018, 0.44, 0.88]} />
-          <meshStandardMaterial
-            color="#bae6fd"
-            transparent
-            opacity={0.4}
-            roughness={0.06}
-            metalness={0.1}
-          />
+      {/* Top Perimeter Welded Steel Tube Rim (Angled Cart Taper) */}
+      {/* Front Top Rim */}
+      <mesh position={[0, 0.86, -0.38]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.56, 12]} />
+        <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.12} />
+      </mesh>
+      {/* Rear Top Rim */}
+      <mesh position={[0, 0.94, 0.46]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.62, 12]} />
+        <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.12} />
+      </mesh>
+      {/* Left Top Rim */}
+      <mesh position={[-0.295, 0.90, 0.04]} rotation={[-0.095, 0, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.86, 12]} />
+        <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.12} />
+      </mesh>
+      {/* Right Top Rim */}
+      <mesh position={[0.295, 0.90, 0.04]} rotation={[-0.095, 0, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.86, 12]} />
+        <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.12} />
+      </mesh>
+
+      {/* Wire Mesh Walls (Real Steel Wire Grids) */}
+      {/* Left Wire Mesh Wall */}
+      <mesh position={[-0.29, 0.70, 0.04]} rotation={[-0.095, 0, 0]}>
+        <boxGeometry args={[0.008, 0.38, 0.84]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.16} wireframe />
+      </mesh>
+      {/* Right Wire Mesh Wall */}
+      <mesh position={[0.29, 0.70, 0.04]} rotation={[-0.095, 0, 0]}>
+        <boxGeometry args={[0.008, 0.38, 0.84]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.16} wireframe />
+      </mesh>
+      {/* Front Wire Mesh Wall */}
+      <mesh position={[0, 0.68, -0.38]}>
+        <boxGeometry args={[0.56, 0.36, 0.008]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.16} wireframe />
+      </mesh>
+      {/* Rear Wire Mesh Gate */}
+      <mesh position={[0, 0.72, 0.46]}>
+        <boxGeometry args={[0.58, 0.40, 0.008]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.16} wireframe />
+      </mesh>
+
+      {/* Fold-Out Rear Child Seat Flap (Indian Supermarket Red Plastic Accent) */}
+      <group position={[0, 0.68, 0.38]}>
+        {/* Child Seat Plastic Backrest */}
+        <mesh position={[0, 0.12, 0]}>
+          <boxGeometry args={[0.32, 0.22, 0.012]} />
+          <meshStandardMaterial color="#dc2626" roughness={0.3} metalness={0.05} />
         </mesh>
-        {/* Glowing Top Rim Neon Tubing */}
-        <mesh position={[0, 0.22, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.014, 0.014, 0.88, 12]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.9} />
+        {/* Child Seat Bottom Flap */}
+        <mesh position={[0, 0.01, -0.09]}>
+          <boxGeometry args={[0.32, 0.012, 0.18]} />
+          <meshStandardMaterial color="#b91c1c" roughness={0.35} metalness={0.05} />
         </mesh>
       </group>
 
-      {/* Right Wall - Icy Frosted Glass with Glowing Neon Top Rim */}
-      <group position={[0.33, 0.72, 0.05]}>
-        <mesh>
-          <boxGeometry args={[0.018, 0.44, 0.88]} />
-          <meshStandardMaterial
-            color="#bae6fd"
-            transparent
-            opacity={0.4}
-            roughness={0.06}
-            metalness={0.1}
-          />
-        </mesh>
-        {/* Glowing Top Rim Neon Tubing */}
-        <mesh position={[0, 0.22, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.014, 0.014, 0.88, 12]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.9} />
-        </mesh>
-      </group>
-
-      {/* Front Wall - Frosted Glass Panel with Glowing Top Rim */}
-      <group position={[0, 0.72, -0.39]}>
-        <mesh>
-          <boxGeometry args={[0.66, 0.44, 0.018]} />
-          <meshStandardMaterial
-            color="#bae6fd"
-            transparent
-            opacity={0.4}
-            roughness={0.06}
-            metalness={0.1}
-          />
-        </mesh>
-        {/* Glowing Front Top Rim Neon Tubing */}
-        <mesh position={[0, 0.22, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.014, 0.014, 0.66, 12]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.9} />
-        </mesh>
-      </group>
-
-      {/* Back Wall - Frosted Glass Panel with Glowing Top Rim */}
-      <group position={[0, 0.72, 0.49]}>
-        <mesh>
-          <boxGeometry args={[0.66, 0.44, 0.018]} />
-          <meshStandardMaterial
-            color="#bae6fd"
-            transparent
-            opacity={0.4}
-            roughness={0.06}
-            metalness={0.1}
-          />
-        </mesh>
-        {/* Glowing Back Top Rim Neon Tubing */}
-        <mesh position={[0, 0.22, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.014, 0.014, 0.66, 12]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.9} />
-        </mesh>
-      </group>
-
-      {/* --- Ergonomic Luminous Sapphire Smart Handlebar --- */}
-      <group position={[0, 0.98, 0.55]}>
-        {/* Main Sapphire Bar with Luminous Glow */}
+      {/* --- 5. Signature Commercial Red Supermarket Ergonomic Handle --- */}
+      <group position={[0, 0.98, 0.52]}>
+        {/* Main Commercial Red Plastic Handlebar Tube */}
         <mesh rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.028, 0.028, 0.72, 16]} />
-          <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.65} roughness={0.2} metalness={0.2} />
+          <cylinderGeometry args={[0.024, 0.024, 0.66, 16]} />
+          <meshStandardMaterial color="#dc2626" roughness={0.25} metalness={0.05} />
         </mesh>
-        {/* Center Smart Display Capsule */}
-        <mesh position={[0, 0.02, 0]}>
-          <boxGeometry args={[0.16, 0.015, 0.04]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.9} />
+        {/* Printed White Center Brand Logo Plate */}
+        <mesh position={[0, 0.016, 0]}>
+          <boxGeometry args={[0.16, 0.010, 0.038]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.2} metalness={0.1} />
         </mesh>
-        {/* White Ceramic Grips with Chrome End Caps */}
-        <mesh position={[-0.24, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.032, 0.032, 0.12, 16]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.2} />
+        <Text
+          position={[0, 0.022, 0]}
+          fontSize={0.016}
+          color="#0f172a"
+          anchorX="center"
+          anchorY="middle"
+          fontWeight="extrabold"
+          letterSpacing={0.04}
+        >
+          MARTVERSE
+        </Text>
+
+        {/* Sturdy Chrome Diagonal Handle Mount Brackets */}
+        <mesh position={[-0.30, -0.06, -0.03]} rotation={[-0.45, 0, 0]}>
+          <boxGeometry args={[0.028, 0.12, 0.032]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
         </mesh>
-        <mesh position={[0.24, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.032, 0.032, 0.12, 16]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.2} />
-        </mesh>
-        {/* Handle Chrome Brackets (Pearl White / Chrome) */}
-        <mesh position={[-0.32, -0.06, -0.03]} rotation={[-0.4, 0, 0]}>
-          <boxGeometry args={[0.04, 0.12, 0.04]} />
-          <meshStandardMaterial color="#ffffff" metalness={0.6} roughness={0.15} />
-        </mesh>
-        <mesh position={[0.32, -0.06, -0.03]} rotation={[-0.4, 0, 0]}>
-          <boxGeometry args={[0.04, 0.12, 0.04]} />
-          <meshStandardMaterial color="#ffffff" metalness={0.6} roughness={0.15} />
+        <mesh position={[0.30, -0.06, -0.03]} rotation={[-0.45, 0, 0]}>
+          <boxGeometry args={[0.028, 0.12, 0.032]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.12} />
         </mesh>
       </group>
 
-      {/* --- Live Products inside Trolley Basket --- */}
-      <group position={[0, 0.55, 0.05]}>
+      {/* --- 6. Live Products inside Trolley Basket --- */}
+      <group position={[0, 0.53, 0.04]}>
         {itemsInBasket.map((item, idx) => (
           <TrolleyProductItem key={`trolley-item-${item.id}-${idx}`} item={item} index={idx} />
         ))}

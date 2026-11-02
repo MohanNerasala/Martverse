@@ -56,11 +56,6 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 1.85, maxX: 4.15, minZ: 20.8, maxZ: 23.2 },
   { minX: 7.85, maxX: 10.15, minZ: 20.8, maxZ: 23.2 },
   { minX: 13.85, maxX: 16.15, minZ: 20.8, maxZ: 23.2 },
-
-  // Exit Turnstile Gate (At z = -31.0)
-  { minX: -1.95, maxX: -1.65, minZ: -31.25, maxZ: -30.75 },
-  { minX: 1.65, maxX: 1.95, minZ: -31.25, maxZ: -30.75 },
-  { minX: -0.22, maxX: 0.22, minZ: -31.25, maxZ: -30.75 },
 ];
 
 const STATIC_OBSTACLES_FLOOR2: ObstacleBox[] = [
@@ -166,27 +161,10 @@ function getCircleBoxDepenetration(
 // Pre-allocated static motion vector to eliminate GC heap allocation in useFrame
 const staticMoveVector = new THREE.Vector3();
 
-// Full-Perimeter Trolley Rig Collision Spheres:
-// Encloses Front Bumper, Basket Corners, Side Walls, Handlebar Tips, and Player Body.
-// Completely prevents any part of the trolley edges, corners, or handlebar from clipping into shelves!
+// Streamlined Coaxial Trolley Rig Collision Spheres (Prevents lateral wedging in aisles)
 const STATIC_SPHERES = [
-  // Front Bumper & Front Wheels (Foremost reach of trolley)
-  { fwdDist: 1.56, latDist: 0.0, radius: 0.30 },     // Front-Center Bumper Nose
-  { fwdDist: 1.40, latDist: -0.42, radius: 0.30 },   // Front-Left Basket Corner
-  { fwdDist: 1.40, latDist: 0.42, radius: 0.30 },    // Front-Right Basket Corner
-  // Mid Basket Walls & Frame
-  { fwdDist: 1.05, latDist: -0.44, radius: 0.30 },   // Upper-Mid Left Wall
-  { fwdDist: 1.05, latDist: 0.44, radius: 0.30 },    // Upper-Mid Right Wall
-  { fwdDist: 0.70, latDist: -0.46, radius: 0.30 },   // Lower-Mid Left Wall
-  { fwdDist: 0.70, latDist: 0.46, radius: 0.30 },    // Lower-Mid Right Wall
-  // Rear Handlebar, Grips & Rear Wheels (Crucial contact zone protecting shelf edges & corners)
-  { fwdDist: 0.32, latDist: -0.50, radius: 0.32 },   // Rear-Left Handlebar Grip & Outer Edge
-  { fwdDist: 0.32, latDist: 0.50, radius: 0.32 },    // Rear-Right Handlebar Grip & Outer Edge
-  { fwdDist: 0.32, latDist: 0.0, radius: 0.30 },     // Rear-Center Handlebar Display
-  // Player Body & Flanks
-  { fwdDist: 0.0, latDist: 0.0, radius: 0.36 },      // Player Body Core
-  { fwdDist: 0.08, latDist: -0.34, radius: 0.30 },   // Player Left Flank
-  { fwdDist: 0.08, latDist: 0.34, radius: 0.30 },    // Player Right Flank
+  { fwdDist: 0.35, latDist: 0.0, radius: 0.35 }, // Player & rear trolley core
+  { fwdDist: 1.05, latDist: 0.0, radius: 0.28 }, // Front trolley bumper
 ] as const;
 
 export const PlayerController: React.FC = () => {
@@ -685,65 +663,50 @@ export const PlayerController: React.FC = () => {
         const sinYaw = Math.sin(yawRef.current);
         const cosYaw = Math.cos(yawRef.current);
 
+        // --- Decoupled Axis Sliding Physics: Guaranteed Never-Stuck Movement ---
+        // 1. Move along X axis and resolve X-axis collisions
         let nextX = posRef.current.x + worldDX;
-        let nextZ = posRef.current.z + worldDZ;
+        for (let s = 0; s < STATIC_SPHERES.length; s++) {
+          const sp = STATIC_SPHERES[s];
+          const sx = nextX + sinYaw * sp.fwdDist;
+          const sz = posRef.current.z + cosYaw * sp.fwdDist;
 
-        // Full-perimeter 8-sphere footprint: guarantees zero edge clipping while preserving buttery-smooth sliding
-        const spheres = STATIC_SPHERES;
-
-        for (let iter = 0; iter < 3; iter++) {
-          for (let s = 0; s < spheres.length; s++) {
-            const sp = spheres[s];
-            let sx = nextX + sinYaw * sp.fwdDist - cosYaw * sp.latDist;
-            let sz = nextZ + cosYaw * sp.fwdDist + sinYaw * sp.latDist;
-
-            for (let i = 0; i < boxes.length; i++) {
-              const res = getCircleBoxDepenetration(sx, sz, sp.radius, boxes[i]);
-              if (res.overlap) {
-                nextX += res.pX;
-                nextZ += res.pZ;
-                sx = nextX + sinYaw * sp.fwdDist - cosYaw * sp.latDist;
-                sz = nextZ + cosYaw * sp.fwdDist + sinYaw * sp.latDist;
-
-                // Slide smoothly along obstacle surface: deflect only velocity penetrating into obstacle
-                const vn = velocityRef.current.x * res.normalX + velocityRef.current.z * res.normalZ;
-                if (vn < 0) {
-                  velocityRef.current.x -= vn * res.normalX;
-                  velocityRef.current.z -= vn * res.normalZ;
-
-                  // Tangential slide assist: if glancing off a shelf or corner, glide effortlessly along the open tangent
-                  if (isMoving) {
-                    const tangentX = -res.normalZ;
-                    const tangentZ = res.normalX;
-                    const vt = velocityRef.current.x * tangentX + velocityRef.current.z * tangentZ;
-                    if (Math.abs(vt) < speed * 0.5) {
-                      const pushDir = vt >= 0 ? 1 : -1;
-                      velocityRef.current.x += tangentX * pushDir * 3.0;
-                      velocityRef.current.z += tangentZ * pushDir * 3.0;
-                    }
-                  }
-                }
-              }
+          for (let i = 0; i < boxes.length; i++) {
+            const res = getCircleBoxDepenetration(sx, sz, sp.radius, boxes[i]);
+            if (res.overlap) {
+              nextX += res.pX;
+              velocityRef.current.x = 0;
             }
           }
+        }
 
-          // Unpaid exit barrier check
-          const activeCart = useCartStore.getState().items;
-          const activePaid = useCartStore.getState().isPaid;
-          if (activeCart.length > 0 && !activePaid && currentFloor === 1) {
-            const frontSp = spheres[2]; // Front-Center Nose
-            let fx = nextX + sinYaw * frontSp.fwdDist;
-            let fz = nextZ + cosYaw * frontSp.fwdDist;
-            const resExit = getCircleBoxDepenetration(fx, fz, frontSp.radius, UNPAID_EXIT_BARRIER);
-            if (resExit.overlap) {
-              nextX += resExit.pX;
-              nextZ += resExit.pZ;
-              const vn = velocityRef.current.x * resExit.normalX + velocityRef.current.z * resExit.normalZ;
-              if (vn < 0) {
-                velocityRef.current.x -= vn * resExit.normalX;
-                velocityRef.current.z -= vn * resExit.normalZ;
-              }
+        // 2. Move along Z axis and resolve Z-axis collisions
+        let nextZ = posRef.current.z + worldDZ;
+        for (let s = 0; s < STATIC_SPHERES.length; s++) {
+          const sp = STATIC_SPHERES[s];
+          const sx = nextX + sinYaw * sp.fwdDist;
+          const sz = nextZ + cosYaw * sp.fwdDist;
+
+          for (let i = 0; i < boxes.length; i++) {
+            const res = getCircleBoxDepenetration(sx, sz, sp.radius, boxes[i]);
+            if (res.overlap) {
+              nextZ += res.pZ;
+              velocityRef.current.z = 0;
             }
+          }
+        }
+
+        // Unpaid exit barrier check
+        const activeCart = useCartStore.getState().items;
+        const activePaid = useCartStore.getState().isPaid;
+        if (activeCart.length > 0 && !activePaid && currentFloor === 1) {
+          const frontSp = STATIC_SPHERES[1]; // Front Bumper
+          const fx = nextX + sinYaw * frontSp.fwdDist;
+          const fz = nextZ + cosYaw * frontSp.fwdDist;
+          const resExit = getCircleBoxDepenetration(fx, fz, frontSp.radius, UNPAID_EXIT_BARRIER);
+          if (resExit.overlap) {
+            nextZ += resExit.pZ;
+            velocityRef.current.z = 0;
           }
         }
 
@@ -751,9 +714,9 @@ export const PlayerController: React.FC = () => {
         posRef.current.z = nextZ;
       }
 
-      // Store outer boundaries safety clamp
-      posRef.current.x = Math.max(-16.8, Math.min(16.8, posRef.current.x));
-      posRef.current.z = Math.max(-24.2, Math.min(24.2, posRef.current.z));
+      // Store outer boundaries safety clamp (72m x 72m hypermarket: -35m to +35m)
+      posRef.current.x = Math.max(-34.8, Math.min(34.8, posRef.current.x));
+      posRef.current.z = Math.max(-34.8, Math.min(34.8, posRef.current.z));
 
       // Track previous Z to detect directional crossing across the yellow checkout sensor line (z = 15.6)
       const prevZ = prevZRef.current;

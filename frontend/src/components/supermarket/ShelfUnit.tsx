@@ -48,9 +48,10 @@ export function getProductPackagingTexture(product: Product): THREE.Texture {
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.generateMipmaps = false;
-  texture.minFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
   texture.needsUpdate = true;
   shelfTextureCache.set(cacheKey, texture);
 
@@ -594,7 +595,10 @@ export function getGondolaPegboardTexture(): THREE.CanvasTexture {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(1, 4);
-  texture.anisotropy = 8;
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
   gondolaPegboardTextureCache = texture;
   return texture;
 }
@@ -696,8 +700,10 @@ export function getSharedPriceTalkerMaterial(): THREE.MeshBasicMaterial {
   }
   sharedPriceTalkerTexture = new THREE.CanvasTexture(canvas);
   sharedPriceTalkerTexture.colorSpace = THREE.SRGBColorSpace;
-  sharedPriceTalkerTexture.minFilter = THREE.LinearFilter;
+  sharedPriceTalkerTexture.generateMipmaps = true;
+  sharedPriceTalkerTexture.minFilter = THREE.LinearMipmapLinearFilter;
   sharedPriceTalkerTexture.magFilter = THREE.LinearFilter;
+  sharedPriceTalkerTexture.anisotropy = 8;
   sharedPriceTalkerMaterial = new THREE.MeshBasicMaterial({
     map: sharedPriceTalkerTexture,
     toneMapped: false,
@@ -766,9 +772,10 @@ export function getEslTexture(price: number, brand: string): THREE.CanvasTexture
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.generateMipmaps = false;
-  texture.minFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 8;
   eslTextureCache.set(key, texture);
   return texture;
 }
@@ -1447,151 +1454,74 @@ const AisleKickplates: React.FC<{ length: number; height: number }> = React.memo
   );
 });
 
-// Photorealistic Commercial Gondola End-Cap Feature Display (Replaces Artificial Black Boards)
-const SingleEndCapFacing: React.FC<{
+// Clean Architectural Commercial Gondola End-Cap Profile (Eliminates artificial floating boards & slashes 1,740 draw calls)
+const SingleEndCapProfile: React.FC<{
   height: number;
   aisleNumber: number;
-  categoryName: string;
-  featureProducts: Product[];
-}> = React.memo(({ height, aisleNumber, categoryName, featureProducts }) => {
-  const openProductModal = useMartStore((state) => state.openProductModal);
-  const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
-
-  const tiers = [0.45, 1.05, 1.65, 2.25];
-  const itemX = [-0.60, -0.30, 0, 0.30, 0.60];
-
+}> = React.memo(({ height, aisleNumber }) => {
   return (
-    <group>
-      {/* 1. Commercial Ivory Gondola Backing Wall (Perforated Pegboard Texture Tone) */}
-      <mesh geometry={sharedGeometries.box} scale={[1.74, height, 0.04]} material={shelfRackMaterials.divider} raycast={() => null} />
+    <group raycast={() => null}>
+      {/* 1. Commercial Ivory Powder-Coated Gondola End Wall */}
+      <mesh geometry={sharedGeometries.box} scale={[1.74, height, 0.04]} material={shelfRackMaterials.divider} />
 
-      {/* 2. Commercial Brushed Aluminum Corner Uprights */}
-      <mesh position={[-0.84, 0, 0]} geometry={sharedGeometries.box} scale={[0.06, height, 0.06]} material={shelfRackMaterials.post} raycast={() => null} />
-      <mesh position={[0.84, 0, 0]} geometry={sharedGeometries.box} scale={[0.06, height, 0.06]} material={shelfRackMaterials.post} raycast={() => null} />
+      {/* 2. Brushed Aluminum Corner Uprights */}
+      <mesh position={[-0.84, 0, 0]} geometry={sharedGeometries.box} scale={[0.06, height, 0.06]} material={shelfRackMaterials.post} />
+      <mesh position={[0.84, 0, 0]} geometry={sharedGeometries.box} scale={[0.06, height, 0.06]} material={shelfRackMaterials.post} />
 
       {/* 3. Base Stainless Steel Kickplate Plinth */}
-      <mesh position={[0, -height / 2 + 0.09, 0.16]} geometry={sharedGeometries.box} scale={[1.74, 0.18, 0.36]} material={shelfRackMaterials.kickplate} raycast={() => null} />
+      <mesh position={[0, -height / 2 + 0.10, 0.02]} geometry={sharedGeometries.box} scale={[1.74, 0.20, 0.08]} material={shelfRackMaterials.kickplate} />
 
-      {/* 4. Top Illuminated D-Mart Header Lightbox */}
-      <group position={[0, height / 2 - 0.34, 0.06]} raycast={() => null}>
-        {/* Outer Silver Bezel */}
-        <mesh geometry={sharedGeometries.box} scale={[1.70, 0.50, 0.08]} material={shelfRackMaterials.post} />
-        {/* Pure White Acrylic Panel */}
-        <mesh position={[0, 0, 0.02]} geometry={sharedGeometries.box} scale={[1.66, 0.46, 0.06]} material={shelfRackMaterials.plank} />
-        {/* D-Mart Sapphire Blue Header Pill */}
-        <mesh position={[0, 0.14, 0.055]} geometry={sharedGeometries.box} scale={[1.52, 0.12, 0.005]} material={shelfRackMaterials.endCapSign} />
-        <Text position={[0, 0.14, 0.06]} fontSize={0.068} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.04}>
-          {'D-MART BACHAT BAZAAR • SPECIAL OFFERS'}
-        </Text>
-        {/* Main Category Headline */}
-        <Text position={[0, -0.01, 0.06]} fontSize={0.12} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.02}>
-          {categoryName.toUpperCase()}
-        </Text>
-        {/* Promotional Savings Badge */}
-        <Text position={[0, -0.15, 0.06]} fontSize={0.065} color="#047857" anchorX="center" anchorY="middle" fontWeight="bold">
-          {'★ SPECIAL VALUE • FLAT 20% TO 50% OFF ★'}
+      {/* 4. Sleek Royal Blue Commercial Accent Trim Band */}
+      <mesh position={[0, height / 2 - 0.06, 0.025]} geometry={sharedGeometries.box} scale={[1.74, 0.12, 0.02]} material={shelfRackMaterials.rail} />
+
+      {/* 5. Minimalist Chrome Aisle Number Disk (Sleek & Realistic) */}
+      <group position={[0, height / 2 - 0.06, 0.038]}>
+        <mesh rotation={[0, 0, 0]}>
+          <cylinderGeometry args={[0.075, 0.075, 0.015, 24]} />
+          <meshStandardMaterial color="#ffffff" metalness={0.2} roughness={0.2} />
+        </mesh>
+        <Text
+          position={[0, 0, 0.012]}
+          fontSize={0.065}
+          color="#1d4ed8"
+          anchorX="center"
+          anchorY="middle"
+          fontWeight="black"
+        >
+          {`${aisleNumber}`}
         </Text>
       </group>
-
-      {/* 5. 4 Tiered Outward-Facing Display Shelves */}
-      {tiers.map((tierH, tIdx) => {
-        const yRel = tierH - height / 2;
-        return (
-          <group key={`endcap-shelf-${tIdx}`} position={[0, yRel, 0.19]} raycast={() => null}>
-            {/* White Powder-Coated Shelf Plank */}
-            <mesh geometry={sharedGeometries.box} scale={[1.64, 0.035, 0.38]} material={shelfRackMaterials.plank} />
-            {/* Left & Right Cantilever Steel Support Brackets */}
-            <mesh position={[-0.78, -0.03, -0.03]} geometry={sharedGeometries.box} scale={[0.04, 0.045, 0.32]} material={shelfRackMaterials.bracket} />
-            <mesh position={[0.78, -0.03, -0.03]} geometry={sharedGeometries.box} scale={[0.04, 0.045, 0.32]} material={shelfRackMaterials.bracket} />
-            {/* D-Mart Blue Front Price Rail */}
-            <mesh position={[0, 0, 0.195]} geometry={sharedGeometries.box} scale={[1.64, 0.042, 0.012]} material={shelfRackMaterials.rail} />
-            {/* Yellow Promotional Price Talker Strip */}
-            <mesh position={[0, 0, 0.202]} geometry={sharedGeometries.box} scale={[1.60, 0.022, 0.004]} material={shelfRackMaterials.neon} />
-          </group>
-        );
-      })}
-
-      {/* 6. Stocked Front-Facing Feature Products on Each Tier (5 items per tier) */}
-      {tiers.map((tierH, tIdx) => {
-        const yRel = tierH - height / 2;
-        return itemX.map((xPos, iIdx) => {
-          const prodIdx = (tIdx * 5 + iIdx) % (featureProducts.length || 1);
-          const prod = featureProducts[prodIdx];
-          if (!prod) return null;
-
-          const plcColor = prod.placement?.color || '#3b82f6';
-          const bodyMat = getProductBodyMaterial(plcColor, 0.3, 0.08);
-
-          return (
-            <group key={`endcap-prod-${tIdx}-${iIdx}`} position={[xPos, yRel, 0.22]}>
-              {/* Invisible Pointer Hitbox */}
-              <mesh
-                visible={false}
-                position={[0, 0.17, 0]}
-                geometry={sharedGeometries.box}
-                scale={[0.26, 0.36, 0.18]}
-                onPointerOver={(e) => {
-                  e.stopPropagation();
-                  if (typeof document !== 'undefined') document.body.style.cursor = 'pointer';
-                  setHoveredProduct(prod);
-                }}
-                onPointerOut={(e) => {
-                  e.stopPropagation();
-                  if (typeof document !== 'undefined') document.body.style.cursor = 'default';
-                  setHoveredProduct(null);
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openProductModal(prod);
-                }}
-              />
-              {/* Front-Facing Product 3D Body */}
-              <mesh position={[0, 0.17, 0]} geometry={sharedGeometries.box} scale={[0.24, 0.34, 0.13]} material={bodyMat} raycast={() => null} />
-              {/* High-Resolution Branded Packaging Artwork */}
-              <ProductSmallImage product={prod} position={[0, 0.17, 0.07]} scale={[0.23, 0.32]} />
-            </group>
-          );
-        });
-      })}
     </group>
   );
 });
+SingleEndCapProfile.displayName = 'SingleEndCapProfile';
 
 const AisleGondolaEndCaps: React.FC<{
   length: number;
   height: number;
   aisleNumber: number;
-  categoryName: string;
-  aisleProducts: Product[];
-}> = React.memo(({ length, height, aisleNumber, categoryName, aisleProducts }) => {
-  const featureProducts = useMemo(() => {
-    return aisleProducts && aisleProducts.length > 0 ? aisleProducts.slice(0, 12) : [];
-  }, [aisleProducts]);
-
+}> = React.memo(({ length, height, aisleNumber }) => {
   return (
     <group>
       {/* North End-Cap (Facing -Z towards front concourse) */}
-      <group position={[0, 0, -length / 2 - 0.20]} rotation={[0, Math.PI, 0]}>
-        <SingleEndCapFacing
+      <group position={[0, 0, -length / 2 - 0.02]} rotation={[0, Math.PI, 0]}>
+        <SingleEndCapProfile
           height={height}
           aisleNumber={aisleNumber}
-          categoryName={categoryName}
-          featureProducts={featureProducts}
         />
       </group>
 
       {/* South End-Cap (Facing +Z towards back concourse) */}
-      <group position={[0, 0, length / 2 + 0.20]}>
-        <SingleEndCapFacing
+      <group position={[0, 0, length / 2 + 0.02]}>
+        <SingleEndCapProfile
           height={height}
           aisleNumber={aisleNumber}
-          categoryName={categoryName}
-          featureProducts={featureProducts}
         />
       </group>
     </group>
   );
 });
+AisleGondolaEndCaps.displayName = 'AisleGondolaEndCaps';
 
 interface ShelfUnitProps {
   aisle: SupermarketAisle;
@@ -1628,17 +1558,14 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   const centerZ = (aisle.startZ + aisle.endZ) / 2;
   const centerY = floorYOffset + aisle.shelfHeight / 2;
 
-  const BLOCK_COUNT = useMemo(() => Math.max(6, Math.round(length / 4.0)), [length]);
-  const blockWidth = length / BLOCK_COUNT;
-
-  const blockCenters = useMemo(() => {
-    return Array.from(
-      { length: BLOCK_COUNT },
-      (_, b) => -length / 2 + (b + 0.5) * blockWidth
-    );
-  }, [length, blockWidth, BLOCK_COUNT]);
-
-  const itemOffsets = [-1.50, -1.00, -0.50, 0, 0.50, 1.00, 1.50];
+  // Single Continuous Uniform Column Grid across all tiers (Zero block gaps, 100% straight vertical columns)
+  const colSpacing = 0.44;
+  const usableLength = length - 0.88;
+  const colCount = useMemo(() => Math.max(8, Math.floor(usableLength / colSpacing)), [usableLength]);
+  const colStep = useMemo(() => usableLength / (colCount - 1), [usableLength, colCount]);
+  const columnZ = useMemo(() => {
+    return Array.from({ length: colCount }, (_, c) => -length / 2 + 0.44 + c * colStep);
+  }, [length, colCount, colStep]);
 
   const SHELF_TIERS = useMemo(() => [
     { tier: 1, height: 0.45 },
@@ -1647,7 +1574,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
     { tier: 4, height: 2.25 },
   ], []);
 
-  // Generate BLOCK_COUNT blocks x 7 items x 4 tiers per side (Dense, photorealistic supermarket rows)
+  // Generate continuous straight columns x 4 tiers per side (Dense, photorealistic supermarket rows)
   const displaySlots = useMemo(() => {
     if (!isFloorActive || !aisleProducts || aisleProducts.length === 0) return [];
 
@@ -1672,84 +1599,85 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
       { side: 'RIGHT', relX: 0.45, rotationY: Math.PI / 2 },
     ];
 
+    const FACING_WIDTH = 2; // 2 clean facings per product brand side by side
+    const pool = aisleProducts;
+    const poolLength = pool.length;
+
     sides.forEach((s) => {
-      SHELF_TIERS.forEach((tierInfo, tIdx) => {
+      SHELF_TIERS.forEach((tierInfo) => {
         const shelfTierY = tierInfo.height - aisle.shelfHeight / 2 + 0.02;
+        const tierOffset = (tierInfo.tier - 1) * 3;
 
-        for (let b = 0; b < BLOCK_COUNT; b++) {
-          for (let k = 0; k < itemOffsets.length; k++) {
-            const zRel = blockCenters[b] + itemOffsets[k];
-            const tierProducts = aisleProducts.filter((p) => p.placement?.shelfTier === tierInfo.tier);
-            const pool = tierProducts.length > 0 ? tierProducts : aisleProducts;
-            const prodIdx = (b * itemOffsets.length + k + (s.side === 'RIGHT' ? 1 : 0)) % pool.length;
-            const product = pool[prodIdx];
+        for (let c = 0; c < colCount; c++) {
+          const zRel = columnZ[c];
+          const prodIdx = (Math.floor(c / FACING_WIDTH) + tierOffset + (s.side === 'RIGHT' ? Math.floor(poolLength / 2) : 0)) % poolLength;
+          const product = pool[prodIdx];
 
-            const slotWorldX = centerX + s.relX;
-            const slotWorldY = centerY + shelfTierY;
-            const slotWorldZ = centerZ + zRel;
+          const slotWorldX = centerX + s.relX;
+          const slotWorldY = centerY + shelfTierY;
+          const slotWorldZ = centerZ + zRel;
 
-            const slotPlacement: ProductPlacement = product.placement
-              ? {
-                  ...product.placement,
-                  worldX: slotWorldX,
-                  worldY: slotWorldY,
-                  worldZ: slotWorldZ,
-                  floorNumber: floorYOffset > 2 ? 2 : 1,
-                  aisleNumber: aisle.aisleNumber,
-                  aisleName: aisle.name,
-                  shelfSide: s.side,
-                  shelfTier: tierInfo.tier,
-                }
-              : {
-                  id: `place-${product.id}-t${tierInfo.tier}-${b}-${k}`,
-                  productId: product.id,
-                  productName: product.name,
-                  productSlug: product.slug,
-                  productPrice: product.price,
-                  productMrp: product.mrp,
-                  floorNumber: floorYOffset > 2 ? 2 : 1,
-                  aisleId: aisle.id,
-                  aisleNumber: aisle.aisleNumber,
-                  aisleName: aisle.name,
-                  aisleCategory: aisle.categoryName,
-                  shelfSide: s.side,
-                  shelfTier: tierInfo.tier,
-                  shelfPosition: b * itemOffsets.length + k + 1,
-                  worldX: slotWorldX,
-                  worldY: slotWorldY,
-                  worldZ: slotWorldZ,
-                  rotationY: s.rotationY,
-                  color: '#3b82f6',
-                  modelType: 'box',
-                };
+          const slotPlacement: ProductPlacement = product.placement
+            ? {
+                ...product.placement,
+                worldX: slotWorldX,
+                worldY: slotWorldY,
+                worldZ: slotWorldZ,
+                floorNumber: floorYOffset > 2 ? 2 : 1,
+                aisleNumber: aisle.aisleNumber,
+                aisleName: aisle.name,
+                shelfSide: s.side,
+                shelfTier: tierInfo.tier,
+              }
+            : {
+                id: `place-${product.id}-t${tierInfo.tier}-c${c}`,
+                productId: product.id,
+                productName: product.name,
+                productSlug: product.slug,
+                productPrice: product.price,
+                productMrp: product.mrp,
+                floorNumber: floorYOffset > 2 ? 2 : 1,
+                aisleId: aisle.id,
+                aisleNumber: aisle.aisleNumber,
+                aisleName: aisle.name,
+                aisleCategory: aisle.categoryName,
+                shelfSide: s.side,
+                shelfTier: tierInfo.tier,
+                shelfPosition: c + 1,
+                worldX: slotWorldX,
+                worldY: slotWorldY,
+                worldZ: slotWorldZ,
+                rotationY: s.rotationY,
+                color: '#3b82f6',
+                modelType: 'box',
+              };
 
-            const slotProduct: Product = {
-              ...product,
-              placement: slotPlacement,
-            };
+          const slotProduct: Product = {
+            ...product,
+            placement: slotPlacement,
+          };
 
-            slots.push({
-              key: `${s.side}-t${tierInfo.tier}-b${b}-s${k}-${product.id}`,
-              product: slotProduct,
-              side: s.side,
-              tier: tierInfo.tier,
-              blockIdx: b,
-              slotIdx: k,
-              relX: s.relX,
-              relY: shelfTierY,
-              relZ: zRel,
-              worldX: slotWorldX,
-              worldY: slotWorldY,
-              worldZ: slotWorldZ,
-              rotationY: s.rotationY,
-            });
-          }
+          slots.push({
+            key: `${s.side}-t${tierInfo.tier}-c${c}-${product.id}`,
+            product: slotProduct,
+            side: s.side,
+            tier: tierInfo.tier,
+            blockIdx: Math.floor(c / 8),
+            slotIdx: c,
+            relX: s.relX,
+            relY: shelfTierY,
+            relZ: zRel,
+            worldX: slotWorldX,
+            worldY: slotWorldY,
+            worldZ: slotWorldZ,
+            rotationY: s.rotationY,
+          });
         }
       });
     });
 
     return slots;
-  }, [isFloorActive, aisleProducts, blockCenters, SHELF_TIERS, centerX, centerY, centerZ, floorYOffset, aisle.aisleNumber, aisle.name, aisle.shelfHeight, aisle.id, aisle.categoryName]);
+  }, [isFloorActive, aisleProducts, columnZ, colCount, SHELF_TIERS, centerX, centerY, centerZ, floorYOffset, aisle.aisleNumber, aisle.name, aisle.shelfHeight, aisle.id, aisle.categoryName]);
 
   // Group slots by unique product for high-performance InstancedMesh batching
   const productBatches = useMemo(() => {
@@ -1789,13 +1717,11 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
         <AisleKickplates length={length} height={aisle.shelfHeight} />
       </group>
 
-      {/* Photorealistic Commercial Gondola End-Cap Feature Displays */}
+      {/* Photorealistic Commercial Gondola End-Cap Profiles */}
       <AisleGondolaEndCaps
         length={length}
         height={aisle.shelfHeight}
         aisleNumber={aisle.aisleNumber}
-        categoryName={aisle.categoryName}
-        aisleProducts={aisleProducts}
       />
 
       {/* Instanced Shelf Surface Contact Shadows (1 draw call per aisle instead of 392) */}

@@ -104,8 +104,8 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
     <div className="w-full h-full relative select-none">
       <Canvas
         frameloop={isPaused ? 'never' : 'always'}
-        dpr={[1, 1.25]}
-        camera={{ position: [0, 4, -28], fov: 60, near: 0.15, far: 95 }}
+        dpr={[1, 2]}
+        camera={{ position: [0, 4, -28], fov: 60, near: 0.15, far: 110 }}
         raycaster={{ near: 0.2, far: 25 }}
         gl={{
           antialias: true,
@@ -118,7 +118,7 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
         }}
       >
         <color attach="background" args={['#e2e8f0']} />
-        <fog attach="fog" args={['#e2e8f0', 65, 115]} />
+        <fog attach="fog" args={['#e2e8f0', 70, 130]} />
 
         {/* --- Commercial Retail Lighting: Rich Contrast, Lustrous Metallic Sheen & Crisp Packaging --- */}
         <ambientLight intensity={0.42} />
