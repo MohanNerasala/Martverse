@@ -276,6 +276,108 @@ function drawBrandedPackagingArtwork(ctx: CanvasRenderingContext2D, prod: Produc
     headerTitle = 'Cadbury';
     subHeadline = 'Dairy Milk • GLASS & A HALF';
     graphicType = 'chocolate';
+  } else if (slug.includes('5-star') || name.includes('5 star')) {
+    bgGradient = ['#854d0e', '#ca8a04', '#713f12'];
+    brandColor = '#fde047';
+    headerTitle = '5 STAR';
+    subHeadline = 'CARAMEL & NOUGAT CHOC';
+    graphicType = 'chocolate';
+  } else if (slug.includes('munch') || name.includes('munch')) {
+    bgGradient = ['#7f1d1d', '#b91c1c', '#dc2626'];
+    brandColor = '#fde047';
+    headerTitle = 'MUNCH';
+    subHeadline = 'CRUNCHILICIOUS WAFER';
+    graphicType = 'chocolate';
+  } else if (slug.includes('kitkat') || name.includes('kitkat')) {
+    bgGradient = ['#991b1b', '#dc2626', '#b91c1c'];
+    brandColor = '#ffffff';
+    headerTitle = 'KitKat';
+    subHeadline = 'HAVE A BREAK • 4 FINGER';
+    graphicType = 'chocolate';
+  } else if (slug.includes('lux') || name.includes('lux')) {
+    bgGradient = ['#be185d', '#db2777', '#9d174d'];
+    brandColor = '#fde047';
+    headerTitle = 'LUX';
+    subHeadline = 'VELVET GLOW JASMINE';
+    graphicType = 'generic';
+  } else if (slug.includes('himalaya') || name.includes('himalaya')) {
+    bgGradient = ['#064e3b', '#047857', '#022c22'];
+    brandColor = '#ffffff';
+    headerTitle = 'Himalaya';
+    subHeadline = 'PURIFYING NEEM FACE WASH';
+    graphicType = 'menthol';
+  } else if (slug.includes('ponds') || name.includes("pond's") || name.includes('ponds')) {
+    bgGradient = ['#f43f5e', '#fb7185', '#e11d48'];
+    brandColor = '#ffffff';
+    headerTitle = "POND'S";
+    subHeadline = 'BRIGHT BEAUTY GLOW';
+    graphicType = 'generic';
+  } else if (slug.includes('tropicana') || name.includes('tropicana')) {
+    bgGradient = ['#c2410c', '#ea580c', '#f97316'];
+    brandColor = '#ffffff';
+    headerTitle = 'Tropicana';
+    subHeadline = '100% PURE ORANGE JUICE';
+    graphicType = 'lemon';
+  } else if (slug.includes('saffola') || name.includes('saffola')) {
+    bgGradient = ['#1e3a8a', '#1d4ed8', '#172554'];
+    brandColor = '#facc15';
+    headerTitle = 'Saffola';
+    subHeadline = 'GOLD PRO HEALTHY OIL';
+    graphicType = 'sunflower';
+  } else if (slug.includes('dhara') || name.includes('dhara')) {
+    bgGradient = ['#713f12', '#a16207', '#ca8a04'];
+    brandColor = '#fef08a';
+    headerTitle = 'Dhara';
+    subHeadline = 'KACHI GHANI MUSTARD OIL';
+    graphicType = 'sunflower';
+  } else if (slug.includes('gulab-jamun') || name.includes('gulab jamun')) {
+    bgGradient = ['#831843', '#9d174d', '#701a75'];
+    brandColor = '#fde047';
+    headerTitle = "Haldiram's";
+    subHeadline = 'ROYAL GULAB JAMUN 1KG';
+    graphicType = 'generic';
+  } else if (slug.includes('soan-papdi') || name.includes('soan papdi')) {
+    bgGradient = ['#a16207', '#ca8a04', '#eab308'];
+    brandColor = '#ffffff';
+    headerTitle = "Haldiram's";
+    subHeadline = 'DESI GHEE SOAN PAPDI';
+    graphicType = 'generic';
+  } else if (slug.includes('celebrations') || name.includes('celebrations')) {
+    bgGradient = ['#3b0764', '#581c87', '#2e1065'];
+    brandColor = '#facc15';
+    headerTitle = 'Celebrations';
+    subHeadline = 'RICH DRY FRUIT GIFT PACK';
+    graphicType = 'chocolate';
+  } else if (slug.includes('happilo') || name.includes('almond') || name.includes('cashew')) {
+    bgGradient = ['#064e3b', '#047857', '#022c22'];
+    brandColor = '#facc15';
+    headerTitle = 'Happilo';
+    subHeadline = 'PREMIUM ROYAL DRY FRUITS';
+    graphicType = 'generic';
+  } else if (slug.includes('tide') || name.includes('tide')) {
+    bgGradient = ['#c2410c', '#ea580c', '#1d4ed8'];
+    brandColor = '#ffffff';
+    headerTitle = 'Tide';
+    subHeadline = 'DOUBLE POWER EXTRA WHITE';
+    graphicType = 'washing';
+  } else if (slug.includes('comfort') || name.includes('comfort')) {
+    bgGradient = ['#0284c7', '#38bdf8', '#be185d'];
+    brandColor = '#ffffff';
+    headerTitle = 'Comfort';
+    subHeadline = 'FABRIC CONDITIONER 2L';
+    graphicType = 'washing';
+  } else if (slug.includes('wagh-bakri') || name.includes('wagh bakri')) {
+    bgGradient = ['#14532d', '#15803d', '#166534'];
+    brandColor = '#facc15';
+    headerTitle = 'Wagh Bakri';
+    subHeadline = 'PREMIUM CTC SPICED TEA';
+    graphicType = 'tea';
+  } else if (slug.includes('bikaji') || name.includes('bikaji')) {
+    bgGradient = ['#b91c1c', '#dc2626', '#ca8a04'];
+    brandColor = '#facc15';
+    headerTitle = 'Bikaji';
+    subHeadline = 'BIKANERI BHUJIA 1KG';
+    graphicType = 'biscuit';
   }
 
   // 1. Draw Background Gradient
@@ -858,20 +960,30 @@ ShelfProductItem.displayName = 'ShelfProductItem';
 // Sleek Commercial D-Mart Aisle Category Hanging Sign (Compact, Non-Intrusive, Realistic)
 const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; height: number }> = React.memo(({ aisleNumber, categoryName, height }) => {
   const subtitleMap: Record<number, string> = {
-    1: 'Chips • Biscuits • Cookies • Namkeen',
-    2: 'Chocolates • Sweets • Candies',
-    3: 'Atta • Rice • Dal • Edible Oils',
-    4: 'Soaps • Shampoos • Oral Care',
-    5: 'Detergents • Cleaning Essentials',
+    1: 'Detergents • Surface Cleaners • Fabric Care',
+    2: 'Soaps • Shampoos • Oral Care • Face Wash',
+    3: 'Cookies • Biscuits • Chips • Ready Bites',
+    4: 'Premium Tea • Instant Coffee • Green Tea',
+    5: 'Chocolates • Gifting Bars • Sweet Treats',
+    6: 'Chakki Atta • Basmati Rice • Organic Pulses',
+    7: 'Refined Oils • Mustard Oil • Spices & Masalas',
+    8: 'Chilled Sodas • Pure Fruit Juices • Water',
+    9: 'Authentic Namkeen • Bhujia • Crispy Snacks',
+    10: 'Gourmet Dry Fruits • Festive Hampers • Sweets',
   };
   const subtitle = subtitleMap[aisleNumber] || 'Daily Groceries & Essentials';
 
   const titleMap: Record<number, string> = {
-    1: 'BISCUITS & SNACKS',
-    2: 'TEA, COFFEE & SWEETS',
-    3: 'GROCERIES & STAPLES',
-    4: 'PERSONAL CARE',
-    5: 'HOUSEHOLD & CLEANING',
+    1: 'HOUSEHOLD & CLEANING',
+    2: 'PERSONAL CARE & BEAUTY',
+    3: 'BISCUITS & SNACKS',
+    4: 'TEA & COFFEE ESSENTIALS',
+    5: 'CHOCOLATES & SWEETS',
+    6: 'FLOURS, RICE & DALS',
+    7: 'COOKING OILS & SPICES',
+    8: 'BEVERAGES & COLD DRINKS',
+    9: 'SNACK PACKS & NAMKEEN',
+    10: 'FESTIVE GIFTS & DRY FRUITS',
   };
   const title = titleMap[aisleNumber] || categoryName.toUpperCase();
 
@@ -1006,10 +1118,13 @@ const AisleEslCasings: React.FC<{ slots: ShelfSlotItemProps['slot'][] }> = React
 const AisleSupportPosts: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
   const postsRef = useRef<THREE.InstancedMesh>(null);
   const neonsRef = useRef<THREE.InstancedMesh>(null);
-  const zPositions = useMemo(
-    () => [-length / 2, -length / 3, -length / 6, 0, length / 6, length / 3, length / 2],
-    [length]
-  );
+  const zPositions = useMemo(() => {
+    const postCount = Math.max(5, Math.round(length / 4.0) + 1);
+    const step = length / (postCount - 1);
+    return Array.from({ length: postCount }, (_, i) => -length / 2 + i * step);
+  }, [length]);
+
+  const maxPostInstances = zPositions.length * 2;
 
   useEffect(() => {
     if (!postsRef.current || !neonsRef.current) return;
@@ -1048,8 +1163,8 @@ const AisleSupportPosts: React.FC<{ length: number; height: number }> = React.me
 
   return (
     <group raycast={() => null}>
-      <instancedMesh ref={postsRef} args={[sharedGeometries.box, shelfRackMaterials.post, 14]} raycast={() => null} />
-      <instancedMesh ref={neonsRef} args={[sharedGeometries.box, shelfRackMaterials.postNeon, 14]} raycast={() => null} />
+      <instancedMesh ref={postsRef} args={[sharedGeometries.box, shelfRackMaterials.post, maxPostInstances]} raycast={() => null} />
+      <instancedMesh ref={neonsRef} args={[sharedGeometries.box, shelfRackMaterials.postNeon, maxPostInstances]} raycast={() => null} />
     </group>
   );
 });
@@ -1320,15 +1435,15 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   const centerZ = (aisle.startZ + aisle.endZ) / 2;
   const centerY = floorYOffset + aisle.shelfHeight / 2;
 
-  const BLOCK_COUNT = 6;
-  const blockWidth = length / BLOCK_COUNT; // 4.0m
+  const BLOCK_COUNT = useMemo(() => Math.max(6, Math.round(length / 4.0)), [length]);
+  const blockWidth = length / BLOCK_COUNT;
 
   const blockCenters = useMemo(() => {
     return Array.from(
       { length: BLOCK_COUNT },
       (_, b) => -length / 2 + (b + 0.5) * blockWidth
-    ); // [-10, -6, -2, 2, 6, 10]
-  }, [length, blockWidth]);
+    );
+  }, [length, blockWidth, BLOCK_COUNT]);
 
   const itemOffsets = [-1.15, 0, 1.15];
 
@@ -1339,7 +1454,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
     { tier: 4, height: 2.25 },
   ], []);
 
-  // Generate 6 blocks x 3 items x 3 tiers = 54 items per side (108 items total per aisle)
+  // Generate BLOCK_COUNT blocks x 3 items x 4 tiers per side
   const displaySlots = useMemo(() => {
     if (!isFloorActive || !aisleProducts || aisleProducts.length === 0) return [];
 

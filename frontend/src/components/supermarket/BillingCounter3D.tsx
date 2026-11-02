@@ -1637,11 +1637,11 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
   const phase = useBillingStore((state) => state.phase);
   const runningTotal = useBillingStore((state) => state.runningTotal);
 
-  const [activeDeskIndex, setActiveDeskIndex] = useState(1);
+  const [activeDeskIndex, setActiveDeskIndex] = useState(2);
   const bagScaleRef = useRef(1.0);
 
-  // 3.8m spacing between counter centers
-  const counterXPositions = [-3.8, 0, 3.8];
+  // 6 Commercial Checkout Lanes across X = [-15, 15]
+  const counterXPositions = useMemo(() => [-15, -9, -3, 3, 9, 15], []);
 
   const handleBagBump = () => {
     bagScaleRef.current = 1.15;
@@ -1652,16 +1652,17 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
   useFrame((_, delta) => {
     // Dynamic active counter selection based on real player position
     const playerX = martRuntime.playerPos[0];
-    let targetIdx = 1;
-    if (playerX < -3.5) {
-      targetIdx = 0; // Bench 1 at -3.8 (trolley is in Box 1 at -5.7)
-    } else if (playerX > 0.0) {
-      targetIdx = 2; // Bench 3 at +3.8 (trolley is in Box 3 at +1.9)
-    } else {
-      targetIdx = 1; // Bench 2 at 0 (trolley is in Box 2 at -1.9)
+    let closestIdx = 0;
+    let closestDist = Math.abs(playerX - counterXPositions[0]);
+    for (let i = 1; i < counterXPositions.length; i++) {
+      const dist = Math.abs(playerX - counterXPositions[i]);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestIdx = i;
+      }
     }
-    if (targetIdx !== activeDeskIndex) {
-      setActiveDeskIndex(targetIdx);
+    if (closestIdx !== activeDeskIndex) {
+      setActiveDeskIndex(closestIdx);
     }
 
     // Laser scanning beam animation
@@ -1697,8 +1698,8 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
     <group position={position}>
       {/* Professional D-Mart Hypermarket Checkout & Billing Lightbox Sign */}
       <group position={[0, 3.7, 0]} raycast={() => null}>
-        {/* Chrome Suspension Rods */}
-        {[-3.6, -1.2, 1.2, 3.6].map((rodX, rIdx) => (
+        {/* Chrome Suspension Rods across all 6 lanes */}
+        {[-15, -9, -3, 3, 9, 15].map((rodX, rIdx) => (
           <mesh key={`rod-${rIdx}`} position={[rodX, 0.65, 0]}>
             <cylinderGeometry args={[0.012, 0.012, 1.1, 10]} />
             <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
@@ -1707,13 +1708,13 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
 
         {/* Sleek Aluminum Outer Frame */}
         <mesh>
-          <boxGeometry args={[9.4, 0.76, 0.08]} />
+          <boxGeometry args={[33.0, 0.82, 0.08]} />
           <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.8} />
         </mesh>
 
         {/* Pure White Translucent Backlit Diffuser Face */}
         <mesh>
-          <boxGeometry args={[9.3, 0.70, 0.09]} />
+          <boxGeometry args={[32.8, 0.76, 0.09]} />
           <meshStandardMaterial color="#ffffff" roughness={0.15} metalness={0.05} />
         </mesh>
 
@@ -1721,11 +1722,11 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
         <group position={[0, 0, -0.048]} rotation={[0, Math.PI, 0]}>
           {/* Top D-Mart Sapphire Header Pill */}
           <mesh position={[0, 0.22, 0]}>
-            <planeGeometry args={[4.2, 0.16]} />
+            <planeGeometry args={[14.0, 0.16]} />
             <meshBasicMaterial color="#0284c7" />
           </mesh>
           <Text position={[0, 0.22, 0.005]} fontSize={0.095} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.06}>
-            {'D-MART HYPERMARKET EXPRESS'}
+            {'D-MART HYPERMARKET EXPRESS CHECKOUT'}
           </Text>
 
           {/* Main Title */}
@@ -1735,14 +1736,14 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
 
           {/* Lane Directional Indicators */}
           <Text position={[0, -0.20, 0.005]} fontSize={0.085} color="#047857" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.04}>
-            {'↓  LANE 01      ↓  LANE 02      ↓  LANE 03'}
+            {'↓ LANE 01      ↓ LANE 02      ↓ LANE 03      ↓ LANE 04      ↓ LANE 05      ↓ LANE 06'}
           </Text>
         </group>
 
         {/* BACK FACE (Facing +Z towards store exit) */}
         <group position={[0, 0, 0.048]}>
           <Text position={[0, 0.12, 0.005]} fontSize={0.18} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.06}>
-            {'THANK YOU FOR SHOPPING AT MARTVERSE'}
+            {'THANK YOU FOR SHOPPING AT D-MART MARTVERSE'}
           </Text>
           <Text position={[0, -0.12, 0.005]} fontSize={0.11} color="#0284c7" anchorX="center" anchorY="middle" fontWeight="bold">
             {'PLEASE PROCEED TO EXIT GATE'}
@@ -1754,10 +1755,10 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
       <CheckoutQueueStanchions lanes={counterXPositions} />
 
       {/* Parked Return Shopping Trolleys near Exit */}
-      <ParkedShoppingTrolleys position={[-5.8, 0, 1.8]} />
-      <ParkedShoppingTrolleys position={[5.8, 0, 1.8]} />
+      <ParkedShoppingTrolleys position={[-18.5, 0, 1.8]} />
+      <ParkedShoppingTrolleys position={[18.5, 0, 1.8]} />
 
-      {/* --- 3 Photo-Realistic Supermarket Checkout Counters --- */}
+      {/* --- 6 Photo-Realistic Supermarket Checkout Counters --- */}
       {counterXPositions.map((xOffset, cIdx) => {
         const isActiveDesk = cIdx === activeDeskIndex;
 
@@ -1785,42 +1786,30 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
         onBagBump={handleBagBump}
       />
 
-      {/* --- Checkout Floor Queue Docks (Realistic Industrial Non-Slip Vinyl Decals) --- */}
-      {/* Lane 1 Floor Queue Dock (Left of Counter 1 at x = -5.7) */}
-      <RealisticFloorDockDecal
-        laneIndex={0}
-        position={[-5.7, 0.012, -0.6]}
-        isActive={activeDeskIndex === 0}
-      />
+      {/* --- Checkout Floor Queue Docks across all 6 lanes --- */}
+      {counterXPositions.map((xPos, idx) => (
+        <RealisticFloorDockDecal
+          key={`dock-${idx}`}
+          laneIndex={idx}
+          position={[xPos - 1.9, 0.012, -0.6]}
+          isActive={activeDeskIndex === idx}
+        />
+      ))}
 
-      {/* Lane 2 Floor Queue Dock (Left of Counter 2 at x = -1.9) */}
-      <RealisticFloorDockDecal
-        laneIndex={1}
-        position={[-1.9, 0.012, -0.6]}
-        isActive={activeDeskIndex === 1}
-      />
-
-      {/* Lane 3 Floor Queue Dock (Left of Counter 3 at x = +1.9) */}
-      <RealisticFloorDockDecal
-        laneIndex={2}
-        position={[1.9, 0.012, -0.6]}
-        isActive={activeDeskIndex === 2}
-      />
-
-      {/* --- Industrial Safety Hazard Sensor Line Across All 3 Lanes --- */}
+      {/* --- Industrial Safety Hazard Sensor Line Across All 6 Lanes --- */}
       <group position={[0, 0.016, -2.4]}>
         {/* Main High-Visibility Safety Band */}
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[14.2, 0.38]} />
+          <planeGeometry args={[33.0, 0.38]} />
           <meshStandardMaterial color="#facc15" roughness={0.8} />
         </mesh>
         {/* Dark Top & Bottom Edge Inlays */}
         <mesh position={[0, 0.001, -0.18]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[14.2, 0.02]} />
+          <planeGeometry args={[33.0, 0.02]} />
           <meshBasicMaterial color="#090d16" />
         </mesh>
         <mesh position={[0, 0.001, 0.18]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[14.2, 0.02]} />
+          <planeGeometry args={[33.0, 0.02]} />
           <meshBasicMaterial color="#090d16" />
         </mesh>
         <Text

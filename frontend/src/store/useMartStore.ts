@@ -65,7 +65,7 @@ interface MartStore {
 }
 
 export const martRuntime = {
-  playerPos: [0, 1.5, -20] as [number, number, number],
+  playerPos: [0, 1.5, -28] as [number, number, number],
   playerYaw: 0,
   billingCooldownUntil: 0,
   virtualKeys: {
@@ -80,7 +80,7 @@ export const useMartStore = create<MartStore>((set) => ({
   floors: MOCK_FLOORS,
   products: MOCK_PRODUCTS, // Instant 0ms shelf population on initial paint; background revalidation updates live data
   activeFloor: 1,
-  playerPos: [0, 1.5, -20], // Spawn at Entrance
+  playerPos: [0, 1.5, -28], // Spawn at Entrance
   playerYaw: 0,
   selectedProduct: null,
   hoveredProduct: null,
@@ -285,7 +285,10 @@ export const useMartStore = create<MartStore>((set) => ({
     }
 
     const floorNum = plc.floorNumber || 1;
-    const aisleCentersF1: Record<number, number> = { 1: -10, 2: -5, 3: 0, 4: 5, 5: 10 };
+    const aisleCentersF1: Record<number, number> = {
+      1: -24.3, 2: -18.9, 3: -13.5, 4: -8.1, 5: -2.7,
+      6: 2.7, 7: 8.1, 8: 13.5, 9: 18.9, 10: 24.3,
+    };
     const aisleCentersF2: Record<number, number> = { 6: -11.0, 7: -6.5, 8: -2.0, 9: 2.5, 10: 7.0, 11: 11.5 };
     const aisleCenter =
       floorNum === 2

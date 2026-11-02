@@ -105,7 +105,7 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
       <Canvas
         frameloop={isPaused ? 'never' : 'always'}
         dpr={[1, 1.25]}
-        camera={{ position: [0, 4, -24], fov: 60, near: 0.15, far: 65 }}
+        camera={{ position: [0, 4, -28], fov: 60, near: 0.15, far: 95 }}
         raycaster={{ near: 0.2, far: 25 }}
         gl={{
           antialias: true,
@@ -118,7 +118,7 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
         }}
       >
         <color attach="background" args={['#e2e8f0']} />
-        <fog attach="fog" args={['#e2e8f0', 48, 68]} />
+        <fog attach="fog" args={['#e2e8f0', 55, 95]} />
 
         {/* --- Commercial Retail Lighting: Rich Contrast, Lustrous Metallic Sheen & Crisp Packaging --- */}
         <ambientLight intensity={1.1} />
@@ -136,10 +136,10 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           {/* Store Shell */}
           <StoreArchitecture />
 
-          {/* Commercial Refrigerated Reach-in Display Sections on Ground Floor Left Wall */}
+          {/* Commercial Refrigerated Reach-in Display Sections on Ground Floor Right Wall */}
           {activeFloor === 1 && <RefrigeratorSection3D />}
 
-          {/* Ground Floor Aisles (Aisles 1 - 5) - Active Floor Culling */}
+          {/* Ground Floor Aisles (Aisles 1 - 10) - Active Floor Culling */}
           {activeFloor === 1 && groundFloor?.aisles.map((aisle) => (
             <ShelfUnit
               key={aisle.id}
@@ -149,21 +149,21 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
             />
           ))}
 
-          {/* First Floor Aisles (Aisles 6 - 10) - Active Floor Culling */}
+          {/* First Floor Aisles (Future Upper Level expansion) */}
           {activeFloor === 2 && firstFloor?.aisles.map((aisle) => (
             <ShelfUnit
               key={aisle.id}
               aisle={aisle}
               products={products}
-              floorYOffset={5.0} // First floor elevated base
+              floorYOffset={5.0}
             />
           ))}
 
-          {/* Billing Counters Zone on Ground Floor near z = 18 */}
-          <BillingCounter3D position={[0, 0, 18]} />
+          {/* Billing Counters Zone on Ground Floor near z = 22 */}
+          <BillingCounter3D position={[0, 0, 22]} />
 
-          {/* Exit Gate on Ground Floor near z = -23 */}
-          <ExitGate3D position={[0, 0, -23]} />
+          {/* Exit Gate on Ground Floor near z = -31 */}
+          <ExitGate3D position={[0, 0, -31]} />
 
           {/* Player Navigation & Camera Controller (Must execute first in useFrame loop to update positions) */}
           <PlayerController />

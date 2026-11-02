@@ -333,12 +333,12 @@ export const RefrigeratorSection3D: React.FC = () => {
     return REFRIGERATOR_PRODUCTS.filter((p) => p.placement?.aisleId === 'refrig-froz');
   }, []);
 
-  // Commercial chillers are on Ground Floor (Floor 1) along Left Wall (X = -16.85)
+  // Commercial chillers are on Ground Floor (Floor 1) along Right Wall (X = 34.6, facing inward)
   if (activeFloor !== 1) return null;
 
   return (
-    <group position={[-16.85, 0, 0]}>
-      {/* SECTION 1: DAIRY & FRESH MILK (World Z = -10) */}
+    <group position={[34.6, 0, 0]} rotation={[0, Math.PI, 0]}>
+      {/* SECTION 1: DAIRY & FRESH MILK (World Z = 10 when rotated) */}
       <RefrigeratorCabinet
         sectionTitle="DAIRY, MILK & FRESH CHEESE"
         categoryTag="100% PURE FARM FRESH DAIRY"
@@ -362,7 +362,7 @@ export const RefrigeratorSection3D: React.FC = () => {
         products={beverageProducts}
       />
 
-      {/* SECTION 3: FROZEN FOODS & ICE CREAM (World Z = 10) */}
+      {/* SECTION 3: FROZEN FOODS & ICE CREAM (World Z = -10 when rotated) */}
       <RefrigeratorCabinet
         sectionTitle="FROZEN FOODS & ICE CREAM"
         categoryTag="DEEP FREEZE DESSERTS & READY-TO-COOK"

@@ -25,38 +25,42 @@ interface ObstacleBox {
 }
 
 const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
-  // Outer Store Perimeter Walls
-  { minX: -22.0, maxX: -17.2, minZ: -27.0, maxZ: 27.0 },  // Left Wall
-  { minX: 17.2, maxX: 22.0, minZ: -27.0, maxZ: 27.0 },   // Right Wall
-  { minX: -22.0, maxX: 22.0, minZ: 24.6, maxZ: 28.0 },   // Back Wall
-  { minX: -22.0, maxX: -3.8, minZ: -28.0, maxZ: -24.8 }, // Front Entrance Wall (Left of door)
-  { minX: 3.8, maxX: 22.0, minZ: -28.0, maxZ: -24.8 },  // Front Entrance Wall (Right of door)
-  { minX: -3.8, maxX: 3.8, minZ: -28.0, maxZ: -25.8 },  // Front Doorway Backstop
+  // Outer Store Perimeter Walls (72m x 72m footprint)
+  { minX: -37.0, maxX: -35.2, minZ: -37.0, maxZ: 37.0 },  // Left Wall
+  { minX: 35.2, maxX: 37.0, minZ: -37.0, maxZ: 37.0 },   // Right Wall
+  { minX: -37.0, maxX: 37.0, minZ: 35.2, maxZ: 37.0 },   // Back Wall
+  { minX: -37.0, maxX: -6.0, minZ: -37.0, maxZ: -35.2 }, // Front Entrance Wall (Left of grand portal)
+  { minX: 6.0, maxX: 37.0, minZ: -37.0, maxZ: -35.2 },  // Front Entrance Wall (Right of grand portal)
+  { minX: -6.0, maxX: 6.0, minZ: -37.5, maxZ: -36.2 },  // Front Doorway Backstop
 
-  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 1.20, Z: [-12.85, 12.85]
-  // Physical shelf planks extend to +-0.88m, gondola end-caps reach to +-12.58m.
-  // halfW = 1.20m and Z: [-12.85, 12.85] guarantees absolute zero clipping of trolley edges, corners, and handlebar!
-  { minX: -11.20, maxX: -8.80, minZ: -12.85, maxZ: 12.85 }, // Aisle 1
-  { minX: -6.20, maxX: -3.80, minZ: -12.85, maxZ: 12.85 },  // Aisle 2
-  { minX: -1.20, maxX: 1.20, minZ: -12.85, maxZ: 12.85 },   // Aisle 3
-  { minX: 3.80, maxX: 6.20, minZ: -12.85, maxZ: 12.85 },    // Aisle 4
-  { minX: 8.80, maxX: 11.20, minZ: -12.85, maxZ: 12.85 },   // Aisle 5
+  // Shelves Floor 1: 10 Parallel Double-Sided Aisles
+  // Positions: [-24.3, -18.9, -13.5, -8.1, -2.7, 2.7, 8.1, 13.5, 18.9, 24.3], halfW = 1.05, Z: [-16.6, 16.6]
+  { minX: -25.35, maxX: -23.25, minZ: -16.6, maxZ: 16.6 }, // Aisle 1: Household & Cleaning
+  { minX: -19.95, maxX: -17.85, minZ: -16.6, maxZ: 16.6 }, // Aisle 2: Personal Care & Beauty
+  { minX: -14.55, maxX: -12.45, minZ: -16.6, maxZ: 16.6 }, // Aisle 3: Biscuits & Snacks
+  { minX: -9.15, maxX: -7.05, minZ: -16.6, maxZ: 16.6 },   // Aisle 4: Tea & Coffee Essentials
+  { minX: -3.75, maxX: -1.65, minZ: -16.6, maxZ: 16.6 },   // Aisle 5: Chocolates & Sweets
+  { minX: 1.65, maxX: 3.75, minZ: -16.6, maxZ: 16.6 },     // Aisle 6: Flours, Rice & Dals
+  { minX: 7.05, maxX: 9.15, minZ: -16.6, maxZ: 16.6 },     // Aisle 7: Cooking Oils & Spices
+  { minX: 12.45, maxX: 14.55, minZ: -16.6, maxZ: 16.6 },   // Aisle 8: Soft Drinks & Beverages
+  { minX: 17.85, maxX: 19.95, minZ: -16.6, maxZ: 16.6 },   // Aisle 9: Snack Packs & Namkeen
+  { minX: 23.25, maxX: 25.35, minZ: -16.6, maxZ: 16.6 },   // Aisle 10: Festive Gifting & Sweets
 
-  // Commercial Refrigerator Reach-in Sections on Left Wall
-  { minX: -17.60, maxX: -16.20, minZ: -14.20, maxZ: 14.20 },
+  // Commercial Refrigerator Sections on Right Wall
+  { minX: 33.20, maxX: 35.80, minZ: -14.20, maxZ: 14.20 },
 
-  // Billing Counter Desks at [-3.8, 0, 3.8]
-  { minX: -4.45, maxX: -3.15, minZ: 16.5, maxZ: 19.5 },
-  { minX: -0.65, maxX: 0.65, minZ: 16.5, maxZ: 19.5 },
-  { minX: 3.15, maxX: 4.45, minZ: 16.5, maxZ: 19.5 },
+  // 6 Commercial Checkout Billing Counter Desks at [-15, -9, -3, 3, 9, 15], Z ~ 22.0
+  { minX: -16.15, maxX: -13.85, minZ: 20.8, maxZ: 23.2 },
+  { minX: -10.15, maxX: -7.85, minZ: 20.8, maxZ: 23.2 },
+  { minX: -4.15, maxX: -1.85, minZ: 20.8, maxZ: 23.2 },
+  { minX: 1.85, maxX: 4.15, minZ: 20.8, maxZ: 23.2 },
+  { minX: 7.85, maxX: 10.15, minZ: 20.8, maxZ: 23.2 },
+  { minX: 13.85, maxX: 16.15, minZ: 20.8, maxZ: 23.2 },
 
-  // Escalator Outer Barrier Balustrade (Separating Aisle 5 from Escalator Well)
-  { minX: 13.0, maxX: 13.5, minZ: -7.0, maxZ: 5.0 },
-
-  // Exit Turnstile Gate (At z = -23.0)
-  { minX: -1.95, maxX: -1.65, minZ: -23.25, maxZ: -22.75 },
-  { minX: 1.65, maxX: 1.95, minZ: -23.25, maxZ: -22.75 },
-  { minX: -0.22, maxX: 0.22, minZ: -23.25, maxZ: -22.75 },
+  // Exit Turnstile Gate (At z = -31.0)
+  { minX: -1.95, maxX: -1.65, minZ: -31.25, maxZ: -30.75 },
+  { minX: 1.65, maxX: 1.95, minZ: -31.25, maxZ: -30.75 },
+  { minX: -0.22, maxX: 0.22, minZ: -31.25, maxZ: -30.75 },
 ];
 
 const STATIC_OBSTACLES_FLOOR2: ObstacleBox[] = [
@@ -82,8 +86,8 @@ const STATIC_OBSTACLES_FLOOR2: ObstacleBox[] = [
 const UNPAID_EXIT_BARRIER: ObstacleBox = {
   minX: -1.75,
   maxX: 1.75,
-  minZ: -23.15,
-  maxZ: -22.85,
+  minZ: -31.15,
+  maxZ: -30.85,
 };
 
 interface DepenetrationResult {
@@ -277,16 +281,16 @@ export const PlayerController: React.FC = () => {
   // Handle Reset to Original State & Starting Position (Entrance)
   useEffect(() => {
     if (resetTrigger === 0) return;
-    posRef.current.set(0, 1.5, -20);
+    posRef.current.set(0, 1.5, -28);
     velocityRef.current = { x: 0, z: 0 };
     yawRef.current = 0;
     pitchRef.current = 0;
     targetYawRef.current = 0;
     targetPitchRef.current = 0;
-    currentLookTarget.current.set(0, 1.85, -17.7);
+    currentLookTarget.current.set(0, 1.85, -25.7);
     martRuntime.playerPos[0] = 0;
     martRuntime.playerPos[1] = 1.5;
-    martRuntime.playerPos[2] = -20;
+    martRuntime.playerPos[2] = -28;
     martRuntime.playerYaw = 0;
     resetPending.current = true;
   }, [resetTrigger]);
@@ -501,19 +505,19 @@ export const PlayerController: React.FC = () => {
     const px = posRef.current.x;
     const pz = posRef.current.z;
 
-    // Check Billing Counter (around z = 15.0 to 19.5, across lanes 1-3 from x = -6.8 to 3.5)
+    // Check Billing Counter (around z = 19.0 to 24.5, across lanes 1-6 from x = -17.5 to 17.5)
     const currentCart = useCartStore.getState().items;
     const currentPaid = useCartStore.getState().isPaid;
 
-    if (pz >= 15.0 && pz <= 19.5 && px >= -6.8 && px <= 3.5) {
+    if (pz >= 19.0 && pz <= 24.5 && px >= -17.5 && px <= 17.5) {
       if (currentCart.length > 0 && useBillingStore.getState().phase === 'idle') {
         startCheckout(currentCart);
       }
       return;
     }
 
-    // Check Exit Gate (around z = -22, x between -3 and 3)
-    if (Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5) {
+    // Check Exit Gate (around z = -31, x between -3 and 3)
+    if (Math.abs(pz - (-31.0)) < 3.5 && Math.abs(px) < 3.5) {
       if (currentCart.length === 0 || currentPaid) {
         sounds.playGateOpen();
         setCameraMode('exit');
@@ -874,8 +878,8 @@ export const PlayerController: React.FC = () => {
     const px = posRef.current.x;
     const pz = posRef.current.z;
 
-    const nearBilling = activeFloor === 1 && Math.abs(pz - 17.5) < 4.0 && Math.abs(px) < 7.8;
-    const nearExit = activeFloor === 1 && Math.abs(pz - (-22)) < 3.5 && Math.abs(px) < 3.5;
+    const nearBilling = activeFloor === 1 && Math.abs(pz - 22.0) < 4.0 && Math.abs(px) < 18.0;
+    const nearExit = activeFloor === 1 && Math.abs(pz - (-31.0)) < 3.5 && Math.abs(px) < 3.5;
     const nearEscalatorGround = activeFloor === 1 && Math.abs(px - 14.7) < 2.2 && pz >= -10.5 && pz <= -6.8;
     const nearEscalatorFloor2 = activeFloor === 2 && Math.abs(px - 14.7) < 2.2 && pz >= 5.0 && pz <= 8.5;
 
@@ -900,8 +904,7 @@ export const PlayerController: React.FC = () => {
       lastProximityCheck.current = now;
       const nearbyProd = products.find((p) => {
         if (!p.placement) return false;
-        // Floor filter: aisles 1-5 = Floor 1, aisles 6-10 = Floor 2
-        const prodFloor = p.placement.aisleNumber <= 5 ? 1 : 2;
+        const prodFloor = p.placement.floorNumber ?? 1;
         if (prodFloor !== activeFloor) return false;
         const dx = p.placement.worldX - px;
         const dz = p.placement.worldZ - pz;
@@ -939,8 +942,8 @@ export const PlayerController: React.FC = () => {
       camera.lookAt(posRef.current.x + 0.85, posRef.current.y + 0.35, posRef.current.z + 1.2);
     } else if (cameraMode === 'exit') {
       // Exit gate cinematic view
-      camera.position.set(0, 2.2, -18.5);
-      camera.lookAt(0, 1.5, -23.0);
+      camera.position.set(0, 2.2, -26.5);
+      camera.lookAt(0, 1.5, -31.0);
     } else if (cameraMode === 'first_person') {
       camera.position.set(posRef.current.x, posRef.current.y + 0.3, posRef.current.z);
       const lookDist = 5;
@@ -949,7 +952,7 @@ export const PlayerController: React.FC = () => {
       const targetLookZ = posRef.current.z + Math.cos(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
       camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {
-      // Third Person (Orbit lock with smooth perimeter wall avoidance - zero jitter / zero angle distortion)
+      // Third Person (Orbit lock with smooth perimeter wall avoidance across 72m footprint)
       const camDist = 3.0;
       const camHeight = 1.95;
       const rayDirX = -Math.sin(yawRef.current);
@@ -957,18 +960,18 @@ export const PlayerController: React.FC = () => {
 
       let effectiveCamDist = camDist;
       if (rayDirX < -0.001) {
-        const dX = (-17.0 - posRef.current.x) / rayDirX;
+        const dX = (-35.0 - posRef.current.x) / rayDirX;
         if (dX > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dX - 0.25));
       } else if (rayDirX > 0.001) {
-        const dX = (17.0 - posRef.current.x) / rayDirX;
+        const dX = (35.0 - posRef.current.x) / rayDirX;
         if (dX > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dX - 0.25));
       }
 
       if (rayDirZ < -0.001) {
-        const dZ = (-25.0 - posRef.current.z) / rayDirZ;
+        const dZ = (-35.0 - posRef.current.z) / rayDirZ;
         if (dZ > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dZ - 0.25));
       } else if (rayDirZ > 0.001) {
-        const dZ = (25.0 - posRef.current.z) / rayDirZ;
+        const dZ = (35.0 - posRef.current.z) / rayDirZ;
         if (dZ > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dZ - 0.25));
       }
 
