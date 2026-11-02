@@ -267,53 +267,6 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       />
 
       {/* ==============================================================
-          OVERHEAD CEILING PROMOTIONAL BANNERS (Suspended Between Aisles)
-          ============================================================== */}
-      {/* Banner 1: Front Concourse */}
-      <group position={[0, 4.1, -4]}>
-        <mesh geometry={sharedGeos.box} scale={[6.2, 0.9, 0.04]} material={sharedMaterials.bannerGold} />
-        {/* Suspension Rods */}
-        <mesh position={[-2.8, 0.45, 0]} geometry={sharedGeos.cyl} scale={[0.012, 0.9, 0.012]} material={sharedMaterials.basketChrome} />
-        <mesh position={[2.8, 0.45, 0]} geometry={sharedGeos.cyl} scale={[0.012, 0.9, 0.012]} material={sharedMaterials.basketChrome} />
-        <Text position={[0, 0.16, 0.025]} fontSize={0.24} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          D-MART BACHAT BAZAAR • DAILY SAVINGS
-        </Text>
-        <Text position={[0, -0.16, 0.025]} fontSize={0.13} color="#fef08a" anchorX="center" anchorY="middle" fontWeight="bold">
-          ★ FLAT 20% TO 50% OFF ON ALL DAILY ESSENTIALS ★
-        </Text>
-        {/* Back side */}
-        <group rotation={[0, Math.PI, 0]}>
-          <Text position={[0, 0.16, 0.025]} fontSize={0.24} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-            D-MART BACHAT BAZAAR • DAILY SAVINGS
-          </Text>
-          <Text position={[0, -0.16, 0.025]} fontSize={0.13} color="#fef08a" anchorX="center" anchorY="middle" fontWeight="bold">
-            ★ FLAT 20% TO 50% OFF ON ALL DAILY ESSENTIALS ★
-          </Text>
-        </group>
-      </group>
-
-      {/* Banner 2: Rear Concourse */}
-      <group position={[0, 4.1, 8]}>
-        <mesh geometry={sharedGeos.box} scale={[6.2, 0.9, 0.04]} material={sharedMaterials.bannerGreen} />
-        <mesh position={[-2.8, 0.45, 0]} geometry={sharedGeos.cyl} scale={[0.012, 0.9, 0.012]} material={sharedMaterials.basketChrome} />
-        <mesh position={[2.8, 0.45, 0]} geometry={sharedGeos.cyl} scale={[0.012, 0.9, 0.012]} material={sharedMaterials.basketChrome} />
-        <Text position={[0, 0.16, 0.025]} fontSize={0.24} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          SUPER SAVER COMBOS • BUY MORE SAVE MORE
-        </Text>
-        <Text position={[0, -0.16, 0.025]} fontSize={0.13} color="#a7f3d0" anchorX="center" anchorY="middle" fontWeight="bold">
-          ✓ 100% Quality Assurance • Instant Conveyor Checkout
-        </Text>
-        <group rotation={[0, Math.PI, 0]}>
-          <Text position={[0, 0.16, 0.025]} fontSize={0.24} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-            SUPER SAVER COMBOS • BUY MORE SAVE MORE
-          </Text>
-          <Text position={[0, -0.16, 0.025]} fontSize={0.13} color="#a7f3d0" anchorX="center" anchorY="middle" fontWeight="bold">
-            ✓ 100% Quality Assurance • Instant Conveyor Checkout
-          </Text>
-        </group>
-      </group>
-
-      {/* ==============================================================
           ENTRANCE SHOPPING BASKET STATIONS
           ============================================================== */}
       <BasketStackStation position={[-3.4, 0, -22.5]} color="red" />

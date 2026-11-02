@@ -925,3 +925,4 @@ export const REFRIGERATOR_PRODUCTS: Product[] = [
     },
   },
 ];
+
