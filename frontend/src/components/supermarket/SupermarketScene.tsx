@@ -117,12 +117,12 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           toneMappingExposure: 1.15,
         }}
       >
-        <color attach="background" args={['#0a0f1d']} />
-        <fog attach="fog" args={['#0a0f1d', 45, 65]} />
+        <color attach="background" args={['#e2e8f0']} />
+        <fog attach="fog" args={['#e2e8f0', 48, 68]} />
 
         {/* --- Commercial Retail Lighting: Rich Contrast, Lustrous Metallic Sheen & Crisp Packaging --- */}
-        <ambientLight intensity={1.05} />
-        <hemisphereLight args={['#ffffff', '#475569', 0.85]} />
+        <ambientLight intensity={1.1} />
+        <hemisphereLight args={['#ffffff', '#94a3b8', 0.85]} />
 
         {/* Primary Crisp Ceiling Retail Light with Specular Sheen */}
         <directionalLight position={[10, 26, 8]} intensity={1.3} />

@@ -66,6 +66,12 @@ const sharedMaterials = {
   bannerGold: new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.3, metalness: 0.2 }),
   bannerGreen: new THREE.MeshStandardMaterial({ color: '#047857', roughness: 0.3, metalness: 0.2 }),
   cameraDome: new THREE.MeshStandardMaterial({ color: '#09090b', roughness: 0.1, metalness: 0.8 }),
+  acDuct: new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.82, roughness: 0.28 }),
+  acDiffuser: new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.3, roughness: 0.4 }),
+  sprinklerPipe: new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.4, metalness: 0.2 }),
+  sprinklerBrass: new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.9, roughness: 0.2 }),
+  baseboard: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.85 }),
+  cctvLed: new THREE.MeshBasicMaterial({ color: '#22c55e' }),
 };
 
 const sharedGeos = {
@@ -166,6 +172,169 @@ const BasketStackStation: React.FC<{ position: [number, number, number]; color: 
   );
 });
 BasketStackStation.displayName = 'BasketStackStation';
+
+// Industrial Open Ceiling Galvanized Spiral HVAC Ducts & Diffusers
+const IndustrialHvacSystem: React.FC = React.memo(() => {
+  const ductXPositions = [-8, 8];
+  const diffuserZPositions = [-18, -10, -2, 6, 14, 22];
+
+  return (
+    <group raycast={() => null}>
+      {ductXPositions.map((xDuct, dIdx) => (
+        <group key={`hvac-run-${dIdx}`} position={[xDuct, 4.60, 0]}>
+          {/* Main Spiral Air Duct Cylindrical Trunk */}
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.22, 0.22, 44, 16]} />
+            <primitive object={sharedMaterials.acDuct} attach="material" />
+          </mesh>
+
+          {/* Galvanized Suspension Hangers from Ceiling Slab */}
+          {[-20, -14, -8, -2, 4, 10, 16, 22].map((zH, hIdx) => (
+            <group key={`hanger-${hIdx}`} position={[0, 0.24, zH]}>
+              <mesh>
+                <cylinderGeometry args={[0.01, 0.01, 0.44, 8]} />
+                <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.2} />
+              </mesh>
+              {/* Duct Collar Ring */}
+              <mesh position={[0, -0.22, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                <torusGeometry args={[0.23, 0.015, 8, 16]} />
+                <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.3} />
+              </mesh>
+            </group>
+          ))}
+
+          {/* Drop Air Supply Diffusers with Louver Grilles */}
+          {diffuserZPositions.map((zDiff, dfIdx) => (
+            <group key={`diff-${dfIdx}`} position={[0, -0.24, zDiff]}>
+              {/* Vertical Branch Stub */}
+              <mesh>
+                <cylinderGeometry args={[0.08, 0.08, 0.16, 12]} />
+                <primitive object={sharedMaterials.acDuct} attach="material" />
+              </mesh>
+              {/* 4-Way Square Diffuser Plaque */}
+              <mesh position={[0, -0.09, 0]}>
+                <boxGeometry args={[0.48, 0.03, 0.48]} />
+                <primitive object={sharedMaterials.acDiffuser} attach="material" />
+              </mesh>
+              {/* Inner Air Grille Core */}
+              <mesh position={[0, -0.11, 0]}>
+                <boxGeometry args={[0.38, 0.01, 0.38]} />
+                <meshStandardMaterial color="#1e293b" roughness={0.9} />
+              </mesh>
+            </group>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+});
+IndustrialHvacSystem.displayName = 'IndustrialHvacSystem';
+
+// Mandatory Fire Safety Sprinkler Network
+const FireSprinklerSystem: React.FC = React.memo(() => {
+  const branchZ = [-18, -10, -2, 6, 14, 22];
+  const headX = [-12, -8, -4, 0, 4, 8, 12];
+
+  return (
+    <group raycast={() => null}>
+      {branchZ.map((zLine, bIdx) => (
+        <group key={`sprinkler-branch-${bIdx}`} position={[0, 4.76, zLine]}>
+          {/* Main Red Pipe Branch Running Transversely */}
+          <mesh rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.02, 0.02, 28, 10]} />
+            <primitive object={sharedMaterials.sprinklerPipe} attach="material" />
+          </mesh>
+          {/* Pendent Sprinkler Heads */}
+          {headX.map((xH, hIdx) => (
+            <group key={`head-${hIdx}`} position={[xH, -0.05, 0]}>
+              <mesh>
+                <cylinderGeometry args={[0.008, 0.008, 0.08, 8]} />
+                <primitive object={sharedMaterials.sprinklerPipe} attach="material" />
+              </mesh>
+              {/* Brass Deflector Cap */}
+              <mesh position={[0, -0.045, 0]}>
+                <cylinderGeometry args={[0.028, 0.005, 0.01, 10]} />
+                <primitive object={sharedMaterials.sprinklerBrass} attach="material" />
+              </mesh>
+            </group>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+});
+FireSprinklerSystem.displayName = 'FireSprinklerSystem';
+
+// Commercial Rubber / Vinyl Protective Wall Baseboard Kickplates
+const PerimeterWallBaseboards: React.FC = React.memo(() => {
+  return (
+    <group raycast={() => null}>
+      {/* Back Wall Kickplate (z = 25.79) */}
+      <mesh position={[0, 0.08, 25.79]}>
+        <boxGeometry args={[35.6, 0.16, 0.025]} />
+        <primitive object={sharedMaterials.baseboard} attach="material" />
+      </mesh>
+      {/* Front Entrance Wall Kickplates (z = -25.79) */}
+      <mesh position={[-11, 0.08, -25.79]}>
+        <boxGeometry args={[13.6, 0.16, 0.025]} />
+        <primitive object={sharedMaterials.baseboard} attach="material" />
+      </mesh>
+      <mesh position={[11, 0.08, -25.79]}>
+        <boxGeometry args={[13.6, 0.16, 0.025]} />
+        <primitive object={sharedMaterials.baseboard} attach="material" />
+      </mesh>
+      {/* Left Wall Kickplate (x = -17.79) */}
+      <mesh position={[-17.79, 0.08, 0]}>
+        <boxGeometry args={[0.025, 0.16, 51.6]} />
+        <primitive object={sharedMaterials.baseboard} attach="material" />
+      </mesh>
+      {/* Right Wall Kickplate (x = 17.79) */}
+      <mesh position={[17.79, 0.08, 0]}>
+        <boxGeometry args={[0.025, 0.16, 51.6]} />
+        <primitive object={sharedMaterials.baseboard} attach="material" />
+      </mesh>
+    </group>
+  );
+});
+PerimeterWallBaseboards.displayName = 'PerimeterWallBaseboards';
+
+// High-Resolution 360° Surveillance CCTV Dome Cameras
+const SecurityDomeCameras: React.FC = React.memo(() => {
+  const cameraLocations: [number, number, number][] = [
+    [0, 4.88, -16],
+    [0, 4.88, 0],
+    [0, 4.88, 16],
+    [-7.5, 4.88, -8],
+    [7.5, 4.88, -8],
+    [-7.5, 4.88, 8],
+    [7.5, 4.88, 8],
+  ];
+
+  return (
+    <group raycast={() => null}>
+      {cameraLocations.map(([cx, cy, cz], idx) => (
+        <group key={`cctv-${idx}`} position={[cx, cy, cz]}>
+          {/* Circular Surface Mount Housing Base */}
+          <mesh position={[0, 0.03, 0]}>
+            <cylinderGeometry args={[0.12, 0.14, 0.06, 16]} />
+            <primitive object={sharedMaterials.pillarConcrete} attach="material" />
+          </mesh>
+          {/* Smoked Tinted Polycarbonate Acrylic Dome */}
+          <mesh position={[0, -0.03, 0]} rotation={[Math.PI, 0, 0]}>
+            <sphereGeometry args={[0.09, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <primitive object={sharedMaterials.cameraDome} attach="material" />
+          </mesh>
+          {/* Active Status LED Dot */}
+          <mesh position={[0.07, 0.02, 0.05]}>
+            <sphereGeometry args={[0.012, 8, 8]} />
+            <primitive object={sharedMaterials.cctvLed} attach="material" />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+});
+SecurityDomeCameras.displayName = 'SecurityDomeCameras';
 
 interface StoreArchitectureProps {
   activeFloor?: number;
@@ -272,13 +441,11 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       <BasketStackStation position={[-3.4, 0, -22.5]} color="red" />
       <BasketStackStation position={[3.4, 0, -22.5]} color="blue" />
 
-      {/* Ceiling Security Cameras */}
-      {[-16, 0, 16].map((zCam, i) => (
-        <group key={`cctv-${i}`} position={[0, 4.9, zCam]}>
-          <mesh geometry={sharedGeos.cyl} scale={[0.1, 0.06, 0.1]} material={sharedMaterials.hazardBlack} />
-          <mesh position={[0, -0.04, 0]} geometry={sharedGeos.cyl} scale={[0.07, 0.08, 0.07]} material={sharedMaterials.cameraDome} />
-        </group>
-      ))}
+      {/* Industrial Open Ceiling Mechanical Services */}
+      <IndustrialHvacSystem />
+      <FireSprinklerSystem />
+      <PerimeterWallBaseboards />
+      <SecurityDomeCameras />
 
       {/* ==============================================================
           ESCALATOR CONNECTING GROUND & FIRST FLOOR (x = 14.7, z = 0)

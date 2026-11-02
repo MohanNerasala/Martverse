@@ -367,6 +367,148 @@ const ConveyorAnimation3D: React.FC<{
 };
 
 // ---------------------------------------------------------------------------
+// Multi-Tier Commercial Checkout Impulse-Purchase Wire Display Rack
+const CheckoutImpulseDisplayRack: React.FC<{ position: [number, number, number] }> = React.memo(({ position }) => {
+  return (
+    <group position={position} raycast={() => null}>
+      {/* Chrome Vertical Upright Wire Spine */}
+      <mesh position={[0, 0.45, 0]}>
+        <boxGeometry args={[0.02, 0.9, 0.02]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
+      </mesh>
+      <mesh position={[0, 0.02, 0]}>
+        <cylinderGeometry args={[0.14, 0.14, 0.02, 16]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} />
+      </mesh>
+
+      {/* 3 Angled Wire Baskets */}
+      {[0.24, 0.52, 0.78].map((yTier, tIdx) => (
+        <group key={`tier-${tIdx}`} position={[0, yTier, 0.08]} rotation={[0.2, 0, 0]}>
+          {/* Wire Basket Wire Base */}
+          <mesh>
+            <boxGeometry args={[0.28, 0.012, 0.16]} />
+            <meshStandardMaterial color="#e2e8f0" metalness={0.9} roughness={0.2} />
+          </mesh>
+          {/* Front Wire Lip */}
+          <mesh position={[0, 0.025, 0.08]}>
+            <boxGeometry args={[0.28, 0.04, 0.008]} />
+            <meshStandardMaterial color="#e2e8f0" metalness={0.9} roughness={0.2} />
+          </mesh>
+          {/* Yellow D-Mart Price Rail */}
+          <mesh position={[0, 0.025, 0.085]}>
+            <boxGeometry args={[0.27, 0.022, 0.004]} />
+            <meshBasicMaterial color="#fef08a" />
+          </mesh>
+          <Text position={[0, 0.025, 0.088]} fontSize={0.014} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="bold">
+            {tIdx === 0 ? 'ORBIT GUM ₹10' : tIdx === 1 ? 'TIC TAC ₹15' : 'KITKAT MINI ₹20'}
+          </Text>
+
+          {/* Mini Merchandise Products in Tray */}
+          {[-0.08, 0, 0.08].map((xP, pIdx) => (
+            <mesh key={`imp-${tIdx}-${pIdx}`} position={[xP, 0.02, 0]}>
+              <boxGeometry args={[0.065, 0.026, 0.11]} />
+              <meshStandardMaterial
+                color={tIdx === 0 ? '#10b981' : tIdx === 1 ? '#f97316' : '#dc2626'}
+                roughness={0.3}
+                metalness={0.1}
+              />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+});
+
+// Stainless Steel Queue Stanchions with Retractable Belts
+const CheckoutQueueStanchions: React.FC<{ lanes: number[] }> = React.memo(({ lanes }) => {
+  return (
+    <group raycast={() => null}>
+      {lanes.map((xL, idx) => {
+        // Customer Entry Stanchion at z = -2.2
+        const sX = xL - 0.72;
+        return (
+          <group key={`stanchion-pair-${idx}`}>
+            {/* Stanchion 1: Entry */}
+            <group position={[sX, 0, -2.2]}>
+              {/* Weighted Chrome Base */}
+              <mesh position={[0, 0.015, 0]}>
+                <cylinderGeometry args={[0.16, 0.18, 0.03, 16]} />
+                <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
+              </mesh>
+              {/* Stainless Steel Column Post */}
+              <mesh position={[0, 0.48, 0]}>
+                <cylinderGeometry args={[0.022, 0.022, 0.92, 14]} />
+                <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
+              </mesh>
+              {/* Belt Cassette Top Cap */}
+              <mesh position={[0, 0.96, 0]}>
+                <cylinderGeometry args={[0.035, 0.035, 0.08, 14]} />
+                <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.25} />
+              </mesh>
+            </group>
+
+            {/* Stanchion 2: Mid Aisle */}
+            <group position={[sX, 0, -0.6]}>
+              <mesh position={[0, 0.015, 0]}>
+                <cylinderGeometry args={[0.16, 0.18, 0.03, 16]} />
+                <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
+              </mesh>
+              <mesh position={[0, 0.48, 0]}>
+                <cylinderGeometry args={[0.022, 0.022, 0.92, 14]} />
+                <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
+              </mesh>
+              <mesh position={[0, 0.96, 0]}>
+                <cylinderGeometry args={[0.035, 0.035, 0.08, 14]} />
+                <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.25} />
+              </mesh>
+            </group>
+
+            {/* Retractable Woven Blue Queue Belt running between stanchions */}
+            <mesh position={[sX, 0.94, -1.4]}>
+              <boxGeometry args={[0.008, 0.045, 1.58]} />
+              <meshStandardMaterial color="#1d4ed8" roughness={0.6} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+});
+
+// Nested Parked Supermarket Shopping Trolleys near Checkout Exit
+const ParkedShoppingTrolleys: React.FC<{ position: [number, number, number] }> = React.memo(({ position }) => {
+  return (
+    <group position={position} raycast={() => null}>
+      {/* 3 Nested Wire Trolleys */}
+      {[0, 0.45, 0.90].map((zN, nIdx) => (
+        <group key={`nested-cart-${nIdx}`} position={[0, 0, zN]}>
+          {/* Chassis Base */}
+          <mesh position={[0, 0.12, 0]}>
+            <boxGeometry args={[0.62, 0.04, 0.88]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.2} />
+          </mesh>
+          {/* Wire Basket */}
+          <mesh position={[0, 0.58, 0.05]}>
+            <boxGeometry args={[0.58, 0.38, 0.78]} />
+            <meshStandardMaterial color="#e2e8f0" metalness={0.92} roughness={0.15} wireframe={true} />
+          </mesh>
+          {/* Blue Plastic Handlebar */}
+          <mesh position={[0, 0.88, 0.48]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.018, 0.018, 0.56, 12]} />
+            <meshStandardMaterial color="#0284c7" roughness={0.4} />
+          </mesh>
+        </group>
+      ))}
+      {/* Chrome Retaining Floor Rail */}
+      <mesh position={[0.38, 0.22, 0.45]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.018, 0.018, 1.6, 12]} />
+        <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
+      </mesh>
+    </group>
+  );
+});
+
 // Realistic Supermarket Checkout Counter Model
 // ---------------------------------------------------------------------------
 interface SingleCheckoutCounterProps {
@@ -496,6 +638,9 @@ const SingleCheckoutCounterComponent: React.FC<SingleCheckoutCounterProps> = ({
           <meshBasicMaterial color="#020617" />
         </mesh>
       </group>
+
+      {/* Front Impulse-Purchase Chewing Gum & Chocolate Wire Display Rack */}
+      <CheckoutImpulseDisplayRack position={[-0.72, 0, -0.2]} />
 
       {/* Cashier Side Access Cabinet Doors */}
       <group position={[0.652, 0.45, -0.7]}>
@@ -911,6 +1056,45 @@ const SingleCheckoutCounterComponent: React.FC<SingleCheckoutCounterProps> = ({
           <cylinderGeometry args={[0.03, 0.03, 0.05, 12]} />
           <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.25} />
         </mesh>
+      </group>
+
+      {/* Customer-Facing Dual-Line Digital VFD Pole Display */}
+      <group position={[-0.32, 1.05, 0.2]} rotation={[0, Math.PI / 2 + 0.1, 0]}>
+        {/* Stainless Steel Pedestal Mast */}
+        <mesh position={[0, 0.22, 0]}>
+          <cylinderGeometry args={[0.018, 0.018, 0.44, 12]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
+        </mesh>
+        {/* Display Head Box */}
+        <mesh position={[0, 0.45, 0]}>
+          <boxGeometry args={[0.34, 0.10, 0.05]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.4} metalness={0.6} />
+        </mesh>
+        {/* Glowing Vacuum Fluorescent Display Screen */}
+        <mesh position={[0, 0.45, 0.026]}>
+          <planeGeometry args={[0.31, 0.075]} />
+          <meshBasicMaterial color="#022c22" />
+        </mesh>
+        <Text
+          position={[0, 0.465, 0.028]}
+          fontSize={0.019}
+          color="#34d399"
+          anchorX="center"
+          anchorY="middle"
+          fontWeight="bold"
+        >
+          {`LANE ${laneNumberStr} READY`}
+        </Text>
+        <Text
+          position={[0, 0.435, 0.028]}
+          fontSize={0.022}
+          color="#10b981"
+          anchorX="center"
+          anchorY="middle"
+          fontWeight="extrabold"
+        >
+          {`TOTAL: ₹${runningTotal.toFixed(2)}`}
+        </Text>
       </group>
 
       {/* Modern Widescreen POS Touchscreen Monitor */}
@@ -1511,56 +1695,67 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
 
   return (
     <group position={position}>
-      {/* --- Overhead Luxury White Billing Signboard Spanning All 3 Counters --- */}
-      <group position={[0, 3.5, 0]}>
-        {/* Chrome Suspension Rods to Ceiling */}
-        {[-4.2, -1.4, 1.4, 4.2].map((rodX, rIdx) => (
-          <mesh key={`rod-${rIdx}`} position={[rodX, 0.75, 0]}>
-            <cylinderGeometry args={[0.018, 0.018, 1.3, 10]} />
-            <meshStandardMaterial color="#ffffff" metalness={0.95} roughness={0.1} />
+      {/* Professional D-Mart Hypermarket Checkout & Billing Lightbox Sign */}
+      <group position={[0, 3.7, 0]} raycast={() => null}>
+        {/* Chrome Suspension Rods */}
+        {[-3.6, -1.2, 1.2, 3.6].map((rodX, rIdx) => (
+          <mesh key={`rod-${rIdx}`} position={[rodX, 0.65, 0]}>
+            <cylinderGeometry args={[0.012, 0.012, 1.1, 10]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
           </mesh>
         ))}
 
-        {/* Polished Chrome Outer Bezel Frame */}
+        {/* Sleek Aluminum Outer Frame */}
         <mesh>
-          <boxGeometry args={[11.16, 0.96, 0.14]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.15} />
+          <boxGeometry args={[9.4, 0.76, 0.08]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.8} />
         </mesh>
 
-        {/* Pristine Pure White High-Gloss Porcelain/Acrylic Board Body */}
+        {/* Pure White Translucent Backlit Diffuser Face */}
         <mesh>
-          <boxGeometry args={[11.0, 0.88, 0.16]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.08} metalness={0.04} />
+          <boxGeometry args={[9.3, 0.70, 0.09]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.15} metalness={0.05} />
         </mesh>
 
-        {/* FRONT FACE (Facing -Z towards supermarket aisles & customers approaching) */}
-        <group position={[0, 0, -0.085]} rotation={[0, Math.PI, 0]}>
-          <Text
-            position={[0, 0, 0.01]}
-            fontSize={0.42}
-            color="#0f172a"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.06}
-          >
-            {'BILLING CHECKOUT'}
+        {/* FRONT FACE (Facing -Z towards approaching shoppers) */}
+        <group position={[0, 0, -0.048]} rotation={[0, Math.PI, 0]}>
+          {/* Top D-Mart Sapphire Header Pill */}
+          <mesh position={[0, 0.22, 0]}>
+            <planeGeometry args={[4.2, 0.16]} />
+            <meshBasicMaterial color="#0284c7" />
+          </mesh>
+          <Text position={[0, 0.22, 0.005]} fontSize={0.095} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.06}>
+            {'D-MART HYPERMARKET EXPRESS'}
+          </Text>
+
+          {/* Main Title */}
+          <Text position={[0, 0.02, 0.005]} fontSize={0.24} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.08}>
+            {'CHECKOUT & BILLING'}
+          </Text>
+
+          {/* Lane Directional Indicators */}
+          <Text position={[0, -0.20, 0.005]} fontSize={0.085} color="#047857" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.04}>
+            {'↓  LANE 01      ↓  LANE 02      ↓  LANE 03'}
           </Text>
         </group>
 
-        {/* BACK FACE (Facing +Z towards store exit & rear wall) */}
-        <group position={[0, 0, 0.085]}>
-          <Text
-            position={[0, 0, 0.01]}
-            fontSize={0.42}
-            color="#0f172a"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.06}
-          >
-            {'BILLING CHECKOUT'}
+        {/* BACK FACE (Facing +Z towards store exit) */}
+        <group position={[0, 0, 0.048]}>
+          <Text position={[0, 0.12, 0.005]} fontSize={0.18} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.06}>
+            {'THANK YOU FOR SHOPPING AT MARTVERSE'}
+          </Text>
+          <Text position={[0, -0.12, 0.005]} fontSize={0.11} color="#0284c7" anchorX="center" anchorY="middle" fontWeight="bold">
+            {'PLEASE PROCEED TO EXIT GATE'}
           </Text>
         </group>
       </group>
+
+      {/* Stainless Steel Queue Stanchions & Retractable Belts */}
+      <CheckoutQueueStanchions lanes={counterXPositions} />
+
+      {/* Parked Return Shopping Trolleys near Exit */}
+      <ParkedShoppingTrolleys position={[-5.8, 0, 1.8]} />
+      <ParkedShoppingTrolleys position={[5.8, 0, 1.8]} />
 
       {/* --- 3 Photo-Realistic Supermarket Checkout Counters --- */}
       {counterXPositions.map((xOffset, cIdx) => {
