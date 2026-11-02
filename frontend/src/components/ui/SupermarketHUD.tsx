@@ -42,33 +42,6 @@ import {
 import { api } from '@/lib/api';
 import { ProductHoverCard } from '@/components/ui/ProductHoverCard';
 
-const FpsTelemetryBadge: React.FC = () => {
-  const [stats, setStats] = useState<{ fps: number; drawCalls: number } | null>(null);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (typeof window !== 'undefined' && (window as any).__martverseStats) {
-        setStats({
-          fps: (window as any).__martverseStats.fps,
-          drawCalls: (window as any).__martverseStats.drawCalls,
-        });
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  if (!stats) return null;
-
-  return (
-    <div className="hidden 2xl:flex items-center gap-1.5 px-2.5 h-10 rounded-xl bg-slate-100/90 border border-slate-200/90 text-[11px] font-mono text-slate-700 shadow-2xs select-none" title="Live Three.js Hardware Performance">
-      <span className={`w-2 h-2 rounded-full ${stats.fps >= 55 ? 'bg-emerald-500 animate-pulse' : stats.fps >= 35 ? 'bg-amber-500' : 'bg-rose-500'}`} />
-      <span className="font-bold text-slate-900">{stats.fps} FPS</span>
-      <span className="text-slate-300">|</span>
-      <span className="text-slate-500">{stats.drawCalls} calls</span>
-    </div>
-  );
-};
-
 export const ContextualPromptBanner: React.FC = React.memo(() => {
   const promptText = useMartStore((state) => state.promptText);
   if (!promptText) return null;
@@ -551,7 +524,6 @@ export const SupermarketHUD: React.FC = () => {
 
           {/* Action Utilities & User Area - Tactile Frosted Pearl Glass Controls */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <FpsTelemetryBadge />
             {/* Camera Perspective Mode (1st / 3rd Person) */}
             <button
               onClick={() =>
