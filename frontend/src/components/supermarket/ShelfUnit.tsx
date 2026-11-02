@@ -8,9 +8,10 @@ import { useMartStore } from '@/store/useMartStore';
 import { Text } from '@react-three/drei';
 
 // Shared pre-allocated geometries (eliminates 3,000+ geometry allocations and GC pauses)
-const sharedGeometries = {
+export const sharedGeometries = {
   box: new THREE.BoxGeometry(1, 1, 1),
   plane: new THREE.PlaneGeometry(1, 1),
+  cyl16: new THREE.CylinderGeometry(1, 1, 1, 16),
   cyl14: new THREE.CylinderGeometry(1, 1, 1, 14),
   cyl12: new THREE.CylinderGeometry(1, 1, 1, 12),
   cyl8: new THREE.CylinderGeometry(1, 1, 1, 8),
@@ -1130,30 +1131,28 @@ ProductBatch.displayName = 'ProductBatch';
 // Sleek Commercial D-Mart Aisle Category Hanging Sign (Compact, Non-Intrusive, Realistic)
 const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; height: number }> = React.memo(({ aisleNumber, categoryName, height }) => {
   const subtitleMap: Record<number, string> = {
-    1: 'Detergents • Surface Cleaners • Fabric Care',
-    2: 'Soaps • Shampoos • Oral Care • Face Wash',
-    3: 'Cookies • Biscuits • Chips • Ready Bites',
-    4: 'Premium Tea • Instant Coffee • Green Tea',
-    5: 'Chocolates • Gifting Bars • Sweet Treats',
-    6: 'Chakki Atta • Basmati Rice • Organic Pulses',
-    7: 'Refined Oils • Mustard Oil • Spices & Masalas',
-    8: 'Chilled Sodas • Pure Fruit Juices • Water',
-    9: 'Authentic Namkeen • Bhujia • Crispy Snacks',
-    10: 'Gourmet Dry Fruits • Festive Hampers • Sweets',
+    1: 'Parle-G • Good Day • Oreo • Crackers',
+    2: 'Potato Chips • Kurkure • Bhujia • Bites',
+    3: 'Tata Tea Gold • Red Label • Green Tea',
+    4: 'Nescafe Classic • Bru Roast • Hot Drinks',
+    5: 'Aashirvaad Atta • Maida • Sooji',
+    6: 'India Gate Basmati • Toor Dal • Pulses',
+    7: 'Sunflower Oil • Mustard Oil • Spices',
+    8: 'Maggi Noodles • Pasta • Oats • Cereals',
+    9: 'Chilled Sodas • Tropicana • Water Bottles',
   };
   const subtitle = subtitleMap[aisleNumber] || 'Daily Groceries & Essentials';
 
   const titleMap: Record<number, string> = {
-    1: 'HOUSEHOLD & CLEANING',
-    2: 'PERSONAL CARE & BEAUTY',
-    3: 'BISCUITS & SNACKS',
-    4: 'TEA & COFFEE ESSENTIALS',
-    5: 'CHOCOLATES & SWEETS',
-    6: 'FLOURS, RICE & DALS',
+    1: 'BISCUITS & COOKIES',
+    2: 'SNACKS & NAMKEEN',
+    3: 'TEA & INFUSIONS',
+    4: 'COFFEE & HOT DRINKS',
+    5: 'FLOURS & CHAKKI ATTA',
+    6: 'RICE, DALS & PULSES',
     7: 'COOKING OILS & SPICES',
-    8: 'BEVERAGES & COLD DRINKS',
-    9: 'SNACK PACKS & NAMKEEN',
-    10: 'FESTIVE GIFTS & DRY FRUITS',
+    8: 'INSTANT FOODS & PASTA',
+    9: 'BEVERAGES & SODAS',
   };
   const title = titleMap[aisleNumber] || categoryName.toUpperCase();
 

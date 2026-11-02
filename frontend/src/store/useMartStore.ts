@@ -125,8 +125,7 @@ export const useMartStore = create<MartStore>((set) => ({
               (p: any) =>
                 !(
                   p.placement?.floorNumber === 2 ||
-                  (p.sku && p.sku.startsWith('APP-')) ||
-                  (p.placement?.aisleNumber && p.placement.aisleNumber >= 6)
+                  (p.sku && p.sku.startsWith('APP-'))
                 )
             );
             if (sanitized.length > 0) {
@@ -148,8 +147,7 @@ export const useMartStore = create<MartStore>((set) => ({
           (p: any) =>
             !(
               p.placement?.floorNumber === 2 ||
-              (p.sku && p.sku.startsWith('APP-')) ||
-              (p.placement?.aisleNumber && p.placement.aisleNumber >= 6)
+              (p.sku && p.sku.startsWith('APP-'))
             )
         )
       : products;
@@ -286,8 +284,8 @@ export const useMartStore = create<MartStore>((set) => ({
 
     const floorNum = plc.floorNumber || 1;
     const aisleCentersF1: Record<number, number> = {
-      1: -24.3, 2: -18.9, 3: -13.5, 4: -8.1, 5: -2.7,
-      6: 2.7, 7: 8.1, 8: 13.5, 9: 18.9, 10: 24.3,
+      1: -23.5, 2: -17.0, 3: -10.5, 4: -4.5,
+      5: 4.5, 6: 10.5, 7: 17.0, 8: 23.5, 9: 29.0,
     };
     const aisleCentersF2: Record<number, number> = { 6: -11.0, 7: -6.5, 8: -2.0, 9: 2.5, 10: 7.0, 11: 11.5 };
     const aisleCenter =

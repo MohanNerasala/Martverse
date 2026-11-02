@@ -33,21 +33,30 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 6.0, maxX: 37.0, minZ: -37.0, maxZ: -35.2 },  // Front Entrance Wall (Right of grand portal)
   { minX: -6.0, maxX: 6.0, minZ: -37.5, maxZ: -36.2 },  // Front Doorway Backstop
 
-  // Shelves Floor 1: 10 Parallel Double-Sided Aisles
-  // Positions: [-24.3, -18.9, -13.5, -8.1, -2.7, 2.7, 8.1, 13.5, 18.9, 24.3], halfW = 1.05, Z: [-16.6, 16.6]
-  { minX: -25.35, maxX: -23.25, minZ: -16.6, maxZ: 16.6 }, // Aisle 1: Household & Cleaning
-  { minX: -19.95, maxX: -17.85, minZ: -16.6, maxZ: 16.6 }, // Aisle 2: Personal Care & Beauty
-  { minX: -14.55, maxX: -12.45, minZ: -16.6, maxZ: 16.6 }, // Aisle 3: Biscuits & Snacks
-  { minX: -9.15, maxX: -7.05, minZ: -16.6, maxZ: 16.6 },   // Aisle 4: Tea & Coffee Essentials
-  { minX: -3.75, maxX: -1.65, minZ: -16.6, maxZ: 16.6 },   // Aisle 5: Chocolates & Sweets
-  { minX: 1.65, maxX: 3.75, minZ: -16.6, maxZ: 16.6 },     // Aisle 6: Flours, Rice & Dals
-  { minX: 7.05, maxX: 9.15, minZ: -16.6, maxZ: 16.6 },     // Aisle 7: Cooking Oils & Spices
-  { minX: 12.45, maxX: 14.55, minZ: -16.6, maxZ: 16.6 },   // Aisle 8: Soft Drinks & Beverages
-  { minX: 17.85, maxX: 19.95, minZ: -16.6, maxZ: 16.6 },   // Aisle 9: Snack Packs & Namkeen
-  { minX: 23.25, maxX: 25.35, minZ: -16.6, maxZ: 16.6 },   // Aisle 10: Festive Gifting & Sweets
+  // Left Wall Retail Shelving Section (Household & Personal Care, X = -34.8, Z = [-18, 18])
+  { minX: -35.4, maxX: -33.9, minZ: -18.5, maxZ: 18.5 },
 
-  // Commercial Refrigerator Sections on Right Wall
+  // Back Wall Warehouse Wholesale Pallet Racking (Atta, Rice, Oil, Salt, Z = 33.8, X = [-27, 27])
+  { minX: -27.5, maxX: 27.5, minZ: 32.8, maxZ: 35.0 },
+
+  // Commercial Refrigerator Gallery on Right Wall (Dairy, Sodas, Frozen Foods, X = 34.5, Z = [-14, 14])
   { minX: 33.20, maxX: 35.80, minZ: -14.20, maxZ: 14.20 },
+
+  // 9 Varied Double-Sided Gondola Aisles
+  { minX: -24.45, maxX: -22.55, minZ: -14.5, maxZ: 14.5 }, // Aisle 1: Biscuits & Cookies (X = -23.5, 28m)
+  { minX: -17.95, maxX: -16.05, minZ: -12.5, maxZ: 12.5 }, // Aisle 2: Savory Snacks & Chips (X = -17.0, 24m)
+  { minX: -11.45, maxX: -9.55, minZ: -15.5, maxZ: 7.5 },   // Aisle 3: Leaf Teas & Infusions (X = -10.5, 22m)
+  { minX: -5.45, maxX: -3.55, minZ: -13.5, maxZ: 9.5 },    // Aisle 4: Instant Coffees & Hot Drinks (X = -4.5, 22m)
+  { minX: 3.55, maxX: 5.45, minZ: -9.5, maxZ: 13.5 },      // Aisle 5: Chakki Atta & Flours (X = 4.5, 22m)
+  { minX: 9.55, maxX: 11.45, minZ: -7.5, maxZ: 15.5 },     // Aisle 6: Basmati Rice & Dals (X = 10.5, 22m)
+  { minX: 16.05, maxX: 17.95, minZ: -12.5, maxZ: 12.5 },   // Aisle 7: Cooking Oils & Spices (X = 17.0, 24m)
+  { minX: 22.55, maxX: 24.45, minZ: -14.5, maxZ: 14.5 },   // Aisle 8: Instant Foods & Pasta (X = 23.5, 28m)
+  { minX: 28.10, maxX: 29.90, minZ: -10.5, maxZ: 10.5 },   // Aisle 9: Soft Drinks & Juices (X = 29.0, 20m)
+
+  // 3 Central Grand Promenade Feature Promotional Islands (Low-profile, open 360-deg browsing)
+  { minX: -1.5, maxX: 1.5, minZ: -16.5, maxZ: -13.5 },     // Island 1: Luxury Chocolates Showcase (X = 0, Z = -15)
+  { minX: -1.7, maxX: 1.7, minZ: -3.2, maxZ: -0.8 },       // Island 2: Artisan Tea & Coffee Pavilion (X = 0, Z = -2)
+  { minX: -1.6, maxX: 1.6, minZ: 9.6, maxZ: 12.4 },        // Island 3: Festive Sweets & Dry Fruits (X = 0, Z = 11)
 
   // 6 Commercial Checkout Billing Counter Desks at [-15, -9, -3, 3, 9, 15], Z ~ 22.0
   { minX: -16.15, maxX: -13.85, minZ: 20.8, maxZ: 23.2 },
@@ -672,7 +681,9 @@ export const PlayerController: React.FC = () => {
           const sz = posRef.current.z + cosYaw * sp.fwdDist;
 
           for (let i = 0; i < boxes.length; i++) {
-            const res = getCircleBoxDepenetration(sx, sz, sp.radius, boxes[i]);
+            const b = boxes[i];
+            if (sx < b.minX - 2.5 || sx > b.maxX + 2.5 || sz < b.minZ - 2.5 || sz > b.maxZ + 2.5) continue;
+            const res = getCircleBoxDepenetration(sx, sz, sp.radius, b);
             if (res.overlap) {
               nextX += res.pX;
               velocityRef.current.x = 0;
@@ -688,7 +699,9 @@ export const PlayerController: React.FC = () => {
           const sz = nextZ + cosYaw * sp.fwdDist;
 
           for (let i = 0; i < boxes.length; i++) {
-            const res = getCircleBoxDepenetration(sx, sz, sp.radius, boxes[i]);
+            const b = boxes[i];
+            if (sx < b.minX - 2.5 || sx > b.maxX + 2.5 || sz < b.minZ - 2.5 || sz > b.maxZ + 2.5) continue;
+            const res = getCircleBoxDepenetration(sx, sz, sp.radius, b);
             if (res.overlap) {
               nextZ += res.pZ;
               velocityRef.current.z = 0;

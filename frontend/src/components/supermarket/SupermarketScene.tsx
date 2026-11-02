@@ -11,6 +11,8 @@ import { TrolleyModel } from './TrolleyModel';
 import { FlyingProductArc } from './FlyingProductArc';
 import { PlayerController } from './PlayerController';
 import { RefrigeratorSection3D } from './RefrigeratorSection3D';
+import { WallShelves } from './WallShelves';
+import { PromotionalIslands } from './PromotionalIslands';
 import { useMartStore } from '@/store/useMartStore';
 import { api } from '@/lib/api';
 
@@ -139,7 +141,13 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           {/* Commercial Refrigerated Reach-in Display Sections on Ground Floor Right Wall */}
           {activeFloor === 1 && <RefrigeratorSection3D />}
 
-          {/* Ground Floor Aisles (Aisles 1 - 10) - Active Floor Culling */}
+          {/* Left Wall Retail Shelving (Household & Personal Care) and Back Wall Bulk Pallet Racking */}
+          {activeFloor === 1 && <WallShelves />}
+
+          {/* Central Grand Promenade Feature Promotional Merchandising Islands */}
+          {activeFloor === 1 && <PromotionalIslands />}
+
+          {/* Ground Floor Double-Sided Gondola Aisles (Aisles 1 - 9) - Active Floor Culling */}
           {activeFloor === 1 && groundFloor?.aisles.map((aisle) => (
             <ShelfUnit
               key={aisle.id}
