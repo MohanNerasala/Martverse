@@ -48,13 +48,13 @@ const sharedWhiteLabelMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
 // Maximum visible 3D items displayed inside the basket (Neat, clean 3x4 layout that never overflows or lags)
 const MAX_BASKET_DISPLAY_ITEMS = 12;
 
-// Strict Physical Shelf Obstacle Bounds (Planks, Uprights, & ESL Digital Price Tag Rails)
+// Strict Physical Shelf Obstacle Bounds (Planks, Uprights, & Commercial Gondola End-Caps)
 const SHELF_OBSTACLES_FLOOR1 = [
-  { minX: -11.20, maxX: -8.80, minZ: -12.60, maxZ: 12.60 }, // Aisle 1
-  { minX: -6.20, maxX: -3.80, minZ: -12.60, maxZ: 12.60 },  // Aisle 2
-  { minX: -1.20, maxX: 1.20, minZ: -12.60, maxZ: 12.60 },   // Aisle 3
-  { minX: 3.80, maxX: 6.20, minZ: -12.60, maxZ: 12.60 },    // Aisle 4
-  { minX: 8.80, maxX: 11.20, minZ: -12.60, maxZ: 12.60 },   // Aisle 5
+  { minX: -11.20, maxX: -8.80, minZ: -12.85, maxZ: 12.85 }, // Aisle 1
+  { minX: -6.20, maxX: -3.80, minZ: -12.85, maxZ: 12.85 },  // Aisle 2
+  { minX: -1.20, maxX: 1.20, minZ: -12.85, maxZ: 12.85 },   // Aisle 3
+  { minX: 3.80, maxX: 6.20, minZ: -12.85, maxZ: 12.85 },    // Aisle 4
+  { minX: 8.80, maxX: 11.20, minZ: -12.85, maxZ: 12.85 },   // Aisle 5
   // Commercial Refrigerator Reach-in Sections on Left Wall
   { minX: -17.60, maxX: -16.20, minZ: -14.20, maxZ: 14.20 },
 ];

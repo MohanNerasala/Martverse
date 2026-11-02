@@ -448,18 +448,18 @@ const shelfRackMaterials = {
   divider: new THREE.MeshStandardMaterial({ color: '#f1f5f9', metalness: 0.1, roughness: 0.4 }),
   plank: new THREE.MeshStandardMaterial({ color: '#f8fafc', metalness: 0.12, roughness: 0.25 }),
   led: new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: new THREE.Color('#f8fafc'), emissiveIntensity: 0.45, roughness: 0.1 }),
-  rail: new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.4 }), // D-Mart signature red price rail
+  rail: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.35 }), // Commercial royal blue shelf rail (matches Carrefour/D-Mart)
   neon: new THREE.MeshBasicMaterial({ color: '#facc15' }), // D-Mart yellow accent
-  post: new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.4, roughness: 0.4 }), // Commercial ivory powder-coated steel uprights
-  postNeon: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.5 }),
-  eslCasing: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3, metalness: 0.1 }),
-  kickplate: new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.8, roughness: 0.3 }),
+  post: new THREE.MeshStandardMaterial({ color: '#f1f5f9', metalness: 0.3, roughness: 0.35 }), // Commercial ivory powder-coated steel uprights
+  postNeon: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.4 }),
+  eslCasing: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.2, metalness: 0.1 }),
+  kickplate: new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.65, roughness: 0.35 }), // Brushed aluminum kickplate (no harsh black)
   endCapSign: new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.3, roughness: 0.2 }),
   acrylicTray: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.05 }),
   acrylicLip: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.35, roughness: 0.1 }),
   cartonFlap: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.5 }),
   whiteCap: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3, metalness: 0.1 }),
-  hangerBar: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.5 }),
+  hangerBar: new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.5 }),
   hangerHook: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0.95, roughness: 0.1 }),
   contactShadow: new THREE.MeshBasicMaterial({ color: '#090d16', transparent: true, opacity: 0.22, depthWrite: false }),
   crimpSilver: new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.8, roughness: 0.3 }),
@@ -468,6 +468,73 @@ const shelfRackMaterials = {
   pegboard: new THREE.MeshStandardMaterial({ color: '#f1f5f9', roughness: 0.5, metalness: 0.15 }),
   pumpChrome: new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.9, roughness: 0.15 }),
 };
+
+// Global shared product body material cache to avoid thousands of duplicate WebGL programs
+const productBodyMaterials = new Map<string, THREE.MeshStandardMaterial>();
+export function getProductBodyMaterial(color: string, roughness = 0.32, metalness = 0.08): THREE.MeshStandardMaterial {
+  const key = `${color}-${roughness}-${metalness}`;
+  let mat = productBodyMaterials.get(key);
+  if (!mat) {
+    mat = new THREE.MeshStandardMaterial({ color, roughness, metalness });
+    productBodyMaterials.set(key, mat);
+  }
+  return mat;
+}
+
+let sharedPriceTalkerTexture: THREE.CanvasTexture | null = null;
+let sharedPriceTalkerMaterial: THREE.MeshBasicMaterial | null = null;
+
+export function getSharedPriceTalkerMaterial(): THREE.MeshBasicMaterial {
+  if (sharedPriceTalkerMaterial) return sharedPriceTalkerMaterial;
+  if (typeof document === 'undefined') {
+    return new THREE.MeshBasicMaterial();
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Bright yellow promotional retail tag
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(0, 0, 256, 64);
+
+    // Red D-Mart pill
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(4, 4, 110, 20);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('D-MART PRICE', 10, 14);
+
+    // Main Price
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.fillText('SPECIAL', 6, 44);
+
+    // Savings
+    ctx.fillStyle = '#15803d';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('SAVE 25%', 120, 20);
+    ctx.fillStyle = '#475569';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('BEST VALUE', 120, 44);
+
+    // Barcode
+    ctx.fillStyle = '#1e293b';
+    for (let x = 205; x < 250; x += 3) {
+      ctx.fillRect(x, 8, (x % 2 === 0 ? 2 : 1), 48);
+    }
+  }
+  sharedPriceTalkerTexture = new THREE.CanvasTexture(canvas);
+  sharedPriceTalkerTexture.colorSpace = THREE.SRGBColorSpace;
+  sharedPriceTalkerTexture.minFilter = THREE.LinearFilter;
+  sharedPriceTalkerTexture.magFilter = THREE.LinearFilter;
+  sharedPriceTalkerMaterial = new THREE.MeshBasicMaterial({
+    map: sharedPriceTalkerTexture,
+    toneMapped: false,
+  });
+  return sharedPriceTalkerMaterial;
+}
 
 export function getEslTexture(price: number, brand: string): THREE.CanvasTexture {
   const key = `${price}-${brand}`;
@@ -635,10 +702,12 @@ interface ShelfSlotItemProps {
     worldZ: number;
     rotationY: number;
   };
-  eslMaterial: THREE.MeshBasicMaterial;
+  eslMaterial?: THREE.MeshBasicMaterial;
 }
 
-const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMaterial }) => {
+// High-Performance Interactive 3D Product Item
+// Batched, shared materials, zero back-row duplicates, 0ms pre-warmed packaging textures
+const ShelfProductItem: React.FC<{ slot: ShelfSlotItemProps['slot'] }> = React.memo(({ slot }) => {
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
 
@@ -651,25 +720,15 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
   const isDairyMilk = prod.slug.includes('dairy-milk') ||
                       prod.name.toLowerCase().includes('dairy milk') ||
                       prod.brand?.toLowerCase().includes('cadbury');
-  const packagingUrl = isDairyMilk
-    ? '/products/sweets/DairyMilk_cropped.png'
-    : (prod.imageUrl || '/products/fallback.svg');
 
   const animGroupRef = useRef<THREE.Group>(null);
-  const mainMatRef = useRef<THREE.MeshStandardMaterial>(null);
-  const eslMatRef = useRef<THREE.MeshStandardMaterial>(null);
-
-  // On-demand hardware-accelerated RAF animation:
-  // Eliminates 540 idle useFrame loops per frame (saving 32,400+ function calls/second)
   const animFrameRef = useRef<number | null>(null);
 
   const startHoverAnimation = (hovering: boolean) => {
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-    }
-    const targetScale = hovering ? 1.20 : 1.0;
-    const targetLift = hovering ? 0.05 : 0.0;
-    const targetFwd = hovering ? 0.07 : 0.0;
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    const targetScale = hovering ? 1.15 : 1.0;
+    const targetLift = hovering ? 0.04 : 0.0;
+    const targetFwd = hovering ? 0.06 : 0.0;
 
     const step = () => {
       if (!animGroupRef.current) return;
@@ -701,29 +760,28 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
     };
   }, []);
 
-  // Intelligent Indian Retail Product Classification for Realistic Packaging
+  // Commercial Retail Product Form Classification
   const nameLower = ((prod.name || '') + ' ' + (prod.category?.name || '') + ' ' + (prod.brand || '')).toLowerCase();
   const isPouch = /chips|kurkure|bingo|lays|snack|bhujia|namkeen|wafer|puff|chindi/i.test(nameLower);
   const isGrainSack = /atta|rice|flour|salt|sugar|wheat|grain|basmati|chakki/i.test(nameLower);
   const isOilCan = /oil|sunlite|saffola|kachi|ghani|mustard|fortune|detergent liquid|surf excel liquid/i.test(nameLower);
   const isPumpBottle = /shampoo|dove|head & shoulders|pantene|handwash|dettol liquid|vim gel|harpic|lizol/i.test(nameLower) || plc.modelType === 'bottle';
   const isChoc = plc.modelType === 'chocolate' || plc.modelType === 'bar' || isDairyMilk;
-  const isGarment = plc.modelType === 'shirt' || plc.modelType === 'hanger';
+
+  const bodyMat = useMemo(() => {
+    if (isChoc) return getProductBodyMaterial('#4a044e', 0.3, 0.12);
+    if (isGrainSack) return getProductBodyMaterial(color, 0.85, 0.04);
+    if (isPouch) return getProductBodyMaterial(color, 0.35, 0.12);
+    if (isPumpBottle) return getProductBodyMaterial(color, 0.25, 0.1);
+    if (isOilCan) return getProductBodyMaterial(color, 0.25, 0.1);
+    return getProductBodyMaterial(color, 0.3, 0.06);
+  }, [color, isChoc, isGrainSack, isPouch, isPumpBottle, isOilCan]);
 
   return (
     <group
       position={[slot.relX, slot.relY, slot.relZ]}
       rotation={[0, slot.rotationY, 0]}
     >
-      {/* Soft Grounding Contact Shadow on Shelf Surface */}
-      <mesh
-        position={[0, 0.003, 0.02]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        geometry={sharedGeometries.contactShadow}
-        material={shelfRackMaterials.contactShadow}
-        raycast={() => null}
-      />
-
       {/* Invisible Interaction Hitbox - Exclusively raycasted */}
       <mesh
         visible={false}
@@ -733,25 +791,12 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
         onPointerOver={(e) => {
           e.stopPropagation();
           startHoverAnimation(true);
-          if (mainMatRef.current) {
-            mainMatRef.current.emissive.set(isDairyMilk ? '#6b21a8' : color);
-            mainMatRef.current.emissiveIntensity = 0.35;
-          }
-          if (eslMatRef.current) {
-            eslMatRef.current.color.set('#047857');
-          }
           if (typeof document !== 'undefined') document.body.style.cursor = 'pointer';
           setHoveredProduct(prod);
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
           startHoverAnimation(false);
-          if (mainMatRef.current) {
-            mainMatRef.current.emissiveIntensity = 0;
-          }
-          if (eslMatRef.current) {
-            eslMatRef.current.color.set('#0f172a');
-          }
           if (typeof document !== 'undefined') document.body.style.cursor = 'default';
           setHoveredProduct(null);
         }}
@@ -764,166 +809,46 @@ const ShelfProductItem: React.FC<ShelfSlotItemProps> = React.memo(({ slot, eslMa
       {/* Smoothly Animated Product Group (Raycast bypassed internally) */}
       <group ref={animGroupRef} raycast={() => null}>
         {isPumpBottle ? (
-          /* ==============================================================
-             1. DISPENSER BOTTLE (Shampoo, Dishwash Gel, Liquid Cleaner)
-             ============================================================== */
-          <group position={[0, 0, 0]}>
-            {/* Front Row Bottle */}
-            <group position={[0, 0, 0.04]}>
-              <mesh position={[0, 0.12, 0]} geometry={sharedGeometries.cyl14} scale={[0.078, 0.22, 0.078]}>
-                <meshStandardMaterial ref={mainMatRef} color={color} roughness={0.2} metalness={0.12} />
-              </mesh>
-              {/* Bottle Shoulder */}
-              <mesh position={[0, 0.25, 0]} geometry={sharedGeometries.cyl14} scale={[0.055, 0.04, 0.055]}>
-                <meshStandardMaterial color={color} roughness={0.2} metalness={0.1} />
-              </mesh>
-              {/* Dispenser Pump Mechanism */}
-              <mesh position={[0, 0.29, 0]} geometry={sharedGeometries.cyl12} scale={[0.024, 0.04, 0.024]} material={shelfRackMaterials.pumpChrome} />
-              <mesh position={[0, 0.315, 0.015]} geometry={sharedGeometries.box} scale={[0.022, 0.014, 0.045]} material={shelfRackMaterials.whiteCap} />
-              <ProductSmallImage product={prod} position={[0, 0.12, 0.082]} scale={[0.13, 0.14]} />
-            </group>
-            {/* Back Row Stock Bottle for Retail Density */}
-            <group position={[0, 0, -0.12]}>
-              <mesh position={[0, 0.12, 0]} geometry={sharedGeometries.cyl14} scale={[0.078, 0.22, 0.078]}>
-                <meshStandardMaterial color={color} roughness={0.3} metalness={0.1} />
-              </mesh>
-              <mesh position={[0, 0.25, 0]} geometry={sharedGeometries.cyl14} scale={[0.055, 0.04, 0.055]} material={shelfRackMaterials.whiteCap} />
-              <mesh position={[0, 0.29, 0]} geometry={sharedGeometries.cyl12} scale={[0.024, 0.04, 0.024]} material={shelfRackMaterials.pumpChrome} />
-            </group>
+          <group position={[0, 0, 0.04]}>
+            <mesh position={[0, 0.12, 0]} geometry={sharedGeometries.cyl14} scale={[0.078, 0.22, 0.078]} material={bodyMat} />
+            <mesh position={[0, 0.25, 0]} geometry={sharedGeometries.cyl14} scale={[0.055, 0.04, 0.055]} material={bodyMat} />
+            <mesh position={[0, 0.29, 0]} geometry={sharedGeometries.cyl12} scale={[0.024, 0.04, 0.024]} material={shelfRackMaterials.pumpChrome} />
+            <mesh position={[0, 0.315, 0.015]} geometry={sharedGeometries.box} scale={[0.022, 0.014, 0.045]} material={shelfRackMaterials.whiteCap} />
+            <ProductSmallImage product={prod} position={[0, 0.12, 0.082]} scale={[0.13, 0.14]} />
           </group>
         ) : isOilCan ? (
-          /* ==============================================================
-             2. MOLDED HANDLE CANISTER (Cooking Oil, Detergent Can)
-             ============================================================== */
-          <group position={[0, 0, 0]}>
-            {/* Front Row Canister */}
-            <group position={[0, 0, 0.03]}>
-              <mesh position={[0, 0.17, 0]} geometry={sharedGeometries.box} scale={[0.20, 0.32, 0.13]}>
-                <meshStandardMaterial ref={mainMatRef} color={color} roughness={0.25} metalness={0.1} />
-              </mesh>
-              {/* Molded Handle Opening */}
-              <mesh position={[0.065, 0.25, 0]} geometry={sharedGeometries.box} scale={[0.025, 0.12, 0.04]} material={shelfRackMaterials.plank} />
-              {/* Spout Cap */}
-              <mesh position={[-0.05, 0.34, 0]} geometry={sharedGeometries.cyl12} scale={[0.028, 0.03, 0.028]} material={shelfRackMaterials.neon} />
-              <ProductSmallImage product={prod} position={[0, 0.16, 0.07]} scale={[0.19, 0.25]} />
-            </group>
-            {/* Back Row Stock Canister */}
-            <group position={[0, 0, -0.13]}>
-              <mesh position={[0, 0.17, 0]} geometry={sharedGeometries.box} scale={[0.20, 0.32, 0.13]}>
-                <meshStandardMaterial color={color} roughness={0.35} metalness={0.08} />
-              </mesh>
-              <mesh position={[-0.05, 0.34, 0]} geometry={sharedGeometries.cyl12} scale={[0.028, 0.03, 0.028]} material={shelfRackMaterials.neon} />
-            </group>
+          <group position={[0, 0, 0.03]}>
+            <mesh position={[0, 0.17, 0]} geometry={sharedGeometries.box} scale={[0.20, 0.32, 0.13]} material={bodyMat} />
+            <mesh position={[-0.05, 0.34, 0]} geometry={sharedGeometries.cyl12} scale={[0.028, 0.03, 0.028]} material={shelfRackMaterials.neon} />
+            <ProductSmallImage product={prod} position={[0, 0.16, 0.07]} scale={[0.19, 0.25]} />
           </group>
         ) : isGrainSack ? (
-          /* ==============================================================
-             3. HEAVY GRAIN & FLOUR SACK (Atta, Basmati Rice, Salt)
-             ============================================================== */
-          <group position={[0, 0, 0]}>
-            {/* Front Row Woven Sack */}
-            <group position={[0, 0, 0.02]}>
-              <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.27, 0.35, 0.16]}>
-                <meshStandardMaterial ref={mainMatRef} color={color} roughness={0.85} metalness={0.04} />
-              </mesh>
-              {/* Stitched Top Seam Hem */}
-              <mesh position={[0, 0.36, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.016, 0.02]} material={shelfRackMaterials.sackStitch} />
-              <ProductSmallImage product={prod} position={[0, 0.18, 0.086]} scale={[0.24, 0.31]} />
-            </group>
-            {/* Back Row Stored Sack */}
-            <group position={[0, 0, -0.15]}>
-              <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.27, 0.35, 0.16]}>
-                <meshStandardMaterial color={color} roughness={0.9} metalness={0.02} />
-              </mesh>
-              <mesh position={[0, 0.36, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.016, 0.02]} material={shelfRackMaterials.sackStitch} />
-            </group>
+          <group position={[0, 0, 0.02]}>
+            <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.27, 0.35, 0.16]} material={bodyMat} />
+            <mesh position={[0, 0.36, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.016, 0.02]} material={shelfRackMaterials.sackStitch} />
+            <ProductSmallImage product={prod} position={[0, 0.18, 0.086]} scale={[0.24, 0.31]} />
           </group>
         ) : isPouch ? (
-          /* ==============================================================
-             4. PUFFED PILLOW POUCH (Lay's, Kurkure, Bingo, Namkeen)
-             ============================================================== */
-          <group position={[0, 0, 0]}>
-            {/* Front Row Puffed Snack Bag */}
-            <group position={[0, 0, 0.03]} rotation={[-0.04, 0, 0]}>
-              <mesh position={[0, 0.17, 0]} geometry={sharedGeometries.box} scale={[0.24, 0.31, 0.11]}>
-                <meshStandardMaterial ref={mainMatRef} color={color} roughness={0.35} metalness={0.15} />
-              </mesh>
-              {/* Top Crimped Metallic Seal */}
-              <mesh position={[0, 0.33, 0]} geometry={sharedGeometries.crimpRib} scale={[0.23, 0.016, 0.008]} material={shelfRackMaterials.crimpSilver} />
-              {/* Bottom Crimped Metallic Seal */}
-              <mesh position={[0, 0.01, 0]} geometry={sharedGeometries.crimpRib} scale={[0.23, 0.014, 0.008]} material={shelfRackMaterials.crimpSilver} />
-              <ProductSmallImage product={prod} position={[0, 0.17, 0.06]} scale={[0.23, 0.28]} />
-            </group>
-            {/* Back Row Stock Snack Bag */}
-            <group position={[0, 0, -0.12]} rotation={[-0.03, 0, 0]}>
-              <mesh position={[0, 0.17, 0]} geometry={sharedGeometries.box} scale={[0.24, 0.31, 0.11]}>
-                <meshStandardMaterial color={color} roughness={0.4} metalness={0.12} />
-              </mesh>
-              <mesh position={[0, 0.33, 0]} geometry={sharedGeometries.crimpRib} scale={[0.23, 0.016, 0.008]} material={shelfRackMaterials.crimpSilver} />
-            </group>
-          </group>
-        ) : isGarment ? (
-          /* ==============================================================
-             5. GARMENT ON DISPLAY HANGER
-             ============================================================== */
-          <group position={[0, 0, 0]}>
-            <mesh position={[0, 0.44, 0]} geometry={sharedGeometries.cyl8} scale={[0.008, 0.1, 0.008]} material={shelfRackMaterials.hangerHook} />
-            <mesh position={[0, 0.38, 0]} geometry={sharedGeometries.box} scale={[0.42, 0.02, 0.02]} material={shelfRackMaterials.hangerBar} />
-            <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.36, 0.36, 0.09]}>
-              <meshStandardMaterial ref={mainMatRef} color={color} roughness={0.7} metalness={0.05} />
-            </mesh>
-            <mesh position={[0, 0.34, 0]} geometry={sharedGeometries.box} scale={[0.14, 0.03, 0.11]} material={shelfRackMaterials.plank} />
+          <group position={[0, 0, 0.03]} rotation={[-0.04, 0, 0]}>
+            <mesh position={[0, 0.17, 0]} geometry={sharedGeometries.box} scale={[0.24, 0.31, 0.11]} material={bodyMat} />
+            <ProductSmallImage product={prod} position={[0, 0.17, 0.06]} scale={[0.23, 0.28]} />
           </group>
         ) : isChoc ? (
-          /* ==============================================================
-             6. CONFECTIONERY BARS IN ACRYLIC DISPLAY TRAY
-             ============================================================== */
           <group position={[0, 0, 0]}>
             <mesh position={[0, 0.008, 0.02]} geometry={sharedGeometries.box} scale={[0.70, 0.016, 0.16]} material={shelfRackMaterials.acrylicTray} />
             <mesh position={[0, 0.026, 0.095]} geometry={sharedGeometries.box} scale={[0.70, 0.036, 0.006]} material={shelfRackMaterials.acrylicLip} />
-            {/* Front Bar */}
             <group position={[0, 0.155, 0.03]} rotation={[-0.04, 0, 0]}>
-              <mesh geometry={sharedGeometries.box} scale={[0.65, 0.296, 0.022]}>
-                <meshStandardMaterial ref={mainMatRef} color="#4a044e" roughness={0.3} metalness={0.15} />
-              </mesh>
-              <ProductSmallImage product={prod} position={[0, 0, 0.016]} scale={[0.66, 0.302]} materialType="basic" />
-            </group>
-            {/* Back Stacked Bar */}
-            <group position={[0, 0.155, -0.04]} rotation={[-0.06, 0, 0]}>
-              <mesh geometry={sharedGeometries.box} scale={[0.65, 0.296, 0.022]}>
-                <meshStandardMaterial color="#4a044e" roughness={0.35} metalness={0.12} />
-              </mesh>
+              <mesh geometry={sharedGeometries.box} scale={[0.65, 0.296, 0.022]} material={bodyMat} />
+              <ProductSmallImage product={prod} position={[0, 0.016, 0.016]} scale={[0.66, 0.302]} materialType="basic" />
             </group>
           </group>
         ) : (
-          /* ==============================================================
-             7. COMMERCIAL RETAIL PAPERBOARD CARTON (Soaps, Toothpaste, Cereals)
-             ============================================================== */
-          <group position={[0, 0, 0]}>
-            {/* Front Facing Carton */}
-            <group position={[0, 0, 0.03]}>
-              <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.35, 0.14]}>
-                <meshStandardMaterial ref={mainMatRef} color={color} roughness={0.3} metalness={0.06} />
-              </mesh>
-              <ProductSmallImage product={prod} position={[0, 0.18, 0.076]} scale={[0.25, 0.33]} />
-            </group>
-            {/* Back Row Stock Carton */}
-            <group position={[0, 0, -0.13]}>
-              <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.35, 0.14]}>
-                <meshStandardMaterial color={color} roughness={0.4} metalness={0.04} />
-              </mesh>
-            </group>
+          <group position={[0, 0, 0.03]}>
+            <mesh position={[0, 0.18, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.35, 0.14]} material={bodyMat} />
+            <ProductSmallImage product={prod} position={[0, 0.18, 0.076]} scale={[0.25, 0.33]} />
           </group>
         )}
       </group>
-
-      {/* Shelf Edge ESL Digital Display Face (Casing is batched via InstancedMesh for 60FPS) */}
-      <mesh
-        position={[0, -0.01, 0.45]}
-        geometry={sharedGeometries.plane}
-        scale={[0.30, 0.10, 1]}
-        raycast={() => null}
-        material={eslMaterial}
-      />
     </group>
   );
 });
@@ -998,19 +923,17 @@ const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; h
   );
 });
 
-// High-Performance Instanced ESL Casings (Turns 540 draw calls into 5)
-const AisleEslCasings: React.FC<{ slots: ShelfSlotItemProps['slot'][] }> = React.memo(({ slots }) => {
+// Instanced Shelf Surface Contact Shadows (1 draw call per aisle instead of 144)
+const AisleContactShadows: React.FC<{ slots: ShelfSlotItemProps['slot'][] }> = React.memo(({ slots }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
 
   useEffect(() => {
     if (!meshRef.current || slots.length === 0) return;
     const dummy = new THREE.Object3D();
     slots.forEach((slot, idx) => {
-      const isLeft = slot.side === 'LEFT';
-      const eslX = isLeft ? -0.89 : 0.89;
-      dummy.position.set(eslX, slot.relY - 0.01, slot.relZ);
-      dummy.rotation.set(0, slot.rotationY, 0);
-      dummy.scale.set(0.32, 0.12, 0.018);
+      dummy.position.set(slot.relX, slot.relY + 0.003, slot.relZ);
+      dummy.rotation.set(-Math.PI / 2, slot.rotationY, 0);
+      dummy.scale.set(0.28, 0.22, 1);
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(idx, dummy.matrix);
     });
@@ -1022,13 +945,64 @@ const AisleEslCasings: React.FC<{ slots: ShelfSlotItemProps['slot'][] }> = React
   return (
     <instancedMesh
       ref={meshRef}
-      args={[sharedGeometries.box, shelfRackMaterials.eslCasing, slots.length]}
+      args={[sharedGeometries.contactShadow, shelfRackMaterials.contactShadow, slots.length]}
       raycast={() => null}
     />
   );
 });
 
-// High-Performance Instanced Support Posts (Turns 140 draw calls into 10)
+// High-Performance Instanced ESL Casings & Price Talkers (Flush with shelf rail edge)
+const AisleEslCasings: React.FC<{ slots: ShelfSlotItemProps['slot'][] }> = React.memo(({ slots }) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const talkerRef = useRef<THREE.InstancedMesh>(null);
+  const talkerMat = useMemo(() => getSharedPriceTalkerMaterial(), []);
+
+  useEffect(() => {
+    if (!meshRef.current || !talkerRef.current || slots.length === 0) return;
+    const dummy = new THREE.Object3D();
+    const talkerDummy = new THREE.Object3D();
+
+    slots.forEach((slot, idx) => {
+      const isLeft = slot.side === 'LEFT';
+      const eslX = isLeft ? -0.875 : 0.875;
+      const talkerX = isLeft ? -0.880 : 0.880;
+
+      dummy.position.set(eslX, slot.relY, slot.relZ);
+      dummy.rotation.set(0, slot.rotationY, 0);
+      dummy.scale.set(0.24, 0.045, 0.008);
+      dummy.updateMatrix();
+      meshRef.current!.setMatrixAt(idx, dummy.matrix);
+
+      talkerDummy.position.set(talkerX, slot.relY, slot.relZ);
+      talkerDummy.rotation.set(0, slot.rotationY, 0);
+      talkerDummy.scale.set(0.22, 0.038, 1);
+      talkerDummy.updateMatrix();
+      talkerRef.current!.setMatrixAt(idx, talkerDummy.matrix);
+    });
+
+    meshRef.current.instanceMatrix.needsUpdate = true;
+    talkerRef.current.instanceMatrix.needsUpdate = true;
+  }, [slots]);
+
+  if (slots.length === 0) return null;
+
+  return (
+    <group raycast={() => null}>
+      <instancedMesh
+        ref={meshRef}
+        args={[sharedGeometries.box, shelfRackMaterials.eslCasing, slots.length]}
+        raycast={() => null}
+      />
+      <instancedMesh
+        ref={talkerRef}
+        args={[sharedGeometries.plane, talkerMat, slots.length]}
+        raycast={() => null}
+      />
+    </group>
+  );
+});
+
+// High-Performance Instanced Support Posts (Commercial Ivory Slotted Uprights)
 const AisleSupportPosts: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
   const postsRef = useRef<THREE.InstancedMesh>(null);
   const neonsRef = useRef<THREE.InstancedMesh>(null);
@@ -1045,24 +1019,24 @@ const AisleSupportPosts: React.FC<{ length: number; height: number }> = React.me
     zPositions.forEach((zPos) => {
       // Left post
       dummy.position.set(-0.86, 0, zPos);
-      dummy.scale.set(0.05, height, 0.05);
+      dummy.scale.set(0.04, height, 0.04);
       dummy.updateMatrix();
       postsRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      dummy.position.set(-0.888, 0, zPos);
-      dummy.scale.set(0.006, height * 0.94, 0.02);
+      dummy.position.set(-0.882, 0, zPos);
+      dummy.scale.set(0.005, height * 0.94, 0.015);
       dummy.updateMatrix();
       neonsRef.current!.setMatrixAt(idx, dummy.matrix);
       idx++;
 
       // Right post
       dummy.position.set(0.86, 0, zPos);
-      dummy.scale.set(0.05, height, 0.05);
+      dummy.scale.set(0.04, height, 0.04);
       dummy.updateMatrix();
       postsRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      dummy.position.set(0.888, 0, zPos);
-      dummy.scale.set(0.006, height * 0.94, 0.02);
+      dummy.position.set(0.882, 0, zPos);
+      dummy.scale.set(0.005, height * 0.94, 0.015);
       dummy.updateMatrix();
       neonsRef.current!.setMatrixAt(idx, dummy.matrix);
       idx++;
@@ -1080,7 +1054,7 @@ const AisleSupportPosts: React.FC<{ length: number; height: number }> = React.me
   );
 });
 
-// High-Performance Instanced Shelf Planks & Rails (Turns 120 draw calls into 20)
+// High-Performance Instanced Shelf Planks & Royal Blue Price Rails
 const AisleShelves: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
   const planksRef = useRef<THREE.InstancedMesh>(null);
   const ledsRef = useRef<THREE.InstancedMesh>(null);
@@ -1107,13 +1081,13 @@ const AisleShelves: React.FC<{ length: number; height: number }> = React.memo(({
       dummy.updateMatrix();
       ledsRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      dummy.position.set(-0.88, yRel, 0);
-      dummy.scale.set(0.02, 0.06, length);
+      dummy.position.set(-0.875, yRel, 0);
+      dummy.scale.set(0.015, 0.05, length);
       dummy.updateMatrix();
       railsRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      dummy.position.set(-0.892, yRel, 0);
-      dummy.scale.set(0.004, 0.018, length);
+      dummy.position.set(-0.884, yRel, 0);
+      dummy.scale.set(0.004, 0.015, length);
       dummy.updateMatrix();
       neonsRef.current!.setMatrixAt(idx, dummy.matrix);
       idx++;
@@ -1129,13 +1103,13 @@ const AisleShelves: React.FC<{ length: number; height: number }> = React.memo(({
       dummy.updateMatrix();
       ledsRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      dummy.position.set(0.88, yRel, 0);
-      dummy.scale.set(0.02, 0.06, length);
+      dummy.position.set(0.875, yRel, 0);
+      dummy.scale.set(0.015, 0.05, length);
       dummy.updateMatrix();
       railsRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      dummy.position.set(0.892, yRel, 0);
-      dummy.scale.set(0.004, 0.018, length);
+      dummy.position.set(0.884, yRel, 0);
+      dummy.scale.set(0.004, 0.015, length);
       dummy.updateMatrix();
       neonsRef.current!.setMatrixAt(idx, dummy.matrix);
       idx++;
@@ -1157,7 +1131,7 @@ const AisleShelves: React.FC<{ length: number; height: number }> = React.memo(({
   );
 });
 
-// Aisle Base Kickplates (Dust & Trolley Protection)
+// Aisle Base Kickplates (Brushed Aluminum Commercial Dust & Trolley Protection)
 const AisleKickplates: React.FC<{ length: number; height: number }> = React.memo(({ length, height }) => {
   const yBase = -height / 2 + 0.10;
   return (
@@ -1168,41 +1142,144 @@ const AisleKickplates: React.FC<{ length: number; height: number }> = React.memo
   );
 });
 
-// Promotional Gondola End-Caps at Aisle Entrances
-const AisleGondolaEndCaps: React.FC<{ length: number; height: number; aisleNumber: number; categoryName: string }> = React.memo(({ length, height, aisleNumber, categoryName }) => {
+// Photorealistic Commercial Gondola End-Cap Feature Display (Replaces Artificial Black Boards)
+const SingleEndCapFacing: React.FC<{
+  height: number;
+  aisleNumber: number;
+  categoryName: string;
+  featureProducts: Product[];
+}> = React.memo(({ height, aisleNumber, categoryName, featureProducts }) => {
+  const openProductModal = useMartStore((state) => state.openProductModal);
+  const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
+
+  const tiers = [0.45, 1.05, 1.65, 2.25];
+  const itemX = [-0.48, 0, 0.48];
+
   return (
-    <group raycast={() => null}>
-      {/* North End-Cap (Facing -Z) */}
-      <group position={[0, 0, -length / 2 - 0.04]}>
-        <mesh geometry={sharedGeometries.box} scale={[1.74, height, 0.08]} material={shelfRackMaterials.kickplate} />
-        <mesh position={[0, height / 2 - 0.45, -0.05]} geometry={sharedGeometries.box} scale={[1.60, 0.70, 0.02]} material={shelfRackMaterials.endCapSign} />
-        <Text
-          position={[0, height / 2 - 0.45, -0.07]}
-          rotation={[0, Math.PI, 0]}
-          fontSize={0.16}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-          fontWeight="bold"
-        >
-          {`D-MART SPECIAL\n${categoryName.toUpperCase()}`}
+    <group>
+      {/* 1. Commercial Ivory Gondola Backing Wall (Perforated Pegboard Texture Tone) */}
+      <mesh geometry={sharedGeometries.box} scale={[1.74, height, 0.04]} material={shelfRackMaterials.plank} raycast={() => null} />
+
+      {/* 2. Commercial Brushed Aluminum Corner Uprights */}
+      <mesh position={[-0.84, 0, 0]} geometry={sharedGeometries.box} scale={[0.06, height, 0.06]} material={shelfRackMaterials.post} raycast={() => null} />
+      <mesh position={[0.84, 0, 0]} geometry={sharedGeometries.box} scale={[0.06, height, 0.06]} material={shelfRackMaterials.post} raycast={() => null} />
+
+      {/* 3. Base Stainless Steel Kickplate Plinth */}
+      <mesh position={[0, -height / 2 + 0.09, 0.16]} geometry={sharedGeometries.box} scale={[1.74, 0.18, 0.36]} material={shelfRackMaterials.kickplate} raycast={() => null} />
+
+      {/* 4. Top Illuminated D-Mart Header Lightbox */}
+      <group position={[0, height / 2 - 0.34, 0.06]} raycast={() => null}>
+        {/* Outer Silver Bezel */}
+        <mesh geometry={sharedGeometries.box} scale={[1.70, 0.50, 0.08]} material={shelfRackMaterials.post} />
+        {/* Pure White Acrylic Panel */}
+        <mesh position={[0, 0, 0.02]} geometry={sharedGeometries.box} scale={[1.66, 0.46, 0.06]} material={shelfRackMaterials.plank} />
+        {/* D-Mart Sapphire Blue Header Pill */}
+        <mesh position={[0, 0.14, 0.055]} geometry={sharedGeometries.box} scale={[1.52, 0.12, 0.005]} material={shelfRackMaterials.endCapSign} />
+        <Text position={[0, 0.14, 0.06]} fontSize={0.068} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.04}>
+          {'D-MART BACHAT BAZAAR • SPECIAL OFFERS'}
+        </Text>
+        {/* Main Category Headline */}
+        <Text position={[0, -0.01, 0.06]} fontSize={0.12} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.02}>
+          {categoryName.toUpperCase()}
+        </Text>
+        {/* Promotional Savings Badge */}
+        <Text position={[0, -0.15, 0.06]} fontSize={0.065} color="#047857" anchorX="center" anchorY="middle" fontWeight="bold">
+          {'★ SPECIAL VALUE • FLAT 20% TO 50% OFF ★'}
         </Text>
       </group>
 
-      {/* South End-Cap (Facing +Z) */}
-      <group position={[0, 0, length / 2 + 0.04]}>
-        <mesh geometry={sharedGeometries.box} scale={[1.74, height, 0.08]} material={shelfRackMaterials.kickplate} />
-        <mesh position={[0, height / 2 - 0.45, 0.05]} geometry={sharedGeometries.box} scale={[1.60, 0.70, 0.02]} material={shelfRackMaterials.endCapSign} />
-        <Text
-          position={[0, height / 2 - 0.45, 0.07]}
-          fontSize={0.16}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-          fontWeight="bold"
-        >
-          {`D-MART SPECIAL\n${categoryName.toUpperCase()}`}
-        </Text>
+      {/* 5. 4 Tiered Outward-Facing Display Shelves */}
+      {tiers.map((tierH, tIdx) => {
+        const yRel = tierH - height / 2;
+        return (
+          <group key={`endcap-shelf-${tIdx}`} position={[0, yRel, 0.19]} raycast={() => null}>
+            {/* White Powder-Coated Shelf Plank */}
+            <mesh geometry={sharedGeometries.box} scale={[1.64, 0.035, 0.38]} material={shelfRackMaterials.plank} />
+            {/* D-Mart Blue Front Price Rail */}
+            <mesh position={[0, 0, 0.195]} geometry={sharedGeometries.box} scale={[1.64, 0.042, 0.012]} material={shelfRackMaterials.rail} />
+            {/* Yellow Promotional Price Talker Strip */}
+            <mesh position={[0, 0, 0.202]} geometry={sharedGeometries.box} scale={[1.60, 0.022, 0.004]} material={shelfRackMaterials.neon} />
+          </group>
+        );
+      })}
+
+      {/* 6. Stocked Front-Facing Feature Products on Each Tier */}
+      {tiers.map((tierH, tIdx) => {
+        const yRel = tierH - height / 2;
+        return itemX.map((xPos, iIdx) => {
+          const prodIdx = (tIdx * 3 + iIdx) % (featureProducts.length || 1);
+          const prod = featureProducts[prodIdx];
+          if (!prod) return null;
+
+          const plcColor = prod.placement?.color || '#3b82f6';
+          const bodyMat = getProductBodyMaterial(plcColor, 0.3, 0.08);
+
+          return (
+            <group key={`endcap-prod-${tIdx}-${iIdx}`} position={[xPos, yRel, 0.22]}>
+              {/* Invisible Pointer Hitbox */}
+              <mesh
+                visible={false}
+                position={[0, 0.17, 0]}
+                geometry={sharedGeometries.box}
+                scale={[0.32, 0.36, 0.22]}
+                onPointerOver={(e) => {
+                  e.stopPropagation();
+                  if (typeof document !== 'undefined') document.body.style.cursor = 'pointer';
+                  setHoveredProduct(prod);
+                }}
+                onPointerOut={(e) => {
+                  e.stopPropagation();
+                  if (typeof document !== 'undefined') document.body.style.cursor = 'default';
+                  setHoveredProduct(null);
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openProductModal(prod);
+                }}
+              />
+              {/* Front-Facing Product 3D Body */}
+              <mesh position={[0, 0.17, 0]} geometry={sharedGeometries.box} scale={[0.26, 0.34, 0.14]} material={bodyMat} raycast={() => null} />
+              {/* High-Resolution Branded Packaging Artwork */}
+              <ProductSmallImage product={prod} position={[0, 0.17, 0.076]} scale={[0.25, 0.32]} />
+            </group>
+          );
+        });
+      })}
+    </group>
+  );
+});
+
+const AisleGondolaEndCaps: React.FC<{
+  length: number;
+  height: number;
+  aisleNumber: number;
+  categoryName: string;
+  aisleProducts: Product[];
+}> = React.memo(({ length, height, aisleNumber, categoryName, aisleProducts }) => {
+  const featureProducts = useMemo(() => {
+    return aisleProducts && aisleProducts.length > 0 ? aisleProducts.slice(0, 12) : [];
+  }, [aisleProducts]);
+
+  return (
+    <group>
+      {/* North End-Cap (Facing -Z towards front concourse) */}
+      <group position={[0, 0, -length / 2 - 0.20]} rotation={[0, Math.PI, 0]}>
+        <SingleEndCapFacing
+          height={height}
+          aisleNumber={aisleNumber}
+          categoryName={categoryName}
+          featureProducts={featureProducts}
+        />
+      </group>
+
+      {/* South End-Cap (Facing +Z towards back concourse) */}
+      <group position={[0, 0, length / 2 + 0.20]}>
+        <SingleEndCapFacing
+          height={height}
+          aisleNumber={aisleNumber}
+          categoryName={categoryName}
+          featureProducts={featureProducts}
+        />
       </group>
     </group>
   );
@@ -1387,26 +1464,31 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
 
         {/* Base Kickplates for Retail Realism */}
         <AisleKickplates length={length} height={aisle.shelfHeight} />
-
-        {/* Promotional Gondola End-Caps */}
-        <AisleGondolaEndCaps length={length} height={aisle.shelfHeight} aisleNumber={aisle.aisleNumber} categoryName={aisle.categoryName} />
       </group>
 
-      {/* Instanced ESL Digital Price Tag Casings (1 draw call per aisle instead of 108) */}
+      {/* Photorealistic Commercial Gondola End-Cap Feature Displays */}
+      <AisleGondolaEndCaps
+        length={length}
+        height={aisle.shelfHeight}
+        aisleNumber={aisle.aisleNumber}
+        categoryName={aisle.categoryName}
+        aisleProducts={aisleProducts}
+      />
+
+      {/* Instanced Shelf Surface Contact Shadows (1 draw call per aisle instead of 144) */}
+      <AisleContactShadows slots={displaySlots} />
+
+      {/* Instanced ESL Digital Price Tag Casings & Talkers (2 draw calls per aisle instead of 144) */}
       <AisleEslCasings slots={displaySlots} />
 
-      {/* Interactive 3D Product Facings & High-Resolution ESL Price Displays */}
+      {/* Interactive 3D Product Facings with Shared Materials */}
       <group>
-        {displaySlots.map((slot) => {
-          const eslMaterial = getEslMaterial(slot.product.price, slot.product.brand || 'Cadbury');
-          return (
-            <ShelfProductItem
-              key={slot.key}
-              slot={slot}
-              eslMaterial={eslMaterial}
-            />
-          );
-        })}
+        {displaySlots.map((slot) => (
+          <ShelfProductItem
+            key={slot.key}
+            slot={slot}
+          />
+        ))}
       </group>
     </group>
   );

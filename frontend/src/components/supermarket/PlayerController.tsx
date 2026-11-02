@@ -33,14 +33,14 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 3.8, maxX: 22.0, minZ: -28.0, maxZ: -24.8 },  // Front Entrance Wall (Right of door)
   { minX: -3.8, maxX: 3.8, minZ: -28.0, maxZ: -25.8 },  // Front Doorway Backstop
 
-  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 1.20, Z: [-12.60, 12.60]
-  // Physical shelf planks extend to +-0.89m, support posts and ESL price tags extend to +-0.92m.
-  // halfW = 1.20m and Z: [-12.60, 12.60] guarantees absolute zero clipping of trolley edges, corners, and handlebar!
-  { minX: -11.20, maxX: -8.80, minZ: -12.60, maxZ: 12.60 }, // Aisle 1
-  { minX: -6.20, maxX: -3.80, minZ: -12.60, maxZ: 12.60 },  // Aisle 2
-  { minX: -1.20, maxX: 1.20, minZ: -12.60, maxZ: 12.60 },   // Aisle 3
-  { minX: 3.80, maxX: 6.20, minZ: -12.60, maxZ: 12.60 },    // Aisle 4
-  { minX: 8.80, maxX: 11.20, minZ: -12.60, maxZ: 12.60 },   // Aisle 5
+  // Shelves Floor 1: [-10, -5, 0, 5, 10], halfW = 1.20, Z: [-12.85, 12.85]
+  // Physical shelf planks extend to +-0.88m, gondola end-caps reach to +-12.58m.
+  // halfW = 1.20m and Z: [-12.85, 12.85] guarantees absolute zero clipping of trolley edges, corners, and handlebar!
+  { minX: -11.20, maxX: -8.80, minZ: -12.85, maxZ: 12.85 }, // Aisle 1
+  { minX: -6.20, maxX: -3.80, minZ: -12.85, maxZ: 12.85 },  // Aisle 2
+  { minX: -1.20, maxX: 1.20, minZ: -12.85, maxZ: 12.85 },   // Aisle 3
+  { minX: 3.80, maxX: 6.20, minZ: -12.85, maxZ: 12.85 },    // Aisle 4
+  { minX: 8.80, maxX: 11.20, minZ: -12.85, maxZ: 12.85 },   // Aisle 5
 
   // Commercial Refrigerator Reach-in Sections on Left Wall
   { minX: -17.60, maxX: -16.20, minZ: -14.20, maxZ: 14.20 },
