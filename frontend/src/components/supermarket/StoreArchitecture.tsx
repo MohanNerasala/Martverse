@@ -4,41 +4,194 @@ import React, { useMemo } from 'react';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
 
-// Procedural seamless commercial supermarket tile texture cache
-let tileTextureCache: THREE.CanvasTexture | null = null;
-function getVitrifiedTileTexture(): THREE.CanvasTexture {
-  if (tileTextureCache) return tileTextureCache;
+// Procedural seamless commercial supermarket vitrified porcelain tile textures
+interface VitrifiedTileSet {
+  map: THREE.CanvasTexture;
+  roughnessMap: THREE.CanvasTexture;
+  bumpMap: THREE.CanvasTexture;
+}
+
+let tileTexturesCache: VitrifiedTileSet | null = null;
+
+function getVitrifiedTileTextures(): VitrifiedTileSet {
+  if (tileTexturesCache) return tileTexturesCache;
   if (typeof document === 'undefined') {
-    return new THREE.CanvasTexture({} as HTMLCanvasElement);
+    const dummy = new THREE.CanvasTexture({} as HTMLCanvasElement);
+    return { map: dummy, roughnessMap: dummy, bumpMap: dummy };
   }
+
+  const S = 1024;
+  const HALF = S / 2; // 512
+
+  // 1. Diffuse / Albedo Map Canvas (Alternating porcelain tiles, grout seams, micro-terrazzo flecks)
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    // 2x2 vitrified commercial supermarket porcelain tile pattern (pearl off-white)
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(0, 0, 512, 512);
+  canvas.width = S;
+  canvas.height = S;
+  const ctx = canvas.getContext('2d')!;
 
-    // Realistic grout joints (soft warm grey)
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(254, 0, 4, 512);
-    ctx.fillRect(0, 254, 512, 4);
+  // 2. Specular / Roughness Map Canvas (Glossy tile body, matte grout)
+  const rCanvas = document.createElement('canvas');
+  rCanvas.width = S;
+  rCanvas.height = S;
+  const rCtx = rCanvas.getContext('2d')!;
 
-    // Subtle natural polished porcelain grain variation
-    ctx.fillStyle = '#f1f5f9';
-    for (let i = 0; i < 48; i++) {
-      const rx = (i * 47) % 508;
-      const ry = (i * 71) % 508;
-      ctx.fillRect(rx, ry, 6, 6);
+  // 3. 3D Bump / Height Map Canvas (Recessed grout depth and beveled edges)
+  const bCanvas = document.createElement('canvas');
+  bCanvas.width = S;
+  bCanvas.height = S;
+  const bCtx = bCanvas.getContext('2d')!;
+
+  // Default neutral backgrounds
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillRect(0, 0, S, S);
+
+  rCtx.fillStyle = '#1e1e1e'; // High porcelain polish (roughness ~0.12)
+  rCtx.fillRect(0, 0, S, S);
+
+  bCtx.fillStyle = '#808080'; // Neutral height
+  bCtx.fillRect(0, 0, S, S);
+
+  // 2x2 Large-Format Commercial Vitrified Porcelain Tiles with Alternating Tones
+  const tileBounds = [
+    { x: 0, y: 0, tone: '#f8fafc' },       // Crisp Ivory porcelain
+    { x: HALF, y: 0, tone: '#e2e8f0' },   // Cool Slate-Grey porcelain
+    { x: 0, y: HALF, tone: '#e2e8f0' },   // Cool Slate-Grey porcelain
+    { x: HALF, y: HALF, tone: '#f8fafc' }, // Crisp Ivory porcelain
+  ];
+
+  tileBounds.forEach(({ x, y, tone }) => {
+    // Tile base fill
+    ctx.fillStyle = tone;
+    ctx.fillRect(x + 10, y + 10, HALF - 20, HALF - 20);
+
+    // Natural subtle porcelain cloud veining
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x + 10, y + 10, HALF - 20, HALF - 20);
+    ctx.clip();
+
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.16)';
+    ctx.lineWidth = 16;
+    ctx.beginPath();
+    ctx.moveTo(x + 50, y + HALF - 60);
+    ctx.bezierCurveTo(x + 160, y + 280, x + 340, y + 160, x + HALF - 50, y + 60);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(x + 100, y + HALF - 30);
+    ctx.bezierCurveTo(x + 220, y + 340, x + 300, y + 210, x + HALF - 100, y + 120);
+    ctx.stroke();
+
+    // Micro-crystalline granite and quartz terrazzo speckles
+    for (let i = 0; i < 110; i++) {
+      const rx = x + 12 + ((i * 47) % (HALF - 24));
+      const ry = y + 12 + ((i * 79) % (HALF - 24));
+      const rw = 2 + (i % 3);
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(71, 85, 105, 0.28)' : 'rgba(148, 163, 184, 0.35)';
+      ctx.fillRect(rx, ry, rw, rw);
     }
-  }
+    ctx.restore();
+
+    // Soft Ambient Occlusion vignette towards tile edges
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.12)';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(x + 12, y + 12, HALF - 24, HALF - 24);
+
+    // Beveled Tile Edge Specular Highlight (Catches directional lighting)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.lineWidth = 3.5;
+    ctx.strokeRect(x + 10, y + 10, HALF - 20, HALF - 20);
+
+    // Bump Map: raised beveled rim around tile
+    bCtx.strokeStyle = '#d4d4d4';
+    bCtx.lineWidth = 4;
+    bCtx.strokeRect(x + 10, y + 10, HALF - 20, HALF - 20);
+  });
+
+  // Architectural Deep Recessed Slate Grout Seams (22px wide)
+  const drawGroutLine = (x1: number, y1: number, x2: number, y2: number) => {
+    // 1. Soft grout drop shadow
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.35)';
+    ctx.lineWidth = 26;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    // 2. Medium slate grout body
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 20;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    // 3. Deep center recessed seam
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    // Roughness: Completely matte porous cement grout
+    rCtx.strokeStyle = '#ffffff';
+    rCtx.lineWidth = 24;
+    rCtx.beginPath();
+    rCtx.moveTo(x1, y1);
+    rCtx.lineTo(x2, y2);
+    rCtx.stroke();
+
+    // Bump: Deep recessed physical groove
+    bCtx.strokeStyle = '#0a0a0a';
+    bCtx.lineWidth = 20;
+    bCtx.beginPath();
+    bCtx.moveTo(x1, y1);
+    bCtx.lineTo(x2, y2);
+    bCtx.stroke();
+  };
+
+  // Center intersecting grout lines
+  drawGroutLine(HALF, 0, HALF, S);
+  drawGroutLine(0, HALF, S, HALF);
+
+  // Outer tile repeat seams
+  drawGroutLine(0, 0, 0, S);
+  drawGroutLine(S, 0, S, S);
+  drawGroutLine(0, 0, S, 0);
+  drawGroutLine(0, S, S, S);
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(36, 36); // Generates realistic 800x800mm tiles across 72x72m floor
-  tileTextureCache = texture;
-  return texture;
+  texture.repeat.set(45, 45); // Generates standard 800x800mm tiles across 72x72m floor
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16;
+
+  const roughnessMap = new THREE.CanvasTexture(rCanvas);
+  roughnessMap.wrapS = THREE.RepeatWrapping;
+  roughnessMap.wrapT = THREE.RepeatWrapping;
+  roughnessMap.repeat.set(45, 45);
+  roughnessMap.generateMipmaps = true;
+  roughnessMap.minFilter = THREE.LinearMipmapLinearFilter;
+  roughnessMap.magFilter = THREE.LinearFilter;
+  roughnessMap.anisotropy = 16;
+
+  const bumpMap = new THREE.CanvasTexture(bCanvas);
+  bumpMap.wrapS = THREE.RepeatWrapping;
+  bumpMap.wrapT = THREE.RepeatWrapping;
+  bumpMap.repeat.set(45, 45);
+  bumpMap.generateMipmaps = true;
+  bumpMap.minFilter = THREE.LinearMipmapLinearFilter;
+  bumpMap.magFilter = THREE.LinearFilter;
+  bumpMap.anisotropy = 16;
+
+  tileTexturesCache = { map: texture, roughnessMap, bumpMap };
+  return tileTexturesCache;
 }
 
 // Pre-allocated static materials and geometries to eliminate GPU pipeline re-compilations
@@ -425,7 +578,7 @@ interface StoreArchitectureProps {
 }
 
 const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
-  const tileTexture = useMemo(() => getVitrifiedTileTexture(), []);
+  const tileTextures = useMemo(() => getVitrifiedTileTextures(), []);
 
   return (
     <group>
@@ -434,11 +587,14 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
           ============================================================== */}
       {/* Ground Floor High-Quality Polished Vitrified Tile Supermarket Flooring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-        <planeGeometry args={[72, 72]} />
+        <planeGeometry args={[72, 72, 45, 45]} />
         <meshStandardMaterial
-          map={tileTexture}
+          map={tileTextures.map}
+          roughnessMap={tileTextures.roughnessMap}
+          bumpMap={tileTextures.bumpMap}
+          bumpScale={0.018}
           roughness={0.14}
-          metalness={0.18}
+          metalness={0.03}
         />
       </mesh>
 

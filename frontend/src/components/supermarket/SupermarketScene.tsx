@@ -114,22 +114,22 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           stencil: false,
           depth: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.15,
+          toneMappingExposure: 1.02,
         }}
       >
         <color attach="background" args={['#e2e8f0']} />
-        <fog attach="fog" args={['#e2e8f0', 55, 95]} />
+        <fog attach="fog" args={['#e2e8f0', 65, 115]} />
 
         {/* --- Commercial Retail Lighting: Rich Contrast, Lustrous Metallic Sheen & Crisp Packaging --- */}
-        <ambientLight intensity={1.1} />
-        <hemisphereLight args={['#ffffff', '#94a3b8', 0.85]} />
+        <ambientLight intensity={0.42} />
+        <hemisphereLight args={['#ffffff', '#64748b', 0.38]} />
 
         {/* Primary Crisp Ceiling Retail Light with Specular Sheen */}
-        <directionalLight position={[10, 26, 8]} intensity={1.3} />
+        <directionalLight position={[12, 28, 12]} intensity={1.15} />
         {/* Soft Cool-Tint Aisle Fill */}
-        <directionalLight position={[-10, 20, -8]} intensity={0.7} />
+        <directionalLight position={[-12, 22, -12]} intensity={0.42} />
         {/* Central Aisle Ambiance */}
-        <directionalLight position={[0, 18, 0]} intensity={0.35} />
+        <directionalLight position={[0, 18, 0]} intensity={0.25} />
 
         <Suspense fallback={null}>
           <ScenePerformanceMonitor />
