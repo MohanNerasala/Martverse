@@ -383,7 +383,7 @@ export default function CartPage() {
             <div className="space-y-1">
               <h2 className="text-xl font-black text-slate-900">Your Shopping Trolley is Empty</h2>
               <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
-                Step into our 3D aisles on Floor 1 (Groceries) or Floor 2 (Fashion) and interact with any shelf product to add it.
+                Step into our 3D aisles and interact with any shelf product to add it to your shopping trolley.
               </p>
             </div>
             <div className="pt-2">

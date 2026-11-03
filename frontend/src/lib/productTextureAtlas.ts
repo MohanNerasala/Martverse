@@ -167,24 +167,13 @@ export function getProductPackagingTexture(product: Product): THREE.CanvasTextur
 
   productPackagingCache.set(cacheKey, texture);
 
-  // Load the actual catalogue SVG / image and paint into the artwork area
+  // Load the actual catalogue SVG / image and paint edge-to-edge for photorealistic commercial packaging
   if (product.imageUrl) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-      // Re-draw base card
-      drawBaseCard();
-
-      // Draw product artwork centered inside 472 x 340 viewport
-      const targetW = 430;
-      const targetH = 310;
-      const scale = Math.min(targetW / (img.width || targetW), targetH / (img.height || targetH));
-      const dw = (img.width || targetW) * scale;
-      const dh = (img.height || targetH) * scale;
-      const dx = 20 + (472 - dw) / 2;
-      const dy = 78 + (340 - dh) / 2;
-
-      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.clearRect(0, 0, 512, 640);
+      ctx.drawImage(img, 0, 0, 512, 640);
       texture.needsUpdate = true;
     };
     img.src = product.imageUrl;

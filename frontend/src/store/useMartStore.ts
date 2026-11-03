@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import { SupermarketFloor, Product } from '@/types';
 import { MOCK_FLOORS, MOCK_PRODUCTS } from '@/lib/mockData';
+import { CANONICAL_BACKEND_PRODUCTS } from '@/lib/productsCatalog';
 import { sounds } from '@/lib/sound';
+import { AutoNavState, buildNavWaypoints, resolveProductStandingPosition } from '@/lib/autoNav';
+export type { AutoNavState } from '@/lib/autoNav';
 
 interface MartStore {
   floors: SupermarketFloor[];
@@ -60,6 +63,9 @@ interface MartStore {
   resetToOriginalState: () => void;
   teleportTrigger: number;
   teleportTo: (pos: [number, number, number], yaw?: number) => void;
+  activeAutoNav: AutoNavState | null;
+  startAutoNavToProduct: (product: Product, autoAddToCart?: boolean) => void;
+  cancelAutoNav: () => void;
   navigateToProduct: (product: Product) => void;
   hydrateProductsFromCache: () => void;
 }
@@ -82,7 +88,7 @@ function getInitialProducts(): Product[] {
       const saved = localStorage.getItem('martverse_products_cache');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed) && parsed.length >= 70) {
           const sanitized = parsed.filter(
             (p: any) =>
               !(
@@ -90,17 +96,17 @@ function getInitialProducts(): Product[] {
                 (p.sku && p.sku.startsWith('APP-'))
               )
           );
-          if (sanitized.length > 0) {
+          if (sanitized.length >= 70) {
             return sanitized;
           }
         }
       }
     } catch {}
   }
-  return [];
+  return CANONICAL_BACKEND_PRODUCTS;
 }
 
-export const useMartStore = create<MartStore>((set) => ({
+export const useMartStore = create<MartStore>((set, get) => ({
   floors: MOCK_FLOORS,
   products: getInitialProducts(), // Instant 0ms shelf population on initial paint; background revalidation updates live data
   activeFloor: 1,
@@ -143,7 +149,7 @@ export const useMartStore = create<MartStore>((set) => ({
         const saved = localStorage.getItem('martverse_products_cache');
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed) && parsed.length >= 70) {
             // Strictly exclude Floor 2 / Apparel items
             const sanitized = parsed.filter(
               (p: any) =>
@@ -152,13 +158,18 @@ export const useMartStore = create<MartStore>((set) => ({
                   (p.sku && p.sku.startsWith('APP-'))
                 )
             );
-            if (sanitized.length > 0) {
+            if (sanitized.length >= 70) {
               set({ products: sanitized });
               localStorage.setItem('martverse_products_cache', JSON.stringify(sanitized));
               return;
             }
           }
         }
+      } catch {}
+      // Fallback to authoritative backend products collection
+      set({ products: CANONICAL_BACKEND_PRODUCTS });
+      try {
+        localStorage.setItem('martverse_products_cache', JSON.stringify(CANONICAL_BACKEND_PRODUCTS));
       } catch {}
     }
   },
@@ -281,6 +292,7 @@ export const useMartStore = create<MartStore>((set) => ({
       isAutoNavigatingToExit: false,
       finalCompletedPopupOpen: false,
       unpaidExitAlertOpen: false,
+      activeAutoNav: null,
     }));
   },
 
@@ -297,61 +309,49 @@ export const useMartStore = create<MartStore>((set) => ({
     }));
   },
 
-  navigateToProduct: (product) => {
+  activeAutoNav: null,
+
+  startAutoNavToProduct: (product: Product, autoAddToCart = true) => {
     sounds.playPickSound();
-    const plc = product.placement;
-    if (!plc) {
-      set({ selectedProduct: product, isProductModalOpen: true });
-      return;
-    }
+    const { standX, standZ, standYaw } = resolveProductStandingPosition(product);
+    const startX = martRuntime.playerPos[0];
+    const startZ = martRuntime.playerPos[2];
+    const waypoints = buildNavWaypoints(startX, startZ, standX, standZ);
 
-    const floorNum = plc.floorNumber || 1;
-    const isEastWest = (floorNum === 1 && (plc.aisleNumber === 3 || plc.aisleNumber === 4 || plc.aisleNumber === 7 || plc.aisleNumber === 8));
-    let targetX = plc.worldX;
-    let targetZ = plc.worldZ;
-    let targetYaw = 0;
-
-    if (isEastWest) {
-      const isNorth = plc.shelfSide === 'LEFT';
-      targetZ = isNorth ? plc.worldZ - 1.35 : plc.worldZ + 1.35;
-      targetYaw = isNorth ? 0 : Math.PI;
-    } else {
-      const aisleCentersF1: Record<number, number> = {
-        1: -24.0, 2: -17.5, 3: -11.0, 4: -11.0,
-        5: 17.5, 6: 24.0, 7: 11.0, 8: 11.0, 9: 29.5,
-      };
-      const aisleCentersF2: Record<number, number> = { 6: -11.0, 7: -6.5, 8: -2.0, 9: 2.5, 10: 7.0, 11: 11.5 };
-      const aisleCenter =
-        floorNum === 2
-          ? (aisleCentersF2[plc.aisleNumber] ?? plc.worldX)
-          : (aisleCentersF1[plc.aisleNumber] ?? plc.worldX);
-
-      const isLeft = plc.shelfSide === 'LEFT' || plc.worldX < aisleCenter;
-      targetX = isLeft ? plc.worldX - 1.35 : plc.worldX + 1.35;
-      targetYaw = isLeft ? Math.PI / 2 : -Math.PI / 2;
-    }
-    const targetY = floorNum === 2 ? 6.5 : 1.5;
-
-    martRuntime.playerPos[0] = targetX;
-    martRuntime.playerPos[1] = targetY;
-    martRuntime.playerPos[2] = targetZ;
-    martRuntime.playerYaw = targetYaw;
-
-    const toastId = 'nav-' + Date.now();
-
-    set((state) => ({
-      activeFloor: floorNum,
-      playerPos: [targetX, targetY, targetZ],
-      playerYaw: targetYaw,
-      selectedProduct: product,
-      isProductModalOpen: true,
-      teleportTrigger: state.teleportTrigger + 1,
-      toast: {
-        id: toastId,
-        title: `Arrived at ${product.name}`,
-        subtitle: `Floor ${floorNum} • ${plc.aisleName || `Aisle ${plc.aisleNumber}`}`,
-        type: 'success',
+    set({
+      isProductModalOpen: false,
+      selectedProduct: null,
+      activeFloor: 1,
+      cameraMode: 'third_person',
+      activeAutoNav: {
+        targetX: standX,
+        targetZ: standZ,
+        targetYaw: standYaw,
+        product,
+        autoAddToCart,
+        waypoints,
+        currentWaypointIndex: 0,
+        startTime: performance.now(),
+        startPos: [...martRuntime.playerPos],
       },
-    }));
+      toast: {
+        id: 'autonav-' + Date.now(),
+        title: `Guiding to ${product.name}`,
+        subtitle: `Trolley navigating smoothly along aisles...`,
+        type: 'info',
+        imageUrl: product.imageUrl,
+      },
+    });
+  },
+
+  cancelAutoNav: () => {
+    set((state) => {
+      if (!state.activeAutoNav) return {};
+      return { activeAutoNav: null };
+    });
+  },
+
+  navigateToProduct: (product: Product) => {
+    get().startAutoNavToProduct(product, true);
   },
 }));

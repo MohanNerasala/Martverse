@@ -121,6 +121,9 @@ export const SupermarketHUD: React.FC = () => {
   const resetToOriginalState = useMartStore((state) => state.resetToOriginalState);
   const products = useMartStore((state) => state.products);
   const navigateToProduct = useMartStore((state) => state.navigateToProduct);
+  const activeAutoNav = useMartStore((state) => state.activeAutoNav);
+  const startAutoNavToProduct = useMartStore((state) => state.startAutoNavToProduct);
+  const cancelAutoNav = useMartStore((state) => state.cancelAutoNav);
   const isMinimapOpen = useMartStore((state) => state.isMinimapOpen);
   const toggleMinimap = useMartStore((state) => state.toggleMinimap);
   const isNavigatorOpen = useMartStore((state) => state.isNavigatorOpen);
@@ -330,17 +333,17 @@ export const SupermarketHUD: React.FC = () => {
                     </div>
                   ) : (
                     filteredProducts.map((p) => (
-                      <button
+                      <div
                         key={p.id}
                         onClick={() => {
                           setIsSearchOpen(false);
                           setSearchQuery('');
-                          navigateToProduct(p);
+                          startAutoNavToProduct(p, true);
                         }}
                         className="w-full px-2.5 py-2 flex items-center justify-between gap-3 hover:bg-sky-50/80 hover:translate-x-0.5 transition-all duration-150 text-left group cursor-pointer rounded-xl"
                       >
                         {/* 1. Item Image & 2. Item Name */}
-                        <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5 shadow-xs">
                             {p.imageUrl ? (
                               <img
@@ -355,16 +358,38 @@ export const SupermarketHUD: React.FC = () => {
                               <span className="text-xs">🛍️</span>
                             )}
                           </div>
-                          <span className="font-semibold text-slate-800 text-xs truncate group-hover:text-sky-600 transition-colors">
-                            {p.name}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="font-semibold text-slate-800 text-xs truncate block group-hover:text-sky-600 transition-colors">
+                              {p.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block truncate">
+                              {p.category?.name || 'Groceries'}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* 3. Amount (Price in INR) */}
-                        <span className="text-xs font-bold text-emerald-600 font-mono flex-shrink-0">
-                          ₹{p.price}
-                        </span>
-                      </button>
+                        {/* 3. Price & Dedicated Add to Trolley CTA */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs font-bold text-emerald-600 font-mono">
+                            ₹{p.price}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsSearchOpen(false);
+                              setSearchQuery('');
+                              startAutoNavToProduct(p, true);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                            title={`Add ${p.name} to Shopping Trolley`}
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5 text-white" />
+                            <span className="hidden sm:inline">Add to Trolley</span>
+                            <span className="sm:hidden">+ Add</span>
+                          </button>
+                        </div>
+                      </div>
                     ))
                   )}
                 </div>
@@ -490,6 +515,34 @@ export const SupermarketHUD: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Active Auto Navigation Indicator Banner */}
+        {activeAutoNav && (
+          <div className="mt-2.5 mx-auto max-w-md bg-slate-900/95 backdrop-blur-2xl text-white px-3.5 py-2 rounded-2xl border border-sky-400/40 shadow-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto select-none">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center flex-shrink-0">
+                <Navigation className="w-4 h-4 animate-pulse text-sky-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
+                  <span>Guiding to {activeAutoNav.product.name}</span>
+                  <span className="text-[10px] bg-sky-500/30 text-sky-300 px-1.5 py-0.5 rounded font-mono font-bold">
+                    ₹{activeAutoNav.product.price}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-300 truncate">
+                  Trolley moving to shelf • Will auto-place into trolley
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => cancelAutoNav()}
+              className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-[10px] font-bold transition-all cursor-pointer flex-shrink-0 border border-white/15"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </header>
 
       {/* ============================================================== */}

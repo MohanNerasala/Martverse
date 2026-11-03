@@ -682,6 +682,19 @@ export const PlayerController: React.FC = () => {
     const delta = Math.min(rawDelta, 0.04);
     const isAutoNavigatingToExit = useMartStore.getState().isAutoNavigatingToExit;
     const finishExitAnimation = useMartStore.getState().finishExitAnimation;
+    const activeAutoNav = useMartStore.getState().activeAutoNav;
+    const cancelAutoNav = useMartStore.getState().cancelAutoNav;
+
+    // Check for user manual steering to immediately cancel auto-nav if requested
+    const isLeft = keys.current.left || martRuntime.virtualKeys.left;
+    const isRight = keys.current.right || martRuntime.virtualKeys.right;
+    const isForward = keys.current.forward || martRuntime.virtualKeys.forward;
+    const isBackward = keys.current.backward || martRuntime.virtualKeys.backward;
+    const hasManualInput = isForward || isBackward || isLeft || isRight;
+
+    if (activeAutoNav && hasManualInput) {
+      cancelAutoNav();
+    }
 
     if (isAutoNavigatingToExit) {
       // Smoothly guide customer and trolley through the main supermarket aisle towards exit gate at x = 0, z = -22.5
@@ -694,6 +707,93 @@ export const PlayerController: React.FC = () => {
       // Once reached the exit sensor gate
       if (posRef.current.z <= -21.6) {
         finishExitAnimation();
+      }
+    } else if (activeAutoNav && !hasManualInput) {
+      // -------------------------------------------------------------------------
+      // SMOOTH HYPERMARKET AUTO-NAVIGATION ("slow -> little fast -> decelerate to arrive")
+      // -------------------------------------------------------------------------
+      const now = performance.now();
+      const elapsed = (now - activeAutoNav.startTime) / 1000;
+
+      const waypoints = activeAutoNav.waypoints;
+      let wpIdx = activeAutoNav.currentWaypointIndex;
+      if (wpIdx >= waypoints.length) wpIdx = waypoints.length - 1;
+      const currentWP = waypoints[wpIdx] || { x: activeAutoNav.targetX, z: activeAutoNav.targetZ };
+      const isFinalWaypoint = wpIdx >= waypoints.length - 1;
+
+      // Distance to intermediate waypoint
+      const toWpX = currentWP.x - posRef.current.x;
+      const toWpZ = currentWP.z - posRef.current.z;
+      const distToWp = Math.hypot(toWpX, toWpZ);
+
+      // Distance to ultimate destination
+      const toFinalX = activeAutoNav.targetX - posRef.current.x;
+      const toFinalZ = activeAutoNav.targetZ - posRef.current.z;
+      const distToFinal = Math.hypot(toFinalX, toFinalZ);
+
+      // Smooth acceleration curve:
+      // 1. Initial ease-in (0.0s -> 0.75s: "go slow")
+      const easeIn = Math.min(1.0, elapsed / 0.75);
+      const accelFactor = Math.sin(easeIn * Math.PI * 0.5);
+
+      // 2. Approach deceleration (distToFinal < 2.2m: "slow down to arrive")
+      const decelFactor = Math.min(1.0, Math.max(0.22, distToFinal / 2.2));
+
+      // Cruise speed: 5.4 m/s ("little fast")
+      const cruiseSpeed = 5.4;
+      const navSpeed = cruiseSpeed * accelFactor * decelFactor;
+
+      // Switch to next waypoint once close enough to intermediate waypoint
+      if (!isFinalWaypoint && distToWp < 0.9) {
+        activeAutoNav.currentWaypointIndex++;
+      }
+
+      if (distToFinal > 0.16) {
+        // Continuous steering towards next waypoint
+        const desiredYaw = Math.atan2(toWpX, toWpZ);
+        let yawDiff = desiredYaw - yawRef.current;
+        while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
+        while (yawDiff > Math.PI) yawDiff -= Math.PI * 2;
+        yawRef.current += yawDiff * Math.min(1.0, delta * 6.5);
+        targetYawRef.current = yawRef.current;
+
+        const dirX = toWpX / (distToWp || 1);
+        const dirZ = toWpZ / (distToWp || 1);
+        posRef.current.x += dirX * navSpeed * delta;
+        posRef.current.z += dirZ * navSpeed * delta;
+        velocityRef.current.x = dirX * navSpeed;
+        velocityRef.current.z = dirZ * navSpeed;
+      } else {
+        // Arrived at walkway location: smoothly align trolley to face the shelf directly
+        let finalYawDiff = activeAutoNav.targetYaw - yawRef.current;
+        while (finalYawDiff < -Math.PI) finalYawDiff += Math.PI * 2;
+        while (finalYawDiff > Math.PI) finalYawDiff -= Math.PI * 2;
+        yawRef.current += finalYawDiff * Math.min(1.0, delta * 8.5);
+        targetYawRef.current = activeAutoNav.targetYaw;
+        velocityRef.current.x = 0;
+        velocityRef.current.z = 0;
+
+        // When yaw alignment completes (within 0.08 rad / ~4 deg)
+        if (Math.abs(finalYawDiff) < 0.08) {
+          const productToAdd = activeAutoNav.product;
+          const shouldAdd = activeAutoNav.autoAddToCart;
+
+          // Clear autonav first so it does not re-enter
+          useMartStore.setState({ activeAutoNav: null });
+
+          if (shouldAdd) {
+            // Adds exact product to cart and spawns 3D parabolic FlyingProductArc from shelf into trolley basket
+            useCartStore.getState().addItem(productToAdd, 1);
+            sounds.playScanBeep();
+          }
+
+          useMartStore.getState().showToast(
+            'Arrived at Shelf',
+            `${productToAdd.name} placed in shopping trolley`,
+            'success',
+            productToAdd.imageUrl
+          );
+        }
       }
     } else {
       if (turn360Ref.current?.active) {
@@ -848,13 +948,13 @@ export const PlayerController: React.FC = () => {
       // The Yellow Checkout Sensor Line spans all 6 lanes (x: -17.5 to +17.5, z: 15.6)
       const isWithinBillingWidth = Math.abs(currX) <= 17.5;
 
-      // 1. FORWARD CROSSING: User pushes trolley forward across the yellow line (z >= 15.5) into the scan dock
+      // 1. FORWARD CROSSING: User pushes trolley forward across the line into the scan dock (z >= 16.5)
       // Automatically takes items from trolley and scans them!
       const isCrossingForward =
         isWithinBillingWidth &&
-        currZ >= 15.5 &&
-        currZ <= 19.5 &&
-        (prevZ < 15.5 || velocityRef.current.z > 0.04 || keys.current.forward || martRuntime.virtualKeys.forward);
+        currZ >= 16.5 &&
+        currZ <= 20.0 &&
+        (prevZ < 16.5 || velocityRef.current.z > 0.04 || keys.current.forward || martRuntime.virtualKeys.forward);
 
       if (
         isCrossingForward &&
@@ -863,19 +963,20 @@ export const PlayerController: React.FC = () => {
         billingPhase === 'idle' &&
         Date.now() > martRuntime.billingCooldownUntil
       ) {
+        martRuntime.billingCooldownUntil = Date.now() + 2500;
         startCheckout(activeCartItems);
       }
 
-      // 2. RETREATING BACKWARD: User pulls trolley back across that line (currZ < 15.4)
+      // 2. RETREATING BACKWARD: User pulls trolley far back out of the dock (currZ < 13.8)
       // When coming back, do NOT take items! If a scan was active, cancel and keep items in trolley
       const isRetreatingBackward =
         isWithinBillingWidth &&
-        currZ < 15.4 &&
-        (prevZ >= 15.4 || velocityRef.current.z < -0.04 || keys.current.backward || martRuntime.virtualKeys.backward);
+        currZ < 13.8 &&
+        (prevZ >= 13.8 || velocityRef.current.z < -0.04 || keys.current.backward || martRuntime.virtualKeys.backward);
 
       if (isRetreatingBackward && billingPhase === 'scanning') {
         useBillingStore.getState().resetBilling();
-        martRuntime.billingCooldownUntil = Date.now() + 1000;
+        martRuntime.billingCooldownUntil = Date.now() + 2500;
       }
     }
 
@@ -934,15 +1035,17 @@ export const PlayerController: React.FC = () => {
 
     // Camera positioning based on cameraMode
     if (cameraMode === 'billing') {
-      const camDist = 3.2;
-      const camHeight = 1.9;
-      const targetCamX = posRef.current.x - Math.sin(yawRef.current) * camDist - 0.35;
-      const targetCamZ = posRef.current.z - Math.cos(yawRef.current) * camDist;
-      const targetCamY = posRef.current.y + camHeight;
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 10, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 10, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 10, delta);
-      camera.lookAt(posRef.current.x + 0.85, posRef.current.y + 0.35, posRef.current.z + 1.2);
+      // Normal full-size trolley framing: camera sits at standard third-person distance right behind the handle
+      const camDist = 0.55;
+      const fwdX = Math.sin(yawRef.current);
+      const fwdZ = Math.cos(yawRef.current);
+      const targetCamX = posRef.current.x - fwdX * camDist;
+      const targetCamZ = posRef.current.z - fwdZ * camDist;
+      const targetCamY = posRef.current.y - 0.05;
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 22, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 22, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 22, delta);
+      camera.lookAt(posRef.current.x + fwdX * 4.0, posRef.current.y - 0.35, posRef.current.z + fwdZ * 4.0);
     } else if (cameraMode === 'exit') {
       // Exit gate cinematic view
       camera.position.set(0, 2.2, -26.5);

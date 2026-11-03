@@ -295,12 +295,12 @@ export default function Home() {
                 Welcome to Martverse
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-sm mx-auto">
-                Explore two floors of groceries and fashion with full 3D trolley freedom.
+                Explore our world-class hypermarket with full 3D shopping trolley freedom.
               </p>
             </div>
 
-            {/* Store Highlights Grid - Floor 1, Floor 2, Billing in Crisp Luxury White Cards with Black Text */}
-            <div className="grid grid-cols-3 gap-3 text-left">
+            {/* Store Highlights Grid - Groceries & POS Billing in Crisp Luxury White Cards */}
+            <div className="grid grid-cols-2 gap-3 text-left">
               {/* Floor 1 */}
               <div className="bg-white border border-slate-200 hover:border-slate-300 p-3.5 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md group">
                 <div className="flex items-center justify-between mb-2.5">
@@ -309,20 +309,8 @@ export default function Home() {
                   </div>
                   <span className="text-[10px] font-black text-black bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">L1</span>
                 </div>
-                <div className="text-black font-black text-xs sm:text-sm tracking-tight">Floor 1</div>
+                <div className="text-black font-black text-xs sm:text-sm tracking-tight">Supermarket</div>
                 <div className="text-[11px] text-black font-bold mt-0.5">Groceries &amp; Staples</div>
-              </div>
-
-              {/* Floor 2 */}
-              <div className="bg-white border border-slate-200 hover:border-slate-300 p-3.5 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md group">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-fuchsia-500 text-white flex items-center justify-center shadow-sm shadow-purple-500/25 group-hover:scale-105 transition-transform">
-                    <ShoppingBag className="w-4 h-4" />
-                  </div>
-                  <span className="text-[10px] font-black text-black bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">L2</span>
-                </div>
-                <div className="text-black font-black text-xs sm:text-sm tracking-tight">Floor 2</div>
-                <div className="text-[11px] text-black font-bold mt-0.5">Upper Level (Coming Soon)</div>
               </div>
 
               {/* POS Billing */}

@@ -1331,14 +1331,14 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
     // 4 clean facings per product brand block (authentic D-Mart / Carrefour merchandising blocks)
     // Slashes product draw calls by 75% to strictly hold the <= 150 budget
     const FACING_WIDTH = 4;
-    const pool = aisleProducts.length > 6 ? aisleProducts.slice(0, 6) : aisleProducts;
+    const pool = aisleProducts;
     const poolLength = pool.length;
     if (poolLength === 0) return slots; // Return clean empty bays while loading
 
     sides.forEach((s) => {
       SHELF_TIERS.forEach((tierInfo) => {
         const shelfTierY = tierInfo.height - aisle.shelfHeight / 2 + 0.0175;
-        const tierOffset = (tierInfo.tier - 1) * 3;
+        const tierOffset = (tierInfo.tier - 1) * 2;
 
         for (let c = 0; c < colCount; c++) {
           const zRel = columnZ[c];

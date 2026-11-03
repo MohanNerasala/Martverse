@@ -961,15 +961,15 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
     const playerZ = martRuntime.playerPos[2];
     const playerX = martRuntime.playerPos[0];
 
-    // Only evaluate desk switching if player is within the billing section approach zone (Z: 13 to 26)
-    // and throttle to 150ms with 1.5m hysteresis to prevent oscillation / state thrashing!
-    if (playerZ >= 13.0 && playerZ <= 26.0 && now - lastDeskCheckRef.current > 150) {
+    // Only evaluate desk switching if NOT currently scanning, and player is within the billing section
+    // Throttle to 350ms with 2.8m hysteresis to eliminate unnecessary re-renders
+    if (phase !== 'scanning' && playerZ >= 13.0 && playerZ <= 26.0 && now - lastDeskCheckRef.current > 350) {
       lastDeskCheckRef.current = now;
       let bestIdx = activeDeskIndex;
       let minDiff = Math.abs(playerX - counterXPositions[activeDeskIndex]);
       for (let i = 0; i < counterXPositions.length; i++) {
         const dist = Math.abs(playerX - counterXPositions[i]);
-        if (dist < minDiff - 1.5) { // 1.5m hysteresis
+        if (dist < minDiff - 2.8) { // 2.8m hysteresis
           bestIdx = i;
           minDiff = dist;
         }

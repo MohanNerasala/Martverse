@@ -43,26 +43,37 @@ export interface ProductPlacement {
   worldY: number;
   worldZ: number;
   rotationY: number;
+  standX?: number;
+  standZ?: number;
+  standYaw?: number;
   color?: string;
   modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger' | 'chocolate' | 'bar';
 }
 
 export interface Product {
   id: string;
+  sku?: string;
   name: string;
   slug: string;
   brand: string;
   description: string;
   price: number;
   mrp: number;
+  effectivePrice?: number;
+  discountPrice?: number;
   discountPercentage: number;
   weightGrams?: number;
   unit: string;
+  packageType?: string;
   imageUrl: string;
   category: Category;
+  categoryId?: string;
+  categoryName?: string;
+  isVeg?: boolean;
   inStock: boolean;
   stockQuantity: number;
   featured: boolean;
+  hasVariants?: boolean;
   variants?: ProductVariant[];
   placement?: ProductPlacement;
 }

@@ -1,5 +1,6 @@
 import { SupermarketFloor, Product, Cart, AuthState, User, Order } from '@/types';
 import { MOCK_FLOORS, MOCK_PRODUCTS } from './mockData';
+import { CANONICAL_BACKEND_PRODUCTS } from './productsCatalog';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
@@ -225,10 +226,10 @@ export const api = {
     } catch {
       isBackendOffline = true;
       if (cachedBackendProducts.length > 0) return cachedBackendProducts;
-      return MOCK_PRODUCTS;
+      return CANONICAL_BACKEND_PRODUCTS;
     }
     if (cachedBackendProducts.length > 0) return cachedBackendProducts;
-    return MOCK_PRODUCTS;
+    return CANONICAL_BACKEND_PRODUCTS;
   },
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {
