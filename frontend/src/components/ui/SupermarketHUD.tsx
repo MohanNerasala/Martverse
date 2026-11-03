@@ -27,7 +27,6 @@ import {
   ShieldAlert,
   Store,
   ArrowRight,
-  ArrowUpDown,
   User,
   LogIn,
   Heart,
@@ -101,106 +100,6 @@ export const ContextualPromptBanner: React.FC = React.memo(() => {
         <kbd className="bg-white/10 border border-white/20 text-white text-xs font-mono font-bold px-2 py-0.5 rounded-md shadow-inner">
           E
         </kbd>
-      </div>
-    </div>
-  );
-});
-
-export const EscalatorPromptCard: React.FC = React.memo(() => {
-  const promptText = useMartStore((state) => state.promptText);
-  const activeFloor = useMartStore((state) => state.activeFloor);
-  const setActiveFloor = useMartStore((state) => state.setActiveFloor);
-  const setPlayerPos = useMartStore((state) => state.setPlayerPos);
-
-  if (!promptText?.includes('Escalator') && !promptText?.includes('Ride to')) return null;
-
-  return (
-    <div className="fixed top-36 sm:top-40 right-5 sm:right-8 z-40 pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-slate-200/90 text-slate-900 max-w-xs w-full transition-all">
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold border border-blue-100">
-            <ArrowUpDown className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="font-extrabold text-xs text-slate-900 tracking-tight block">
-              Store Escalator & Floors
-            </span>
-            <span className="text-[10px] text-slate-500 font-medium">
-              {activeFloor === 2 ? 'Currently on Floor 2' : 'Currently on Ground Floor'}
-            </span>
-          </div>
-        </div>
-        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-          Walkway
-        </span>
-      </div>
-
-      <div className="space-y-2 text-left">
-        {/* Option 1: 2nd Floor (Fashion Studio & Apparel) */}
-        <button
-          type="button"
-          onClick={() => {
-            setPlayerPos([14.7, 6.5, 6.2], 0);
-            setActiveFloor(2);
-          }}
-          className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
-            activeFloor === 2
-              ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-400/30'
-              : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 hover:shadow-sm'
-          }`}
-        >
-          <div className="space-y-0.5">
-            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
-              <span>↑ 2nd Floor • Upper Level</span>
-              {activeFloor === 2 ? (
-                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full">Current</span>
-              ) : (
-                <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">L2</span>
-              )}
-            </div>
-            <div className="text-[11px] text-slate-500 font-medium">
-              Department Expansion (Coming Soon)
-            </div>
-          </div>
-          <ArrowRight className={`w-4 h-4 transition-transform duration-200 ${
-            activeFloor === 2
-              ? 'text-blue-600'
-              : 'text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1'
-          }`} />
-        </button>
-
-        {/* Option 2: Ground Floor (Groceries, Staples & POS) */}
-        <button
-          type="button"
-          onClick={() => {
-            setPlayerPos([14.7, 1.5, -9.2], 0);
-            setActiveFloor(1);
-          }}
-          className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group flex items-center justify-between cursor-pointer ${
-            activeFloor === 1
-              ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-400/30'
-              : 'bg-white hover:bg-blue-50/50 border-slate-200 hover:border-blue-400 hover:shadow-sm'
-          }`}
-        >
-          <div className="space-y-0.5">
-            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center gap-1.5">
-              <span>↓ Ground Floor • Groceries & POS</span>
-              {activeFloor === 1 ? (
-                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full">Current</span>
-              ) : (
-                <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">L1</span>
-              )}
-            </div>
-            <div className="text-[11px] text-slate-500 font-medium">
-              Groceries, Snacks & Billing Counters
-            </div>
-          </div>
-          <ArrowRight className={`w-4 h-4 transition-transform duration-200 ${
-            activeFloor === 1
-              ? 'text-blue-600'
-              : 'text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1'
-          }`} />
-        </button>
       </div>
     </div>
   );
@@ -371,45 +270,11 @@ export const SupermarketHUD: React.FC = () => {
             </div>
           </div>
 
-          {/* Floor Navigation Segmented Switcher — High-Contrast Capsule on White */}
-          <nav className="h-10 flex items-center p-1 rounded-xl bg-slate-100/90 border border-slate-200/80 shadow-inner gap-1">
-            <button
-              onClick={() => {
-                if (activeFloor !== 1) {
-                  setPlayerPos([14.7, 1.5, -9.2], 0);
-                  setActiveFloor(1);
-                }
-              }}
-              className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer active:scale-95 hover:scale-[1.02] ${
-                activeFloor === 1
-                  ? 'bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 text-white shadow-xs border border-sky-400/40'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-              }`}
-              title="Ground Floor: Groceries & Staples"
-            >
-              <Layers className={`w-3.5 h-3.5 ${activeFloor === 1 ? 'text-white' : 'text-slate-500'}`} />
-              <span className="hidden sm:inline">Floor 1:</span>
-              <span>Groceries</span>
-            </button>
-            <button
-              onClick={() => {
-                if (activeFloor !== 2) {
-                  setPlayerPos([14.7, 6.5, 6.2], 0);
-                  setActiveFloor(2);
-                }
-              }}
-              className={`h-8 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer active:scale-95 hover:scale-[1.02] ${
-                activeFloor === 2
-                  ? 'bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 text-white shadow-xs border border-sky-400/40'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-              }`}
-              title="Second Floor: Upper Level"
-            >
-              <Layers className={`w-3.5 h-3.5 ${activeFloor === 2 ? 'text-white' : 'text-slate-500'}`} />
-              <span className="hidden sm:inline">Floor 2:</span>
-              <span>Upper Level</span>
-            </button>
-          </nav>
+          {/* Active Store Section Indicator — Clean Capsule */}
+          <div className="h-10 hidden sm:flex items-center px-3 rounded-xl bg-slate-100/90 border border-slate-200/80 shadow-xs text-xs font-bold text-slate-700 gap-1.5 select-none">
+            <Layers className="w-3.5 h-3.5 text-sky-600" />
+            <span>Groceries & Supermarket</span>
+          </div>
 
           {/* Search Bar - Standardized h-10 height, Clean Pearl Glass */}
           <div ref={searchContainerRef} className="relative flex-1 max-w-[150px] xs:max-w-[190px] sm:max-w-xs md:max-w-sm lg:max-w-md h-10 group">
@@ -633,10 +498,6 @@ export const SupermarketHUD: React.FC = () => {
       <ContextualPromptBanner />
 
       {/* ============================================================== */}
-      {/* --- Escalator Options: Clean White Card with High-End Styling --- */}
-      {/* Positioned comfortably below navbar toasts to prevent overlapping */}
-      {/* ============================================================== */}
-      <EscalatorPromptCard />
       {/* --- First-Look Prominent Mart Name (First-Time Only, Light Blue to White Theme) --- */}
       {/* ============================================================== */}
       <IntroBrandBanner />

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
 import { useMartStore } from '@/store/useMartStore';
@@ -11,6 +12,12 @@ import {
   getShelfMaterial,
   sharedGeometries,
 } from './ShelfUnit';
+import { easeOutCubic, isReducedMotion, computeHoverMatrix, computeHoverLabelMatrix } from '@/lib/hoverProductTween';
+import { HoverProductHighlightBadge } from './HoverProductHighlightBadge';
+
+// Pre-allocated static matrices for zero-GC hover tweens
+const _islandMat4 = new THREE.Matrix4();
+const _islandLabelMat4 = new THREE.Matrix4();
 
 // Pre-allocated static materials for promotional display islands (Bright Hypermarket Palette)
 const islandMaterials = {
@@ -36,17 +43,18 @@ const islandMaterials = {
 };
 
 // ---------------------------------------------------------------------------
-// ISLAND 1: LUXURY CHOCOLATES & CONFECTIONERY SHOWCASE (x = 0, z = -15)
+// ISLAND 1: LUXURY CHOCOLATES & CONFECTIONERY SHOWCASE (x = 0, z = -22.5)
 // ---------------------------------------------------------------------------
 const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
   const products = useMartStore((state) => state.products);
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
 
-  const center: [number, number, number] = [0, 0, -15];
+  const center: [number, number, number] = [0, 0, -22.5];
 
-  // Filter chocolates and confectionery
+  // Filter chocolates and confectionery directly from database API products
   const chocProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
     return products.filter((p) => {
       const name = (p.name || '').toLowerCase();
       const slug = (p.slug || '').toLowerCase();
@@ -82,12 +90,12 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
     }> = [];
 
     tiers.forEach((tierY, tIdx) => {
-      // 1. North Face (Facing Entrance / -Z)
+      // 1. North Face (Facing Entrance / -Z, placed 35mm behind 0.80m shelf lip)
       [-1.2, -0.6, 0, 0.6, 1.2].forEach((xOff, pIdx) => {
         const prod = pool[(tIdx * 8 + pIdx) % poolLen];
         const x = center[0] + xOff;
-        const z = center[2] - 0.76;
-        const y = tierY + 0.02;
+        const z = center[2] - 0.715;
+        const y = tierY + 0.0175;
 
         const slotPlacement: ProductPlacement = {
           id: `choc-n-t${tIdx}-${pIdx}`,
@@ -122,12 +130,12 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
         });
       });
 
-      // 2. South Face (Facing Aisles / +Z)
+      // 2. South Face (Facing Aisles / +Z, placed 35mm behind 0.80m shelf lip)
       [-1.2, -0.6, 0, 0.6, 1.2].forEach((xOff, pIdx) => {
         const prod = pool[(tIdx * 8 + pIdx + 3) % poolLen];
         const x = center[0] + xOff;
-        const z = center[2] + 0.76;
-        const y = tierY + 0.02;
+        const z = center[2] + 0.715;
+        const y = tierY + 0.0175;
 
         const slotPlacement: ProductPlacement = {
           id: `choc-s-t${tIdx}-${pIdx}`,
@@ -162,12 +170,12 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
         });
       });
 
-      // 3. West End-Cap (Facing Left / -X)
+      // 3. West End-Cap (Facing Left / -X, placed 35mm behind 1.60m endcap shelf lip)
       [-0.4, 0.4].forEach((zOff, pIdx) => {
         const prod = pool[(tIdx * 8 + pIdx + 5) % poolLen];
-        const x = center[0] - 1.52;
+        const x = center[0] - 1.515;
         const z = center[2] + zOff;
-        const y = tierY + 0.02;
+        const y = tierY + 0.0175;
 
         const slotPlacement: ProductPlacement = {
           id: `choc-w-t${tIdx}-${pIdx}`,
@@ -202,12 +210,12 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
         });
       });
 
-      // 4. East End-Cap (Facing Right / +X)
+      // 4. East End-Cap (Facing Right / +X, placed 35mm behind 1.60m endcap shelf lip)
       [-0.4, 0.4].forEach((zOff, pIdx) => {
         const prod = pool[(tIdx * 8 + pIdx + 6) % poolLen];
-        const x = center[0] + 1.52;
+        const x = center[0] + 1.515;
         const z = center[2] + zOff;
-        const y = tierY + 0.02;
+        const y = tierY + 0.0175;
 
         const slotPlacement: ProductPlacement = {
           id: `choc-e-t${tIdx}-${pIdx}`,
@@ -263,9 +271,6 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
 
   return (
     <group position={center}>
-      {/* Contact Ground Shadow Decal */}
-      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={sharedGeometries.plane} scale={[3.8, 2.0, 1]} material={islandMaterials.contactShadow} raycast={() => null} />
-
       {/* Royal Blue Base Skirt */}
       <mesh position={[0, 0.12, 0]} geometry={sharedGeometries.box} scale={[3.24, 0.24, 1.64]} material={islandMaterials.bluePodium} raycast={() => null} />
 
@@ -327,17 +332,18 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
 ChocolatesPromotionalIsland.displayName = 'ChocolatesPromotionalIsland';
 
 // ---------------------------------------------------------------------------
-// ISLAND 2: PREMIUM TEA & COFFEE PAVILION (x = 0, z = -2)
+// ISLAND 2: PREMIUM TEA & COFFEE PAVILION (x = 0, z = -15)
 // ---------------------------------------------------------------------------
 const TeaCoffeePromotionalIsland: React.FC = React.memo(() => {
   const products = useMartStore((state) => state.products);
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
 
-  const center: [number, number, number] = [0, 0, -2];
+  const center: [number, number, number] = [0, 0, -15.0];
 
-  // Filter tea & coffee products
+  // Filter tea & coffee products directly from database API products
   const teaCoffeeProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
     return products.filter((p) => {
       const name = (p.name || '').toLowerCase();
       const slug = (p.slug || '').toLowerCase();
@@ -354,7 +360,7 @@ const TeaCoffeePromotionalIsland: React.FC = React.memo(() => {
     });
   }, [products]);
 
-  // Rectangular 2-Tier Natural Wood Display Table (3.2m x 2.2m)
+  // Rectangular 2-Tier Display Table (3.2m x 2.2m)
   const slots = useMemo(() => {
     if (teaCoffeeProducts.length === 0) return [];
     const pool = teaCoffeeProducts;
@@ -368,13 +374,13 @@ const TeaCoffeePromotionalIsland: React.FC = React.memo(() => {
       rotY: number;
     }> = [];
 
-    // Lower Deck Perimeter (Tier 1: y = 0.42m)
+    // Lower Deck Perimeter (Tier 1: y = 0.42m, placed 35mm behind lip)
     // North side (facing -Z)
     [-1.1, -0.55, 0, 0.55, 1.1].forEach((xOff, idx) => {
       const prod = pool[idx % poolLen];
       const x = center[0] + xOff;
-      const z = center[2] - 0.95;
-      const y = 0.42;
+      const z = center[2] - 0.715;
+      const y = 0.42 + 0.0175;
 
       arr.push({
         key: `tc-t1-n-${idx}-${prod.id}`,
@@ -552,17 +558,18 @@ const TeaCoffeePromotionalIsland: React.FC = React.memo(() => {
 TeaCoffeePromotionalIsland.displayName = 'TeaCoffeePromotionalIsland';
 
 // ---------------------------------------------------------------------------
-// ISLAND 3: FESTIVE SWEETS & ROYAL DRY FRUITS DISPLAY (x = 0, z = 11)
+// ISLAND 3: FESTIVE SWEETS & ROYAL DRY FRUITS DISPLAY (x = 0, z = -5)
 // ---------------------------------------------------------------------------
 const SweetsDryFruitsIsland: React.FC = React.memo(() => {
   const products = useMartStore((state) => state.products);
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
 
-  const center: [number, number, number] = [0, 0, 11];
+  const center: [number, number, number] = [0, 0, -5.0];
 
-  // Filter sweets & dry fruits
+  // Filter sweets & dry fruits directly from database API products
   const sweetProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
     return products.filter((p) => {
       const name = (p.name || '').toLowerCase();
       const slug = (p.slug || '').toLowerCase();
@@ -580,7 +587,7 @@ const SweetsDryFruitsIsland: React.FC = React.memo(() => {
     });
   }, [products]);
 
-  // Stepped Emerald & Ruby 3-Tier Octagonal Table (3.0m x 2.6m)
+  // Stepped 3-Tier Octagonal Table (3.0m x 2.6m, placed 35mm behind lip)
   const slots = useMemo(() => {
     if (sweetProducts.length === 0) return [];
     const pool = sweetProducts;
@@ -598,8 +605,8 @@ const SweetsDryFruitsIsland: React.FC = React.memo(() => {
     [-1.0, -0.5, 0, 0.5, 1.0].forEach((xOff, idx) => {
       const prod = pool[idx % poolLen];
       const x = center[0] + xOff;
-      const z = center[2] - 1.05;
-      const y = 0.42;
+      const z = center[2] - 0.715;
+      const y = 0.42 + 0.0175;
 
       arr.push({
         key: `sw-t1-n-${idx}-${prod.id}`,
@@ -786,6 +793,19 @@ const IslandProductBatch: React.FC<{
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const labelRef = useRef<THREE.InstancedMesh>(null);
 
+  // Hover Tween State (200ms easeOutCubic in, 160ms out, zero GC per frame)
+  const hoveredIndexRef = useRef<number | null>(null);
+  const animIndexRef = useRef<number | null>(null);
+  const progressRef = useRef(0.0);
+  const [activeBadge, setActiveBadge] = useState<{
+    pos: [number, number, number];
+    rotY: number;
+    bw: number;
+    bh: number;
+    bd: number;
+    progress: number;
+  } | null>(null);
+
   const plcColor = product.placement?.color || (isChoc ? '#1d4ed8' : '#3b82f6');
   const bodyMat = useMemo(() => {
     return getProductBodyMaterial(plcColor, 0.3, 0.1);
@@ -795,10 +815,11 @@ const IslandProductBatch: React.FC<{
   const labelMat = useMemo(() => getShelfMaterial(frontTex, `pkg-${product.slug || product.id}`, 'standard'), [frontTex, product]);
 
   const bw = isChoc ? 0.28 : 0.26;
-  const bh = isChoc ? 0.24 : 0.34;
-  const bd = isChoc ? 0.08 : 0.14;
+  const bh = isChoc ? 0.32 : 0.34;
+  const bd = isChoc ? 0.08 : 0.12;
   const yOff = bh / 2;
 
+  // Initial Matrix Population
   useEffect(() => {
     if (!bodyRef.current || !labelRef.current || slots.length === 0) return;
     const dummy = new THREE.Object3D();
@@ -834,6 +855,77 @@ const IslandProductBatch: React.FC<{
     } catch {}
   }, [slots, bw, bh, bd, yOff]);
 
+  // Smooth Render Loop Hover Tween (18mm pull-out forward, 3.5 deg tilt, 0 per-frame allocations)
+  useFrame((_, delta) => {
+    if (!bodyRef.current || !labelRef.current || slots.length === 0) return;
+
+    const isHovered = hoveredIndexRef.current !== null;
+
+    if (isHovered) {
+      animIndexRef.current = hoveredIndexRef.current;
+      if (progressRef.current < 1.0) {
+        progressRef.current = Math.min(1.0, progressRef.current + delta / 0.200);
+      }
+    } else if (progressRef.current > 0.0) {
+      progressRef.current = Math.max(0.0, progressRef.current - delta / 0.160);
+    }
+
+    if (animIndexRef.current !== null && animIndexRef.current < slots.length) {
+      const idx = animIndexRef.current;
+      const slot = slots[idx];
+      const p = easeOutCubic(progressRef.current);
+      const reduced = isReducedMotion();
+
+      computeHoverMatrix(_islandMat4, {
+        restX: slot.x,
+        restY: slot.y + yOff,
+        restZ: slot.z,
+        rotY: slot.rotY,
+        bw,
+        bh,
+        bd,
+        progress: p,
+        reducedMotion: reduced,
+      });
+      bodyRef.current.setMatrixAt(idx, _islandMat4);
+
+      computeHoverLabelMatrix(_islandLabelMat4, {
+        restX: slot.x,
+        restY: slot.y + yOff,
+        restZ: slot.z,
+        rotY: slot.rotY,
+        bw,
+        bh,
+        bd,
+        lw: bw * 0.94,
+        lh: bh * 0.94,
+        progress: p,
+        reducedMotion: reduced,
+      });
+      labelRef.current.setMatrixAt(idx, _islandLabelMat4);
+
+      bodyRef.current.instanceMatrix.needsUpdate = true;
+      labelRef.current.instanceMatrix.needsUpdate = true;
+
+      if (progressRef.current > 0.02 && !activeBadge) {
+        setActiveBadge({
+          pos: [slot.x, slot.y + yOff, slot.z],
+          rotY: slot.rotY,
+          bw,
+          bh,
+          bd,
+          progress: p,
+        });
+      } else if (progressRef.current <= 0.02 && activeBadge) {
+        setActiveBadge(null);
+      }
+
+      if (progressRef.current === 0.0 && !isHovered) {
+        animIndexRef.current = null;
+      }
+    }
+  });
+
   if (slots.length === 0) return null;
 
   return (
@@ -845,11 +937,24 @@ const IslandProductBatch: React.FC<{
         onPointerOver={(e) => {
           e.stopPropagation();
           if (typeof document !== 'undefined') document.body.style.cursor = 'pointer';
+          const instanceId = e.instanceId;
+          if (instanceId !== undefined && instanceId < slots.length) {
+            hoveredIndexRef.current = instanceId;
+          }
+          setHover(product);
+        }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          const instanceId = e.instanceId;
+          if (instanceId !== undefined && instanceId < slots.length) {
+            hoveredIndexRef.current = instanceId;
+          }
           setHover(product);
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
           if (typeof document !== 'undefined') document.body.style.cursor = 'default';
+          hoveredIndexRef.current = null;
           setHover(null);
         }}
         onClick={(e) => {
@@ -863,6 +968,17 @@ const IslandProductBatch: React.FC<{
         args={[sharedGeometries.plane, labelMat, slots.length]}
         raycast={() => null}
       />
+      {activeBadge && (
+        <HoverProductHighlightBadge
+          product={product}
+          position={activeBadge.pos}
+          rotY={activeBadge.rotY}
+          bw={activeBadge.bw}
+          bh={activeBadge.bh}
+          bd={activeBadge.bd}
+          progress={progressRef.current}
+        />
+      )}
     </group>
   );
 });

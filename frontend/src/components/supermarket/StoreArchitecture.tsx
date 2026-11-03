@@ -198,10 +198,7 @@ const sharedMaterials = {
     emissiveIntensity: 1.5,
   }),
   glassRail: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.4, roughness: 0.1 }),
-  escalatorBase: new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.7, roughness: 0.3 }),
-  escalatorSteps: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.8 }),
   yellowLine: new THREE.MeshBasicMaterial({ color: '#facc15' }),
-  escalatorGlass: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.5, roughness: 0.1 }),
   pillarConcrete: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.25, metalness: 0.05 }),
   hazardStrip: new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.35, metalness: 0.1 }),
   hazardBlack: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.4 }),
@@ -740,7 +737,6 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       {/* Clean Commercial Overhead Services (Slim Painted White Conduits & Concealed Sprinklers) */}
       <CommercialCeilingServices />
       <PerimeterWallBaseboards />
-      <SecurityDomeCameras />
 
       {/* Clean Commercial Recessed Ceiling Downlights on Regular Grid (Drives Specular Highlights) */}
       <InstancedCircularDownlights />

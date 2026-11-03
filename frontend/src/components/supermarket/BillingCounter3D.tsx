@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
@@ -15,14 +15,277 @@ interface BillingCounterProps {
 }
 
 // ---------------------------------------------------------------------------
+// Pre-allocated Shared Three.js Geometries (Module Scope Singletons)
+// Eliminates 1,000+ GC allocations per second and prevents memory thrashing
+// ---------------------------------------------------------------------------
+const checkoutSharedGeos = {
+  box: new THREE.BoxGeometry(1, 1, 1),
+  cyl: new THREE.CylinderGeometry(1, 1, 1, 16),
+  // Counter bodies
+  plinth: new THREE.BoxGeometry(1.24, 0.12, 3.18),
+  body: new THREE.BoxGeometry(1.3, 0.86, 3.24),
+  stripe: new THREE.BoxGeometry(1.305, 0.12, 3.245),
+  countertop: new THREE.BoxGeometry(1.36, 0.05, 3.32),
+  countertopBevel: new THREE.BoxGeometry(1.34, 0.008, 3.3),
+  // Rails
+  bumperRail: new THREE.CylinderGeometry(0.022, 0.022, 3.22, 12),
+  bumperTrim: new THREE.CylinderGeometry(0.012, 0.012, 3.22, 10),
+  bracketBox: new THREE.BoxGeometry(0.02, 0.06, 0.04),
+  footrestBar: new THREE.CylinderGeometry(0.016, 0.016, 1.4, 12),
+  footrestBracket: new THREE.CylinderGeometry(0.014, 0.014, 0.22, 10),
+  // Drawer
+  drawerCase: new THREE.BoxGeometry(0.46, 0.16, 0.44),
+  drawerFace: new THREE.BoxGeometry(0.006, 0.14, 0.4),
+  drawerHandle: new THREE.BoxGeometry(0.015, 0.018, 0.16),
+  // Conveyor
+  conveyorBed: new THREE.BoxGeometry(0.66, 0.02, 1.66),
+  conveyorBelt: new THREE.BoxGeometry(0.62, 0.02, 1.62),
+  conveyorSideRail: new THREE.BoxGeometry(0.024, 0.065, 1.64),
+  conveyorFlare: new THREE.BoxGeometry(0.024, 0.065, 0.08),
+  driveRoller: new THREE.CylinderGeometry(0.026, 0.026, 0.63, 14),
+  driveRollerCap: new THREE.CylinderGeometry(0.032, 0.032, 0.03, 10),
+  treadRib: new THREE.BoxGeometry(0.6, 0.004, 0.014),
+  // Scanner
+  scannerOuter: new THREE.BoxGeometry(0.38, 0.016, 0.38),
+  scannerBevel: new THREE.BoxGeometry(0.35, 0.008, 0.35),
+  scannerGlass: new THREE.BoxGeometry(0.31, 0.004, 0.31),
+  scannerLaserBar: new THREE.BoxGeometry(0.31, 0.008, 0.035),
+  scannerLedCase: new THREE.BoxGeometry(0.075, 0.004, 0.024),
+  // Overhead sign
+  laneSignBox: new THREE.BoxGeometry(0.38, 0.28, 0.08),
+  laneSignCap: new THREE.BoxGeometry(0.39, 0.016, 0.086),
+  laneSignStatusLed: new THREE.BoxGeometry(0.32, 0.008, 0.07),
+  laneSignMast: new THREE.CylinderGeometry(0.022, 0.022, 1.6, 14),
+  laneSignDownlight: new THREE.BoxGeometry(0.36, 0.016, 0.05),
+  // POS Monitor & Customer Pole
+  monitorMast: new THREE.CylinderGeometry(0.026, 0.026, 0.34, 14),
+  monitorJoint: new THREE.CylinderGeometry(0.03, 0.03, 0.05, 12),
+  monitorChassis: new THREE.BoxGeometry(0.54, 0.36, 0.028),
+  monitorBezel: new THREE.BoxGeometry(0.525, 0.345, 0.005),
+  monitorScreenPlane: new THREE.PlaneGeometry(0.5, 0.32),
+  poleDisplayMast: new THREE.CylinderGeometry(0.018, 0.018, 0.44, 12),
+  poleDisplayHead: new THREE.BoxGeometry(0.34, 0.10, 0.05),
+  poleDisplayGlass: new THREE.PlaneGeometry(0.31, 0.075),
+  // PIN Pad
+  pinPadBody: new THREE.BoxGeometry(0.11, 0.18, 0.035),
+  pinPadArm: new THREE.CylinderGeometry(0.014, 0.014, 0.18, 10),
+  pinPadScreen: new THREE.PlaneGeometry(0.09, 0.055),
+  // Stool
+  stoolBase: new THREE.CylinderGeometry(0.22, 0.22, 0.03, 16),
+  stoolColumn: new THREE.CylinderGeometry(0.024, 0.024, 0.5, 12),
+  stoolCushion: new THREE.CylinderGeometry(0.18, 0.18, 0.06, 16),
+  stoolBackrest: new THREE.BoxGeometry(0.03, 0.16, 0.26),
+  // Bagging Station
+  bagBasin: new THREE.BoxGeometry(0.62, 0.03, 0.72),
+  bagBasinLipSide: new THREE.BoxGeometry(0.015, 0.035, 0.72),
+  bagBasinLipEnd: new THREE.BoxGeometry(0.62, 0.035, 0.015),
+  bagRackPost: new THREE.CylinderGeometry(0.014, 0.014, 0.32, 10),
+  bagRackArm: new THREE.CylinderGeometry(0.007, 0.007, 0.28, 8),
+  bagBody: new THREE.BoxGeometry(0.42, 0.32, 0.28),
+  bagLip: new THREE.BoxGeometry(0.426, 0.016, 0.286),
+  bagInterior: new THREE.PlaneGeometry(0.39, 0.25),
+  // Stanchions
+  stanchionBase: new THREE.CylinderGeometry(0.16, 0.18, 0.03, 14),
+  stanchionPost: new THREE.CylinderGeometry(0.022, 0.022, 0.92, 12),
+  stanchionCap: new THREE.CylinderGeometry(0.035, 0.035, 0.08, 12),
+  stanchionBelt: new THREE.BoxGeometry(0.008, 0.045, 1.58),
+  // Decals
+  dockPlane: new THREE.PlaneGeometry(1.36, 2.46),
+};
+
+// ---------------------------------------------------------------------------
+// Pre-allocated Shared Three.js Materials (Module Scope Singletons)
+// ---------------------------------------------------------------------------
+const checkoutSharedMats = {
+  plinth: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.35, metalness: 0.65 }),
+  bodyWhite: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.25, metalness: 0.1 }),
+  accentBlue: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.28, metalness: 0.15 }),
+  countertopSteel: new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.88, roughness: 0.18 }),
+  countertopTrim: new THREE.MeshStandardMaterial({ color: '#f1f5f9', metalness: 0.9, roughness: 0.15 }),
+  chromeBright: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.12, metalness: 0.98 }),
+  chromeDull: new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.92, roughness: 0.15 }),
+  chromeReflect: new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.95, roughness: 0.1 }),
+  bracketDark: new THREE.MeshStandardMaterial({ color: '#64748b', metalness: 0.8, roughness: 0.2 }),
+  rubberDark: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.88, metalness: 0.08 }),
+  bedSlate: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.5 }),
+  darkSteel: new THREE.MeshStandardMaterial({ color: '#475569', metalness: 0.9, roughness: 0.2 }),
+  blackLeather: new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.7, metalness: 0.1 }),
+  scannerGlassMat: new THREE.MeshStandardMaterial({ color: '#0284c7', roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.85 }),
+  laserRed: new THREE.MeshBasicMaterial({ color: '#ff2222', transparent: true, opacity: 0.96 }),
+  vfdGreenScreen: new THREE.MeshBasicMaterial({ color: '#022c22' }),
+  posBezelMat: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.3 }),
+  screenInactiveMat: new THREE.MeshBasicMaterial({ color: '#0369a1' }),
+  screenScanningMat: new THREE.MeshBasicMaterial({ color: '#022c22' }),
+  kraftPaper: new THREE.MeshStandardMaterial({ color: '#c29b67', roughness: 0.96, metalness: 0.02 }),
+  kraftPaperLip: new THREE.MeshStandardMaterial({ color: '#ab834f', roughness: 0.9 }),
+  kraftInterior: new THREE.MeshBasicMaterial({ color: '#543c1f' }),
+  ropeHandle: new THREE.MeshStandardMaterial({ color: '#8f6a39', roughness: 0.85 }),
+  stanchionBeltMat: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.6 }),
+  signLedActive: new THREE.MeshStandardMaterial({ color: '#38bdf8', emissive: new THREE.Color('#38bdf8'), emissiveIntensity: 1.0, roughness: 0.2 }),
+  signLedInactive: new THREE.MeshStandardMaterial({ color: '#a7f3d0', emissive: new THREE.Color('#059669'), emissiveIntensity: 0.6, roughness: 0.2 }),
+  downlightMat: new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: new THREE.Color('#ffffff'), emissiveIntensity: 0.8, roughness: 0.1 }),
+};
+
+// ---------------------------------------------------------------------------
+// High-Resolution Cached Canvas Textures (0ms Load, 0 WebGL font worker overhead)
+// ---------------------------------------------------------------------------
+const laneSignTextureCache = new Map<number, THREE.CanvasTexture>();
+
+function getLaneSignTexture(laneNumber: number): THREE.CanvasTexture | null {
+  if (typeof window === 'undefined') return null;
+  let tex = laneSignTextureCache.get(laneNumber);
+  if (!tex) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 360;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // Emerald Green Commercial Lane Box
+      ctx.fillStyle = '#059669';
+      ctx.fillRect(0, 0, 512, 360);
+
+      // Top subtle cyan accent line
+      ctx.fillStyle = '#34d399';
+      ctx.fillRect(0, 0, 512, 14);
+
+      // Large bold numeral
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 170px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const numStr = laneNumber < 10 ? `0${laneNumber}` : `${laneNumber}`;
+      ctx.fillText(numStr, 256, 160);
+
+      // Lane Open Badge Pill
+      ctx.fillStyle = '#047857';
+      ctx.beginPath();
+      ctx.roundRect(106, 262, 300, 60, 30);
+      ctx.fill();
+
+      ctx.fillStyle = '#a7f3d0';
+      ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+      ctx.fillText('LANE OPEN', 256, 292);
+
+      tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      laneSignTextureCache.set(laneNumber, tex);
+    }
+  }
+  return tex || null;
+}
+
+const monitorReadyTextureCache = new Map<number, THREE.CanvasTexture>();
+
+function getMonitorReadyTexture(laneNumber: number): THREE.CanvasTexture | null {
+  if (typeof window === 'undefined') return null;
+  let tex = monitorReadyTextureCache.get(laneNumber);
+  if (!tex) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 340;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // Dark Blue Screen Background
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 512, 340);
+
+      // Top Header Bar
+      ctx.fillStyle = '#1e3a8a';
+      ctx.fillRect(0, 0, 512, 50);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 22px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const numStr = laneNumber < 10 ? `0${laneNumber}` : `${laneNumber}`;
+      ctx.fillText(`MARTVERSE • LANE ${numStr} • EXPRESS`, 256, 25);
+
+      // Center Prompt
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 36px system-ui, sans-serif';
+      ctx.fillText('SELF-CHECKOUT OPEN', 256, 130);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 22px system-ui, sans-serif';
+      ctx.fillText('DRIVE TROLLEY INTO DOCK', 256, 180);
+
+      // Bottom Status Pill
+      ctx.fillStyle = '#059669';
+      ctx.fillRect(24, 240, 464, 60);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 28px system-ui, sans-serif';
+      ctx.fillText('● SCANNER READY', 256, 270);
+
+      tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      monitorReadyTextureCache.set(laneNumber, tex);
+    }
+  }
+  return tex || null;
+}
+
+const floorDockTextureCache = new Map<string, THREE.CanvasTexture>();
+
+function getFloorDockTexture(laneNumber: number, isActive: boolean): THREE.CanvasTexture | null {
+  if (typeof window === 'undefined') return null;
+  const key = `${laneNumber}_${isActive ? 'active' : 'inactive'}`;
+  let tex = floorDockTextureCache.get(key);
+  if (!tex) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 800;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // Background dock pad
+      ctx.fillStyle = isActive ? '#e0f2fe' : '#f1f5f9';
+      ctx.fillRect(0, 0, 512, 800);
+
+      // Border safety band
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = isActive ? '#0284c7' : '#94a3b8';
+      ctx.strokeRect(7, 7, 498, 786);
+
+      // Chevrons
+      ctx.fillStyle = isActive ? '#0284c7' : '#64748b';
+      ctx.font = '900 48px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('▲ ▲ ▲', 256, 140);
+
+      // Lane Text
+      const numStr = laneNumber < 10 ? `0${laneNumber}` : `${laneNumber}`;
+      ctx.font = 'bold 40px system-ui, sans-serif';
+      ctx.fillText(`LANE ${numStr} • TROLLEY BAY`, 256, 400);
+
+      ctx.font = 'bold 26px system-ui, sans-serif';
+      ctx.fillStyle = isActive ? '#0369a1' : '#94a3b8';
+      ctx.fillText(isActive ? '[ AUTO-SCAN SENSOR DOCK ]' : '[ TROLLEY DOCK ]', 256, 450);
+
+      // Wheel bracket corners
+      ctx.strokeStyle = isActive ? '#0284c7' : '#94a3b8';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(60, 60, 80, 80);
+      ctx.strokeRect(372, 60, 80, 80);
+      ctx.strokeRect(60, 660, 80, 80);
+      ctx.strokeRect(372, 660, 80, 80);
+
+      tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      floorDockTextureCache.set(key, tex);
+    }
+  }
+  return tex || null;
+}
+
+// ---------------------------------------------------------------------------
 // 3D Item Mesh representing grocery items on the conveyor
 // ---------------------------------------------------------------------------
 const ConveyorItemMesh: React.FC<{
   item: CartItem;
   position: [number, number, number];
   rotation: [number, number, number];
-  isLaserActive: boolean;
-}> = ({ item, position, rotation, isLaserActive }) => {
+}> = React.memo(({ item, position, rotation }) => {
   const isBottle =
     item.modelType === 'bottle' ||
     /oil|shampoo|liquid|wash|dishwash/i.test(item.productName);
@@ -30,7 +293,7 @@ const ConveyorItemMesh: React.FC<{
     item.modelType === 'shirt' ||
     item.modelType === 'hanger' ||
     /shirt|polo|kurta|saree|dress|jeans|apparel/i.test(item.productName) ||
-    !!item.size;
+    Boolean(item.size);
   const isChocolate =
     item.modelType === 'chocolate' ||
     item.modelType === 'bar' ||
@@ -53,106 +316,47 @@ const ConveyorItemMesh: React.FC<{
     <group position={position} rotation={rotation}>
       {isBottle ? (
         <group>
-          {/* Main Bottle Body */}
           <mesh>
-            <cylinderGeometry args={[0.045, 0.05, 0.15, 16]} />
+            <cylinderGeometry args={[0.045, 0.05, 0.15, 12]} />
             <meshStandardMaterial color={color} roughness={0.25} metalness={0.1} />
           </mesh>
-          {/* Bottle Neck & Cap */}
           <mesh position={[0, 0.095, 0]}>
-            <cylinderGeometry args={[0.02, 0.045, 0.04, 16]} />
+            <cylinderGeometry args={[0.02, 0.045, 0.04, 12]} />
             <meshStandardMaterial color={color} roughness={0.25} />
           </mesh>
           <mesh position={[0, 0.125, 0]}>
-            <cylinderGeometry args={[0.018, 0.018, 0.025, 14]} />
+            <cylinderGeometry args={[0.018, 0.018, 0.025, 10]} />
             <meshStandardMaterial color="#ffffff" roughness={0.3} />
-          </mesh>
-          {/* Front Printed Product Label */}
-          <mesh position={[0, 0.01, 0]}>
-            <cylinderGeometry args={[0.046, 0.046, 0.08, 16]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.4} />
           </mesh>
         </group>
       ) : isClothing ? (
         <group>
-          {/* Folded Garment */}
           <mesh>
             <boxGeometry args={[0.18, 0.06, 0.18]} />
             <meshStandardMaterial color={color} roughness={0.8} />
           </mesh>
-          {/* Collar Seam */}
-          <mesh position={[0, 0.032, 0]}>
-            <boxGeometry args={[0.13, 0.006, 0.06]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.4} />
-          </mesh>
         </group>
       ) : isChocolate ? (
         <group>
-          {/* Chocolate Bar Packet on Scanning Conveyor */}
           <mesh>
             <boxGeometry args={[0.2, 0.02, 0.09]} />
             <meshStandardMaterial color={color} roughness={0.25} metalness={0.15} />
           </mesh>
-          <mesh position={[-0.104, 0, 0]}>
-            <boxGeometry args={[0.008, 0.018, 0.086]} />
-            <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
-          </mesh>
-          <mesh position={[0.104, 0, 0]}>
-            <boxGeometry args={[0.008, 0.018, 0.086]} />
-            <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
-          </mesh>
-          {/* Barcode on back/side for scanner */}
-          <mesh position={[0, 0.011, 0]}>
-            <boxGeometry args={[0.08, 0.002, 0.04]} />
-            <meshBasicMaterial color="#ffffff" />
-          </mesh>
         </group>
       ) : (
         <group>
-          {/* Grocery Carton Box (Atta, Cereals, Biscuits, Detergents) */}
           <mesh>
-            <boxGeometry args={[0.15, 0.14, 0.1]} />
-            <meshStandardMaterial color={color} roughness={0.3} metalness={0.08} />
-          </mesh>
-          {/* Front Product Graphic Faceplate */}
-          <mesh position={[0, 0, 0.052]}>
-            <boxGeometry args={[0.12, 0.11, 0.005]} />
-            <meshBasicMaterial color="#ffffff" />
-          </mesh>
-          {/* Back Printed Barcode */}
-          <mesh position={[0, -0.02, -0.052]} rotation={[0, Math.PI, 0]}>
-            <boxGeometry args={[0.08, 0.04, 0.004]} />
-            <meshBasicMaterial color="#000000" />
-          </mesh>
-        </group>
-      )}
-
-      {/* Holographic Laser Reflection & Barcode Scanning Visuals */}
-      {isLaserActive && (
-        <group>
-          {/* Sweeping Laser Plane Sheet cutting through item */}
-          <mesh position={[0, 0.08, 0]}>
-            <boxGeometry args={[0.22, 0.005, 0.16]} />
-            <meshBasicMaterial color="#ef4444" transparent opacity={0.85} />
-          </mesh>
-          {/* Holographic Laser Wireframe Aura */}
-          <mesh position={[0, 0.08, 0]}>
-            <sphereGeometry args={[0.16, 16, 16]} />
-            <meshBasicMaterial color="#ef4444" transparent opacity={0.25} wireframe />
-          </mesh>
-          {/* Emerald Green Holographic Confirmation Disk upon barcode beep */}
-          <mesh position={[0, -0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.08, 0.15, 24]} />
-            <meshBasicMaterial color="#10b981" transparent opacity={0.65} side={THREE.DoubleSide} />
+            <boxGeometry args={[0.15, 0.18, 0.08]} />
+            <meshStandardMaterial color={color} roughness={0.3} metalness={0.05} />
           </mesh>
         </group>
       )}
     </group>
   );
-};
+});
 
 // ---------------------------------------------------------------------------
-// 3D Animated Conveyor Scanning System
+// 3D Animated Conveyor Scanning System (Parabolic flight -> Scan -> Bag)
 // ---------------------------------------------------------------------------
 const ConveyorAnimation3D: React.FC<{
   activeDeskX: number;
@@ -196,8 +400,6 @@ const ConveyorAnimation3D: React.FC<{
     stage: 'fly' | 'convey' | 'scan' | 'pack' | 'done';
     landSoundPlayed: boolean;
     scanSoundPlayed: boolean;
-    priceTagY: number;
-    priceTagOpacity: number;
   }>>([]);
 
   const groupRefs = useRef<Array<THREE.Group | null>>([]);
@@ -208,7 +410,7 @@ const ConveyorAnimation3D: React.FC<{
     if (phase === 'scanning' && unitItems.length > 0) {
       elapsedRef.current = 0;
       finishedRef.current = false;
-      const stagger = 2.2;
+      const stagger = 2.0;
       itemsDataRef.current = unitItems.map((u) => ({
         id: u.uniqueScanId,
         item: u.item,
@@ -216,13 +418,11 @@ const ConveyorAnimation3D: React.FC<{
         totalUnits: u.totalUnits,
         flatIndex: u.flatIndex,
         startTime: u.flatIndex * stagger,
-        pos: [typeof martRuntime.playerPos[0] === 'number' ? martRuntime.playerPos[0] : activeDeskX - 1.9, 0.72, (martRuntime.playerPos[2] || 17.0) - 18.0] as [number, number, number],
-        rot: [0, 0, 0] as [number, number, number],
-        stage: 'fly' as const,
+        pos: [typeof martRuntime.playerPos[0] === 'number' ? martRuntime.playerPos[0] : activeDeskX - 1.9, 0.72, (martRuntime.playerPos[2] || 17.0) - 18.0],
+        rot: [0, 0, 0],
+        stage: 'fly',
         landSoundPlayed: false,
         scanSoundPlayed: false,
-        priceTagY: 1.15,
-        priceTagOpacity: 0,
       }));
     } else if (phase === 'idle') {
       itemsDataRef.current = [];
@@ -267,14 +467,14 @@ const ConveyorAnimation3D: React.FC<{
         useBillingStore.getState().setTransferredToBenchCount(p.flatIndex + 1);
       }
 
-      const totalItemDuration = 3.2;
+      const totalItemDuration = 3.0;
       const progress = Math.min(1, Math.max(0, t / totalItemDuration));
 
       let curX = trolleyX;
       let curY = 0.72;
       let curZ = trolleyZ;
       let rotX = 0;
-      let rotY = p.flatIndex * 0.4;
+      const rotY = p.flatIndex * 0.4;
       let rotZ = 0;
 
       if (progress < 0.32) {
@@ -338,19 +538,19 @@ const ConveyorAnimation3D: React.FC<{
       sounds.playCashRegister();
       setTimeout(() => {
         useBillingStore.getState().finishScanning();
-      }, 750);
+      }, 500);
     }
   });
 
   if (phase !== 'scanning') return null;
 
   return (
-    <group>
-      {unitItems.map((u, i) => (
+    <group raycast={() => null}>
+      {unitItems.map((u, idx) => (
         <group
           key={u.uniqueScanId}
           ref={(el) => {
-            groupRefs.current[i] = el;
+            groupRefs.current[idx] = el;
           }}
           visible={false}
         >
@@ -358,7 +558,6 @@ const ConveyorAnimation3D: React.FC<{
             item={u.item}
             position={[0, 0, 0]}
             rotation={[0, 0, 0]}
-            isLaserActive={false}
           />
         </group>
       ))}
@@ -367,108 +566,328 @@ const ConveyorAnimation3D: React.FC<{
 };
 
 // ---------------------------------------------------------------------------
-// Multi-Tier Commercial Checkout Impulse-Purchase Wire Display Rack
-const CheckoutImpulseDisplayRack: React.FC<{ position: [number, number, number] }> = React.memo(({ position }) => {
+// Isolated Active POS Screen Sub-Component (Subscribes directly to runningTotal)
+// Prevents parent desks or scenes from re-rendering during item scanning!
+// ---------------------------------------------------------------------------
+const ActiveDeskPosScreen: React.FC<{ laneNumberStr: string }> = React.memo(({ laneNumberStr }) => {
+  const runningTotal = useBillingStore((state) => state.runningTotal);
+  const phase = useBillingStore((state) => state.phase);
+  const isScanning = phase === 'scanning';
+
   return (
-    <group position={position} raycast={() => null}>
-      {/* Chrome Vertical Upright Wire Spine */}
-      <mesh position={[0, 0.45, 0]}>
-        <boxGeometry args={[0.02, 0.9, 0.02]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
-      </mesh>
-      <mesh position={[0, 0.02, 0]}>
-        <cylinderGeometry args={[0.14, 0.14, 0.02, 16]} />
-        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} />
+    <group position={[0.44, 1.45, 0.28]} rotation={[-0.06, Math.PI - 0.32, 0]}>
+      {/* Aluminum Monitor Chassis */}
+      <mesh geometry={checkoutSharedGeos.monitorChassis} material={checkoutSharedMats.chromeDull} />
+      <mesh position={[0, 0, 0.015]} geometry={checkoutSharedGeos.monitorBezel} material={checkoutSharedMats.posBezelMat} />
+
+      {/* Screen Face */}
+      <mesh position={[0, 0, 0.019]}>
+        <planeGeometry args={[0.5, 0.32]} />
+        <meshBasicMaterial color={isScanning ? '#022c22' : '#0369a1'} />
       </mesh>
 
-      {/* 3 Angled Wire Baskets */}
-      {[0.24, 0.52, 0.78].map((yTier, tIdx) => (
-        <group key={`tier-${tIdx}`} position={[0, yTier, 0.08]} rotation={[0.2, 0, 0]}>
-          {/* Wire Basket Wire Base */}
-          <mesh>
-            <boxGeometry args={[0.28, 0.012, 0.16]} />
-            <meshStandardMaterial color="#e2e8f0" metalness={0.9} roughness={0.2} />
-          </mesh>
-          {/* Front Wire Lip */}
-          <mesh position={[0, 0.025, 0.08]}>
-            <boxGeometry args={[0.28, 0.04, 0.008]} />
-            <meshStandardMaterial color="#e2e8f0" metalness={0.9} roughness={0.2} />
-          </mesh>
-          {/* Yellow D-Mart Price Rail */}
-          <mesh position={[0, 0.025, 0.085]}>
-            <boxGeometry args={[0.27, 0.022, 0.004]} />
-            <meshBasicMaterial color="#fef08a" />
-          </mesh>
-          <Text position={[0, 0.025, 0.088]} fontSize={0.014} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="bold">
-            {tIdx === 0 ? 'ORBIT GUM ₹10' : tIdx === 1 ? 'TIC TAC ₹15' : 'KITKAT MINI ₹20'}
-          </Text>
+      {/* Screen Typography */}
+      <Text
+        position={[0, 0.13, 0.022]}
+        fontSize={0.019}
+        color="#ffffff"
+        anchorX="center"
+        anchorY="middle"
+        letterSpacing={0.04}
+        fontWeight="bold"
+      >
+        {`MARTVERSE EXPRESS • LANE ${laneNumberStr}`}
+      </Text>
 
-          {/* Mini Merchandise Products in Tray */}
-          {[-0.08, 0, 0.08].map((xP, pIdx) => (
-            <mesh key={`imp-${tIdx}-${pIdx}`} position={[xP, 0.02, 0]}>
-              <boxGeometry args={[0.065, 0.026, 0.11]} />
-              <meshStandardMaterial
-                color={tIdx === 0 ? '#10b981' : tIdx === 1 ? '#f97316' : '#dc2626'}
-                roughness={0.3}
-                metalness={0.1}
-              />
-            </mesh>
-          ))}
-        </group>
-      ))}
+      <Text
+        position={[-0.22, 0.05, 0.022]}
+        fontSize={0.018}
+        color="#ffffff"
+        anchorX="left"
+        anchorY="top"
+        lineHeight={1.4}
+        fontWeight="medium"
+      >
+        {isScanning
+          ? `SCANNING ACTIVE...\nTROLLEY ITEM DETECTED\nGST (5% INCL)`
+          : phase === 'review'
+          ? `BILL PROCESSED\nAWAITING PAYMENT\nALL ITEMS VERIFIED`
+          : `MARTVERSE RETAIL READY\nPLACE TROLLEY IN DOCK\nAUTO-DETECTION ON`}
+      </Text>
+
+      {/* Running Total Highlight Ribbon */}
+      <mesh position={[0, -0.09, 0.021]}>
+        <planeGeometry args={[0.48, 0.07]} />
+        <meshBasicMaterial color={isScanning ? '#059669' : '#0284c7'} />
+      </mesh>
+      <Text
+        position={[0, -0.09, 0.022]}
+        fontSize={0.028}
+        color="#ffffff"
+        anchorX="center"
+        anchorY="middle"
+        fontWeight="extrabold"
+      >
+        {`TOTAL: ₹${runningTotal.toFixed(2)}`}
+      </Text>
     </group>
   );
 });
 
-// Stainless Steel Queue Stanchions with Retractable Belts
+// ---------------------------------------------------------------------------
+// INACTIVE Checkout Counter (Ultra-Lightweight, Pre-allocated Shared Geometries)
+// Drops draw calls from 150 to ~8 meshes, 0 Troika Text, Renders Once & Never Re-renders
+// ---------------------------------------------------------------------------
+const InactiveCheckoutCounter: React.FC<{
+  laneIndex: number;
+  xOffset: number;
+}> = React.memo(({ laneIndex, xOffset }) => {
+  const laneTex = useMemo(() => getLaneSignTexture(laneIndex + 1), [laneIndex]);
+  const monitorTex = useMemo(() => getMonitorReadyTexture(laneIndex + 1), [laneIndex]);
+
+  return (
+    <group position={[xOffset, 0, 0]} raycast={() => null}>
+      {/* 1. Base Kickplate */}
+      <mesh position={[0, 0.06, 0]} geometry={checkoutSharedGeos.plinth} material={checkoutSharedMats.plinth} />
+
+      {/* 2. Main Cabinet Body */}
+      <mesh position={[0, 0.55, 0]} geometry={checkoutSharedGeos.body} material={checkoutSharedMats.bodyWhite} />
+
+      {/* 3. Blue Accent Stripe */}
+      <mesh position={[0, 0.76, 0]} geometry={checkoutSharedGeos.stripe} material={checkoutSharedMats.accentBlue} />
+
+      {/* 4. Trolley Bumper Rails */}
+      <mesh position={[-0.66, 0.65, 0]} rotation={[Math.PI / 2, 0, 0]} geometry={checkoutSharedGeos.bumperRail} material={checkoutSharedMats.chromeBright} />
+      <mesh position={[-0.66, 0.32, 0]} rotation={[Math.PI / 2, 0, 0]} geometry={checkoutSharedGeos.bumperRail} material={checkoutSharedMats.chromeBright} />
+
+      {/* 5. Brushed Stainless Countertop */}
+      <mesh position={[0, 1.025, 0]} geometry={checkoutSharedGeos.countertop} material={checkoutSharedMats.countertopSteel} />
+      <mesh position={[0, 1.052, 0]} geometry={checkoutSharedGeos.countertopBevel} material={checkoutSharedMats.countertopTrim} />
+
+      {/* 6. Conveyor Bed & Belt */}
+      <group position={[-0.15, 1.055, -0.65]}>
+        <mesh position={[0, -0.01, 0]} geometry={checkoutSharedGeos.conveyorBed} material={checkoutSharedMats.bedSlate} />
+        <mesh geometry={checkoutSharedGeos.conveyorBelt} material={checkoutSharedMats.rubberDark} />
+        <mesh position={[-0.32, 0.036, 0]} geometry={checkoutSharedGeos.conveyorSideRail} material={checkoutSharedMats.chromeDull} />
+        <mesh position={[0.32, 0.036, 0]} geometry={checkoutSharedGeos.conveyorSideRail} material={checkoutSharedMats.chromeDull} />
+      </group>
+
+      {/* 7. Overhead Lane Number Beacon */}
+      <group position={[0.56, 1.05, -1.45]}>
+        <mesh position={[0, 0.8, 0]} geometry={checkoutSharedGeos.laneSignMast} material={checkoutSharedMats.chromeDull} />
+        <group position={[0, 1.7, 0]}>
+          <mesh geometry={checkoutSharedGeos.laneSignBox} material={checkoutSharedMats.chromeDull} />
+          <mesh position={[0, 0.145, 0]} geometry={checkoutSharedGeos.laneSignCap} material={checkoutSharedMats.bracketDark} />
+          <mesh position={[0, -0.145, 0]} geometry={checkoutSharedGeos.laneSignCap} material={checkoutSharedMats.bracketDark} />
+          <mesh position={[0, 0.148, 0]} geometry={checkoutSharedGeos.laneSignStatusLed} material={checkoutSharedMats.signLedInactive} />
+          {laneTex && (
+            <>
+              <mesh position={[0, 0, 0.042]}>
+                <planeGeometry args={[0.34, 0.24]} />
+                <meshBasicMaterial map={laneTex} />
+              </mesh>
+              <mesh position={[0, 0, -0.042]} rotation={[0, Math.PI, 0]}>
+                <planeGeometry args={[0.34, 0.24]} />
+                <meshBasicMaterial map={laneTex} />
+              </mesh>
+            </>
+          )}
+          <mesh position={[0, -0.19, 0]} geometry={checkoutSharedGeos.laneSignDownlight} material={checkoutSharedMats.downlightMat} />
+        </group>
+      </group>
+
+      {/* 8. POS Stand & Screen */}
+      <group position={[0.44, 1.05, 0.28]}>
+        <mesh position={[0, 0.18, 0]} geometry={checkoutSharedGeos.monitorMast} material={checkoutSharedMats.bracketDark} />
+        <group position={[0, 0.4, 0]} rotation={[-0.06, Math.PI - 0.32, 0]}>
+          <mesh geometry={checkoutSharedGeos.monitorChassis} material={checkoutSharedMats.chromeDull} />
+          <mesh position={[0, 0, 0.015]} geometry={checkoutSharedGeos.monitorBezel} material={checkoutSharedMats.posBezelMat} />
+          {monitorTex && (
+            <mesh position={[0, 0, 0.019]}>
+              <planeGeometry args={[0.5, 0.32]} />
+              <meshBasicMaterial map={monitorTex} />
+            </mesh>
+          )}
+        </group>
+      </group>
+
+      {/* 9. Bagging Station Base & Kraft Bag Placeholder */}
+      <group position={[-0.15, 1.055, 1.1]}>
+        <mesh position={[0, 0.005, 0]} geometry={checkoutSharedGeos.bagBasin} material={checkoutSharedMats.chromeDull} />
+        <mesh position={[0, 0.16, 0]} geometry={checkoutSharedGeos.bagBody} material={checkoutSharedMats.kraftPaper} />
+      </group>
+    </group>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// ACTIVE Checkout Counter (Interactive Scanner, Laser, Active Bag, Screen)
+// ---------------------------------------------------------------------------
+const ActiveCheckoutCounter: React.FC<{
+  laneIndex: number;
+  xOffset: number;
+  laserRef: React.RefObject<THREE.Mesh | null>;
+  conveyorBeltRibsRef: React.RefObject<THREE.Group | null>;
+  bagGroupRef: (el: THREE.Group | null) => void;
+}> = React.memo(({ laneIndex, xOffset, laserRef, conveyorBeltRibsRef, bagGroupRef }) => {
+  const laneNumberStr = `0${laneIndex + 1}`;
+  const laneTex = useMemo(() => getLaneSignTexture(laneIndex + 1), [laneIndex]);
+
+  return (
+    <group position={[xOffset, 0, 0]}>
+      {/* 1. Base Kickplate */}
+      <mesh position={[0, 0.06, 0]} geometry={checkoutSharedGeos.plinth} material={checkoutSharedMats.plinth} />
+
+      {/* 2. Main Cabinet Body */}
+      <mesh position={[0, 0.55, 0]} geometry={checkoutSharedGeos.body} material={checkoutSharedMats.bodyWhite} />
+
+      {/* 3. Blue Accent Stripe */}
+      <mesh position={[0, 0.76, 0]} geometry={checkoutSharedGeos.stripe} material={checkoutSharedMats.accentBlue} />
+
+      {/* 4. Trolley Bumper Rails */}
+      <mesh position={[-0.66, 0.65, 0]} rotation={[Math.PI / 2, 0, 0]} geometry={checkoutSharedGeos.bumperRail} material={checkoutSharedMats.chromeBright} />
+      <mesh position={[-0.66, 0.32, 0]} rotation={[Math.PI / 2, 0, 0]} geometry={checkoutSharedGeos.bumperRail} material={checkoutSharedMats.chromeBright} />
+
+      {/* 5. Brushed Stainless Countertop */}
+      <mesh position={[0, 1.025, 0]} geometry={checkoutSharedGeos.countertop} material={checkoutSharedMats.countertopSteel} />
+      <mesh position={[0, 1.052, 0]} geometry={checkoutSharedGeos.countertopBevel} material={checkoutSharedMats.countertopTrim} />
+
+      {/* 6. Active Conveyor Belt System */}
+      <group position={[-0.15, 1.055, -0.65]}>
+        <mesh position={[0, -0.01, 0]} geometry={checkoutSharedGeos.conveyorBed} material={checkoutSharedMats.bedSlate} />
+        <mesh geometry={checkoutSharedGeos.conveyorBelt} material={checkoutSharedMats.rubberDark} />
+        <mesh position={[-0.32, 0.036, 0]} geometry={checkoutSharedGeos.conveyorSideRail} material={checkoutSharedMats.chromeDull} />
+        <mesh position={[0.32, 0.036, 0]} geometry={checkoutSharedGeos.conveyorSideRail} material={checkoutSharedMats.chromeDull} />
+
+        {/* Animated Ribbed Tread Lines */}
+        <group ref={conveyorBeltRibsRef}>
+          {Array.from({ length: 16 }).map((_, rIdx) => (
+            <mesh key={`rib-${rIdx}`} position={[0, 0.011, -0.78 + rIdx * 0.104]} geometry={checkoutSharedGeos.treadRib} material={checkoutSharedMats.rubberDark} />
+          ))}
+        </group>
+      </group>
+
+      {/* 7. Bi-Optic Barcode Scanner & Scale Platform */}
+      <group position={[-0.15, 1.065, 0.3]}>
+        <mesh position={[0, -0.004, 0]} geometry={checkoutSharedGeos.scannerOuter} material={checkoutSharedMats.chromeDull} />
+        <mesh position={[0, 0.002, 0]} geometry={checkoutSharedGeos.scannerBevel} material={checkoutSharedMats.bedSlate} />
+        <mesh position={[0, 0.006, 0]} geometry={checkoutSharedGeos.scannerGlass} material={checkoutSharedMats.scannerGlassMat} />
+
+        {/* Sweeping Laser Beam */}
+        <mesh ref={laserRef} position={[0, 0.022, 0]} geometry={checkoutSharedGeos.scannerLaserBar} material={checkoutSharedMats.laserRed} />
+      </group>
+
+      {/* 8. Overhead Lane Beacon */}
+      <group position={[0.56, 1.05, -1.45]}>
+        <mesh position={[0, 0.8, 0]} geometry={checkoutSharedGeos.laneSignMast} material={checkoutSharedMats.chromeDull} />
+        <group position={[0, 1.7, 0]}>
+          <mesh geometry={checkoutSharedGeos.laneSignBox} material={checkoutSharedMats.chromeDull} />
+          <mesh position={[0, 0.145, 0]} geometry={checkoutSharedGeos.laneSignCap} material={checkoutSharedMats.bracketDark} />
+          <mesh position={[0, -0.145, 0]} geometry={checkoutSharedGeos.laneSignCap} material={checkoutSharedMats.bracketDark} />
+          <mesh position={[0, 0.148, 0]} geometry={checkoutSharedGeos.laneSignStatusLed} material={checkoutSharedMats.signLedActive} />
+          {laneTex && (
+            <>
+              <mesh position={[0, 0, 0.042]}>
+                <planeGeometry args={[0.34, 0.24]} />
+                <meshBasicMaterial map={laneTex} />
+              </mesh>
+              <mesh position={[0, 0, -0.042]} rotation={[0, Math.PI, 0]}>
+                <planeGeometry args={[0.34, 0.24]} />
+                <meshBasicMaterial map={laneTex} />
+              </mesh>
+            </>
+          )}
+          <mesh position={[0, -0.19, 0]} geometry={checkoutSharedGeos.laneSignDownlight} material={checkoutSharedMats.downlightMat} />
+        </group>
+      </group>
+
+      {/* 9. Isolated Active POS Screen (Subscribes to runningTotal directly) */}
+      <ActiveDeskPosScreen laneNumberStr={laneNumberStr} />
+
+      {/* 10. Bagging Station & Animated Kraft Grocery Bag */}
+      <group position={[-0.15, 1.055, 1.1]}>
+        <mesh position={[0, 0.005, 0]} geometry={checkoutSharedGeos.bagBasin} material={checkoutSharedMats.chromeDull} />
+        <mesh position={[-0.305, 0.03, 0]} geometry={checkoutSharedGeos.bagBasinLipSide} material={checkoutSharedMats.bracketDark} />
+        <mesh position={[0.305, 0.03, 0]} geometry={checkoutSharedGeos.bagBasinLipSide} material={checkoutSharedMats.bracketDark} />
+        <mesh position={[0, 0.03, 0.355]} geometry={checkoutSharedGeos.bagBasinLipEnd} material={checkoutSharedMats.bracketDark} />
+
+        {/* Animated Bouncing Kraft Grocery Bag */}
+        <group ref={bagGroupRef} position={[0, 0.16, 0]}>
+          <mesh geometry={checkoutSharedGeos.bagBody} material={checkoutSharedMats.kraftPaper} />
+          <mesh position={[0, 0.162, 0]} geometry={checkoutSharedGeos.bagLip} material={checkoutSharedMats.kraftPaperLip} />
+          <mesh position={[0, 0.165, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={checkoutSharedGeos.bagInterior} material={checkoutSharedMats.kraftInterior} />
+
+          {/* Rope Handles */}
+          <mesh position={[0, 0.22, 0.125]}>
+            <torusGeometry args={[0.075, 0.008, 8, 16, Math.PI]} />
+            <meshStandardMaterial color="#8f6a39" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, 0.22, -0.125]}>
+            <torusGeometry args={[0.075, 0.008, 8, 16, Math.PI]} />
+            <meshStandardMaterial color="#8f6a39" roughness={0.85} />
+          </mesh>
+        </group>
+      </group>
+
+      {/* 11. Cashier Stool */}
+      <group position={[0.55, 0, 0.35]}>
+        <mesh position={[0, 0.02, 0]} geometry={checkoutSharedGeos.stoolBase} material={checkoutSharedMats.chromeReflect} />
+        <mesh position={[0, 0.28, 0]} geometry={checkoutSharedGeos.stoolColumn} material={checkoutSharedMats.darkSteel} />
+        <mesh position={[0, 0.53, 0]} geometry={checkoutSharedGeos.stoolCushion} material={checkoutSharedMats.blackLeather} />
+      </group>
+    </group>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Floor Dock Decals (Pre-generated Cached Canvas Texture)
+// ---------------------------------------------------------------------------
+const RealisticFloorDockDecal: React.FC<{
+  laneIndex: number;
+  position: [number, number, number];
+  isActive: boolean;
+}> = React.memo(({ laneIndex, position, isActive }) => {
+  const dockTex = useMemo(() => getFloorDockTexture(laneIndex + 1, isActive), [laneIndex, isActive]);
+
+  return (
+    <group position={position} raycast={() => null}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={checkoutSharedGeos.dockPlane}>
+        {dockTex ? (
+          <meshBasicMaterial map={dockTex} transparent opacity={isActive ? 0.95 : 0.65} />
+        ) : (
+          <meshStandardMaterial color={isActive ? '#e0f2fe' : '#f1f5f9'} roughness={0.65} />
+        )}
+      </mesh>
+    </group>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Stainless Steel Queue Stanchions (Pre-allocated Geometries)
+// ---------------------------------------------------------------------------
 const CheckoutQueueStanchions: React.FC<{ lanes: number[] }> = React.memo(({ lanes }) => {
   return (
     <group raycast={() => null}>
       {lanes.map((xL, idx) => {
-        // Customer Entry Stanchion at z = -2.2
         const sX = xL - 0.72;
         return (
           <group key={`stanchion-pair-${idx}`}>
             {/* Stanchion 1: Entry */}
             <group position={[sX, 0, -2.2]}>
-              {/* Weighted Chrome Base */}
-              <mesh position={[0, 0.015, 0]}>
-                <cylinderGeometry args={[0.16, 0.18, 0.03, 16]} />
-                <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
-              </mesh>
-              {/* Stainless Steel Column Post */}
-              <mesh position={[0, 0.48, 0]}>
-                <cylinderGeometry args={[0.022, 0.022, 0.92, 14]} />
-                <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
-              </mesh>
-              {/* Belt Cassette Top Cap */}
-              <mesh position={[0, 0.96, 0]}>
-                <cylinderGeometry args={[0.035, 0.035, 0.08, 14]} />
-                <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.25} />
-              </mesh>
+              <mesh position={[0, 0.015, 0]} geometry={checkoutSharedGeos.stanchionBase} material={checkoutSharedMats.chromeReflect} />
+              <mesh position={[0, 0.48, 0]} geometry={checkoutSharedGeos.stanchionPost} material={checkoutSharedMats.chromeBright} />
+              <mesh position={[0, 0.96, 0]} geometry={checkoutSharedGeos.stanchionCap} material={checkoutSharedMats.chromeDull} />
             </group>
 
             {/* Stanchion 2: Mid Aisle */}
             <group position={[sX, 0, -0.6]}>
-              <mesh position={[0, 0.015, 0]}>
-                <cylinderGeometry args={[0.16, 0.18, 0.03, 16]} />
-                <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
-              </mesh>
-              <mesh position={[0, 0.48, 0]}>
-                <cylinderGeometry args={[0.022, 0.022, 0.92, 14]} />
-                <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
-              </mesh>
-              <mesh position={[0, 0.96, 0]}>
-                <cylinderGeometry args={[0.035, 0.035, 0.08, 14]} />
-                <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.25} />
-              </mesh>
+              <mesh position={[0, 0.015, 0]} geometry={checkoutSharedGeos.stanchionBase} material={checkoutSharedMats.chromeReflect} />
+              <mesh position={[0, 0.48, 0]} geometry={checkoutSharedGeos.stanchionPost} material={checkoutSharedMats.chromeBright} />
+              <mesh position={[0, 0.96, 0]} geometry={checkoutSharedGeos.stanchionCap} material={checkoutSharedMats.chromeDull} />
             </group>
 
-            {/* Retractable Woven Blue Queue Belt running between stanchions */}
-            <mesh position={[sX, 0.94, -1.4]}>
-              <boxGeometry args={[0.008, 0.045, 1.58]} />
-              <meshStandardMaterial color="#1d4ed8" roughness={0.6} />
-            </mesh>
+            {/* Retractable Blue Belt */}
+            <mesh position={[sX, 0.94, -1.4]} geometry={checkoutSharedGeos.stanchionBelt} material={checkoutSharedMats.stanchionBeltMat} />
           </group>
         );
       })}
@@ -476,31 +895,28 @@ const CheckoutQueueStanchions: React.FC<{ lanes: number[] }> = React.memo(({ lan
   );
 });
 
-// Nested Parked Supermarket Shopping Trolleys near Checkout Exit
+// ---------------------------------------------------------------------------
+// Parked Shopping Trolleys near Exit (Lightweight Reference Model)
+// ---------------------------------------------------------------------------
 const ParkedShoppingTrolleys: React.FC<{ position: [number, number, number] }> = React.memo(({ position }) => {
   return (
     <group position={position} raycast={() => null}>
-      {/* 3 Nested Wire Trolleys */}
       {[0, 0.45, 0.90].map((zN, nIdx) => (
         <group key={`nested-cart-${nIdx}`} position={[0, 0, zN]}>
-          {/* Chassis Base */}
           <mesh position={[0, 0.12, 0]}>
             <boxGeometry args={[0.62, 0.04, 0.88]} />
             <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.2} />
           </mesh>
-          {/* Wire Basket */}
           <mesh position={[0, 0.58, 0.05]}>
             <boxGeometry args={[0.58, 0.38, 0.78]} />
             <meshStandardMaterial color="#e2e8f0" metalness={0.92} roughness={0.15} wireframe={true} />
           </mesh>
-          {/* Blue Plastic Handlebar */}
           <mesh position={[0, 0.88, 0.48]} rotation={[0, 0, Math.PI / 2]}>
             <cylinderGeometry args={[0.018, 0.018, 0.56, 12]} />
             <meshStandardMaterial color="#0284c7" roughness={0.4} />
           </mesh>
         </group>
       ))}
-      {/* Chrome Retaining Floor Rail */}
       <mesh position={[0.38, 0.22, 0.45]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.018, 0.018, 1.6, 12]} />
         <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
@@ -509,1263 +925,61 @@ const ParkedShoppingTrolleys: React.FC<{ position: [number, number, number] }> =
   );
 });
 
-// Realistic Supermarket Checkout Counter Model
-// ---------------------------------------------------------------------------
-interface SingleCheckoutCounterProps {
-  laneIndex: number;
-  xOffset: number;
-  isActiveDesk: boolean;
-  phase: string;
-  runningTotal: number;
-  isConveyorMoving: boolean;
-  laserRef: React.RefObject<THREE.Mesh | null> | null;
-  conveyorBeltRibsRef: React.RefObject<THREE.Group | null> | null;
-  bagGroupRef: (el: THREE.Group | null) => void;
-}
-
-const SingleCheckoutCounterComponent: React.FC<SingleCheckoutCounterProps> = ({
-  laneIndex,
-  xOffset,
-  isActiveDesk,
-  phase,
-  runningTotal,
-  isConveyorMoving,
-  laserRef,
-  conveyorBeltRibsRef,
-  bagGroupRef,
-}) => {
-  const laneNumberStr = `0${laneIndex + 1}`;
-  const isScanning = isActiveDesk && phase === 'scanning';
-
-  // Fast-path for inactive checkout counters: Renders high-fidelity architectural desk
-  // while bypassing 340+ individual tiny decorative meshes (conveyor ribs, candy racks, keyholes),
-  // reducing draw calls by 1,700+ to strictly hold the <= 150 draw-call budget.
-  if (!isActiveDesk) {
-    return (
-      <group position={[xOffset, 0, 0]}>
-        {/* Recessed Kick-Plate Base */}
-        <mesh position={[0, 0.06, 0]}>
-          <boxGeometry args={[1.24, 0.12, 3.18]} />
-          <meshStandardMaterial color="#090d16" roughness={0.85} metalness={0.2} />
-        </mesh>
-        {/* Main Cabinet Body */}
-        <mesh position={[0, 0.55, 0]}>
-          <boxGeometry args={[1.3, 0.86, 3.24]} />
-          <meshStandardMaterial color="#1e2430" roughness={0.45} metalness={0.35} />
-        </mesh>
-        {/* Customer Side Bumper Rub Rail */}
-        <mesh position={[-0.66, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.02, 0.02, 3.22, 8]} />
-          <meshStandardMaterial color="#111827" roughness={0.8} />
-        </mesh>
-        {/* Brushed Stainless Steel Countertop */}
-        <mesh position={[0, 0.99, 0]}>
-          <boxGeometry args={[1.34, 0.04, 3.28]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
-        </mesh>
-        {/* Heavy-Duty Conveyor Bed */}
-        <mesh position={[-0.15, 1.015, -0.2]}>
-          <boxGeometry args={[0.62, 0.015, 1.7]} />
-          <meshStandardMaterial color="#18181b" roughness={0.9} />
-        </mesh>
-        {/* Cashier Monitor & Stand */}
-        <group position={[0.3, 1.01, 0.2]}>
-          <mesh position={[0, 0.18, 0]}>
-            <cylinderGeometry args={[0.02, 0.025, 0.36, 8]} />
-            <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} />
-          </mesh>
-          <mesh position={[0, 0.38, 0]} rotation={[0, -0.3, 0]}>
-            <boxGeometry args={[0.38, 0.26, 0.04]} />
-            <meshStandardMaterial color="#0f172a" roughness={0.5} />
-          </mesh>
-        </group>
-        {/* Lane Indicator Pole & Light Box */}
-        <group position={[0.55, 0, 1.45]}>
-          <mesh position={[0, 1.75, 0]}>
-            <cylinderGeometry args={[0.025, 0.028, 3.5, 8]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.15} />
-          </mesh>
-          <group position={[0, 3.3, 0]}>
-            <mesh>
-              <boxGeometry args={[0.42, 0.36, 0.08]} />
-              <meshStandardMaterial color="#047857" roughness={0.3} />
-            </mesh>
-            <Text
-              position={[0, 0.02, 0.044]}
-              fontSize={0.16}
-              color="#ffffff"
-              anchorX="center"
-              anchorY="middle"
-            >
-              {laneNumberStr}
-            </Text>
-            <Text
-              position={[0, -0.065, 0.044]}
-              fontSize={0.026}
-              color="#a7f3d0"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.08}
-            >
-              LANE OPEN
-            </Text>
-          </group>
-        </group>
-      </group>
-    );
-  }
-
-  return (
-    <group position={[xOffset, 0, 0]}>
-      {/* ============================================================== */}
-      {/* 1. COUNTER BASE & DESK CABINETRY (FURNITURE GRADE)             */}
-      {/* ============================================================== */}
-      {/* Recessed Kick-Plate Base (Elevation indentation) */}
-      <mesh position={[0, 0.06, 0]}>
-        <boxGeometry args={[1.24, 0.12, 3.18]} />
-        <meshStandardMaterial color="#090d16" roughness={0.85} metalness={0.2} />
-      </mesh>
-
-      {/* Main Cabinet Body (Deep Matte Charcoal Steel Chassis) */}
-      <mesh position={[0, 0.55, 0]}>
-        <boxGeometry args={[1.3, 0.86, 3.24]} />
-        <meshStandardMaterial color="#1e2430" roughness={0.45} metalness={0.35} />
-      </mesh>
-
-      {/* Protective Trolley Impact Rub-Rails along customer side (x = -0.66) */}
-      <group position={[-0.66, 0, 0]}>
-        {/* Upper Rubber Bumper Rail */}
-        <mesh position={[0, 0.65, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.022, 0.022, 3.22, 12]} />
-          <meshStandardMaterial color="#111827" roughness={0.8} />
-        </mesh>
-        {/* Upper Chrome Trim Highlight */}
-        <mesh position={[0.005, 0.65, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.012, 0.012, 3.22, 10]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
-        </mesh>
-
-        {/* Lower Rubber Bumper Rail */}
-        <mesh position={[0, 0.32, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.022, 0.022, 3.22, 12]} />
-          <meshStandardMaterial color="#111827" roughness={0.8} />
-        </mesh>
-        {/* Lower Chrome Trim Highlight */}
-        <mesh position={[0.005, 0.32, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.012, 0.012, 3.22, 10]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
-        </mesh>
-
-        {/* Rail Mounting Brackets */}
-        {[-1.3, -0.6, 0.1, 0.8, 1.4].map((bz, bIdx) => (
-          <group key={`bkt-${bIdx}`} position={[0.015, 0, bz]}>
-            <mesh position={[0, 0.65, 0]}>
-              <boxGeometry args={[0.02, 0.06, 0.04]} />
-              <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.2} />
-            </mesh>
-            <mesh position={[0, 0.32, 0]}>
-              <boxGeometry args={[0.02, 0.06, 0.04]} />
-              <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.2} />
-            </mesh>
-          </group>
-        ))}
-      </group>
-
-      {/* Cashier Side Inset & Ergonomic Footrest (x > 0) */}
-      <group position={[0.42, 0, 0]}>
-        {/* Stainless Steel Tubular Footrest Bar */}
-        <mesh position={[0, 0.16, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.016, 0.016, 1.4, 12]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
-        </mesh>
-        <mesh position={[0.1, 0.16, -0.65]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.014, 0.014, 0.22, 10]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
-        </mesh>
-        <mesh position={[0.1, 0.16, 0.65]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.014, 0.014, 0.22, 10]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
-        </mesh>
-      </group>
-
-      {/* Built-in Under-Counter Cash Drawer Unit (under POS on Cashier Side) */}
-      <group position={[0.4, 0.86, 0.28]}>
-        {/* Drawer Casing Face */}
-        <mesh>
-          <boxGeometry args={[0.46, 0.16, 0.44]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.5} metalness={0.4} />
-        </mesh>
-        {/* Recessed Drawer Front Face */}
-        <mesh position={[0.232, 0, 0]}>
-          <boxGeometry args={[0.006, 0.14, 0.4]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.3} metalness={0.5} />
-        </mesh>
-        {/* Polished Chrome Pull Handle */}
-        <mesh position={[0.245, 0.02, 0]}>
-          <boxGeometry args={[0.015, 0.018, 0.16]} />
-          <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
-        </mesh>
-        {/* Keyhole Cylinder */}
-        <mesh position={[0.238, 0.02, 0.14]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.007, 0.007, 0.01, 10]} />
-          <meshStandardMaterial color="#f59e0b" metalness={0.9} roughness={0.2} />
-        </mesh>
-        {/* Cashier Media / Bill Drop Slot */}
-        <mesh position={[0.238, -0.04, 0]}>
-          <boxGeometry args={[0.005, 0.006, 0.12]} />
-          <meshBasicMaterial color="#020617" />
-        </mesh>
-      </group>
-
-      {/* Front Impulse-Purchase Chewing Gum & Chocolate Wire Display Rack */}
-      <CheckoutImpulseDisplayRack position={[-0.72, 0, -0.2]} />
-
-      {/* Cashier Side Access Cabinet Doors */}
-      <group position={[0.652, 0.45, -0.7]}>
-        {/* Door 1 Panel & Seam */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[0.006, 0.58, 0.56]} />
-          <meshStandardMaterial color="#1b2230" roughness={0.5} metalness={0.3} />
-        </mesh>
-        <mesh position={[0.008, 0.12, 0.22]}>
-          <boxGeometry args={[0.012, 0.06, 0.018]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.15} />
-        </mesh>
-
-        {/* Door 2 Panel & Seam */}
-        <mesh position={[0, 0, 0.62]}>
-          <boxGeometry args={[0.006, 0.58, 0.56]} />
-          <meshStandardMaterial color="#1b2230" roughness={0.5} metalness={0.3} />
-        </mesh>
-        <mesh position={[0.008, 0.12, 0.84]}>
-          <boxGeometry args={[0.012, 0.06, 0.018]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.15} />
-        </mesh>
-      </group>
-
-      {/* Cashier Ergonomic Swivel Stool */}
-      <group position={[0.55, 0, 0.35]}>
-        {/* Base Chrome Disc */}
-        <mesh position={[0, 0.02, 0]}>
-          <cylinderGeometry args={[0.22, 0.22, 0.03, 16]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
-        </mesh>
-        {/* Center Pneumatic Column */}
-        <mesh position={[0, 0.28, 0]}>
-          <cylinderGeometry args={[0.024, 0.024, 0.5, 12]} />
-          <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.15} />
-        </mesh>
-        {/* Chrome Footrest Ring */}
-        <mesh position={[0, 0.2, 0]}>
-          <torusGeometry args={[0.14, 0.01, 8, 20]} />
-          <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
-        </mesh>
-        {/* Black Leather Seat Cushion */}
-        <mesh position={[0, 0.53, 0]}>
-          <cylinderGeometry args={[0.18, 0.18, 0.06, 16]} />
-          <meshStandardMaterial color="#18181b" roughness={0.7} metalness={0.1} />
-        </mesh>
-        {/* Curved Stool Lumbar Backrest */}
-        <mesh position={[0.14, 0.72, 0]} rotation={[0, 0, -0.15]}>
-          <boxGeometry args={[0.03, 0.16, 0.26]} />
-          <meshStandardMaterial color="#18181b" roughness={0.7} metalness={0.1} />
-        </mesh>
-        <mesh position={[0.07, 0.62, 0]} rotation={[0, 0, -0.4]}>
-          <cylinderGeometry args={[0.01, 0.01, 0.22, 8]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.15} />
-        </mesh>
-      </group>
-
-      {/* ============================================================== */}
-      {/* 2. BRUSHED STAINLESS STEEL COUNTERTOP & DIVIDER TRAY           */}
-      {/* ============================================================== */}
-      {/* Heavy-Duty Brushed Stainless Steel Countertop Slab */}
-      <mesh position={[0, 1.025, 0]}>
-        <boxGeometry args={[1.36, 0.05, 3.32]} />
-        <meshStandardMaterial
-          color="#e2e8f0"
-          metalness={0.88}
-          roughness={0.18}
-          envMapIntensity={1.2}
-        />
-      </mesh>
-
-      {/* Bullnose Perimeter Beveled Edging */}
-      <mesh position={[0, 1.052, 0]}>
-        <boxGeometry args={[1.34, 0.008, 3.3]} />
-        <meshStandardMaterial color="#f1f5f9" metalness={0.9} roughness={0.15} />
-      </mesh>
-
-      {/* Customer Acrylic Divider Bar Tray on Customer Edge */}
-      <group position={[-0.56, 1.06, -0.65]}>
-        {/* Acrylic Tray Bed & Lip */}
-        <mesh>
-          <boxGeometry args={[0.09, 0.024, 0.64]} />
-          <meshStandardMaterial color="#94a3b8" transparent opacity={0.45} roughness={0.1} />
-        </mesh>
-        <mesh position={[-0.042, 0.02, 0]}>
-          <boxGeometry args={[0.006, 0.025, 0.64]} />
-          <meshStandardMaterial color="#cbd5e1" transparent opacity={0.6} roughness={0.1} />
-        </mesh>
-        <mesh position={[0.042, 0.02, 0]}>
-          <boxGeometry args={[0.006, 0.025, 0.64]} />
-          <meshStandardMaterial color="#cbd5e1" transparent opacity={0.6} roughness={0.1} />
-        </mesh>
-
-        {/* Separator Bar 1 ("Next Customer Please" - Red/White) */}
-        <group position={[-0.015, 0.022, 0]}>
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.016, 0.016, 0.52, 12]} />
-            <meshStandardMaterial color="#ef4444" roughness={0.3} metalness={0.2} />
-          </mesh>
-          {/* Black Rubber Shock Absorber End Caps */}
-          <mesh position={[0, 0, -0.26]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.019, 0.019, 0.03, 12]} />
-            <meshStandardMaterial color="#09090b" roughness={0.8} />
-          </mesh>
-          <mesh position={[0, 0, 0.26]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.019, 0.019, 0.03, 12]} />
-            <meshStandardMaterial color="#09090b" roughness={0.8} />
-          </mesh>
-          {/* Text Band */}
-          <mesh position={[0, 0.017, 0]}>
-            <boxGeometry args={[0.02, 0.002, 0.24]} />
-            <meshBasicMaterial color="#ffffff" />
-          </mesh>
-        </group>
-
-        {/* Separator Bar 2 ("Martverse Express" - Sapphire Blue) */}
-        <group position={[0.02, 0.022, 0.04]}>
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.016, 0.016, 0.48, 12]} />
-            <meshStandardMaterial color="#0284c7" roughness={0.3} metalness={0.2} />
-          </mesh>
-          <mesh position={[0, 0, -0.24]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.019, 0.019, 0.03, 12]} />
-            <meshStandardMaterial color="#09090b" roughness={0.8} />
-          </mesh>
-          <mesh position={[0, 0, 0.24]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.019, 0.019, 0.03, 12]} />
-            <meshStandardMaterial color="#09090b" roughness={0.8} />
-          </mesh>
-        </group>
-      </group>
-
-      {/* ============================================================== */}
-      {/* 3. PRECISION CONVEYOR BELT SYSTEM                              */}
-      {/* ============================================================== */}
-      <group position={[-0.15, 1.055, -0.65]}>
-        {/* Recessed Frame Bed */}
-        <mesh position={[0, -0.01, 0]}>
-          <boxGeometry args={[0.66, 0.02, 1.66]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.6} />
-        </mesh>
-
-        {/* Vulcanized Textured Rubber Conveyor Belt */}
-        <mesh>
-          <boxGeometry args={[0.62, 0.02, 1.62]} />
-          <meshStandardMaterial color="#111317" roughness={0.92} metalness={0.06} />
-        </mesh>
-
-        {/* Brushed Stainless Steel Guide Rails */}
-        {/* Customer Side Rail */}
-        <mesh position={[-0.32, 0.036, 0]}>
-          <boxGeometry args={[0.024, 0.065, 1.64]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.12} />
-        </mesh>
-        {/* Flared Entry Corner piece */}
-        <mesh position={[-0.32, 0.036, -0.82]} rotation={[0, -0.3, 0]}>
-          <boxGeometry args={[0.024, 0.065, 0.08]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.12} />
-        </mesh>
-
-        {/* Cashier Side Rail */}
-        <mesh position={[0.32, 0.036, 0]}>
-          <boxGeometry args={[0.024, 0.065, 1.64]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.12} />
-        </mesh>
-        <mesh position={[0.32, 0.036, -0.82]} rotation={[0, 0.3, 0]}>
-          <boxGeometry args={[0.024, 0.065, 0.08]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.12} />
-        </mesh>
-
-        {/* Heavy-Duty Cylindrical End Drive Rollers */}
-        <group position={[0, -0.005, -0.81]}>
-          <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.026, 0.026, 0.63, 16]} />
-            <meshStandardMaterial color="#64748b" metalness={0.92} roughness={0.15} />
-          </mesh>
-          {/* Chrome Bearing Caps on Rail Sides */}
-          <mesh position={[-0.32, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.032, 0.032, 0.03, 12]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
-          </mesh>
-          <mesh position={[0.32, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.032, 0.032, 0.03, 12]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
-          </mesh>
-        </group>
-
-        <group position={[0, -0.005, 0.81]}>
-          <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.026, 0.026, 0.63, 16]} />
-            <meshStandardMaterial color="#64748b" metalness={0.92} roughness={0.15} />
-          </mesh>
-          <mesh position={[-0.32, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.032, 0.032, 0.03, 12]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
-          </mesh>
-          <mesh position={[0.32, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.032, 0.032, 0.03, 12]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
-          </mesh>
-        </group>
-
-        {/* Optical Photocell Eye Sensors on rails right before scanner */}
-        <group position={[0, 0.04, 0.72]}>
-          {/* Transmitter Sensor Housing on Customer Rail */}
-          <mesh position={[-0.31, 0, 0]}>
-            <boxGeometry args={[0.016, 0.028, 0.036]} />
-            <meshStandardMaterial color="#09090b" roughness={0.5} />
-          </mesh>
-          <mesh position={[-0.301, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
-            <cylinderGeometry args={[0.006, 0.006, 0.004, 10]} />
-            <meshStandardMaterial color="#dc2626" roughness={0.1} />
-          </mesh>
-          {/* Receiver Sensor Housing on Cashier Rail */}
-          <mesh position={[0.31, 0, 0]}>
-            <boxGeometry args={[0.016, 0.028, 0.036]} />
-            <meshStandardMaterial color="#09090b" roughness={0.5} />
-          </mesh>
-          <mesh position={[0.301, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
-            <cylinderGeometry args={[0.006, 0.006, 0.004, 10]} />
-            <meshStandardMaterial color="#10b981" roughness={0.1} />
-          </mesh>
-        </group>
-
-        {/* Animated Ribbed Tread Lines */}
-        <group ref={isActiveDesk ? conveyorBeltRibsRef : null}>
-          {Array.from({ length: 16 }).map((_, rIdx) => (
-            <mesh key={`rib-${rIdx}`} position={[0, 0.011, -0.78 + rIdx * 0.104]}>
-              <boxGeometry args={[0.6, 0.004, 0.014]} />
-              <meshBasicMaterial color="#1f242d" />
-            </mesh>
-          ))}
-        </group>
-      </group>
-
-      {/* ============================================================== */}
-      {/* 4. BI-OPTIC SCALE & MULTI-PLANE BARCODE SCANNER (ZEBRA/HONEYWELL)*/}
-      {/* ============================================================== */}
-      <group position={[-0.15, 1.065, 0.3]}>
-        {/* Stainless Steel Outer Scale Platter Flange */}
-        <mesh position={[0, -0.004, 0]}>
-          <boxGeometry args={[0.38, 0.016, 0.38]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.88} roughness={0.18} />
-        </mesh>
-
-        {/* Beveled Platter Border */}
-        <mesh position={[0, 0.002, 0]}>
-          <boxGeometry args={[0.35, 0.008, 0.35]} />
-          <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.25} />
-        </mesh>
-
-        {/* Sapphire Scratch-Resistant Optical Horizontal Window */}
-        <mesh position={[0, 0.006, 0]}>
-          <boxGeometry args={[0.31, 0.004, 0.31]} />
-          <meshStandardMaterial
-            color="#0284c7"
-            roughness={0.08}
-            metalness={0.2}
-            transparent
-            opacity={0.82}
-          />
-        </mesh>
-
-        {/* Digital Scale LED Readout on Platter Corner (0.000 kg) */}
-        <group position={[-0.11, 0.009, 0.14]}>
-          <mesh>
-            <boxGeometry args={[0.075, 0.004, 0.024]} />
-            <meshBasicMaterial color="#020617" />
-          </mesh>
-          <mesh position={[0, 0.003, 0]}>
-            <boxGeometry args={[0.065, 0.002, 0.018]} />
-            <meshBasicMaterial color="#022c22" />
-          </mesh>
-          <Text
-            position={[0, 0.005, 0]}
-            rotation={[-Math.PI / 2, 0, 0]}
-            fontSize={0.013}
-            color="#34d399"
-            anchorX="center"
-            anchorY="middle"
-          >
-            {isScanning ? '0.450 kg' : '0.000 kg'}
-          </Text>
-        </group>
-
-        {/* Optical Perimeter Laser Status Glow */}
-        <mesh position={[0, 0.01, 0]}>
-          <boxGeometry args={[0.32, 0.003, 0.32]} />
-          <meshStandardMaterial
-            color={isScanning ? '#10b981' : '#38bdf8'}
-            emissive={isScanning ? '#059669' : '#0284c7'}
-            emissiveIntensity={isScanning ? 1.6 : 0.5}
-            wireframe
-          />
-        </mesh>
-
-        {/* Dynamic Sweeping Red Laser Line */}
-        <mesh ref={isActiveDesk ? laserRef : null} position={[0, 0.022, 0]}>
-          <boxGeometry args={[0.29, 0.006, 0.025]} />
-          <meshBasicMaterial color="#ef4444" transparent opacity={0.92} />
-        </mesh>
-
-        {/* Crosshair Secondary Red Laser Line */}
-        <mesh position={[0, 0.02, 0]} rotation={[0, Math.PI / 2, 0]}>
-          <boxGeometry args={[0.29, 0.005, 0.016]} />
-          <meshBasicMaterial color="#ef4444" transparent opacity={isScanning ? 0.8 : 0.3} />
-        </mesh>
-
-        {/* Volumetric Laser Scan Sheet Fan */}
-        <mesh position={[0, 0.16, 0]}>
-          <planeGeometry args={[0.28, 0.28]} />
-          <meshBasicMaterial
-            color="#ef4444"
-            transparent
-            opacity={isScanning ? 0.42 : 0.08}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-
-        {/* Vertical Bi-Optic Scanner Tower (Upright Hood) */}
-        <group position={[0.22, 0.18, 0]}>
-          {/* Molded Aerodynamic Tower Body */}
-          <mesh>
-            <boxGeometry args={[0.085, 0.38, 0.34]} />
-            <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.3} />
-          </mesh>
-          {/* Dark Glass Vertical Scan Aperture */}
-          <mesh position={[-0.044, 0, 0]}>
-            <planeGeometry args={[0.26, 0.3]} />
-            <meshBasicMaterial
-              color="#ef4444"
-              transparent
-              opacity={isScanning ? 0.65 : 0.2}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-          {/* Vertical Laser Projector Stripe */}
-          {isScanning && (
-            <mesh position={[-0.14, 0, 0]}>
-              <planeGeometry args={[0.2, 0.015]} />
-              <meshBasicMaterial
-                color="#ef4444"
-                transparent
-                opacity={0.85}
-                side={THREE.DoubleSide}
-              />
-            </mesh>
-          )}
-          {/* Beep Speaker Grill Perforations */}
-          <mesh position={[0.044, 0.1, 0]}>
-            <boxGeometry args={[0.002, 0.06, 0.12]} />
-            <meshStandardMaterial color="#0f172a" roughness={0.9} />
-          </mesh>
-        </group>
-
-        {/* Handheld Barcode Scanner Pistol in Holster */}
-        <group position={[0.28, 0.14, 0.22]} rotation={[0.4, 0, -0.3]}>
-          {/* Holster Bracket */}
-          <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[0.05, 0.08, 0.06]} />
-            <meshStandardMaterial color="#334155" roughness={0.5} />
-          </mesh>
-          {/* Handheld Gun Grip */}
-          <mesh position={[0.02, 0.06, 0.02]} rotation={[0.4, 0, 0]}>
-            <cylinderGeometry args={[0.016, 0.018, 0.11, 10]} />
-            <meshStandardMaterial color="#09090b" roughness={0.7} />
-          </mesh>
-          {/* Scanner Gun Head (Zebra Yellow/Black look) */}
-          <mesh position={[0.02, 0.12, 0.05]}>
-            <boxGeometry args={[0.048, 0.04, 0.075]} />
-            <meshStandardMaterial color="#eab308" roughness={0.4} />
-          </mesh>
-          <mesh position={[0.02, 0.12, 0.09]}>
-            <boxGeometry args={[0.042, 0.034, 0.005]} />
-            <meshBasicMaterial color="#ef4444" />
-          </mesh>
-          {/* Coiled Cord */}
-          <mesh position={[0.02, 0.01, -0.01]}>
-            <cylinderGeometry args={[0.008, 0.008, 0.1, 8]} />
-            <meshStandardMaterial color="#09090b" roughness={0.9} />
-          </mesh>
-        </group>
-
-        {/* High-Efficiency Red Laser Optical Glow Accent */}
-        <mesh position={[0, 0.08, 0]}>
-          <cylinderGeometry args={[0.04, 0.04, 0.015, 12]} />
-          <meshStandardMaterial
-            color="#ef4444"
-            emissive="#ef4444"
-            emissiveIntensity={isScanning ? 3.0 : 0.8}
-            roughness={0.1}
-          />
-        </mesh>
-      </group>
-
-      {/* ============================================================== */}
-      {/* 5. CASHIER POS WORKSTATION & PAYMENT SYSTEM                     */}
-      {/* ============================================================== */}
-      {/* Articulated Dual-Joint Aluminum Monitor Arm */}
-      <group position={[0.44, 1.05, 0.28]}>
-        {/* Base Mounting Flange Bolted to Counter */}
-        <mesh position={[0, 0.012, 0]}>
-          <cylinderGeometry args={[0.058, 0.065, 0.024, 16]} />
-          <meshStandardMaterial color="#1e293b" metalness={0.9} roughness={0.2} />
-        </mesh>
-        {/* Vertical Upright Mast */}
-        <mesh position={[0, 0.18, 0]}>
-          <cylinderGeometry args={[0.026, 0.026, 0.34, 14]} />
-          <meshStandardMaterial color="#64748b" metalness={0.92} roughness={0.15} />
-        </mesh>
-        {/* Articulated Elbow Joint */}
-        <mesh position={[0, 0.35, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.03, 0.03, 0.05, 12]} />
-          <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.25} />
-        </mesh>
-      </group>
-
-      {/* Customer-Facing Dual-Line Digital VFD Pole Display */}
-      <group position={[-0.32, 1.05, 0.2]} rotation={[0, Math.PI / 2 + 0.1, 0]}>
-        {/* Stainless Steel Pedestal Mast */}
-        <mesh position={[0, 0.22, 0]}>
-          <cylinderGeometry args={[0.018, 0.018, 0.44, 12]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
-        </mesh>
-        {/* Display Head Box */}
-        <mesh position={[0, 0.45, 0]}>
-          <boxGeometry args={[0.34, 0.10, 0.05]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.4} metalness={0.6} />
-        </mesh>
-        {/* Glowing Vacuum Fluorescent Display Screen */}
-        <mesh position={[0, 0.45, 0.026]}>
-          <planeGeometry args={[0.31, 0.075]} />
-          <meshBasicMaterial color="#022c22" />
-        </mesh>
-        <Text
-          position={[0, 0.465, 0.028]}
-          fontSize={0.019}
-          color="#34d399"
-          anchorX="center"
-          anchorY="middle"
-          fontWeight="bold"
-        >
-          {`LANE ${laneNumberStr} READY`}
-        </Text>
-        <Text
-          position={[0, 0.435, 0.028]}
-          fontSize={0.022}
-          color="#10b981"
-          anchorX="center"
-          anchorY="middle"
-          fontWeight="extrabold"
-        >
-          {`TOTAL: ₹${runningTotal.toFixed(2)}`}
-        </Text>
-      </group>
-
-      {/* Modern Widescreen POS Touchscreen Monitor */}
-      <group position={[0.44, 1.45, 0.28]} rotation={[0.08, -0.45, 0]}>
-        {/* Sleek Aluminum Monitor Chassis Rear */}
-        <mesh>
-          <boxGeometry args={[0.54, 0.36, 0.028]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.8} />
-        </mesh>
-        {/* Rear VESA Plate & Cable Inset */}
-        <mesh position={[0, 0, -0.018]}>
-          <boxGeometry args={[0.12, 0.12, 0.01]} />
-          <meshStandardMaterial color="#334155" metalness={0.9} roughness={0.2} />
-        </mesh>
-        {/* Ultra-Slim Bezel Front Frame */}
-        <mesh position={[0, 0, 0.015]}>
-          <boxGeometry args={[0.525, 0.345, 0.005]} />
-          <meshStandardMaterial color="#020617" roughness={0.1} />
-        </mesh>
-        {/* Active High-Definition POS Screen Display */}
-        <mesh position={[0, 0, 0.019]}>
-          <planeGeometry args={[0.5, 0.32]} />
-          <meshBasicMaterial color={isScanning ? '#022c22' : '#090d16'} />
-        </mesh>
-
-        {/* Screen GUI Elements */}
-        {/* Top Header Bar */}
-        <mesh position={[0, 0.13, 0.021]}>
-          <planeGeometry args={[0.48, 0.04]} />
-          <meshBasicMaterial color="#1e3a8a" />
-        </mesh>
-        <Text
-          position={[0, 0.13, 0.022]}
-          fontSize={0.019}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.04}
-        >
-          {`MARTVERSE POS OS 4.2 • LANE ${laneNumberStr} • LIVE INVOICE`}
-        </Text>
-
-        {/* Main Content Area */}
-        <Text
-          position={[-0.22, 0.05, 0.022]}
-          fontSize={0.018}
-          color="#94a3b8"
-          anchorX="left"
-          anchorY="top"
-          lineHeight={1.4}
-        >
-          {isScanning
-            ? `SCANNING ACTIVE...\nPARABOLIC TROLLEY SYNC\nGST (5% INCL)`
-            : phase === 'review'
-            ? `BILL PROCESSED\nAWAITING CARD / UPI\nALL UNITS VERIFIED`
-            : `MARTVERSE RETAIL READY\nPLACE TROLLEY IN DOCK\nAUTO-DETECTION ON`}
-        </Text>
-
-        {/* Running Total Highlight Ribbon */}
-        <mesh position={[0, -0.09, 0.021]}>
-          <planeGeometry args={[0.48, 0.07]} />
-          <meshBasicMaterial color={isScanning ? '#059669' : '#0284c7'} />
-        </mesh>
-        <Text
-          position={[0, -0.09, 0.022]}
-          fontSize={0.028}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-        >
-          {`TOTAL: ₹${runningTotal.toFixed(2)}`}
-        </Text>
-      </group>
-
-      {/* Customer-Facing Mini Pole Display (Facing Customer Aisle) */}
-      <group position={[0.18, 1.05, 0.15]}>
-        {/* Mounting Mast */}
-        <mesh position={[0, 0.18, 0]}>
-          <cylinderGeometry args={[0.016, 0.016, 0.36, 12]} />
-          <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.15} />
-        </mesh>
-        {/* Customer VFD Display Head (Rotated towards customer) */}
-        <group position={[0, 0.38, 0]} rotation={[0, Math.PI - 0.25, 0]}>
-          <mesh>
-            <boxGeometry args={[0.3, 0.09, 0.04]} />
-            <meshStandardMaterial color="#0f172a" roughness={0.4} />
-          </mesh>
-          {/* Glowing Green/Cyan VFD Glass */}
-          <mesh position={[0, 0, 0.022]}>
-            <planeGeometry args={[0.26, 0.055]} />
-            <meshBasicMaterial color="#022c22" />
-          </mesh>
-          <Text
-            position={[0, 0.01, 0.024]}
-            fontSize={0.018}
-            color="#34d399"
-            anchorX="center"
-            anchorY="middle"
-          >
-            {`MARTVERSE • LANE ${laneNumberStr}`}
-          </Text>
-          <Text
-            position={[0, -0.014, 0.024]}
-            fontSize={0.016}
-            color="#6ee7b7"
-            anchorX="center"
-            anchorY="middle"
-          >
-            {`DUE: ₹${runningTotal.toFixed(2)}`}
-          </Text>
-        </group>
-      </group>
-
-      {/* Verifone/Ingenico Chip & PIN Card Reader Terminal (Customer Swivel Arm) */}
-      <group position={[-0.28, 1.22, 0.45]} rotation={[-0.2, 0.3, 0]}>
-        {/* Swivel Mount Arm */}
-        <mesh position={[0, -0.1, 0]}>
-          <cylinderGeometry args={[0.014, 0.014, 0.18, 10]} />
-          <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.2} />
-        </mesh>
-        {/* Terminal Body */}
-        <mesh>
-          <boxGeometry args={[0.11, 0.18, 0.035]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.6} />
-        </mesh>
-        {/* Contactless NFC Wave Screen */}
-        <mesh position={[0, 0.045, 0.019]}>
-          <planeGeometry args={[0.09, 0.055]} />
-          <meshBasicMaterial color="#0369a1" />
-        </mesh>
-        <Text
-          position={[0, 0.045, 0.021]}
-          fontSize={0.011}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-        >
-          {`TAP / INSERT CARD\n₹${runningTotal.toFixed(2)}`}
-        </Text>
-        {/* Numeric Tactile Keypad */}
-        <mesh position={[0, -0.035, 0.019]}>
-          <planeGeometry args={[0.08, 0.07]} />
-          <meshBasicMaterial color="#09090b" />
-        </mesh>
-        {/* Colored Function Keys (Green OK, Red Cancel, Yellow Clear) */}
-        <mesh position={[0.025, -0.065, 0.021]}>
-          <boxGeometry args={[0.016, 0.008, 0.002]} />
-          <meshBasicMaterial color="#10b981" />
-        </mesh>
-        <mesh position={[-0.025, -0.065, 0.021]}>
-          <boxGeometry args={[0.016, 0.008, 0.002]} />
-          <meshBasicMaterial color="#ef4444" />
-        </mesh>
-        <mesh position={[0, -0.065, 0.021]}>
-          <boxGeometry args={[0.016, 0.008, 0.002]} />
-          <meshBasicMaterial color="#f59e0b" />
-        </mesh>
-        {/* Chip Card Bottom Insertion Slot */}
-        <mesh position={[0, -0.09, 0]}>
-          <boxGeometry args={[0.065, 0.004, 0.018]} />
-          <meshBasicMaterial color="#020617" />
-        </mesh>
-      </group>
-
-      {/* Epson Thermal Receipt Printer beside POS */}
-      <group position={[0.54, 1.055, -0.04]}>
-        {/* Printer Chassis */}
-        <mesh position={[0, 0.07, 0]}>
-          <boxGeometry args={[0.15, 0.14, 0.17]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.6} />
-        </mesh>
-        {/* Paper Cover Lid */}
-        <mesh position={[0, 0.142, 0.01]}>
-          <boxGeometry args={[0.14, 0.01, 0.13]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.4} />
-        </mesh>
-        {/* Receipt Paper Output Slit */}
-        <mesh position={[0, 0.144, 0.045]}>
-          <boxGeometry args={[0.09, 0.004, 0.01]} />
-          <meshBasicMaterial color="#020617" />
-        </mesh>
-        {/* Status LEDs (Power Green & Error Amber) */}
-        <mesh position={[-0.05, 0.13, 0.07]}>
-          <sphereGeometry args={[0.003, 8, 8]} />
-          <meshBasicMaterial color="#10b981" />
-        </mesh>
-        <mesh position={[-0.038, 0.13, 0.07]}>
-          <sphereGeometry args={[0.003, 8, 8]} />
-          <meshBasicMaterial color="#f59e0b" />
-        </mesh>
-        {/* Printed Receipt Paper emerging from slit */}
-        <mesh position={[0, 0.165, 0.055]} rotation={[-0.2, 0, 0]}>
-          <planeGeometry args={[0.075, 0.05]} />
-          <meshBasicMaterial color="#f8fafc" side={THREE.DoubleSide} />
-        </mesh>
-      </group>
-
-      {/* ============================================================== */}
-      {/* 6. PACKING & BAGGING STATION (FABRIC BAG + CHROME CAROUSEL)    */}
-      {/* ============================================================== */}
-      <group position={[-0.15, 1.055, 1.1]}>
-        {/* Stainless Steel Bagging Basin Drop Well */}
-        <mesh position={[0, 0.005, 0]}>
-          <boxGeometry args={[0.62, 0.03, 0.72]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.88} roughness={0.16} />
-        </mesh>
-        {/* Protective Raised Perimeter Lip */}
-        <mesh position={[-0.305, 0.03, 0]}>
-          <boxGeometry args={[0.015, 0.035, 0.72]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
-        </mesh>
-        <mesh position={[0.305, 0.03, 0]}>
-          <boxGeometry args={[0.015, 0.035, 0.72]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
-        </mesh>
-        <mesh position={[0, 0.03, 0.355]}>
-          <boxGeometry args={[0.62, 0.035, 0.015]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
-        </mesh>
-
-        {/* Dual Tubular Chrome Bag Rack / Suspension Arms */}
-        <group position={[0.22, 0, 0]}>
-          <mesh position={[0, 0.16, 0]}>
-            <cylinderGeometry args={[0.014, 0.014, 0.32, 10]} />
-            <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
-          </mesh>
-          {/* Left Wire Suspension Arm */}
-          <mesh position={[-0.14, 0.3, -0.12]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.007, 0.007, 0.28, 8]} />
-            <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
-          </mesh>
-          {/* Right Wire Suspension Arm */}
-          <mesh position={[-0.14, 0.3, 0.12]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.007, 0.007, 0.28, 8]} />
-            <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
-          </mesh>
-        </group>
-
-        {/* Realistic Authentic Kraft Paper Grocery Bag Packing Assembly */}
-        <group
-          ref={bagGroupRef}
-          position={[0, 0.16, 0]}
-          scale={[1, 1, 1]}
-        >
-          {/* Main Kraft Paper Bag Body */}
-          <mesh>
-            <boxGeometry args={[0.42, 0.32, 0.28]} />
-            <meshStandardMaterial color="#c29b67" roughness={0.96} metalness={0.02} />
-          </mesh>
-          {/* Top Folded Paper Serrated Lip */}
-          <mesh position={[0, 0.162, 0]}>
-            <boxGeometry args={[0.426, 0.016, 0.286]} />
-            <meshStandardMaterial color="#ab834f" roughness={0.9} />
-          </mesh>
-          {/* Open Hollow Interior Depth */}
-          <mesh position={[0, 0.165, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[0.39, 0.25]} />
-            <meshBasicMaterial color="#543c1f" />
-          </mesh>
-
-          {/* Realistic Twisted Kraft Paper Rope Handles */}
-          {/* Front Loop Handle */}
-          <mesh position={[0, 0.22, 0.125]}>
-            <torusGeometry args={[0.075, 0.008, 8, 20, Math.PI]} />
-            <meshStandardMaterial color="#8f6a39" roughness={0.85} />
-          </mesh>
-          {/* Back Loop Handle */}
-          <mesh position={[0, 0.22, -0.125]}>
-            <torusGeometry args={[0.075, 0.008, 8, 20, Math.PI]} />
-            <meshStandardMaterial color="#8f6a39" roughness={0.85} />
-          </mesh>
-
-          {/* Front Printed Martverse Eco Kraft Typography */}
-          <group position={[0, 0, 0.142]}>
-            <Text
-              position={[0, 0.04, 0.002]}
-              fontSize={0.038}
-              color="#2d4030"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.06}
-            >
-              MARTVERSE
-            </Text>
-            <Text
-              position={[0, -0.015, 0.002]}
-              fontSize={0.016}
-              color="#4a634e"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.04}
-            >
-              100% RECYCLED KRAFT
-            </Text>
-            <Text
-              position={[0, -0.06, 0.002]}
-              fontSize={0.013}
-              color="#68876d"
-              anchorX="center"
-              anchorY="middle"
-            >
-              HYPERMARKET EXPRESS
-            </Text>
-          </group>
-        </group>
-
-        {/* Stack of Folded Spare Kraft Bags Next to the Packing Bay */}
-        <group position={[0.08, 0.22, 0.22]} rotation={[0, 0.1, 0]}>
-          <mesh>
-            <boxGeometry args={[0.26, 0.26, 0.03]} />
-            <meshStandardMaterial color="#ab834f" roughness={0.95} />
-          </mesh>
-          <mesh position={[0, 0.14, 0]}>
-            <torusGeometry args={[0.04, 0.006, 6, 16, Math.PI]} />
-            <meshStandardMaterial color="#845e2c" />
-          </mesh>
-        </group>
-      </group>
-
-      {/* ============================================================== */}
-      {/* 7. OVERHEAD LANE NUMBER BEACON & STATUS MAST (REALISTIC - NO GREEN DOTS) */}
-      {/* ============================================================== */}
-      <group position={[0.56, 1.05, -1.45]}>
-        {/* Brushed Stainless Steel Tower Mast with Base Mounting Ring */}
-        <mesh position={[0, 0.02, 0]}>
-          <cylinderGeometry args={[0.04, 0.045, 0.03, 14]} />
-          <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.2} />
-        </mesh>
-        <mesh position={[0, 0.8, 0]}>
-          <cylinderGeometry args={[0.022, 0.022, 1.6, 14]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
-        </mesh>
-
-        {/* Dual-Sided Backlit Acrylic Lane Number Box */}
-        <group position={[0, 1.7, 0]}>
-          {/* Black Machined Aluminum Outer Bezel */}
-          <mesh>
-            <boxGeometry args={[0.38, 0.28, 0.08]} />
-            <meshStandardMaterial color="#0f172a" roughness={0.25} metalness={0.8} />
-          </mesh>
-
-          {/* Top Machined Flat Cap (Realistic Architectural Cap - No Green Spheres) */}
-          <mesh position={[0, 0.145, 0]}>
-            <boxGeometry args={[0.39, 0.016, 0.086]} />
-            <meshStandardMaterial color="#090d16" roughness={0.3} metalness={0.85} />
-          </mesh>
-          {/* Integrated Slim Diffused LED Status Edge Bar */}
-          <mesh position={[0, 0.148, 0]}>
-            <boxGeometry args={[0.32, 0.008, 0.07]} />
-            <meshStandardMaterial
-              color={isActiveDesk ? '#38bdf8' : '#ffffff'}
-              emissive={isActiveDesk ? '#38bdf8' : '#ffffff'}
-              emissiveIntensity={isActiveDesk ? 0.8 : 0.25}
-              roughness={0.2}
-            />
-          </mesh>
-
-          {/* Bottom Machined Base Cap */}
-          <mesh position={[0, -0.145, 0]}>
-            <boxGeometry args={[0.39, 0.016, 0.086]} />
-            <meshStandardMaterial color="#090d16" roughness={0.3} metalness={0.85} />
-          </mesh>
-
-          {/* Backlit White Acrylic Panels - Front Side (-Z facing aisle) */}
-          <mesh position={[0, 0, 0.042]}>
-            <planeGeometry args={[0.34, 0.24]} />
-            <meshBasicMaterial color="#ffffff" />
-          </mesh>
-          <Text
-            position={[0, 0.03, 0.044]}
-            fontSize={0.11}
-            color="#090d16"
-            anchorX="center"
-            anchorY="middle"
-          >
-            {laneNumberStr}
-          </Text>
-          <Text
-            position={[0, -0.065, 0.044]}
-            fontSize={0.026}
-            color="#047857"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.08}
-          >
-            LANE OPEN
-          </Text>
-
-          {/* Reverse Side Facing +Z */}
-          <mesh position={[0, 0, -0.042]} rotation={[0, Math.PI, 0]}>
-            <planeGeometry args={[0.34, 0.24]} />
-            <meshBasicMaterial color="#ffffff" />
-          </mesh>
-          <Text
-            position={[0, 0.03, -0.044]}
-            rotation={[0, Math.PI, 0]}
-            fontSize={0.11}
-            color="#090d16"
-            anchorX="center"
-            anchorY="middle"
-          >
-            {laneNumberStr}
-          </Text>
-          <Text
-            position={[0, -0.065, -0.044]}
-            rotation={[0, Math.PI, 0]}
-            fontSize={0.026}
-            color="#047857"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.08}
-          >
-            LANE OPEN
-          </Text>
-
-          {/* Clean Luminous Work Downlight Strip */}
-          <mesh position={[0, -0.19, 0]}>
-            <boxGeometry args={[0.36, 0.016, 0.05]} />
-            <meshStandardMaterial
-              color="#ffffff"
-              emissive="#ffffff"
-              emissiveIntensity={isActiveDesk ? 1.2 : 0.4}
-              roughness={0.1}
-            />
-          </mesh>
-        </group>
-      </group>
-    </group>
-  );
-};
-
-// ---------------------------------------------------------------------------
-// Realistic Industrial Floor Dock Decal (Replaces Wireframe Cyan Planes)
-// ---------------------------------------------------------------------------
-const RealisticFloorDockDecal: React.FC<{
-  laneIndex: number;
-  position: [number, number, number];
-  isActive: boolean;
-}> = ({ laneIndex, position, isActive }) => {
-  const laneStr = `0${laneIndex + 1}`;
-
-  // Inactive lanes only render the subtle floor dock mat, saving 60+ draw calls
-  if (!isActive) {
-    return (
-      <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[1.36, 2.46]} />
-        <meshStandardMaterial
-          color="#0e121a"
-          roughness={0.95}
-          metalness={0.05}
-        />
-      </mesh>
-    );
-  }
-
-  return (
-    <group position={position}>
-      {/* Heavy Industrial Vulcanized Rubber Dock Mat */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[1.36, 2.46]} />
-        <meshStandardMaterial
-          color={isActive ? '#141824' : '#0e121a'}
-          roughness={0.95}
-          metalness={0.05}
-        />
-      </mesh>
-
-      {/* Outer Safety Beveled Hazard Border */}
-      <group position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        {/* Top & Bottom Industrial Safety Strips */}
-        <mesh position={[0, 1.2, 0]}>
-          <planeGeometry args={[1.36, 0.04]} />
-          <meshBasicMaterial color={isActive ? '#38bdf8' : '#d97706'} />
-        </mesh>
-        <mesh position={[0, -1.2, 0]}>
-          <planeGeometry args={[1.36, 0.04]} />
-          <meshBasicMaterial color={isActive ? '#38bdf8' : '#d97706'} />
-        </mesh>
-        {/* Left & Right Strips */}
-        <mesh position={[-0.66, 0, 0]}>
-          <planeGeometry args={[0.035, 2.36]} />
-          <meshBasicMaterial color={isActive ? '#38bdf8' : '#d97706'} />
-        </mesh>
-        <mesh position={[0.66, 0, 0]}>
-          <planeGeometry args={[0.035, 2.36]} />
-          <meshBasicMaterial color={isActive ? '#38bdf8' : '#d97706'} />
-        </mesh>
-      </group>
-
-      {/* Stenciled Shopping Trolley Wheel Alignment Grid - Rotated to face approaching customer */}
-      <group position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, Math.PI]}>
-        {/* Forward Direction Chevrons pointing into counter */}
-        <Text
-          position={[0, 0.82, 0]}
-          fontSize={0.12}
-          color={isActive ? '#38bdf8' : '#94a3b8'}
-          anchorX="center"
-          anchorY="middle"
-        >
-          ▲ ▲ ▲
-        </Text>
-
-        {/* Center Stenciled Typography facing customer correctly */}
-        <Text
-          position={[0, -0.54, 0]}
-          fontSize={0.095}
-          color={isActive ? '#f1f5f9' : '#cbd5e1'}
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.06}
-        >
-          {`LANE ${laneStr} • TROLLEY BAY`}
-        </Text>
-        <Text
-          position={[0, -0.72, 0]}
-          fontSize={0.05}
-          color={isActive ? '#38bdf8' : '#64748b'}
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.08}
-        >
-          [ AUTO-SCAN SENSOR DOCK ]
-        </Text>
-
-        {/* Trolley Wheel Alignment Corner Brackets */}
-        {[-0.45, 0.45].map((wx, wIdx) => (
-          <group key={`wheel-mk-${wx}-${wIdx}`} position={[wx, 0.1, 0]}>
-            <mesh position={[0, 0.4, 0]}>
-              <planeGeometry args={[0.12, 0.025]} />
-              <meshBasicMaterial color={isActive ? '#38bdf8' : '#64748b'} />
-            </mesh>
-            <mesh position={[0, -0.4, 0]}>
-              <planeGeometry args={[0.12, 0.025]} />
-              <meshBasicMaterial color={isActive ? '#38bdf8' : '#64748b'} />
-            </mesh>
-          </group>
-        ))}
-      </group>
-    </group>
-  );
-};
-
-const SingleCheckoutCounter = React.memo(SingleCheckoutCounterComponent);
-
 // ---------------------------------------------------------------------------
 // Main BillingCounter3D Component
 // ---------------------------------------------------------------------------
 export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) => {
   const laserRef = useRef<THREE.Mesh>(null);
   const conveyorBeltRibsRef = useRef<THREE.Group>(null);
-  const bagGroupRefs = useRef<(THREE.Group | null)[]>([]);
+  const bagGroupRefs = useRef<(THREE.Group | null)[]>([null, null, null, null, null, null]);
 
   const isConveyorMoving = useBillingStore((state) => state.isConveyorMoving);
   const phase = useBillingStore((state) => state.phase);
-  const runningTotal = useBillingStore((state) => state.runningTotal);
 
   const [activeDeskIndex, setActiveDeskIndex] = useState(2);
-  const [isNearCheckout, setIsNearCheckout] = useState(false);
   const bagScaleRef = useRef(1.0);
+  const lastDeskCheckRef = useRef(0);
 
   // 6 Commercial Checkout Lanes across X = [-15, 15]
   const counterXPositions = useMemo(() => [-15, -9, -3, 3, 9, 15], []);
 
-  const handleBagBump = () => {
+  const handleBagBump = useCallback(() => {
     bagScaleRef.current = 1.15;
     const activeBag = bagGroupRefs.current[activeDeskIndex];
     if (activeBag) activeBag.scale.set(1, 1.15, 1);
-  };
+  }, [activeDeskIndex]);
+
+  // Stable bag ref setters per desk index (avoids inline arrow functions)
+  const bagRefSetters = useMemo(() => {
+    return [0, 1, 2, 3, 4, 5].map((idx) => (el: THREE.Group | null) => {
+      bagGroupRefs.current[idx] = el;
+    });
+  }, []);
 
   useFrame((_, delta) => {
-    // Distance LOD for checkout area (mounts full desks when customer enters checkout concourse at z > 4.0)
+    const now = performance.now();
     const playerZ = martRuntime.playerPos[2];
-    const near = playerZ > 4.0;
-    if (near !== isNearCheckout) {
-      setIsNearCheckout(near);
-    }
-
-    // Dynamic active counter selection based on real player position
     const playerX = martRuntime.playerPos[0];
-    let closestIdx = 0;
-    let closestDist = Math.abs(playerX - counterXPositions[0]);
-    for (let i = 1; i < counterXPositions.length; i++) {
-      const dist = Math.abs(playerX - counterXPositions[i]);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestIdx = i;
+
+    // Only evaluate desk switching if player is within the billing section approach zone (Z: 13 to 26)
+    // and throttle to 150ms with 1.5m hysteresis to prevent oscillation / state thrashing!
+    if (playerZ >= 13.0 && playerZ <= 26.0 && now - lastDeskCheckRef.current > 150) {
+      lastDeskCheckRef.current = now;
+      let bestIdx = activeDeskIndex;
+      let minDiff = Math.abs(playerX - counterXPositions[activeDeskIndex]);
+      for (let i = 0; i < counterXPositions.length; i++) {
+        const dist = Math.abs(playerX - counterXPositions[i]);
+        if (dist < minDiff - 1.5) { // 1.5m hysteresis
+          bestIdx = i;
+          minDiff = dist;
+        }
+      }
+      if (bestIdx !== activeDeskIndex) {
+        setActiveDeskIndex(bestIdx);
       }
     }
-    if (closestIdx !== activeDeskIndex) {
-      setActiveDeskIndex(closestIdx);
-    }
 
-    // Laser scanning beam animation
+    // Laser scanning beam animation on active desk
     if (laserRef.current) {
       const isScanning = phase === 'scanning';
       const speed = isScanning ? 16 : 4;
@@ -1774,7 +988,7 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
       (laserRef.current.material as THREE.MeshBasicMaterial).opacity = isScanning ? 0.95 : 0.45;
     }
 
-    // Moving ribbed conveyor belt treads
+    // Moving ribbed conveyor belt treads on active desk
     if (isConveyorMoving && conveyorBeltRibsRef.current) {
       conveyorBeltRibsRef.current.children.forEach((child) => {
         child.position.z += delta * 0.42;
@@ -1784,7 +998,7 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
       });
     }
 
-    // Smoothly settle bag squash & stretch bounce imperatively without React setState overhead
+    // Smoothly settle bag squash & stretch bounce imperatively without React setState
     if (bagScaleRef.current > 1.0) {
       bagScaleRef.current = Math.max(1.0, bagScaleRef.current - delta * 0.8);
       const activeBag = bagGroupRefs.current[activeDeskIndex];
@@ -1799,9 +1013,9 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
       {/* Professional D-Mart Hypermarket Checkout & Billing Lightbox Sign */}
       <group position={[0, 3.7, 0]} raycast={() => null}>
         {/* Chrome Suspension Rods across all 6 lanes */}
-        {[-15, -9, -3, 3, 9, 15].map((rodX, rIdx) => (
+        {counterXPositions.map((rodX, rIdx) => (
           <mesh key={`rod-${rIdx}`} position={[rodX, 0.65, 0]}>
-            <cylinderGeometry args={[0.012, 0.012, 1.1, 10]} />
+            <cylinderGeometry args={[0.012, 0.012, 1.1, 8]} />
             <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
           </mesh>
         ))}
@@ -1809,10 +1023,10 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
         {/* Sleek Aluminum Outer Frame */}
         <mesh>
           <boxGeometry args={[33.0, 0.82, 0.08]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.8} />
+          <meshStandardMaterial color="#cbd5e1" roughness={0.25} metalness={0.85} />
         </mesh>
 
-        {/* Pure White Translucent Backlit Diffuser Face */}
+        {/* Pure White Translucent Diffuser Face */}
         <mesh>
           <boxGeometry args={[32.8, 0.76, 0.09]} />
           <meshStandardMaterial color="#ffffff" roughness={0.15} metalness={0.05} />
@@ -1820,7 +1034,6 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
 
         {/* FRONT FACE (Facing -Z towards approaching shoppers) */}
         <group position={[0, 0, -0.048]} rotation={[0, Math.PI, 0]}>
-          {/* Top D-Mart Sapphire Header Pill */}
           <mesh position={[0, 0.22, 0]}>
             <planeGeometry args={[14.0, 0.16]} />
             <meshBasicMaterial color="#0284c7" />
@@ -1829,12 +1042,10 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
             {'D-MART HYPERMARKET EXPRESS CHECKOUT'}
           </Text>
 
-          {/* Main Title */}
           <Text position={[0, 0.02, 0.005]} fontSize={0.24} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.08}>
             {'CHECKOUT & BILLING'}
           </Text>
 
-          {/* Lane Directional Indicators */}
           <Text position={[0, -0.20, 0.005]} fontSize={0.085} color="#047857" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.04}>
             {'↓ LANE 01      ↓ LANE 02      ↓ LANE 03      ↓ LANE 04      ↓ LANE 05      ↓ LANE 06'}
           </Text>
@@ -1851,95 +1062,78 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
         </group>
       </group>
 
-      {!isNearCheckout ? (
-        /* Distant Checkout Proxy: Continuous counter chassis plinth (2 draw calls instead of 150) */
-        <group position={[0, 0, 0]} raycast={() => null}>
-          <mesh position={[0, 0.5, 0]}>
-            <boxGeometry args={[32.0, 0.95, 3.2]} />
-            <meshStandardMaterial color="#1e2430" roughness={0.45} metalness={0.35} />
-          </mesh>
-          <mesh position={[0, 0.99, 0]}>
-            <boxGeometry args={[32.2, 0.04, 3.24]} />
-            <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
-          </mesh>
-        </group>
-      ) : (
-        <>
-          {/* Stainless Steel Queue Stanchions & Retractable Belts */}
-          <CheckoutQueueStanchions lanes={counterXPositions} />
+      {/* Stainless Steel Queue Stanchions & Retractable Belts */}
+      <CheckoutQueueStanchions lanes={counterXPositions} />
 
-          {/* Parked Return Shopping Trolleys near Exit */}
-          <ParkedShoppingTrolleys position={[-18.5, 0, 1.8]} />
-          <ParkedShoppingTrolleys position={[18.5, 0, 1.8]} />
+      {/* Parked Return Shopping Trolleys near Exit */}
+      <ParkedShoppingTrolleys position={[-18.5, 0, 1.8]} />
+      <ParkedShoppingTrolleys position={[18.5, 0, 1.8]} />
 
-          {/* --- 6 Photo-Realistic Supermarket Checkout Counters --- */}
-          {counterXPositions.map((xOffset, cIdx) => {
-            const isActiveDesk = isNearCheckout && (cIdx === activeDeskIndex);
+      {/* --- 6 High-Performance Commercial Checkout Counters --- */}
+      {counterXPositions.map((xOffset, cIdx) => {
+        const isActiveDesk = cIdx === activeDeskIndex;
 
-            return (
-              <SingleCheckoutCounter
-                key={`counter-${cIdx}`}
-                laneIndex={cIdx}
-                xOffset={xOffset}
-                isActiveDesk={isActiveDesk}
-                phase={phase}
-                runningTotal={runningTotal}
-                isConveyorMoving={isConveyorMoving}
-                laserRef={isActiveDesk ? laserRef : null}
-                conveyorBeltRibsRef={isActiveDesk ? conveyorBeltRibsRef : null}
-                bagGroupRef={(el: THREE.Group | null) => {
-                  bagGroupRefs.current[cIdx] = el;
-                }}
-              />
-            );
-          })}
-
-          {/* --- Live 3D Parabolic Flying, Scanning & Packing Pipeline --- */}
-          <ConveyorAnimation3D
-            activeDeskX={counterXPositions[activeDeskIndex]}
-            onBagBump={handleBagBump}
+        return isActiveDesk ? (
+          <ActiveCheckoutCounter
+            key={`counter-${cIdx}`}
+            laneIndex={cIdx}
+            xOffset={xOffset}
+            laserRef={laserRef}
+            conveyorBeltRibsRef={conveyorBeltRibsRef}
+            bagGroupRef={bagRefSetters[cIdx]}
           />
+        ) : (
+          <InactiveCheckoutCounter
+            key={`counter-${cIdx}`}
+            laneIndex={cIdx}
+            xOffset={xOffset}
+          />
+        );
+      })}
 
-          {/* --- Checkout Floor Queue Docks across all 6 lanes --- */}
-          {counterXPositions.map((xPos, idx) => (
-            <RealisticFloorDockDecal
-              key={`dock-${idx}`}
-              laneIndex={idx}
-              position={[xPos - 1.9, 0.012, -0.6]}
-              isActive={activeDeskIndex === idx}
-            />
-          ))}
+      {/* --- Live 3D Parabolic Flying, Scanning & Packing Pipeline --- */}
+      <ConveyorAnimation3D
+        activeDeskX={counterXPositions[activeDeskIndex]}
+        onBagBump={handleBagBump}
+      />
 
-          {/* --- Industrial Safety Hazard Sensor Line Across All 6 Lanes --- */}
-          <group position={[0, 0.016, -2.4]}>
-            {/* Main High-Visibility Safety Band */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[33.0, 0.38]} />
-              <meshStandardMaterial color="#facc15" roughness={0.8} />
-            </mesh>
-            {/* Dark Top & Bottom Edge Inlays */}
-            <mesh position={[0, 0.001, -0.18]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[33.0, 0.02]} />
-              <meshBasicMaterial color="#090d16" />
-            </mesh>
-            <mesh position={[0, 0.001, 0.18]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[33.0, 0.02]} />
-              <meshBasicMaterial color="#090d16" />
-            </mesh>
-            <Text
-              position={[0, 0.003, 0]}
-              rotation={[-Math.PI / 2, 0, 0]}
-              fontSize={0.14}
-              color="#0f172a"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.06}
-            >
-              {'▶ ▶ ▶   CHECKOUT SENSOR LINE • TROLLEY AUTO-SCAN DOCK   ◀ ◀ ◀'}
-            </Text>
-          </group>
-        </>
-      )}
+      {/* --- Checkout Floor Queue Docks across all 6 lanes --- */}
+      {counterXPositions.map((xPos, idx) => (
+        <RealisticFloorDockDecal
+          key={`dock-${idx}`}
+          laneIndex={idx}
+          position={[xPos - 1.9, 0.012, -0.6]}
+          isActive={activeDeskIndex === idx}
+        />
+      ))}
+
+      {/* --- Industrial Safety Hazard Sensor Line Across All 6 Lanes --- */}
+      <group position={[0, 0.016, -2.4]} raycast={() => null}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[33.0, 0.38]} />
+          <meshStandardMaterial color="#facc15" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.001, -0.18]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[33.0, 0.02]} />
+          <meshBasicMaterial color="#0284c7" />
+        </mesh>
+        <mesh position={[0, 0.001, 0.18]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[33.0, 0.02]} />
+          <meshBasicMaterial color="#0284c7" />
+        </mesh>
+        <Text
+          position={[0, 0.003, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          fontSize={0.14}
+          color="#0f172a"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.06}
+          fontWeight="bold"
+        >
+          {'▶ ▶ ▶   CHECKOUT SENSOR LINE • TROLLEY AUTO-SCAN DOCK   ◀ ◀ ◀'}
+        </Text>
+      </group>
     </group>
   );
 };

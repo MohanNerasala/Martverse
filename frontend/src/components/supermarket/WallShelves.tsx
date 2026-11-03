@@ -268,7 +268,6 @@ const LeftWallRetailShelving: React.FC = React.memo(() => {
         <group raycast={() => null}>
           <instancedMesh ref={eslRef} args={[sharedGeometries.box, wallRackMaterials.eslCasing, displaySlots.length]} />
           <instancedMesh ref={talkerRef} args={[sharedGeometries.plane, talkerMat, displaySlots.length]} />
-          <instancedMesh ref={shadowRef} args={[sharedGeometries.contactShadow, wallRackMaterials.contactShadow, displaySlots.length]} />
         </group>
       )}
 

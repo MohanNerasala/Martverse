@@ -76,9 +76,33 @@ export const martRuntime = {
   },
 };
 
+function getInitialProducts(): Product[] {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('martverse_products_cache');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const sanitized = parsed.filter(
+            (p: any) =>
+              !(
+                p.placement?.floorNumber === 2 ||
+                (p.sku && p.sku.startsWith('APP-'))
+              )
+          );
+          if (sanitized.length > 0) {
+            return sanitized;
+          }
+        }
+      }
+    } catch {}
+  }
+  return [];
+}
+
 export const useMartStore = create<MartStore>((set) => ({
   floors: MOCK_FLOORS,
-  products: MOCK_PRODUCTS, // Instant 0ms shelf population on initial paint; background revalidation updates live data
+  products: getInitialProducts(), // Instant 0ms shelf population on initial paint; background revalidation updates live data
   activeFloor: 1,
   playerPos: [0, 1.5, -28], // Spawn at Entrance
   playerYaw: 0,
@@ -136,22 +160,21 @@ export const useMartStore = create<MartStore>((set) => ({
           }
         }
       } catch {}
-      set((state) => (state.products.length === 0 ? { products: MOCK_PRODUCTS } : {}));
     }
   },
 
   setFloors: (floors) => set({ floors }),
   setProducts: (products) => {
-    const sanitized = Array.isArray(products)
-      ? products.filter(
-          (p: any) =>
-            !(
-              p.placement?.floorNumber === 2 ||
-              (p.sku && p.sku.startsWith('APP-'))
-            )
+    if (!products || !Array.isArray(products) || products.length === 0) return;
+    const sanitized = products.filter(
+      (p: any) =>
+        !(
+          p.placement?.floorNumber === 2 ||
+          (p.sku && p.sku.startsWith('APP-'))
         )
-      : products;
-    if (typeof window !== 'undefined' && sanitized && sanitized.length > 0) {
+    );
+    if (sanitized.length === 0) return;
+    if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('martverse_products_cache', JSON.stringify(sanitized));
       } catch {}

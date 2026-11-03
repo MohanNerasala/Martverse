@@ -144,7 +144,6 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
   }, [setFloors, setProducts]);
 
   const groundFloor = floors.find((f) => f.floorNumber === 1);
-  const firstFloor = floors.find((f) => f.floorNumber === 2);
 
   return (
     <div className="w-full h-full relative select-none touch-none" style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -193,23 +192,13 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           {/* Central Grand Promenade Feature Promotional Merchandising Islands */}
           {activeFloor === 1 && <PromotionalIslands />}
 
-          {/* Ground Floor Double-Sided Gondola Aisles (Aisles 1 - 9) - Active Floor Culling */}
-          {activeFloor === 1 && groundFloor?.aisles.map((aisle) => (
+          {/* Ground Floor Double-Sided Gondola Aisles (Aisles 1 - 9) */}
+          {groundFloor?.aisles.map((aisle) => (
             <ShelfUnit
               key={aisle.id}
               aisle={aisle}
               products={products}
               floorYOffset={0}
-            />
-          ))}
-
-          {/* First Floor Aisles (Future Upper Level expansion) */}
-          {activeFloor === 2 && firstFloor?.aisles.map((aisle) => (
-            <ShelfUnit
-              key={aisle.id}
-              aisle={aisle}
-              products={products}
-              floorYOffset={5.0}
             />
           ))}
 

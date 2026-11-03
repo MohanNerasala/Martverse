@@ -54,9 +54,9 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 28.55, maxX: 30.45, minZ: -11.5, maxZ: 11.5 },    // Aisle 9: Soft Drinks & Juices (X = 29.5, 22m)
 
   // 3 Central Grand Promenade Feature Promotional Islands (Low-profile, open 360-deg browsing)
-  { minX: -1.5, maxX: 1.5, minZ: -16.5, maxZ: -13.5 },     // Island 1: Luxury Chocolates Showcase (X = 0, Z = -15)
-  { minX: -1.7, maxX: 1.7, minZ: -3.2, maxZ: -0.8 },       // Island 2: Artisan Tea & Coffee Pavilion (X = 0, Z = -2)
-  { minX: -1.6, maxX: 1.6, minZ: 9.6, maxZ: 12.4 },        // Island 3: Festive Sweets & Dry Fruits (X = 0, Z = 11)
+  { minX: -1.8, maxX: 1.8, minZ: -23.5, maxZ: -21.5 },     // Island 1: Luxury Chocolates Showcase (X = 0, Z = -22.5)
+  { minX: -1.7, maxX: 1.7, minZ: -16.2, maxZ: -13.8 },     // Island 2: Artisan Tea & Coffee Pavilion (X = 0, Z = -15)
+  { minX: -1.6, maxX: 1.6, minZ: -6.2, maxZ: -3.8 },       // Island 3: Festive Sweets & Dry Fruits (X = 0, Z = -5)
 
   // 6 Commercial Checkout Billing Counter Desks at [-15, -9, -3, 3, 9, 15], Z ~ 22.0
   { minX: -16.15, maxX: -13.85, minZ: 20.8, maxZ: 23.2 },
@@ -65,26 +65,6 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 1.85, maxX: 4.15, minZ: 20.8, maxZ: 23.2 },
   { minX: 7.85, maxX: 10.15, minZ: 20.8, maxZ: 23.2 },
   { minX: 13.85, maxX: 16.15, minZ: 20.8, maxZ: 23.2 },
-];
-
-const STATIC_OBSTACLES_FLOOR2: ObstacleBox[] = [
-  // Outer Store Perimeter Walls
-  { minX: -22.0, maxX: -17.2, minZ: -27.0, maxZ: 27.0 },  // Left Wall
-  { minX: 17.2, maxX: 22.0, minZ: -27.0, maxZ: 27.0 },   // Right Wall
-  { minX: -22.0, maxX: 22.0, minZ: 24.6, maxZ: 28.0 },   // Back Wall
-  { minX: -22.0, maxX: 22.0, minZ: -28.0, maxZ: -24.8 }, // Front Wall
-
-  // Shelves Floor 2: [-11.0, -6.5, -2.0, 2.5, 7.0, 11.5], halfW = 0.96, Z: [-12.1, 12.1]
-  { minX: -11.96, maxX: -10.04, minZ: -12.1, maxZ: 12.1 }, // Aisle 6
-  { minX: -7.46, maxX: -5.54, minZ: -12.1, maxZ: 12.1 },  // Aisle 7
-  { minX: -2.96, maxX: -1.04, minZ: -12.1, maxZ: 12.1 },  // Aisle 8
-  { minX: 1.54, maxX: 3.46, minZ: -12.1, maxZ: 12.1 },    // Aisle 9
-  { minX: 6.04, maxX: 7.96, minZ: -12.1, maxZ: 12.1 },    // Aisle 10
-  { minX: 10.54, maxX: 12.46, minZ: -12.1, maxZ: 12.1 },  // Aisle 11
-
-  // Floor 2 Escalator void opening guardrails
-  { minX: 13.0, maxX: 13.4, minZ: -6.5, maxZ: 5.2 },
-  { minX: 13.0, maxX: 16.5, minZ: -6.7, maxZ: -6.3 },
 ];
 
 const UNPAID_EXIT_BARRIER: ObstacleBox = {
@@ -658,29 +638,6 @@ export const PlayerController: React.FC = () => {
       return;
     }
 
-    // Check Escalator Entrance (Floor 1 entrance at z ~ -8, Floor 2 entrance at z ~ 6)
-    const isFloor2 = posRef.current.y > 4.5 || activeFloor === 2;
-    const nearEscalatorGround = !isFloor2 && Math.abs(px - 14.7) < 2.2 && pz >= -10.5 && pz <= -6.8;
-    const nearEscalatorFloor2 = isFloor2 && Math.abs(px - 14.7) < 2.2 && pz >= 5.0 && pz <= 8.5;
-
-    if (nearEscalatorGround) {
-      posRef.current.x = 14.7;
-      posRef.current.z = -7.0;
-      yawRef.current = 0; // face forward up the ramp
-      targetYawRef.current = 0;
-      sounds.playPickSound();
-      return;
-    }
-
-    if (nearEscalatorFloor2) {
-      posRef.current.x = 14.7;
-      posRef.current.z = 5.0;
-      yawRef.current = Math.PI; // face down the ramp
-      targetYawRef.current = Math.PI;
-      sounds.playPickSound();
-      return;
-    }
-
     // If an item is actively hovered by the user's cursor, prioritize inspecting that exact item!
     const hovered = useMartStore.getState().hoveredProduct;
     if (hovered) {
@@ -811,30 +768,18 @@ export const PlayerController: React.FC = () => {
       const worldDX = velocityRef.current.x * delta;
       const worldDZ = velocityRef.current.z * delta;
 
-      const currentFloor = posRef.current.y > 4.5 ? 2 : 1;
-
       // -------------------------------------------------------------
       // AAA Buttery-Smooth Unified Character Capsule Sliding
       // 2 streamlined convex spheres: Front Basket Nose, Player/Trolley Center
       // Eliminates internal friction, edge catching, corner snags, and collision chatter
       // -------------------------------------------------------------
-      const onRampCorridor =
-        posRef.current.x >= 13.8 &&
-        posRef.current.x <= 15.6 &&
-        posRef.current.z >= -9.5 &&
-        posRef.current.z <= 7.5;
+      const boxes = STATIC_OBSTACLES_FLOOR1;
+      const sinYaw = Math.sin(yawRef.current);
+      const cosYaw = Math.cos(yawRef.current);
 
-      if (onRampCorridor) {
-        posRef.current.x += worldDX;
-        posRef.current.z += worldDZ;
-      } else {
-        const boxes = currentFloor === 1 ? STATIC_OBSTACLES_FLOOR1 : STATIC_OBSTACLES_FLOOR2;
-        const sinYaw = Math.sin(yawRef.current);
-        const cosYaw = Math.cos(yawRef.current);
-
-        // --- Decoupled Axis Sliding Physics: Guaranteed Never-Stuck Movement ---
-        // 1. Move along X axis and resolve X-axis collisions
-        let nextX = posRef.current.x + worldDX;
+      // --- Decoupled Axis Sliding Physics: Guaranteed Never-Stuck Movement ---
+      // 1. Move along X axis and resolve X-axis collisions
+      let nextX = posRef.current.x + worldDX;
         for (let s = 0; s < STATIC_SPHERES.length; s++) {
           const sp = STATIC_SPHERES[s];
           const sx = nextX + sinYaw * sp.fwdDist;
@@ -872,7 +817,7 @@ export const PlayerController: React.FC = () => {
         // Unpaid exit barrier check
         const activeCart = useCartStore.getState().items;
         const activePaid = useCartStore.getState().isPaid;
-        if (activeCart.length > 0 && !activePaid && currentFloor === 1) {
+        if (activeCart.length > 0 && !activePaid) {
           const frontSp = STATIC_SPHERES[1]; // Front Bumper
           const fx = nextX + sinYaw * frontSp.fwdDist;
           const fz = nextZ + cosYaw * frontSp.fwdDist;
@@ -885,7 +830,6 @@ export const PlayerController: React.FC = () => {
 
         posRef.current.x = nextX;
         posRef.current.z = nextZ;
-      }
 
       // Store outer boundaries safety clamp (72m x 72m hypermarket: -35m to +35m)
       posRef.current.x = Math.max(-34.8, Math.min(34.8, posRef.current.x));
@@ -901,8 +845,8 @@ export const PlayerController: React.FC = () => {
       const activeCartItems = useCartStore.getState().items;
       const isCartPaid = useCartStore.getState().isPaid;
 
-      // The Yellow Checkout Sensor Line spans all 3 lanes (x: -7.2 to +7.2, z: 15.6)
-      const isWithinBillingWidth = currentFloor === 1 && Math.abs(currX) <= 7.2;
+      // The Yellow Checkout Sensor Line spans all 6 lanes (x: -17.5 to +17.5, z: 15.6)
+      const isWithinBillingWidth = Math.abs(currX) <= 17.5;
 
       // 1. FORWARD CROSSING: User pushes trolley forward across the yellow line (z >= 15.5) into the scan dock
       // Automatically takes items from trolley and scans them!
@@ -935,73 +879,8 @@ export const PlayerController: React.FC = () => {
       }
     }
 
-    // Escalator Transition & Automatic Moving Walkway logic (at x = 14.7, z between -7.4 and 5.4)
-    const onEscalatorRamp =
-      Math.abs(posRef.current.x - 14.7) < 1.2 &&
-      posRef.current.z >= -7.4 &&
-      posRef.current.z <= 5.4;
-
-    if (onEscalatorRamp) {
-      // 1. Center lateral position gently on the walkway
-      posRef.current.x = THREE.MathUtils.damp(posRef.current.x, 14.70, 10, delta);
-
-      // 2. Automatic moving walkway propulsion:
-      const forwardInput = keys.current.forward ? 3.5 : 0;
-      const isAscending = Math.cos(yawRef.current) >= -0.2;
-
-      if (isAscending) {
-        posRef.current.z += (3.2 + forwardInput) * delta;
-        targetYawRef.current = 0;
-        yawRef.current = THREE.MathUtils.clamp(yawRef.current, -0.4, 0.4);
-        yawRef.current = THREE.MathUtils.damp(yawRef.current, 0, 8, delta);
-
-        // When reaching Floor 2 landing
-        if (posRef.current.z >= 5.4) {
-          posRef.current.z = 5.9;
-          posRef.current.y = 6.5;
-          targetYawRef.current = 0;
-          setActiveFloor(2);
-          sounds.playPickSound();
-        }
-      } else {
-        posRef.current.z -= (3.2 + forwardInput) * delta;
-        targetYawRef.current = Math.PI;
-        yawRef.current = THREE.MathUtils.clamp(yawRef.current, Math.PI - 0.4, Math.PI + 0.4);
-        yawRef.current = THREE.MathUtils.damp(yawRef.current, Math.PI, 8, delta);
-
-        // When reaching Ground Floor landing
-        if (posRef.current.z <= -7.4) {
-          posRef.current.z = -9.2;
-          posRef.current.y = 1.5;
-          yawRef.current = 0; // Turn around to face forward in front of the escalator!
-          targetYawRef.current = 0;
-          setActiveFloor(1);
-          sounds.playPickSound();
-        }
-      }
-
-      // 3. Ramp y smoothly between 1.5 (Floor 1) and 6.5 (Floor 2)
-      const t = Math.max(0, Math.min(1, (posRef.current.z - (-7.4)) / (5.4 - (-7.4))));
-      const desiredY = 1.5 + t * 5.0;
-      posRef.current.y = THREE.MathUtils.damp(posRef.current.y, desiredY, 12, delta);
-
-      if (posRef.current.y > 4.5 && activeFloor !== 2) {
-        setActiveFloor(2);
-      } else if (posRef.current.y <= 4.5 && activeFloor !== 1) {
-        setActiveFloor(1);
-      }
-    } else {
-      // Fixed floor height
-      const targetFloorY = activeFloor === 2 ? 6.5 : 1.5;
-      posRef.current.y = THREE.MathUtils.damp(posRef.current.y, targetFloorY, 8, delta);
-
-      // Floor height synchronization outside escalator ramp
-      const physicalFloor = posRef.current.y > 3.8 ? 2 : 1;
-      if (activeFloor !== physicalFloor) {
-        setActiveFloor(physicalFloor);
-        proximityCache.current.prompt = null;
-      }
-    }
+    // Fixed ground floor height (1.45m eye level)
+    posRef.current.y = THREE.MathUtils.damp(posRef.current.y, 1.45, 8, delta);
 
     // High-frequency zero-rerender runtime update (0ms lockstep synchronization with all 3D systems)
     martRuntime.playerPos[0] = posRef.current.x;
@@ -1014,23 +893,13 @@ export const PlayerController: React.FC = () => {
     const px = posRef.current.x;
     const pz = posRef.current.z;
 
-    const nearBilling = activeFloor === 1 && Math.abs(pz - 22.0) < 4.0 && Math.abs(px) < 18.0;
-    const nearExit = activeFloor === 1 && Math.abs(pz - (-31.0)) < 3.5 && Math.abs(px) < 3.5;
-    const nearEscalatorGround = activeFloor === 1 && Math.abs(px - 14.7) < 2.2 && pz >= -10.5 && pz <= -6.8;
-    const nearEscalatorFloor2 = activeFloor === 2 && Math.abs(px - 14.7) < 2.2 && pz >= 5.0 && pz <= 8.5;
+    const nearBilling = Math.abs(pz - 22.0) < 4.0 && Math.abs(px) < 18.0;
+    const nearExit = Math.abs(pz - (-31.0)) < 3.5 && Math.abs(px) < 3.5;
 
     let prompt: string | null = null;
     let targetPos: [number, number, number] | null = null;
 
-    if (onEscalatorRamp) {
-      prompt = 'Escalator Moving Walkway • Gliding automatically between floors...';
-    } else if (nearEscalatorGround) {
-      prompt = 'Press [E] or Step On: ↑ Ride to 2nd Floor (Upper Level)';
-      targetPos = [14.7, 1.5, -7.0];
-    } else if (nearEscalatorFloor2) {
-      prompt = 'Press [E] or Step On: ↓ Ride to Ground Floor (Groceries & POS)';
-      targetPos = [14.7, 6.5, 5.0];
-    } else if (nearBilling) {
+    if (nearBilling) {
       prompt = null; // Do NOT show prompt banner per user request
     } else if (nearExit) {
       const activeCart = useCartStore.getState().items;
@@ -1040,8 +909,6 @@ export const PlayerController: React.FC = () => {
       lastProximityCheck.current = now;
       const nearbyProd = products.find((p) => {
         if (!p.placement) return false;
-        const prodFloor = p.placement.floorNumber ?? 1;
-        if (prodFloor !== activeFloor) return false;
         const dx = p.placement.worldX - px;
         const dz = p.placement.worldZ - pz;
         return (dx * dx + dz * dz) < 6.25; // 2.5m squared (zero Math.sqrt)
@@ -1114,7 +981,7 @@ export const PlayerController: React.FC = () => {
       const rayDirZ = -fwdZ;
       const isCloseInspect = typeof window !== 'undefined' && Boolean((window as any).__martverseInspectTrolleyActive);
       const baseDist = isCloseInspect ? 0.35 : 0.55; // 1.70m total distance behind trolley
-      const currentObstacles = activeFloor === 2 ? STATIC_OBSTACLES_FLOOR2 : STATIC_OBSTACLES_FLOOR1;
+      const currentObstacles = STATIC_OBSTACLES_FLOOR1;
       const safeObstacleDist = isCloseInspect ? 0.35 : checkCameraObstacleDistance(posRef.current.x, posRef.current.z, rayDirX, rayDirZ, baseDist, currentObstacles);
 
       camDistRef.current = THREE.MathUtils.damp(camDistRef.current, safeObstacleDist, 22, delta);
