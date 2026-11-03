@@ -71,6 +71,7 @@ export default function Home() {
     sessionStorage.setItem('martverse_intro_completed', 'true');
     localStorage.setItem('martverse_intro_completed', 'true');
     setHasEnteredStore(true);
+    useMartStore.getState().setCameraMode('third_person');
     const isAuth = useAuthStore.getState().isAuthenticated;
     const hasSkipped = sessionStorage.getItem('martverse_login_skipped');
     if (!isAuth && !hasSkipped) {
@@ -146,6 +147,7 @@ export default function Home() {
       localStorage.setItem('martverse_intro_completed', 'true');
       sessionStorage.removeItem('martverse_skip_intro');
       setHasEnteredStore(true);
+    useMartStore.getState().setCameraMode('third_person');
       setShowIntro(false);
       setShowWelcomeModal(false);
 
@@ -161,7 +163,7 @@ export default function Home() {
         martRuntime.playerPos[2] = 14.6;
         martRuntime.playerYaw = 0;
         store.setPlayerPos([0, 1.5, 14.6], 0);
-        store.setCameraMode('first_person');
+        store.setCameraMode('third_person');
         useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
       } else {
         // ANY OTHER PAGE / CONTINUE SHOPPING AFTER ORDER:
@@ -171,7 +173,7 @@ export default function Home() {
         martRuntime.playerPos[2] = -20;
         martRuntime.playerYaw = 0;
         store.setPlayerPos([0, 1.5, -20], 0);
-        store.setCameraMode('first_person');
+        store.setCameraMode('third_person');
         useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
       }
 
@@ -190,6 +192,7 @@ export default function Home() {
       setShowIntro(false);
       setShowWelcomeModal(false);
       setHasEnteredStore(true);
+    useMartStore.getState().setCameraMode('third_person');
       router.push('/checkout');
       return;
     }
@@ -204,6 +207,7 @@ export default function Home() {
         setShowIntro(false);
         setShowWelcomeModal(false);
         setHasEnteredStore(true);
+    useMartStore.getState().setCameraMode('third_person');
         setTimeout(() => {
           store.openProductModal(target);
         }, 300);
@@ -213,8 +217,8 @@ export default function Home() {
 
   if (!isMounted) {
     return (
-      <main className="w-full h-screen overflow-hidden bg-[#080B11] relative">
-        <div className="w-full h-screen bg-[#080B11] flex flex-col items-center justify-center space-y-5">
+      <main className="w-full h-screen overflow-hidden bg-[#080B11] relative" style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+        <div className="w-full h-screen bg-[#080B11] flex flex-col items-center justify-center space-y-5" style={{ width: '100vw', height: '100vh' }}>
           <div className="relative">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center font-black text-white text-2xl shadow-2xl shadow-blue-500/30 ring-1 ring-white/20 animate-pulse">
               <Store className="w-8 h-8 text-white" />
@@ -236,7 +240,7 @@ export default function Home() {
   }
 
   return (
-    <main className="w-full h-screen overflow-hidden bg-[#080B11] relative">
+    <main className="w-full h-screen overflow-hidden bg-[#080B11] relative" style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
       {/* Full-Screen Scroll-Driven Cinematic Opening Sequence */}
       {showIntro && (
         <CinematicIntro onComplete={handleIntroComplete} />
@@ -249,9 +253,10 @@ export default function Home() {
             ? 'opacity-100 pointer-events-auto z-10'
             : 'opacity-0 pointer-events-none z-0 invisible'
         }`}
+        style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       >
         {/* 3D Supermarket Canvas */}
-        <div className="w-full h-full absolute inset-0">
+        <div className="w-full h-full absolute inset-0" style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
           <SupermarketScene isPaused={showIntro} />
         </div>
 

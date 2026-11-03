@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MOCK_PRODUCTS } from './mockData';
 import { shelfTextureCache, getEslTexture, getEslMaterial } from '@/components/supermarket/ShelfUnit';
+import { prewarmAllProductTextures } from './productTextureAtlas';
 import { api } from './api';
 import { useMartStore } from '@/store/useMartStore';
 
@@ -15,6 +16,9 @@ let isPreloadingStarted = false;
 export function preloadAllShelfAssets() {
   if (isPreloadingStarted || typeof window === 'undefined') return;
   isPreloadingStarted = true;
+
+  // Immediately kick off product texture generation and atlas compilation
+  prewarmAllProductTextures();
 
   // Defer 3D shelf texture preloading slightly so the 2D cinematic intro has 100% network & CPU priority
   const schedule = typeof window !== 'undefined' && 'requestIdleCallback' in window

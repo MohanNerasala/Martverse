@@ -128,10 +128,10 @@ export const ProductHoverCard: React.FC = () => {
         <button
           type="button"
           onClick={handleAddToCart}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+          className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:scale-95 text-white font-extrabold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-md shadow-blue-500/25 transition-all cursor-pointer"
         >
           <ShoppingCart className="w-3.5 h-3.5" />
-          <span>Add to Cart</span>
+          <span>Add to Trolley</span>
         </button>
 
         <button

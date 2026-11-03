@@ -11,9 +11,9 @@ interface FlyingArcsProps {
   playerYaw?: number;
 }
 
-// EaseInOutCubic function for buttery smooth translation
-function easeInOutCubic(x: number): number {
-  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+// EaseOutCubic function for realistic deceleration into trolley basket
+function easeOutCubic(x: number): number {
+  return 1 - Math.pow(1 - x, 3);
 }
 
 // Pre-allocated shared geometries for flying projectile meshes (zero GC pauses)
@@ -50,7 +50,7 @@ const SingleFlyArc: React.FC<{
   playerYaw?: number;
 }> = ({ anim, trolleyPos, playerYaw }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const duration = anim.duration || 480;
+  const duration = anim.duration || 600;
   const productColor = anim.color || '#3b82f6';
 
   useFrame(() => {
@@ -68,54 +68,25 @@ const SingleFlyArc: React.FC<{
       pPos[2] + Math.cos(actualYaw) * 0.95,
     ];
 
-    // Target basket center inside the 1.18x shopping trolley
+    // Target basket center inside the shopping trolley
     const basketOffsetX = -Math.sin(actualYaw) * 0.04;
     const basketOffsetZ = -Math.cos(actualYaw) * 0.04;
     const tx = actualTrolleyPos[0] + basketOffsetX;
-    const ty = actualTrolleyPos[1] + 0.65;
+    const ty = actualTrolleyPos[1] + 0.60;
     const tz = actualTrolleyPos[2] + basketOffsetZ;
 
-    // Smooth horizontal position with cubic easing
-    const p = easeInOutCubic(t);
+    // Smooth horizontal position with easeOutCubic
+    const p = easeOutCubic(t);
     const x = sx + (tx - sx) * p;
     const z = sz + (tz - sz) * p;
 
-    // Realistic multi-stage vertical physics:
-    // 1. Smooth lift off shelf (0.0 -> 0.30)
-    // 2. High aerial glide towards trolley (0.30 -> 0.68)
-    // 3. Gravitational basket drop (0.68 -> 0.92)
-    // 4. Soft elastic landing settle (0.92 -> 1.0)
-    let y: number;
-    let scaleY = 1.0;
-    let scaleXZ = 1.0;
-    const highY = Math.max(sy, ty) + 1.5;
-
-    if (t < 0.30) {
-      const liftT = t / 0.30;
-      const smoothLift = Math.sin(liftT * Math.PI * 0.5);
-      y = sy + (highY - sy) * smoothLift;
-    } else if (t < 0.68) {
-      const glideT = (t - 0.30) / 0.38;
-      y = highY + Math.sin(glideT * Math.PI) * 0.22;
-    } else if (t < 0.92) {
-      const dropT = (t - 0.68) / 0.24;
-      // Accelerated gravitational drop curve
-      const fallCurve = Math.pow(dropT, 2.0);
-      y = highY - (highY - ty) * fallCurve;
-      scaleY = 1.0 + Math.sin(dropT * Math.PI) * 0.12;
-      scaleXZ = 1.0 - Math.sin(dropT * Math.PI) * 0.06;
-    } else {
-      // Gentle elastic settle upon resting in basket
-      const bounceT = (t - 0.92) / 0.08;
-      const bounceHeight = Math.sin(bounceT * Math.PI) * 0.05;
-      y = ty + bounceHeight;
-      scaleY = 1.0 - Math.sin(bounceT * Math.PI) * 0.08;
-      scaleXZ = 1.0 + Math.sin(bounceT * Math.PI) * 0.05;
-    }
+    // Parabolic vertical trajectory: graceful leap and deceleration into basket slot
+    const arcHeight = 1.25;
+    const y = sy + (ty - sy) * p + arcHeight * 4 * t * (1 - t);
 
     groupRef.current.position.set(x, y, z);
-    // Scale item proportionally to match the 0.6x trolley basket dimensions
-    groupRef.current.scale.set(scaleXZ * 0.65, scaleY * 0.65, scaleXZ * 0.65);
+    // Scale item proportionally to match the trolley basket dimensions
+    groupRef.current.scale.set(0.65, 0.65, 0.65);
 
     // Natural item tumbling in flight that aligns as it drops into the basket
     if (t < 0.70) {

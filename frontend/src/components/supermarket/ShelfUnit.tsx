@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { SupermarketAisle, Product, ProductPlacement } from '@/types';
 import { useMartStore } from '@/store/useMartStore';
 import { Text } from '@react-three/drei';
+import { getProductPackagingTexture as getRealProductPackagingTexture } from '@/lib/productTextureAtlas';
 
 // Shared pre-allocated geometries (eliminates 3,000+ geometry allocations and GC pauses)
 export const sharedGeometries = {
@@ -27,36 +28,10 @@ export const eslTextureCache = new Map<string, THREE.CanvasTexture>();
 export const eslMaterialCache = new Map<string, THREE.MeshBasicMaterial>();
 // =========================================================================
 // Photorealistic Indian Supermarket Branded Packaging Texture Generator
-// Produces 512x640 crisp CanvasTextures for all 73 catalog items (0ms cache)
+// Produces crisp 512x640 CanvasTextures with authentic catalogue SVG artwork
 // =========================================================================
 export function getProductPackagingTexture(product: Product): THREE.Texture {
-  const cacheKey = `pkg-${product.slug || product.id}`;
-  if (shelfTextureCache.has(cacheKey)) {
-    return shelfTextureCache.get(cacheKey)!;
-  }
-
-  if (typeof document === 'undefined') {
-    return new THREE.CanvasTexture({} as HTMLCanvasElement);
-  }
-
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 640;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    drawBrandedPackagingArtwork(ctx, product);
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.generateMipmaps = true;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 16;
-  texture.needsUpdate = true;
-  shelfTextureCache.set(cacheKey, texture);
-
-  return texture;
+  return getRealProductPackagingTexture(product);
 }
 
 function drawBrandedPackagingArtwork(ctx: CanvasRenderingContext2D, prod: Product) {
@@ -761,7 +736,7 @@ const shelfRackMaterials = {
   post: new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.45, roughness: 0.3 }), // Commercial powder-coated slotted steel uprights
   postNeon: new THREE.MeshStandardMaterial({ color: '#64748b', roughness: 0.5 }), // Slotted notch accent
   eslCasing: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.2, metalness: 0.1 }),
-  kickplate: new THREE.MeshStandardMaterial({ color: '#64748b', metalness: 0.8, roughness: 0.25 }), // Brushed aluminum kickplate
+  kickplate: new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.6, roughness: 0.25 }), // Brushed aluminum kickplate
   endCapSign: new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.3, roughness: 0.2 }),
   acrylicTray: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.05 }),
   acrylicLip: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.35, roughness: 0.1 }),
@@ -1233,6 +1208,12 @@ const ProductBatch: React.FC<{
 
     bodyRef.current.instanceMatrix.needsUpdate = true;
     labelRef.current.instanceMatrix.needsUpdate = true;
+    try {
+      bodyRef.current.computeBoundingBox();
+      bodyRef.current.computeBoundingSphere();
+      labelRef.current.computeBoundingBox();
+      labelRef.current.computeBoundingSphere();
+    } catch {}
   }, [slots, dims]);
 
   if (slots.length === 0) return null;
@@ -1241,6 +1222,7 @@ const ProductBatch: React.FC<{
     <group>
       <instancedMesh
         ref={bodyRef}
+        frustumCulled={false}
         args={[sharedGeometries.box, bodyMat, slots.length]}
         onPointerOver={(e) => {
           e.stopPropagation();
@@ -1259,6 +1241,7 @@ const ProductBatch: React.FC<{
       />
       <instancedMesh
         ref={labelRef}
+        frustumCulled={false}
         args={[sharedGeometries.plane, labelMat, slots.length]}
         raycast={() => null}
       />
@@ -1886,34 +1869,6 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
   const centerY = floorYOffset + aisle.shelfHeight / 2;
   const rotationY = Math.atan2(dx, dz);
 
-  const detailGroupRef = useRef<THREE.Group>(null);
-  const farGroupRef = useRef<THREE.Group>(null);
-  const frameCounter = useRef(0);
-
-  const isNearInitial = useMemo(() => {
-    // Default player start position is [0, 1.5, -28]
-    const cdx = 0 - centerX;
-    const cdz = -28 - centerZ;
-    return (cdx * cdx + cdz * cdz) < 225;
-  }, [centerX, centerZ]);
-
-  useFrame(({ camera }) => {
-    frameCounter.current++;
-    if (frameCounter.current % 6 === 0) {
-      const cdx = camera.position.x - centerX;
-      const cdz = camera.position.z - centerZ;
-      const distSq = cdx * cdx + cdz * cdz;
-      const isNear = distSq < 225; // 15 meters threshold
-
-      if (detailGroupRef.current && detailGroupRef.current.visible !== isNear) {
-        detailGroupRef.current.visible = isNear;
-      }
-      if (farGroupRef.current && farGroupRef.current.visible === isNear) {
-        farGroupRef.current.visible = !isNear;
-      }
-    }
-  });
-
   // Single Continuous Uniform Column Grid across all tiers (Zero block gaps, 100% straight vertical columns)
   const colSpacing = 0.44;
   const usableLength = length - 0.88;
@@ -2079,8 +2034,8 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
         <mesh position={[0, 0, length / 2 + 0.02]} geometry={sharedGeometries.box} scale={[1.74, aisle.shelfHeight, 0.04]} material={shelfRackMaterials.divider} />
       </group>
 
-      {/* Nearby Merchandising (Culls when camera > 27m to strictly hold <= 150 draw calls) */}
-      <group ref={detailGroupRef} visible={isNearInitial}>
+      {/* Merchandising & Product Facings (Always visible from 1m to 30m, zero pop-in) */}
+      <group>
         {/* Photorealistic Commercial Gondola End-Cap Profiles with Stocked Feature Displays */}
         <AisleGondolaEndCaps
           length={length}
@@ -2089,13 +2044,13 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
           featuredProduct={aisleProducts[0] || products[0]}
         />
 
-        {/* Instanced Shelf Surface Contact Shadows (1 draw call per aisle instead of 392) */}
+        {/* Instanced Shelf Surface Contact Shadows */}
         <AisleContactShadows slots={displaySlots} />
 
-        {/* Instanced ESL Digital Price Tag Casings & Talkers (2 draw calls per aisle instead of 392) */}
+        {/* Instanced ESL Digital Price Tag Casings & Talkers */}
         <AisleEslCasings slots={displaySlots} />
 
-        {/* High-Performance Batched Instanced Product Facings (Locked 60 FPS) */}
+        {/* High-Performance Batched Instanced Product Facings (Locked 60 FPS, Always Visible) */}
         <group>
           {productBatches.map((batch) => (
             <ProductBatch
@@ -2105,11 +2060,6 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
             />
           ))}
         </group>
-      </group>
-
-      {/* Distant Stock Proxy (1 draw call per distant aisle instead of 60) */}
-      <group ref={farGroupRef} visible={!isNearInitial}>
-        <AisleDistantStockProxy length={length} height={aisle.shelfHeight} />
       </group>
     </group>
   );

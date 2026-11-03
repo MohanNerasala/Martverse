@@ -24,7 +24,7 @@ const sharedFridgeGeos = {
 const sharedFridgeMats = {
   cabinetOuter: new THREE.MeshStandardMaterial({ color: '#0f172a', metalness: 0.85, roughness: 0.25 }),
   cabinetInner: new THREE.MeshStandardMaterial({ color: '#f8fafc', metalness: 0.2, roughness: 0.2 }),
-  kickplate: new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.8, roughness: 0.4 }),
+  kickplate: new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.6, roughness: 0.3 }),
   grillSlat: new THREE.MeshStandardMaterial({ color: '#09090b', roughness: 0.8 }),
   glassDoor: new THREE.MeshStandardMaterial({
     color: '#e0f2fe',
@@ -201,12 +201,6 @@ const RefrigeratorCabinet: React.FC<RefrigeratorCabinetProps> = React.memo(({
   // Shelf tier heights from floor
   const shelfHeights = [0.65, 1.35, 2.05, 2.65];
 
-  const [isNear, setIsNear] = useState(false);
-  useFrame(() => {
-    const near = (martRuntime.playerPos[0] || 0) > 16.0;
-    if (near !== isNear) setIsNear(near);
-  });
-
   return (
     <group position={[centerX, 0, centerZ]}>
       {/* --- Heavy-Duty Commercial Steel Frame & Cabinet --- */}
@@ -275,63 +269,50 @@ const RefrigeratorCabinet: React.FC<RefrigeratorCabinetProps> = React.memo(({
         </group>
       ))}
 
-      {/* --- Clear Glass Reach-in Doors & Aluminum Pull Handles (LOD when near) --- */}
-      {isNear ? (
-        Array.from({ length: doorCount }).map((_, dIdx) => {
-          const doorZ = -length / 2 + (dIdx + 0.5) * doorWidth;
-          const doorH = height - 0.82;
-          const doorY = 0.44 + doorH / 2;
+      {/* --- Clear Glass Reach-in Doors & Aluminum Pull Handles (Always Visible) --- */}
+      {Array.from({ length: doorCount }).map((_, dIdx) => {
+        const doorZ = -length / 2 + (dIdx + 0.5) * doorWidth;
+        const doorH = height - 0.82;
+        const doorY = 0.44 + doorH / 2;
+
+        return (
+          <group key={`door-${dIdx}`} position={[depth / 2 - 0.02, doorY, doorZ]}>
+            {/* Magnetic Black Perimeter Gasket Frame */}
+            <mesh geometry={sharedFridgeGeos.box} scale={[0.03, doorH - 0.02, doorWidth - 0.02]} material={sharedFridgeMats.gasketBlack} />
+            {/* Aluminum Outer Door Rim */}
+            <mesh position={[0.005, 0, 0]} geometry={sharedFridgeGeos.box} scale={[0.02, doorH - 0.04, doorWidth - 0.04]} material={sharedFridgeMats.doorFrame} />
+            {/* Crystal-Clear Double Pane Glass Panel */}
+            <mesh position={[0.008, 0, 0]} geometry={sharedFridgeGeos.box} scale={[0.012, doorH - 0.12, doorWidth - 0.12]} material={sharedFridgeMats.glassDoor} raycast={() => null} />
+            {/* Full-Height Vertical Chrome Pull Handle */}
+            <group position={[0.04, 0, doorWidth / 2 - 0.12]}>
+              <mesh geometry={sharedFridgeGeos.cyl} scale={[0.018, 0.95, 0.018]} material={sharedFridgeMats.handleChrome} raycast={() => null} />
+              {/* Handle Mount Brackets */}
+              <mesh position={[0, 0.42, -0.02]} geometry={sharedFridgeGeos.box} scale={[0.03, 0.02, 0.04]} material={sharedFridgeMats.handleChrome} raycast={() => null} />
+              <mesh position={[0, -0.42, -0.02]} geometry={sharedFridgeGeos.box} scale={[0.03, 0.02, 0.04]} material={sharedFridgeMats.handleChrome} raycast={() => null} />
+            </group>
+          </group>
+        );
+      })}
+
+      {/* --- Display Products Neatly Arranged on the Shelves (Always Visible) --- */}
+      <group position={[0, 0, 0]}>
+        {products.map((p, idx) => {
+          // Arrange across 2 primary middle tiers (1.35 and 0.65) and 4 doors
+          const tierIdx = idx < 4 ? 1 : 0;
+          const colIdx = idx % 4;
+          const posX = depth / 2 - 0.28;
+          const posY = shelfHeights[tierIdx] + 0.02;
+          const posZ = -length / 2 + (colIdx + 0.5) * (length / 4);
 
           return (
-            <group key={`door-${dIdx}`} position={[depth / 2 - 0.02, doorY, doorZ]}>
-              {/* Magnetic Black Perimeter Gasket Frame */}
-              <mesh geometry={sharedFridgeGeos.box} scale={[0.03, doorH - 0.02, doorWidth - 0.02]} material={sharedFridgeMats.gasketBlack} />
-              {/* Aluminum Outer Door Rim */}
-              <mesh position={[0.005, 0, 0]} geometry={sharedFridgeGeos.box} scale={[0.02, doorH - 0.04, doorWidth - 0.04]} material={sharedFridgeMats.doorFrame} />
-              {/* Crystal-Clear Double Pane Glass Panel */}
-              <mesh position={[0.008, 0, 0]} geometry={sharedFridgeGeos.box} scale={[0.012, doorH - 0.12, doorWidth - 0.12]} material={sharedFridgeMats.glassDoor} raycast={() => null} />
-              {/* Full-Height Vertical Chrome Pull Handle */}
-              <group position={[0.04, 0, doorWidth / 2 - 0.12]}>
-                <mesh geometry={sharedFridgeGeos.cyl} scale={[0.018, 0.95, 0.018]} material={sharedFridgeMats.handleChrome} raycast={() => null} />
-                {/* Handle Mount Brackets */}
-                <mesh position={[0, 0.42, -0.02]} geometry={sharedFridgeGeos.box} scale={[0.03, 0.02, 0.04]} material={sharedFridgeMats.handleChrome} raycast={() => null} />
-                <mesh position={[0, -0.42, -0.02]} geometry={sharedFridgeGeos.box} scale={[0.03, 0.02, 0.04]} material={sharedFridgeMats.handleChrome} raycast={() => null} />
-              </group>
-            </group>
+            <FridgeProductItem
+              key={p.id}
+              product={p}
+              position={[posX, posY, posZ]}
+            />
           );
-        })
-      ) : (
-        /* Distant Continuous Glass Front Panel (1 draw call instead of 24) */
-        <mesh
-          position={[depth / 2 - 0.01, (height - 0.82) / 2 + 0.44, 0]}
-          geometry={sharedFridgeGeos.box}
-          scale={[0.02, height - 0.82, length - 0.04]}
-          material={sharedFridgeMats.glassDoor}
-          raycast={() => null}
-        />
-      )}
-
-      {/* --- Display Products Neatly Arranged on the Shelves (LOD when near) --- */}
-      {isNear && (
-        <group position={[0, 0, 0]}>
-          {products.map((p, idx) => {
-            // Arrange across 2 primary middle tiers (1.35 and 0.65) and 4 doors
-            const tierIdx = idx < 4 ? 1 : 0;
-            const colIdx = idx % 4;
-            const posX = depth / 2 - 0.28;
-            const posY = shelfHeights[tierIdx] + 0.02;
-            const posZ = -length / 2 + (colIdx + 0.5) * (length / 4);
-
-            return (
-              <FridgeProductItem
-                key={p.id}
-                product={p}
-                position={[posX, posY, posZ]}
-              />
-            );
-          })}
-        </group>
-      )}
+        })}
+      </group>
     </group>
   );
 });

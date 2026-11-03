@@ -48,6 +48,17 @@ export const useCartStore = create<CartStore>((set, get) => ({
   },
 
   addItem: async (product, quantity = 1, variant, customStartPos) => {
+    // Capacity Guard: Maximum 24 items in the trolley basket (3 cols x 4 rows x 2 layers)
+    const currentTotal = get().totalItems;
+    if (currentTotal + quantity > 24) {
+      useMartStore.getState().showToast(
+        'Trolley full',
+        'Your shopping trolley is full (maximum 24 items). Proceed to checkout or remove items.',
+        'warning'
+      );
+      return false;
+    }
+
     // 0ms Instant Feedback: play sound immediately
     sounds.playPickSound();
 
@@ -81,7 +92,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     const animId = 'fly-' + Math.random().toString(36).substring(2, 9);
     const color = variant?.colorCode || variant?.color || product.placement?.color || '#3b82f6';
     const modelType = product.placement?.modelType || 'box';
-    const duration = 480; // Fast, snappy 480ms parabolic arc directly into trolley basket
+    const duration = 600; // 0.6s parabolic arc directly into trolley basket
 
     // Check if 3D scene canvas is active in the DOM
     const has3DCanvas = typeof document !== 'undefined' && !!document.querySelector('canvas');
@@ -239,3 +250,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }));
   },
 }));
+
+if (typeof window !== 'undefined') {
+  (window as any).__cartStore = useCartStore;
+}

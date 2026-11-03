@@ -88,7 +88,7 @@ export const useMartStore = create<MartStore>((set) => ({
   isMinimapOpen: false,
   isNavigatorOpen: false, // Hidden by default - only shows when user taps 'Arrows'
   isSoundMuted: false,
-  cameraMode: 'first_person',
+  cameraMode: 'third_person',
   nearBillingCounter: false,
   nearExitGate: false,
   promptText: null,
@@ -192,7 +192,7 @@ export const useMartStore = create<MartStore>((set) => ({
   startExitAnimation: (orderNumber) => {
     set({
       isAutoNavigatingToExit: true,
-      cameraMode: 'first_person',
+      cameraMode: 'third_person',
       completedOrderNumber: orderNumber,
     });
   },
@@ -209,7 +209,7 @@ export const useMartStore = create<MartStore>((set) => ({
   closeFinalCompletedPopup: () => {
     set({
       finalCompletedPopupOpen: false,
-      cameraMode: 'first_person',
+      cameraMode: 'third_person',
     });
   },
 
@@ -248,7 +248,7 @@ export const useMartStore = create<MartStore>((set) => ({
     sounds.playClick();
     set((state) => ({
       activeFloor: 1,
-      cameraMode: 'first_person',
+      cameraMode: 'third_person',
       playerPos: [0, 1.5, -28],
       playerYaw: 0,
       resetTrigger: state.resetTrigger + 1,
@@ -320,7 +320,6 @@ export const useMartStore = create<MartStore>((set) => ({
       activeFloor: floorNum,
       playerPos: [targetX, targetY, targetZ],
       playerYaw: targetYaw,
-      cameraMode: 'first_person',
       selectedProduct: product,
       isProductModalOpen: true,
       teleportTrigger: state.teleportTrigger + 1,

@@ -42,6 +42,53 @@ import {
 import { api } from '@/lib/api';
 import { ProductHoverCard } from '@/components/ui/ProductHoverCard';
 
+export const OnboardingHintBanner: React.FC = React.memo(() => {
+  const [visible, setVisible] = useState(true);
+  const totalItems = useCartStore((state) => state.totalItems);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem('martverse_hint_dismissed') === 'true') {
+        setVisible(false);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (totalItems > 0 && visible) {
+      setVisible(false);
+      try {
+        if (typeof window !== 'undefined') localStorage.setItem('martverse_hint_dismissed', 'true');
+      } catch {}
+    }
+  }, [totalItems, visible]);
+
+  if (!visible) return null;
+
+  return (
+    <div className="fixed top-20 sm:top-24 left-4 sm:left-8 z-40 pointer-events-auto animate-in fade-in slide-in-from-left duration-300">
+      <div className="bg-slate-900/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-blue-500/40 flex items-center gap-3">
+        <span className="text-base">🛒</span>
+        <span className="text-xs sm:text-sm font-bold tracking-tight text-slate-100">
+          Tap an item, then Add to trolley
+        </span>
+        <button
+          onClick={() => {
+            setVisible(false);
+            try {
+              if (typeof window !== 'undefined') localStorage.setItem('martverse_hint_dismissed', 'true');
+            } catch {}
+          }}
+          className="text-slate-400 hover:text-white transition-colors p-1 cursor-pointer"
+          aria-label="Dismiss hint"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+});
+
 export const ContextualPromptBanner: React.FC = React.memo(() => {
   const promptText = useMartStore((state) => state.promptText);
   if (!promptText) return null;
@@ -475,7 +522,7 @@ export const SupermarketHUD: React.FC = () => {
               ) : (
                 <Camera className="w-4 h-4 text-slate-600 group-hover:text-sky-600 group-hover:scale-110 transition-all" />
               )}
-              <span className="hidden xl:inline font-semibold">
+              <span className="hidden sm:inline font-semibold">
                 {cameraMode === 'first_person' ? '1st Person' : '3rd Person'}
               </span>
             </button>
@@ -905,6 +952,9 @@ export const SupermarketHUD: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Top-Left Onboarding Hint: Tap an item, then Add to trolley */}
+      <OnboardingHintBanner />
 
       {/* Real-time Product Hover Information Card */}
       <ProductHoverCard />

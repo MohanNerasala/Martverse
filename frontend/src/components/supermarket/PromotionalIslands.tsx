@@ -12,26 +12,27 @@ import {
   sharedGeometries,
 } from './ShelfUnit';
 
-// Pre-allocated static materials for promotional display islands
+// Pre-allocated static materials for promotional display islands (Bright Hypermarket Palette)
 const islandMaterials = {
-  // Island 1: Luxury Chocolates (Cadbury Purple & Gold)
-  chocPodium: new THREE.MeshStandardMaterial({ color: '#4a044e', roughness: 0.25, metalness: 0.15 }),
-  goldTrim: new THREE.MeshStandardMaterial({ color: '#ca8a04', roughness: 0.2, metalness: 0.8 }),
-  chocHeader: new THREE.MeshStandardMaterial({ color: '#581c87', roughness: 0.2, metalness: 0.2 }),
+  whitePodium: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.25, metalness: 0.1 }),
+  bluePodium: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.3, metalness: 0.15 }),
+  goldTrim: new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.25, metalness: 0.6 }),
+  blueHeader: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.2, metalness: 0.2 }),
+  whitePlank: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.2, metalness: 0.1 }),
+  kickplate: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.35, metalness: 0.2 }),
+  acrylicLip: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.4, roughness: 0.1 }),
+  contactShadow: new THREE.MeshBasicMaterial({ color: '#090d16', transparent: true, opacity: 0.22, depthWrite: false }),
 
-  // Island 2: Artisan Tea & Coffee (Natural Oak Wood & Brass)
-  woodPodium: new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.65, metalness: 0.05 }),
-  brassTrim: new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.25, metalness: 0.75 }),
-  coffeeHeader: new THREE.MeshStandardMaterial({ color: '#14532d', roughness: 0.2, metalness: 0.2 }),
-
-  // Island 3: Festive Sweets & Dry Fruits (Emerald & Ruby Crimson)
-  sweetPodium: new THREE.MeshStandardMaterial({ color: '#064e3b', roughness: 0.3, metalness: 0.15 }),
-  rubyTrim: new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.25, metalness: 0.3 }),
-  sweetHeader: new THREE.MeshStandardMaterial({ color: '#831843', roughness: 0.2, metalness: 0.2 }),
-
-  // Common
-  acrylicLip: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.35, roughness: 0.1 }),
-  contactShadow: new THREE.MeshBasicMaterial({ color: '#090d16', transparent: true, opacity: 0.24, depthWrite: false }),
+  // Clean Commercial Aliases (Zero dark purple, brown or black placeholders)
+  chocPodium: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.25, metalness: 0.1 }),
+  goldTrimOld: new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.2, metalness: 0.8 }),
+  chocHeader: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.2, metalness: 0.2 }),
+  woodPodium: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.3, metalness: 0.1 }),
+  brassTrim: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.25, metalness: 0.2 }),
+  coffeeHeader: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.2, metalness: 0.2 }),
+  sweetPodium: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.3, metalness: 0.1 }),
+  rubyTrim: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.25, metalness: 0.2 }),
+  sweetHeader: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.2, metalness: 0.2 }),
 };
 
 // ---------------------------------------------------------------------------
@@ -64,10 +65,9 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
     });
   }, [products]);
 
-  // Stepped circular display: 3 tiers
-  // Tier 1: radius 1.4m, height 0.40m, 12 items around perimeter
-  // Tier 2: radius 0.95m, height 0.80m, 8 items around perimeter
-  // Tier 3: radius 0.55m, height 1.20m, 4 items around perimeter
+  // Clean Commercial Promotional Gondola: 3 Tiers (Matching Photo 2 Reference)
+  const tiers = useMemo(() => [0.35, 0.85, 1.35], []);
+
   const slots = useMemo(() => {
     if (chocProducts.length === 0) return [];
     const pool = chocProducts;
@@ -81,94 +81,170 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
       rotY: number;
     }> = [];
 
-    // Tier 1
-    const t1Count = 12;
-    for (let i = 0; i < t1Count; i++) {
-      const angle = (i / t1Count) * Math.PI * 2;
-      const r = 1.22;
-      const x = center[0] + Math.cos(angle) * r;
-      const z = center[2] + Math.sin(angle) * r;
-      const y = 0.40;
-      const prod = pool[i % poolLen];
+    tiers.forEach((tierY, tIdx) => {
+      // 1. North Face (Facing Entrance / -Z)
+      [-1.2, -0.6, 0, 0.6, 1.2].forEach((xOff, pIdx) => {
+        const prod = pool[(tIdx * 8 + pIdx) % poolLen];
+        const x = center[0] + xOff;
+        const z = center[2] - 0.76;
+        const y = tierY + 0.02;
 
-      const slotPlacement: ProductPlacement = {
-        id: `choc-island-t1-${i}`,
-        productId: prod.id,
-        productName: prod.name,
-        productSlug: prod.slug,
-        productPrice: prod.price,
-        productMrp: prod.mrp,
-        floorNumber: 1,
-        aisleId: 'island-choc',
-        aisleNumber: 5,
-        aisleName: 'Luxury Chocolates Island',
-        aisleCategory: 'Chocolates & Confectionery',
-        shelfSide: 'RIGHT',
-        shelfTier: 1,
-        shelfPosition: i + 1,
-        worldX: x,
-        worldY: y,
-        worldZ: z,
-        rotationY: -angle - Math.PI / 2,
-        color: '#4a044e',
-        modelType: 'chocolate',
-      };
+        const slotPlacement: ProductPlacement = {
+          id: `choc-n-t${tIdx}-${pIdx}`,
+          productId: prod.id,
+          productName: prod.name,
+          productSlug: prod.slug,
+          productPrice: prod.price,
+          productMrp: prod.mrp,
+          floorNumber: 1,
+          aisleId: 'island-promo-choc',
+          aisleNumber: 1,
+          aisleName: 'Promotions Feature Gondola',
+          aisleCategory: 'Chocolates & Confectionery',
+          shelfSide: 'LEFT',
+          shelfTier: tIdx + 1,
+          shelfPosition: pIdx + 1,
+          worldX: x,
+          worldY: y,
+          worldZ: z,
+          rotationY: Math.PI,
+          color: '#2563eb',
+          modelType: 'chocolate',
+        };
 
-      arr.push({
-        key: `choc-t1-${i}-${prod.id}`,
-        product: { ...prod, placement: slotPlacement },
-        x,
-        y,
-        z,
-        rotY: -angle - Math.PI / 2,
+        arr.push({
+          key: `choc-n-${tIdx}-${pIdx}-${prod.id}`,
+          product: { ...prod, placement: slotPlacement },
+          x,
+          y,
+          z,
+          rotY: Math.PI,
+        });
       });
-    }
 
-    // Tier 2
-    const t2Count = 8;
-    for (let i = 0; i < t2Count; i++) {
-      const angle = (i / t2Count) * Math.PI * 2 + 0.2;
-      const r = 0.82;
-      const x = center[0] + Math.cos(angle) * r;
-      const z = center[2] + Math.sin(angle) * r;
-      const y = 0.80;
-      const prod = pool[(i + 3) % poolLen];
+      // 2. South Face (Facing Aisles / +Z)
+      [-1.2, -0.6, 0, 0.6, 1.2].forEach((xOff, pIdx) => {
+        const prod = pool[(tIdx * 8 + pIdx + 3) % poolLen];
+        const x = center[0] + xOff;
+        const z = center[2] + 0.76;
+        const y = tierY + 0.02;
 
-      const slotPlacement: ProductPlacement = {
-        id: `choc-island-t2-${i}`,
-        productId: prod.id,
-        productName: prod.name,
-        productSlug: prod.slug,
-        productPrice: prod.price,
-        productMrp: prod.mrp,
-        floorNumber: 1,
-        aisleId: 'island-choc',
-        aisleNumber: 5,
-        aisleName: 'Luxury Chocolates Island',
-        aisleCategory: 'Chocolates & Confectionery',
-        shelfSide: 'RIGHT',
-        shelfTier: 2,
-        shelfPosition: i + 1,
-        worldX: x,
-        worldY: y,
-        worldZ: z,
-        rotationY: -angle - Math.PI / 2,
-        color: '#4a044e',
-        modelType: 'chocolate',
-      };
+        const slotPlacement: ProductPlacement = {
+          id: `choc-s-t${tIdx}-${pIdx}`,
+          productId: prod.id,
+          productName: prod.name,
+          productSlug: prod.slug,
+          productPrice: prod.price,
+          productMrp: prod.mrp,
+          floorNumber: 1,
+          aisleId: 'island-promo-choc',
+          aisleNumber: 1,
+          aisleName: 'Promotions Feature Gondola',
+          aisleCategory: 'Chocolates & Confectionery',
+          shelfSide: 'RIGHT',
+          shelfTier: tIdx + 1,
+          shelfPosition: pIdx + 1,
+          worldX: x,
+          worldY: y,
+          worldZ: z,
+          rotationY: 0,
+          color: '#2563eb',
+          modelType: 'chocolate',
+        };
 
-      arr.push({
-        key: `choc-t2-${i}-${prod.id}`,
-        product: { ...prod, placement: slotPlacement },
-        x,
-        y,
-        z,
-        rotY: -angle - Math.PI / 2,
+        arr.push({
+          key: `choc-s-${tIdx}-${pIdx}-${prod.id}`,
+          product: { ...prod, placement: slotPlacement },
+          x,
+          y,
+          z,
+          rotY: 0,
+        });
       });
-    }
+
+      // 3. West End-Cap (Facing Left / -X)
+      [-0.4, 0.4].forEach((zOff, pIdx) => {
+        const prod = pool[(tIdx * 8 + pIdx + 5) % poolLen];
+        const x = center[0] - 1.52;
+        const z = center[2] + zOff;
+        const y = tierY + 0.02;
+
+        const slotPlacement: ProductPlacement = {
+          id: `choc-w-t${tIdx}-${pIdx}`,
+          productId: prod.id,
+          productName: prod.name,
+          productSlug: prod.slug,
+          productPrice: prod.price,
+          productMrp: prod.mrp,
+          floorNumber: 1,
+          aisleId: 'island-promo-choc',
+          aisleNumber: 1,
+          aisleName: 'Promotions Feature Gondola',
+          aisleCategory: 'Chocolates & Confectionery',
+          shelfSide: 'LEFT',
+          shelfTier: tIdx + 1,
+          shelfPosition: pIdx + 1,
+          worldX: x,
+          worldY: y,
+          worldZ: z,
+          rotationY: -Math.PI / 2,
+          color: '#2563eb',
+          modelType: 'chocolate',
+        };
+
+        arr.push({
+          key: `choc-w-${tIdx}-${pIdx}-${prod.id}`,
+          product: { ...prod, placement: slotPlacement },
+          x,
+          y,
+          z,
+          rotY: -Math.PI / 2,
+        });
+      });
+
+      // 4. East End-Cap (Facing Right / +X)
+      [-0.4, 0.4].forEach((zOff, pIdx) => {
+        const prod = pool[(tIdx * 8 + pIdx + 6) % poolLen];
+        const x = center[0] + 1.52;
+        const z = center[2] + zOff;
+        const y = tierY + 0.02;
+
+        const slotPlacement: ProductPlacement = {
+          id: `choc-e-t${tIdx}-${pIdx}`,
+          productId: prod.id,
+          productName: prod.name,
+          productSlug: prod.slug,
+          productPrice: prod.price,
+          productMrp: prod.mrp,
+          floorNumber: 1,
+          aisleId: 'island-promo-choc',
+          aisleNumber: 1,
+          aisleName: 'Promotions Feature Gondola',
+          aisleCategory: 'Chocolates & Confectionery',
+          shelfSide: 'RIGHT',
+          shelfTier: tIdx + 1,
+          shelfPosition: pIdx + 1,
+          worldX: x,
+          worldY: y,
+          worldZ: z,
+          rotationY: Math.PI / 2,
+          color: '#2563eb',
+          modelType: 'chocolate',
+        };
+
+        arr.push({
+          key: `choc-e-${tIdx}-${pIdx}-${prod.id}`,
+          product: { ...prod, placement: slotPlacement },
+          x,
+          y,
+          z,
+          rotY: Math.PI / 2,
+        });
+      });
+    });
 
     return arr;
-  }, [chocProducts, center]);
+  }, [chocProducts, center, tiers]);
 
   // Group by product
   const batches = useMemo(() => {
@@ -187,44 +263,59 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
 
   return (
     <group position={center}>
-      {/* Tier 1 Podium Cylinder (Radius 1.4m, Height 0.40m) */}
-      <mesh position={[0, 0.20, 0]} geometry={sharedGeometries.cyl16} scale={[1.40, 0.40, 1.40]} material={islandMaterials.chocPodium} raycast={() => null} />
-      {/* Tier 1 Gold Outer Lip Accent */}
-      <mesh position={[0, 0.395, 0]} geometry={sharedGeometries.cyl16} scale={[1.42, 0.02, 1.42]} material={islandMaterials.goldTrim} raycast={() => null} />
+      {/* Contact Ground Shadow Decal */}
+      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={sharedGeometries.plane} scale={[3.8, 2.0, 1]} material={islandMaterials.contactShadow} raycast={() => null} />
 
-      {/* Tier 2 Podium Cylinder (Radius 0.95m, Height 0.40m on top of Tier 1) */}
-      <mesh position={[0, 0.60, 0]} geometry={sharedGeometries.cyl16} scale={[0.95, 0.40, 0.95]} material={islandMaterials.chocPodium} raycast={() => null} />
-      {/* Tier 2 Gold Lip */}
-      <mesh position={[0, 0.795, 0]} geometry={sharedGeometries.cyl16} scale={[0.97, 0.02, 0.97]} material={islandMaterials.goldTrim} raycast={() => null} />
+      {/* Royal Blue Base Skirt */}
+      <mesh position={[0, 0.12, 0]} geometry={sharedGeometries.box} scale={[3.24, 0.24, 1.64]} material={islandMaterials.bluePodium} raycast={() => null} />
 
-      {/* Tier 3 Pyramid Crown Podium (Radius 0.55m, Height 0.40m on top of Tier 2) */}
-      <mesh position={[0, 1.00, 0]} geometry={sharedGeometries.cyl16} scale={[0.55, 0.40, 0.55]} material={islandMaterials.chocPodium} raycast={() => null} />
-      {/* Tier 3 Gold Lip */}
-      <mesh position={[0, 1.195, 0]} geometry={sharedGeometries.cyl16} scale={[0.57, 0.02, 0.57]} material={islandMaterials.goldTrim} raycast={() => null} />
+      {/* Pristine White Gondola Body Core */}
+      <mesh position={[0, 0.85, 0]} geometry={sharedGeometries.box} scale={[3.0, 1.40, 1.4]} material={islandMaterials.whitePodium} raycast={() => null} />
 
-      {/* Central Rotating Topper Sign Stand */}
-      <group position={[0, 1.65, 0]} raycast={() => null}>
-        {/* Brass Support Rod */}
-        <mesh position={[0, -0.25, 0]} geometry={sharedGeometries.cyl8} scale={[0.025, 0.50, 0.025]} material={islandMaterials.goldTrim} />
-        {/* Double-sided Oval Signboard */}
-        <mesh geometry={sharedGeometries.box} scale={[1.60, 0.46, 0.06]} material={islandMaterials.goldTrim} />
-        <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[1.54, 0.40, 0.07]} material={islandMaterials.chocHeader} />
-        <Text position={[0, 0.08, 0.038]} fontSize={0.095} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {'CHOCOLATE CARNIVAL'}
+      {/* 3 Commercial Retail White Shelves with Royal Blue Rails */}
+      {tiers.map((ty, idx) => (
+        <group key={`choc-shelf-${idx}`} position={[0, ty, 0]} raycast={() => null}>
+          {/* White shelf platform */}
+          <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[3.2, 0.035, 1.6]} material={islandMaterials.whitePlank} />
+          {/* North royal blue edge rail */}
+          <mesh position={[0, 0.015, -0.80]} geometry={sharedGeometries.box} scale={[3.2, 0.045, 0.02]} material={islandMaterials.bluePodium} />
+          {/* South royal blue edge rail */}
+          <mesh position={[0, 0.015, 0.80]} geometry={sharedGeometries.box} scale={[3.2, 0.045, 0.02]} material={islandMaterials.bluePodium} />
+          {/* West royal blue edge rail */}
+          <mesh position={[-1.60, 0.015, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.045, 1.6]} material={islandMaterials.bluePodium} />
+          {/* East royal blue edge rail */}
+          <mesh position={[1.60, 0.015, 0]} geometry={sharedGeometries.box} scale={[0.02, 0.045, 1.6]} material={islandMaterials.bluePodium} />
+        </group>
+      ))}
+
+      {/* Overhead Royal Blue Department Header Signboard (Matching Photo 2 Reference) */}
+      <group position={[0, 1.95, 0]} raycast={() => null}>
+        {/* Support Posts */}
+        <mesh position={[-1.2, -0.25, 0]} geometry={sharedGeometries.box} scale={[0.05, 0.50, 0.05]} material={islandMaterials.bluePodium} />
+        <mesh position={[1.2, -0.25, 0]} geometry={sharedGeometries.box} scale={[0.05, 0.50, 0.05]} material={islandMaterials.bluePodium} />
+
+        {/* Double-Sided Royal Blue Signboard */}
+        <mesh geometry={sharedGeometries.box} scale={[2.60, 0.48, 0.08]} material={islandMaterials.bluePodium} />
+        <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[2.54, 0.42, 0.09]} material={islandMaterials.blueHeader} />
+
+        {/* North Face Sign Text */}
+        <Text position={[0, 0.08, 0.048]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
+          {'01 PROMOTIONS • SPECIAL OFFERS'}
         </Text>
-        <Text position={[0, -0.08, 0.038]} fontSize={0.065} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
-          {'★ CADBURY SILK & KITKAT SPECIALS ★'}
+        <Text position={[0, -0.08, 0.048]} fontSize={0.075} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
+          {'★ CADBURY SILK • KITKAT • LUXURY CHOCOLATES ★'}
         </Text>
-        {/* Back face text */}
-        <Text position={[0, 0.08, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.095} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {'CHOCOLATE CARNIVAL'}
+
+        {/* South Face Sign Text */}
+        <Text position={[0, 0.08, -0.048]} rotation={[0, Math.PI, 0]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
+          {'01 PROMOTIONS • SPECIAL OFFERS'}
         </Text>
-        <Text position={[0, -0.08, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.065} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
-          {'★ CADBURY SILK & KITKAT SPECIALS ★'}
+        <Text position={[0, -0.08, -0.048]} rotation={[0, Math.PI, 0]} fontSize={0.075} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
+          {'★ CADBURY SILK • KITKAT • LUXURY CHOCOLATES ★'}
         </Text>
       </group>
 
-      {/* Interactive Instanced Chocolates */}
+      {/* Interactive Instanced Front-Facing Catalogue Products */}
       <group position={[-center[0], 0, -center[2]]}>
         {batches.map((batch) => (
           <IslandProductBatch key={`choc-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} isChoc={true} />
@@ -695,12 +786,10 @@ const IslandProductBatch: React.FC<{
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const labelRef = useRef<THREE.InstancedMesh>(null);
 
-  const plcColor = product.placement?.color || '#3b82f6';
+  const plcColor = product.placement?.color || (isChoc ? '#1d4ed8' : '#3b82f6');
   const bodyMat = useMemo(() => {
-    return isChoc
-      ? getProductBodyMaterial('#4a044e', 0.3, 0.12)
-      : getProductBodyMaterial(plcColor, 0.35, 0.08);
-  }, [plcColor, isChoc]);
+    return getProductBodyMaterial(plcColor, 0.3, 0.1);
+  }, [plcColor]);
 
   const frontTex = useMemo(() => getProductPackagingTexture(product), [product]);
   const labelMat = useMemo(() => getShelfMaterial(frontTex, `pkg-${product.slug || product.id}`, 'standard'), [frontTex, product]);
@@ -737,6 +826,12 @@ const IslandProductBatch: React.FC<{
 
     bodyRef.current.instanceMatrix.needsUpdate = true;
     labelRef.current.instanceMatrix.needsUpdate = true;
+    try {
+      bodyRef.current.computeBoundingBox();
+      bodyRef.current.computeBoundingSphere();
+      labelRef.current.computeBoundingBox();
+      labelRef.current.computeBoundingSphere();
+    } catch {}
   }, [slots, bw, bh, bd, yOff]);
 
   if (slots.length === 0) return null;
@@ -745,6 +840,7 @@ const IslandProductBatch: React.FC<{
     <group>
       <instancedMesh
         ref={bodyRef}
+        frustumCulled={false}
         args={[sharedGeometries.box, bodyMat, slots.length]}
         onPointerOver={(e) => {
           e.stopPropagation();
@@ -761,7 +857,12 @@ const IslandProductBatch: React.FC<{
           openModal(product);
         }}
       />
-      <instancedMesh ref={labelRef} args={[sharedGeometries.plane, labelMat, slots.length]} raycast={() => null} />
+      <instancedMesh
+        ref={labelRef}
+        frustumCulled={false}
+        args={[sharedGeometries.plane, labelMat, slots.length]}
+        raycast={() => null}
+      />
     </group>
   );
 });

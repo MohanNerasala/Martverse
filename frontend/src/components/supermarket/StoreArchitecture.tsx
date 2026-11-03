@@ -202,17 +202,17 @@ const sharedMaterials = {
   escalatorSteps: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.8 }),
   yellowLine: new THREE.MeshBasicMaterial({ color: '#facc15' }),
   escalatorGlass: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.5, roughness: 0.1 }),
-  pillarConcrete: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.25, metalness: 0.1 }),
-  hazardStrip: new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.4 }),
-  hazardBlack: new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.8 }),
-  roof: new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.9 }),
+  pillarConcrete: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.25, metalness: 0.05 }),
+  hazardStrip: new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.35, metalness: 0.1 }),
+  hazardBlack: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.4 }),
+  roof: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.9 }),
   basketRed: new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.3 }),
   basketBlue: new THREE.MeshStandardMaterial({ color: '#2563eb', roughness: 0.3 }),
-  basketChrome: new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.9, roughness: 0.1 }),
+  basketChrome: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 1.0, roughness: 0.18 }),
   bannerGold: new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.3, metalness: 0.2 }),
   bannerGreen: new THREE.MeshStandardMaterial({ color: '#047857', roughness: 0.3, metalness: 0.2 }),
   cameraDome: new THREE.MeshStandardMaterial({ color: '#09090b', roughness: 0.1, metalness: 0.8 }),
-  baseboard: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.85 }),
+  baseboard: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.4 }),
   cctvLed: new THREE.MeshBasicMaterial({ color: '#22c55e' }),
 };
 
@@ -494,28 +494,19 @@ const EntranceTrolleyParkingBays: React.FC<{ position: [number, number, number] 
       <group position={[0, 1.8, 2.7]}>
         <mesh>
           <boxGeometry args={[3.8, 0.5, 0.04]} />
-          <meshStandardMaterial color="#0284c7" />
+          <meshStandardMaterial color="#1d4ed8" />
         </mesh>
         <Text position={[0, 0.08, 0.025]} fontSize={0.14} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {'SHOPPING TROLLEYS'}
+          {'TROLLEY DISINFECTION & RETURN BAY'}
         </Text>
         <Text position={[0, -0.12, 0.025]} fontSize={0.08} color="#facc15" anchorX="center" anchorY="middle" fontWeight="bold">
-          {'★ CLEANED & SANITIZED FOR YOUR SAFETY ★'}
+          {'★ FULLY SANITIZED STAINLESS TROLLEYS READY FOR USE ★'}
         </Text>
       </group>
-      {/* Nested Chrome Trolley Visuals */}
-      {[-1.5, 0, 1.5].map((zOffset, tIdx) => (
-        <group key={`nest-trolley-${tIdx}`} position={[0, 0, zOffset]}>
-          <mesh position={[0, 0.48, 0]}>
-            <boxGeometry args={[1.1, 0.72, 1.3]} />
-            <meshStandardMaterial color="#94a3b8" wireframe />
-          </mesh>
-          <mesh position={[0, 0.88, -0.6]}>
-            <cylinderGeometry args={[0.02, 0.02, 1.1, 10]} />
-            <meshStandardMaterial color="#dc2626" />
-          </mesh>
-        </group>
-      ))}
+      {/* Stainless Steel Floor Guide Rails (Clean Corral, Exactly 1 Live Trolley in Store) */}
+      <mesh position={[-1.6, 0.02, 0]} geometry={sharedGeos.box} scale={[0.06, 0.04, 4.2]} material={sharedMaterials.ceilingBeam} />
+      <mesh position={[0, 0.02, 0]} geometry={sharedGeos.box} scale={[0.06, 0.04, 4.2]} material={sharedMaterials.ceilingBeam} />
+      <mesh position={[1.6, 0.02, 0]} geometry={sharedGeos.box} scale={[0.06, 0.04, 4.2]} material={sharedMaterials.ceilingBeam} />
     </group>
   );
 });
@@ -563,14 +554,15 @@ const GrandStoreEntranceDoors: React.FC = React.memo(() => {
 });
 GrandStoreEntranceDoors.displayName = 'GrandStoreEntranceDoors';
 
-const InstancedCommercialTroffers: React.FC = React.memo(() => {
-  const framesRef = useRef<THREE.InstancedMesh>(null);
-  const panelsRef = useRef<THREE.InstancedMesh>(null);
+// Recessed Circular LED Downlights on Regular Grid (Matches Reference Ceiling & Drives Floor Reflections)
+const InstancedCircularDownlights: React.FC = React.memo(() => {
+  const bezelsRef = useRef<THREE.InstancedMesh>(null);
+  const diffusersRef = useRef<THREE.InstancedMesh>(null);
 
   const coords = useMemo(() => {
     const list: [number, number][] = [];
-    [-25, -15, -5, 5, 15, 25].forEach((xL) => {
-      [-25, -15, -5, 5, 15, 25].forEach((zL) => {
+    [-28, -20, -12, -4, 4, 12, 20, 28].forEach((xL) => {
+      [-28, -20, -12, -4, 4, 12, 20, 28].forEach((zL) => {
         list.push([xL, zL]);
       });
     });
@@ -578,41 +570,41 @@ const InstancedCommercialTroffers: React.FC = React.memo(() => {
   }, []);
 
   useEffect(() => {
-    if (!framesRef.current || !panelsRef.current) return;
+    if (!bezelsRef.current || !diffusersRef.current) return;
     const dummy = new THREE.Object3D();
     coords.forEach(([xL, zL], idx) => {
-      // Bezel frame
-      dummy.position.set(xL, 5.16, zL);
-      dummy.scale.set(0.64, 0.03, 6.04);
+      // Outer flush bezel ring
+      dummy.position.set(xL, 5.18, zL);
+      dummy.scale.set(0.34, 0.02, 0.34);
       dummy.updateMatrix();
-      framesRef.current!.setMatrixAt(idx, dummy.matrix);
+      bezelsRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      // Emissive panel
-      dummy.position.set(xL, 5.145, zL);
-      dummy.scale.set(0.56, 0.02, 5.96);
+      // Inner emissive warm-white diffuser disc
+      dummy.position.set(xL, 5.165, zL);
+      dummy.scale.set(0.26, 0.015, 0.26);
       dummy.updateMatrix();
-      panelsRef.current!.setMatrixAt(idx, dummy.matrix);
+      diffusersRef.current!.setMatrixAt(idx, dummy.matrix);
     });
-    framesRef.current.instanceMatrix.needsUpdate = true;
-    panelsRef.current.instanceMatrix.needsUpdate = true;
+    bezelsRef.current.instanceMatrix.needsUpdate = true;
+    diffusersRef.current.instanceMatrix.needsUpdate = true;
   }, [coords]);
 
   return (
     <group raycast={() => null}>
       <instancedMesh
-        ref={framesRef}
-        args={[sharedGeos.box, sharedMaterials.ceilingBeam, coords.length]}
+        ref={bezelsRef}
+        args={[sharedGeos.cyl, sharedMaterials.ceilingBeam, coords.length]}
         raycast={() => null}
       />
       <instancedMesh
-        ref={panelsRef}
-        args={[sharedGeos.box, sharedMaterials.ceilingLight, coords.length]}
+        ref={diffusersRef}
+        args={[sharedGeos.cyl, sharedMaterials.ceilingLight, coords.length]}
         raycast={() => null}
       />
     </group>
   );
 });
-InstancedCommercialTroffers.displayName = 'InstancedCommercialTroffers';
+InstancedCircularDownlights.displayName = 'InstancedCircularDownlights';
 
 interface StoreArchitectureProps {
   activeFloor?: number;
@@ -633,13 +625,13 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
           map={tileTextures.map}
           roughnessMap={tileTextures.roughnessMap}
           bumpMap={tileTextures.bumpMap}
-          bumpScale={0.002}
-          roughness={0.14}
-          metalness={0.03}
+          bumpScale={0.0008}
+          roughness={0.28}
+          metalness={0.06}
         />
       </mesh>
 
-      {/* Ground Floor Architectural Pristine White Perimeter Walls */}
+      {/* Ground Floor Architectural Pristine White Perimeter Walls (100% Fully Enclosed Hypermarket Shell) */}
       {/* Back Wall (z = 36) */}
       <mesh position={[0, 2.6, 36]} geometry={sharedGeos.box} scale={[72, 5.2, 0.4]} material={sharedMaterials.wall} />
       {/* Front Entrance Wall (z = -36) with 12m grand portal opening */}
@@ -647,6 +639,15 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       <mesh position={[21, 2.6, -36]} geometry={sharedGeos.box} scale={[30, 5.2, 0.4]} material={sharedMaterials.wall} />
       {/* Lintel over entrance portal */}
       <mesh position={[0, 4.4, -36]} geometry={sharedGeos.box} scale={[12, 1.6, 0.4]} material={sharedMaterials.wall} />
+
+      {/* Enclosed Front Concourse Vestibule Wall (z = -36.4, 100% Enclosed: No black void or outside view) */}
+      <mesh position={[0, 2.6, -36.4]} geometry={sharedGeos.box} scale={[72, 5.2, 0.4]} material={sharedMaterials.wall} />
+      {/* Illuminated Customer Service & Welcome Concourse Backdrop */}
+      <mesh position={[0, 2.4, -36.18]} geometry={sharedGeos.box} scale={[14, 4.4, 0.05]} material={sharedMaterials.slab} />
+      <mesh position={[0, 3.8, -36.14]} geometry={sharedGeos.box} scale={[13.6, 0.35, 0.02]} material={sharedMaterials.basketBlue} />
+      <Text position={[0, 3.8, -36.12]} fontSize={0.16} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
+        {'CUSTOMER SERVICE • RECEPTION & MEMBERSHIP DESK'}
+      </Text>
 
       {/* --- Grand Entrance Welcome Lightbox Portal: 'WELCOME TO D-MART HYPERMARKET' --- */}
       <group position={[0, 4.35, -35.75]}>
@@ -675,13 +676,8 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       {/* Right Wall (x = 36) */}
       <mesh position={[36, 2.6, 0]} geometry={sharedGeos.box} scale={[0.4, 5.2, 72]} material={sharedMaterials.wall} />
 
-      {/* Suspended Commercial Ceiling Slab (y = 5.2) */}
-      <mesh position={[0, 5.2, 0]} geometry={sharedGeos.box} scale={[72, 0.3, 72]} material={sharedMaterials.slab} />
-
-      {/* Industrial White Steel Ceiling Beams spanning across Ground Floor */}
-      {[-28, -20, -12, -4, 4, 12, 20, 28].map((zBeam, i) => (
-        <mesh key={`beam-${i}`} position={[0, 5.08, zBeam]} geometry={sharedGeos.box} scale={[72, 0.22, 0.25]} material={sharedMaterials.ceilingBeam} />
-      ))}
+      {/* Continuous Off-White Acoustic Ceiling Slab (y = 5.2) */}
+      <mesh position={[0, 5.2, 0]} geometry={sharedGeos.box} scale={[72, 0.2, 72]} material={sharedMaterials.slab} />
 
       {/* ==============================================================
           STRUCTURAL CONCRETE PILLARS (Unobstructed Concourse Placement)
@@ -746,8 +742,8 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       <PerimeterWallBaseboards />
       <SecurityDomeCameras />
 
-      {/* 36 Commercial Flush LED Troffer Ceiling Lights (Instanced into 2 draw calls) */}
-      <InstancedCommercialTroffers />
+      {/* Clean Commercial Recessed Ceiling Downlights on Regular Grid (Drives Specular Highlights) */}
+      <InstancedCircularDownlights />
     </group>
   );
 };

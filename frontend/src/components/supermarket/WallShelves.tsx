@@ -25,12 +25,12 @@ const wallRackMaterials = {
   eslCasing: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.2, metalness: 0.1 }),
   contactShadow: new THREE.MeshBasicMaterial({ color: '#090d16', transparent: true, opacity: 0.22, depthWrite: false }),
 
-  // Warehouse Pallet Rack Structural Steel (Safety Orange & Yellow)
-  palletUpright: new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.35, metalness: 0.2 }),
-  palletBeam: new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.3, metalness: 0.15 }),
-  palletWood: new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.75, metalness: 0.05 }),
-  palletFoot: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.6, metalness: 0.4 }),
-  headerSignBg: new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.2, roughness: 0.3 }),
+  // Clean Retail Back Wall Shelving & Header Signage (Standard Hypermarket White, Royal Blue & Slate)
+  backWallPanel: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.35, metalness: 0.1 }),
+  backWallUpright: new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.6, roughness: 0.25 }),
+  backWallShelf: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.25, metalness: 0.15 }),
+  backWallRail: new THREE.MeshStandardMaterial({ color: '#1d4ed8', roughness: 0.3, metalness: 0.1 }),
+  headerSignBg: new THREE.MeshStandardMaterial({ color: '#1d4ed8', metalness: 0.2, roughness: 0.3 }),
 };
 
 // ---------------------------------------------------------------------------
@@ -46,12 +46,6 @@ const LeftWallRetailShelving: React.FC = React.memo(() => {
   const startZ = -18.0;
   const endZ = 18.0;
   const wallX = -34.8;
-
-  const [isNear, setIsNear] = useState(false);
-  useFrame(() => {
-    const near = (martRuntime.playerPos[0] || 0) < -12.0;
-    if (near !== isNear) setIsNear(near);
-  });
 
   // Filter household & personal care products
   const leftWallProducts = useMemo(() => {
@@ -305,14 +299,12 @@ const LeftWallRetailShelving: React.FC = React.memo(() => {
         </Text>
       </group>
 
-      {/* Instanced Product Facings (High-Performance Instancing by Unique Product, distance LOD) */}
-      {isNear && (
-        <group>
-          {productBatches.map((batch) => (
-            <WallProductBatch key={`left-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} />
-          ))}
-        </group>
-      )}
+      {/* Instanced Product Facings (High-Performance Instancing by Unique Product, Always Visible) */}
+      <group>
+        {productBatches.map((batch) => (
+          <WallProductBatch key={`left-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} />
+        ))}
+      </group>
     </group>
   );
 });
@@ -361,6 +353,12 @@ const WallProductBatch: React.FC<{
 
     bodyRef.current.instanceMatrix.needsUpdate = true;
     labelRef.current.instanceMatrix.needsUpdate = true;
+    try {
+      bodyRef.current.computeBoundingBox();
+      bodyRef.current.computeBoundingSphere();
+      labelRef.current.computeBoundingBox();
+      labelRef.current.computeBoundingSphere();
+    } catch {}
   }, [slots]);
 
   if (slots.length === 0) return null;
@@ -369,6 +367,7 @@ const WallProductBatch: React.FC<{
     <group>
       <instancedMesh
         ref={bodyRef}
+        frustumCulled={false}
         args={[sharedGeometries.box, bodyMat, slots.length]}
         onPointerOver={(e) => {
           e.stopPropagation();
@@ -385,14 +384,19 @@ const WallProductBatch: React.FC<{
           openModal(product);
         }}
       />
-      <instancedMesh ref={labelRef} args={[sharedGeometries.plane, labelMat, slots.length]} raycast={() => null} />
+      <instancedMesh
+        ref={labelRef}
+        frustumCulled={false}
+        args={[sharedGeometries.plane, labelMat, slots.length]}
+        raycast={() => null}
+      />
     </group>
   );
 });
 WallProductBatch.displayName = 'WallProductBatch';
 
 // ---------------------------------------------------------------------------
-// 2. BACK WALL WAREHOUSE BULK PALLET RACKING (Wholesale 10kg Atta, Rice, Oil)
+// 2. BACK WALL RETAIL GONDOLA SHELVING (Grains, Flours, Rice & Cooking Oils)
 // ---------------------------------------------------------------------------
 const BackWallWarehouseRacks: React.FC = React.memo(() => {
   const products = useMartStore((state) => state.products);
@@ -400,17 +404,11 @@ const BackWallWarehouseRacks: React.FC = React.memo(() => {
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
 
   const length = 54.0;
-  const height = 3.8;
+  const height = 3.4;
   const startX = -27.0;
-  const backZ = 33.8;
+  const backZ = 34.5;
 
-  const [isNear, setIsNear] = useState(false);
-  useFrame(() => {
-    const near = (martRuntime.playerPos[2] || 0) > 8.0;
-    if (near !== isNear) setIsNear(near);
-  });
-
-  // Bulk staples: Atta, Rice, Oil, Salt
+  // Bulk staples: Atta, Rice, Oil, Salt, Dals
   const bulkProducts = useMemo(() => {
     return products.filter((p) => {
       const name = (p.name || '').toLowerCase();
@@ -421,23 +419,25 @@ const BackWallWarehouseRacks: React.FC = React.memo(() => {
         name.includes('basmati') ||
         name.includes('oil') ||
         name.includes('salt') ||
+        name.includes('dal') ||
+        name.includes('pulse') ||
         cat.includes('groceries') ||
         cat.includes('staples')
       );
     });
   }, [products]);
 
-  // 3 Heavy-Duty Pallet Beam Levels: [0.15m ground pallet, 1.50m mid pallet, 2.85m upper pallet]
-  const beamLevels = useMemo(() => [0.15, 1.50, 2.85], []);
+  // 4 Commercial Shelf Tiers: [0.45m base, 1.25m lower, 2.05m middle, 2.85m upper]
+  const shelfTiers = useMemo(() => [0.45, 1.25, 2.05, 2.85], []);
 
-  // 18 Pallet Bays along 54m (each bay is 2.8m wide, holding 2 Euro-pallets)
+  // 18 Shelving Bays along 54m (each bay is 2.8m wide)
   const bayCount = 18;
   const bayStep = length / bayCount;
   const bayX = useMemo(() => {
     return Array.from({ length: bayCount }, (_, i) => startX + (i + 0.5) * bayStep);
   }, [startX, bayCount, bayStep]);
 
-  // Bulk product items stacked on pallets
+  // Bulk product items placed neatly on shelves
   const bulkSlots = useMemo(() => {
     if (bulkProducts.length === 0) return [];
     const pool = bulkProducts;
@@ -450,18 +450,18 @@ const BackWallWarehouseRacks: React.FC = React.memo(() => {
       z: number;
     }> = [];
 
-    beamLevels.forEach((levelY, lIdx) => {
+    shelfTiers.forEach((tierY, lIdx) => {
       bayX.forEach((bX, bIdx) => {
-        // 2 stacks of sacks/cans per pallet bay
-        [-0.65, 0.65].forEach((xOff, pIdx) => {
-          const prodIdx = (bIdx * 2 + pIdx + lIdx * 3) % poolLen;
+        // 3 front-facing product facings per shelf bay
+        [-0.8, 0, 0.8].forEach((xOff, pIdx) => {
+          const prodIdx = (bIdx * 3 + pIdx + lIdx * 4) % poolLen;
           const product = pool[prodIdx];
           const posX = bX + xOff;
-          const posY = levelY + 0.15; // Sitting on top of Euro pallet wooden deck
-          const posZ = backZ;
+          const posY = tierY + 0.02; // Sitting directly on the shelf plank
+          const posZ = backZ - 0.45;
 
           const slotPlacement: ProductPlacement = {
-            id: `bulk-pallet-${product.id}-l${lIdx}-b${bIdx}-${pIdx}`,
+            id: `back-shelf-${product.id}-t${lIdx}-b${bIdx}-${pIdx}`,
             productId: product.id,
             productName: product.name,
             productSlug: product.slug,
@@ -470,32 +470,32 @@ const BackWallWarehouseRacks: React.FC = React.memo(() => {
             floorNumber: 1,
             aisleId: 'back-wall',
             aisleNumber: 6,
-            aisleName: 'Bulk Warehouse Wholesale Section',
-            aisleCategory: 'Bulk Warehouse Staples',
+            aisleName: 'Staples & Grains Department',
+            aisleCategory: 'Staples & Bulk Groceries',
             shelfSide: 'LEFT',
             shelfTier: lIdx + 1,
-            shelfPosition: bIdx * 2 + pIdx + 1,
+            shelfPosition: bIdx * 3 + pIdx + 1,
             worldX: posX,
             worldY: posY,
-            worldZ: posZ - 0.40,
+            worldZ: posZ,
             rotationY: 0,
-            color: '#ca8a04',
+            color: '#3b82f6',
             modelType: 'bag',
           };
 
           slots.push({
-            key: `bulk-${lIdx}-${bIdx}-${pIdx}-${product.id}`,
+            key: `back-${lIdx}-${bIdx}-${pIdx}-${product.id}`,
             product: { ...product, placement: slotPlacement },
             x: posX,
             y: posY,
-            z: posZ - 0.40,
+            z: posZ,
           });
         });
       });
     });
 
     return slots;
-  }, [bulkProducts, beamLevels, bayX, backZ]);
+  }, [bulkProducts, shelfTiers, bayX, backZ]);
 
   // Group by product for instancing
   const bulkBatches = useMemo(() => {
@@ -512,105 +512,113 @@ const BackWallWarehouseRacks: React.FC = React.memo(() => {
     return Array.from(map.values());
   }, [bulkSlots]);
 
-  // Instanced Pallet Upright Columns (Safety Orange #ea580c)
-  const palletUprightsRef = useRef<THREE.InstancedMesh>(null);
+  // Instanced Silver-Grey Uprights
+  const uprightsRef = useRef<THREE.InstancedMesh>(null);
   const uprightX = useMemo(() => {
     return Array.from({ length: bayCount + 1 }, (_, i) => startX + i * bayStep);
   }, [startX, bayCount, bayStep]);
 
   useEffect(() => {
-    if (!palletUprightsRef.current) return;
+    if (!uprightsRef.current) return;
     const dummy = new THREE.Object3D();
-    let idx = 0;
-    uprightX.forEach((ux) => {
-      // Front upright column
-      dummy.position.set(ux, height / 2, backZ - 0.85);
-      dummy.scale.set(0.10, height, 0.08);
+    uprightX.forEach((ux, idx) => {
+      dummy.position.set(ux, height / 2, backZ - 0.50);
+      dummy.scale.set(0.06, height, 0.08);
       dummy.updateMatrix();
-      palletUprightsRef.current!.setMatrixAt(idx++, dummy.matrix);
-
-      // Rear upright column
-      dummy.position.set(ux, height / 2, backZ + 0.05);
-      dummy.scale.set(0.10, height, 0.08);
-      dummy.updateMatrix();
-      palletUprightsRef.current!.setMatrixAt(idx++, dummy.matrix);
+      uprightsRef.current!.setMatrixAt(idx, dummy.matrix);
     });
-    palletUprightsRef.current.instanceMatrix.needsUpdate = true;
+    uprightsRef.current.instanceMatrix.needsUpdate = true;
   }, [uprightX, height, backZ]);
 
-  // Instanced Safety Yellow Load Beams
-  const beamsRef = useRef<THREE.InstancedMesh>(null);
+  // Instanced White Shelves & Royal Blue Rails
+  const shelvesRef = useRef<THREE.InstancedMesh>(null);
+  const railsRef = useRef<THREE.InstancedMesh>(null);
   useEffect(() => {
-    if (!beamsRef.current) return;
+    if (!shelvesRef.current || !railsRef.current) return;
     const dummy = new THREE.Object3D();
-    let idx = 0;
-    beamLevels.forEach((by) => {
-      // Front load beam running across entire back wall
-      dummy.position.set(0, by, backZ - 0.85);
-      dummy.scale.set(length, 0.12, 0.06);
+    const railDummy = new THREE.Object3D();
+    shelfTiers.forEach((ty, idx) => {
+      // Shelf plank
+      dummy.position.set(0, ty, backZ - 0.45);
+      dummy.scale.set(length, 0.035, 0.70);
       dummy.updateMatrix();
-      beamsRef.current!.setMatrixAt(idx++, dummy.matrix);
+      shelvesRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      // Rear load beam running across entire back wall
-      dummy.position.set(0, by, backZ + 0.05);
-      dummy.scale.set(length, 0.12, 0.06);
-      dummy.updateMatrix();
-      beamsRef.current!.setMatrixAt(idx++, dummy.matrix);
+      // Royal blue front edge rail
+      railDummy.position.set(0, ty + 0.01, backZ - 0.80);
+      railDummy.scale.set(length, 0.045, 0.02);
+      railDummy.updateMatrix();
+      railsRef.current!.setMatrixAt(idx, railDummy.matrix);
     });
-    beamsRef.current.instanceMatrix.needsUpdate = true;
-  }, [beamLevels, length, backZ]);
-
-  // Instanced Wooden Euro-Pallets
-  const palletsRef = useRef<THREE.InstancedMesh>(null);
-  useEffect(() => {
-    if (!palletsRef.current) return;
-    const dummy = new THREE.Object3D();
-    let idx = 0;
-    beamLevels.forEach((by) => {
-      bayX.forEach((bx) => {
-        [-0.65, 0.65].forEach((xOff) => {
-          dummy.position.set(bx + xOff, by + 0.07, backZ - 0.40);
-          dummy.scale.set(1.20, 0.12, 0.85);
-          dummy.updateMatrix();
-          palletsRef.current!.setMatrixAt(idx++, dummy.matrix);
-        });
-      });
-    });
-    palletsRef.current.instanceMatrix.needsUpdate = true;
-  }, [beamLevels, bayX, backZ]);
+    shelvesRef.current.instanceMatrix.needsUpdate = true;
+    railsRef.current.instanceMatrix.needsUpdate = true;
+  }, [shelfTiers, length, backZ]);
 
   return (
     <group>
-      {/* Structural Industrial Pallet Uprights (Safety Orange) */}
-      <instancedMesh ref={palletUprightsRef} args={[sharedGeometries.box, wallRackMaterials.palletUpright, (bayCount + 1) * 2]} raycast={() => null} />
+      {/* Clean White Gondola Back Panels */}
+      <mesh position={[0, height / 2, backZ - 0.08]} geometry={sharedGeometries.box} scale={[length, height, 0.04]} material={wallRackMaterials.backWallPanel} raycast={() => null} />
 
-      {/* Safety Yellow High-Strength Box Beams */}
-      <instancedMesh ref={beamsRef} args={[sharedGeometries.box, wallRackMaterials.palletBeam, beamLevels.length * 2]} raycast={() => null} />
+      {/* Heavy-Duty Silver-Grey Retail Uprights */}
+      <instancedMesh ref={uprightsRef} args={[sharedGeometries.box, wallRackMaterials.backWallUpright, uprightX.length]} raycast={() => null} />
 
-      {/* Wooden Euro-Pallets Deck Platforms */}
-      <instancedMesh ref={palletsRef} args={[sharedGeometries.box, wallRackMaterials.palletWood, beamLevels.length * bayCount * 2]} raycast={() => null} />
+      {/* Commercial White Shelf Tiers */}
+      <instancedMesh ref={shelvesRef} args={[sharedGeometries.box, wallRackMaterials.backWallShelf, shelfTiers.length]} raycast={() => null} />
 
-      {/* Overhead Warehouse Department Signboard */}
-      <group position={[0, height + 0.55, backZ - 0.90]} raycast={() => null}>
-        <mesh geometry={sharedGeometries.box} scale={[18.0, 0.70, 0.08]} material={wallRackMaterials.upright} />
-        <mesh position={[0, 0, -0.025]} geometry={sharedGeometries.box} scale={[17.8, 0.64, 0.06]} material={wallRackMaterials.plank} />
-        <mesh position={[0, 0.18, -0.058]} geometry={sharedGeometries.box} scale={[12.0, 0.16, 0.005]} material={wallRackMaterials.headerSignBg} />
-        <Text position={[0, 0.18, -0.065]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {'D-MART WHOLESALE BULK GRAINS & STAPLES'}
-        </Text>
-        <Text position={[0, -0.08, -0.065]} fontSize={0.18} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.05}>
-          {'CHAKKI ATTA 10KG • BASMATI RICE • COOKING OILS 5L • TATA SALT'}
-        </Text>
+      {/* Royal Blue Shelf Edge Rails */}
+      <instancedMesh ref={railsRef} args={[sharedGeometries.box, wallRackMaterials.backWallRail, shelfTiers.length]} raycast={() => null} />
+
+      {/* Kickplate / Base Skirt */}
+      <mesh position={[0, 0.12, backZ - 0.45]} geometry={sharedGeometries.box} scale={[length, 0.24, 0.70]} material={wallRackMaterials.kickplate} raycast={() => null} />
+
+      {/* Overhead Royal Blue Department Header Signboard Band (Matching Photo 2 Reference) */}
+      <group position={[0, height + 0.48, backZ - 0.50]} raycast={() => null}>
+        {/* West Sign: Flours & Atta */}
+        <group position={[-18, 0, 0]}>
+          <mesh geometry={sharedGeometries.box} scale={[16.0, 0.65, 0.08]} material={wallRackMaterials.upright} />
+          <mesh position={[0, 0, -0.025]} geometry={sharedGeometries.box} scale={[15.8, 0.60, 0.06]} material={wallRackMaterials.backWallPanel} />
+          <mesh position={[0, 0.16, -0.058]} geometry={sharedGeometries.box} scale={[15.4, 0.20, 0.005]} material={wallRackMaterials.headerSignBg} />
+          <Text position={[0, 0.16, -0.065]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
+            {'05 FLOURS, ATTA & GRAINS'}
+          </Text>
+          <Text position={[0, -0.10, -0.065]} fontSize={0.13} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.03}>
+            {'CHAKKI ATTA • BASMATI RICE • MAIDA • SOOJI • BESAN'}
+          </Text>
+        </group>
+
+        {/* Center Sign: Pulses & Dals */}
+        <group position={[0, 0, 0]}>
+          <mesh geometry={sharedGeometries.box} scale={[16.0, 0.65, 0.08]} material={wallRackMaterials.upright} />
+          <mesh position={[0, 0, -0.025]} geometry={sharedGeometries.box} scale={[15.8, 0.60, 0.06]} material={wallRackMaterials.backWallPanel} />
+          <mesh position={[0, 0.16, -0.058]} geometry={sharedGeometries.box} scale={[15.4, 0.20, 0.005]} material={wallRackMaterials.headerSignBg} />
+          <Text position={[0, 0.16, -0.065]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
+            {'06 PULSES, DALS & ORGANIC STAPLES'}
+          </Text>
+          <Text position={[0, -0.10, -0.065]} fontSize={0.13} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.03}>
+            {'TOOR DAL • MOONG DAL • CHANA • ORGANIC PULSES • DRY FRUITS'}
+          </Text>
+        </group>
+
+        {/* East Sign: Cooking Oils & Ghee */}
+        <group position={[18, 0, 0]}>
+          <mesh geometry={sharedGeometries.box} scale={[16.0, 0.65, 0.08]} material={wallRackMaterials.upright} />
+          <mesh position={[0, 0, -0.025]} geometry={sharedGeometries.box} scale={[15.8, 0.60, 0.06]} material={wallRackMaterials.backWallPanel} />
+          <mesh position={[0, 0.16, -0.058]} geometry={sharedGeometries.box} scale={[15.4, 0.20, 0.005]} material={wallRackMaterials.headerSignBg} />
+          <Text position={[0, 0.16, -0.065]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
+            {'07 COOKING OILS, GHEE & SPICES'}
+          </Text>
+          <Text position={[0, -0.10, -0.065]} fontSize={0.13} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.03}>
+            {'PURE COW GHEE • MUSTARD OIL • SUNFLOWER OIL • WHOLE SPICES'}
+          </Text>
+        </group>
       </group>
 
-      {/* Interactive Bulk Sacks and Cans on Pallets (distance LOD) */}
-      {isNear && (
-        <group>
-          {bulkBatches.map((batch) => (
-            <BulkPalletBatch key={`bulk-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} />
-          ))}
-        </group>
-      )}
+      {/* Interactive Products on Clean Gondola Shelves (Always Visible, 1m to 30m) */}
+      <group>
+        {bulkBatches.map((batch) => (
+          <BulkPalletBatch key={`bulk-batch-${batch.product.id}`} product={batch.product} slots={batch.slots} openModal={openProductModal} setHover={setHoveredProduct} />
+        ))}
+      </group>
     </group>
   );
 });
@@ -631,10 +639,10 @@ const BulkPalletBatch: React.FC<{
   const frontTex = useMemo(() => getProductPackagingTexture(product), [product]);
   const labelMat = useMemo(() => getShelfMaterial(frontTex, `pkg-${product.slug || product.id}`, 'standard'), [frontTex, product]);
 
-  const bw = 0.48; // Large 10kg/25kg bulk sack width
-  const bh = 0.62; // Tall bulk sack height
-  const bd = 0.32; // Deep bulk sack thickness
-  const yOff = 0.31;
+  const bw = 0.38; // Packaged staples / 5kg / 10kg grain pack width
+  const bh = 0.50; // Shelf-friendly height
+  const bd = 0.24; // Depth
+  const yOff = 0.25;
 
   useEffect(() => {
     if (!bodyRef.current || !labelRef.current || slots.length === 0) return;
@@ -642,23 +650,29 @@ const BulkPalletBatch: React.FC<{
     const labelDummy = new THREE.Object3D();
 
     slots.forEach((slot, idx) => {
-      // 3D Large Sack
+      // 3D Packaged Box / Bag Body
       dummy.position.set(slot.x, slot.y + yOff, slot.z);
       dummy.rotation.set(0, 0, 0);
       dummy.scale.set(bw, bh, bd);
       dummy.updateMatrix();
       bodyRef.current!.setMatrixAt(idx, dummy.matrix);
 
-      // Printed Sack Face
+      // Printed Front Facing Label
       labelDummy.position.set(slot.x, slot.y + yOff, slot.z - bd / 2 - 0.004);
       labelDummy.rotation.set(0, Math.PI, 0);
-      labelDummy.scale.set(bw * 0.92, bh * 0.92, 1);
+      labelDummy.scale.set(bw * 0.94, bh * 0.94, 1);
       labelDummy.updateMatrix();
       labelRef.current!.setMatrixAt(idx, labelDummy.matrix);
     });
 
     bodyRef.current.instanceMatrix.needsUpdate = true;
     labelRef.current.instanceMatrix.needsUpdate = true;
+    try {
+      bodyRef.current.computeBoundingBox();
+      bodyRef.current.computeBoundingSphere();
+      labelRef.current.computeBoundingBox();
+      labelRef.current.computeBoundingSphere();
+    } catch {}
   }, [slots]);
 
   if (slots.length === 0) return null;
@@ -667,6 +681,7 @@ const BulkPalletBatch: React.FC<{
     <group>
       <instancedMesh
         ref={bodyRef}
+        frustumCulled={false}
         args={[sharedGeometries.box, bodyMat, slots.length]}
         onPointerOver={(e) => {
           e.stopPropagation();
@@ -683,7 +698,12 @@ const BulkPalletBatch: React.FC<{
           openModal(product);
         }}
       />
-      <instancedMesh ref={labelRef} args={[sharedGeometries.plane, labelMat, slots.length]} raycast={() => null} />
+      <instancedMesh
+        ref={labelRef}
+        frustumCulled={false}
+        args={[sharedGeometries.plane, labelMat, slots.length]}
+        raycast={() => null}
+      />
     </group>
   );
 });

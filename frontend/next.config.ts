@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    cpus: 1,
+  },
   async rewrites() {
     return [
       {

@@ -3,6 +3,7 @@
 import React, { Suspense, useEffect, useRef } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { StoreArchitecture } from './StoreArchitecture';
 import { ShelfUnit } from './ShelfUnit';
 import { BillingCounter3D } from './BillingCounter3D';
@@ -14,11 +15,12 @@ import { RefrigeratorSection3D } from './RefrigeratorSection3D';
 import { WallShelves } from './WallShelves';
 import { PromotionalIslands } from './PromotionalIslands';
 import { useMartStore } from '@/store/useMartStore';
+import { prewarmAllProductTextures } from '@/lib/productTextureAtlas';
 import { api } from '@/lib/api';
 
 // Real-Time Scene Performance Monitor (Zero-overhead telemetry)
 const ScenePerformanceMonitor: React.FC = () => {
-  const { gl, scene } = useThree();
+  const { gl, scene, camera } = useThree();
   const frameCount = useRef(0);
   const lastTime = useRef(performance.now());
   const fpsHistory = useRef<number[]>([]);
@@ -29,8 +31,13 @@ const ScenePerformanceMonitor: React.FC = () => {
     if (typeof window !== 'undefined') {
       (window as any).__threeScene = scene;
       (window as any).__threeRenderer = gl;
+      // Phase 3: Pre-warm all product textures and pre-compile all scene shaders
+      prewarmAllProductTextures(gl);
+      if ('compileAsync' in gl) {
+        (gl as any).compileAsync(scene, camera).catch(() => {});
+      }
     }
-  }, [scene, gl]);
+  }, [scene, gl, camera]);
 
   useFrame(() => {
     // Capture render calls before autoReset
@@ -70,6 +77,28 @@ const ScenePerformanceMonitor: React.FC = () => {
       lastTime.current = now;
     }
   });
+
+  return null;
+};
+
+// Pre-filtered Indoor Environment for Chrome & Floor Specular Reflections
+const SceneEnvironmentController: React.FC = () => {
+  const { gl, scene } = useThree();
+
+  useEffect(() => {
+    const pmremGenerator = new THREE.PMREMGenerator(gl);
+    pmremGenerator.compileEquirectangularShader();
+    const roomEnv = new RoomEnvironment();
+    const envTexture = pmremGenerator.fromScene(roomEnv, 0.04).texture;
+    scene.environment = envTexture;
+
+    return () => {
+      scene.environment = null;
+      envTexture.dispose();
+      roomEnv.dispose();
+      pmremGenerator.dispose();
+    };
+  }, [gl, scene]);
 
   return null;
 };
@@ -118,11 +147,11 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
   const firstFloor = floors.find((f) => f.floorNumber === 2);
 
   return (
-    <div className="w-full h-full relative select-none touch-none">
+    <div className="w-full h-full relative select-none touch-none" style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
         frameloop={isPaused ? 'never' : 'always'}
         dpr={typeof window !== 'undefined' && window.innerWidth < 768 ? [1, 1.5] : [1, 2]}
-        camera={{ position: [0, 1.6, -28], fov: 62, near: 0.1, far: 200 }}
+        camera={{ position: [0, 1.45, -28], fov: 60, near: 0.1, far: 200 }}
         raycaster={{ near: 0.2, far: 25 }}
         style={{ touchAction: 'none' }}
         gl={{
@@ -132,24 +161,25 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           stencil: false,
           depth: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.05,
+          toneMappingExposure: 1.18,
         }}
       >
-        {/* Architectural Atmosphere: Warm Hypermarket White (Eliminates empty grey void) */}
-        <color attach="background" args={['#f8fafc']} />
-        <fog attach="fog" args={['#f8fafc', 55, 95]} />
+        {/* High-Key Bright Atmosphere (Matches Commercial Reference) */}
+        <color attach="background" args={['#fafafa']} />
+        <fog attach="fog" args={['#fafafa', 70, 150]} />
 
         {/* --- Maximum 3 Dynamic Lights: Neutral White (4500K), High Contrast & Crisp Packaging --- */}
         {/* 1. Balanced Hemisphere Light (Pure sky white, soft neutral floor bounce) */}
-        <hemisphereLight args={['#ffffff', '#cbd5e1', 0.65]} />
+        <hemisphereLight args={['#ffffff', '#f1f5f9', 0.85]} />
 
         {/* 2. Primary High-Luminance Directional Key Light */}
-        <directionalLight position={[8, 24, 8]} intensity={1.15} />
+        <directionalLight position={[10, 25, 10]} intensity={1.25} />
 
         {/* 3. Soft Opposite Aisle Fill Light */}
-        <directionalLight position={[-8, 20, -8]} intensity={0.35} />
+        <directionalLight position={[-10, 20, -10]} intensity={0.45} />
 
         <Suspense fallback={null}>
+          <SceneEnvironmentController />
           <ScenePerformanceMonitor />
           {/* Store Shell */}
           <StoreArchitecture />

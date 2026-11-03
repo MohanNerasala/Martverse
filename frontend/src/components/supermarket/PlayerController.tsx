@@ -176,6 +176,80 @@ const STATIC_SPHERES = [
   { fwdDist: 1.05, latDist: 0.0, radius: 0.28 }, // Front trolley bumper
 ] as const;
 
+// Raycasts against store perimeter and interior gondola obstacles to prevent camera clipping
+function checkCameraObstacleDistance(
+  px: number,
+  pz: number,
+  dirX: number,
+  dirZ: number,
+  maxDist: number,
+  obstacles: ObstacleBox[]
+): number {
+  let closestDist = maxDist;
+  const padding = 0.32; // Buffer so camera never clips geometry
+
+  // 1. Perimeter boundary walls (-35 to +35m)
+  if (dirX < -0.001) {
+    const dX = (-35.0 - px) / dirX;
+    if (dX > 0) closestDist = Math.min(closestDist, Math.max(1.15, dX - padding));
+  } else if (dirX > 0.001) {
+    const dX = (35.0 - px) / dirX;
+    if (dX > 0) closestDist = Math.min(closestDist, Math.max(1.15, dX - padding));
+  }
+
+  if (dirZ < -0.001) {
+    const dZ = (-35.0 - pz) / dirZ;
+    if (dZ > 0) closestDist = Math.min(closestDist, Math.max(1.15, dZ - padding));
+  } else if (dirZ > 0.001) {
+    const dZ = (35.0 - pz) / dirZ;
+    if (dZ > 0) closestDist = Math.min(closestDist, Math.max(1.15, dZ - padding));
+  }
+
+  // 2. Interior shelf racks and obstacles
+  for (let i = 0; i < obstacles.length; i++) {
+    const box = obstacles[i];
+    if (box.maxX - box.minX > 60 || box.maxZ - box.minZ > 60) continue;
+
+    const bMinX = box.minX - padding;
+    const bMaxX = box.maxX + padding;
+    const bMinZ = box.minZ - padding;
+    const bMaxZ = box.maxZ + padding;
+
+    let tmin = 0;
+    let tmax = closestDist;
+
+    if (Math.abs(dirX) > 1e-6) {
+      const invD = 1 / dirX;
+      let t1 = (bMinX - px) * invD;
+      let t2 = (bMaxX - px) * invD;
+      if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
+      tmin = Math.max(tmin, t1);
+      tmax = Math.min(tmax, t2);
+      if (tmin > tmax) continue;
+    } else {
+      if (px < bMinX || px > bMaxX) continue;
+    }
+
+    if (Math.abs(dirZ) > 1e-6) {
+      const invD = 1 / dirZ;
+      let t1 = (bMinZ - pz) * invD;
+      let t2 = (bMaxZ - pz) * invD;
+      if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
+      tmin = Math.max(tmin, t1);
+      tmax = Math.min(tmax, t2);
+      if (tmin > tmax) continue;
+    } else {
+      if (pz < bMinZ || pz > bMaxZ) continue;
+    }
+
+    if (tmin < closestDist && tmin >= 0) {
+      closestDist = Math.max(1.15, tmin);
+    }
+  }
+
+  return closestDist;
+}
+
 export const PlayerController: React.FC = () => {
   const { camera } = useThree();
   const keys = useRef<KeyState>({
@@ -226,7 +300,8 @@ export const PlayerController: React.FC = () => {
   } | null>(null);
   const lastSyncTime = useRef(0);
   const lastProximityCheck = useRef(0);
-  const camDistRef = useRef(3.0);
+  const camDistRef = useRef(2.95);
+  const cameraProgressRef = useRef(cameraMode === 'first_person' ? 0.0 : 1.0);
   const resetPending = useRef(false);
   const prevZRef = useRef(martRuntime.playerPos[2]);
   const proximityCache = useRef<{
@@ -254,15 +329,15 @@ export const PlayerController: React.FC = () => {
       initY + 0.35,
       initZ + Math.cos(initYaw) * 2.3
     );
-    const camDist = 3.0;
-    const camHeight = 1.95;
+    const camDist = 0.55;
+    const camHeight = 1.45;
     const rayDirX = -Math.sin(initYaw);
     const rayDirZ = -Math.cos(initYaw);
-    camera.position.set(initX + rayDirX * camDist, initY + camHeight, initZ + rayDirZ * camDist);
+    camera.position.set(initX + rayDirX * camDist, initY - 1.5 + camHeight, initZ + rayDirZ * camDist);
     camera.lookAt(
-      initX + Math.sin(initYaw) * 2.3,
-      initY + 0.35,
-      initZ + Math.cos(initYaw) * 2.3
+      initX + Math.sin(initYaw) * 5.0,
+      1.05,
+      initZ + Math.cos(initYaw) * 5.0
     );
     keys.current = {
       forward: false,
@@ -283,7 +358,9 @@ export const PlayerController: React.FC = () => {
     pitchRef.current = 0;
     targetYawRef.current = 0;
     targetPitchRef.current = 0;
-    currentLookTarget.current.set(0, 1.85, -25.7);
+    currentLookTarget.current.set(0, 1.28, -23.2);
+    camDistRef.current = 2.95;
+    cameraProgressRef.current = 1.0;
     martRuntime.playerPos[0] = 0;
     martRuntime.playerPos[1] = 1.5;
     martRuntime.playerPos[2] = -28;
@@ -988,7 +1065,7 @@ export const PlayerController: React.FC = () => {
       setProximity(nearBilling, nearExit, prompt, targetPos);
     }
 
-    // Camera positioning based on cameraMode (No auto zoom during billing per user request)
+    // Camera positioning based on cameraMode
     if (cameraMode === 'billing') {
       const camDist = 3.2;
       const camHeight = 1.9;
@@ -1003,55 +1080,70 @@ export const PlayerController: React.FC = () => {
       // Exit gate cinematic view
       camera.position.set(0, 2.2, -26.5);
       camera.lookAt(0, 1.5, -31.0);
-    } else if (cameraMode === 'first_person') {
-      camera.position.set(posRef.current.x, posRef.current.y + 0.1, posRef.current.z);
-      const lookDist = 5;
-      const targetLookX = posRef.current.x + Math.sin(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
-      const targetLookY = posRef.current.y + 0.1 + Math.sin(pitchRef.current) * lookDist;
-      const targetLookZ = posRef.current.z + Math.cos(yawRef.current) * Math.cos(pitchRef.current) * lookDist;
-      camera.lookAt(targetLookX, targetLookY, targetLookZ);
     } else {
-      // Third Person (Orbit lock with smooth perimeter wall avoidance across 72m footprint)
-      const camDist = 3.0;
-      const camHeight = 1.95;
-      const rayDirX = -Math.sin(yawRef.current);
-      const rayDirZ = -Math.cos(yawRef.current);
-
-      let effectiveCamDist = camDist;
-      if (rayDirX < -0.001) {
-        const dX = (-35.0 - posRef.current.x) / rayDirX;
-        if (dX > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dX - 0.25));
-      } else if (rayDirX > 0.001) {
-        const dX = (35.0 - posRef.current.x) / rayDirX;
-        if (dX > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dX - 0.25));
+      // Smooth 0.4s eased transition between 1st Person (0.0) and 3rd Person (1.0)
+      const targetProgress = cameraMode === 'first_person' ? 0.0 : 1.0;
+      const transitionDuration = 0.4;
+      if (cameraProgressRef.current < targetProgress) {
+        cameraProgressRef.current = Math.min(targetProgress, cameraProgressRef.current + delta / transitionDuration);
+      } else if (cameraProgressRef.current > targetProgress) {
+        cameraProgressRef.current = Math.max(targetProgress, cameraProgressRef.current - delta / transitionDuration);
       }
 
-      if (rayDirZ < -0.001) {
-        const dZ = (-35.0 - posRef.current.z) / rayDirZ;
-        if (dZ > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dZ - 0.25));
-      } else if (rayDirZ > 0.001) {
-        const dZ = (35.0 - posRef.current.z) / rayDirZ;
-        if (dZ > 0) effectiveCamDist = Math.min(effectiveCamDist, Math.max(1.2, dZ - 0.25));
-      }
+      // Hermite smoothstep cubic easing: 3*t^2 - 2*t^3
+      const t = cameraProgressRef.current;
+      const easeT = t * t * (3 - 2 * t);
 
-      camDistRef.current = THREE.MathUtils.damp(camDistRef.current, effectiveCamDist, 22, delta);
+      const fwdX = Math.sin(yawRef.current);
+      const fwdZ = Math.cos(yawRef.current);
 
-      const targetCamX = posRef.current.x + rayDirX * camDistRef.current;
-      const targetCamY = posRef.current.y + camHeight;
-      const targetCamZ = posRef.current.z + rayDirZ * camDistRef.current;
+      // --- 1. First-Person Camera Coordinates (Player holding trolley handle) ---
+      const fpCamX = posRef.current.x + fwdX * 0.12;
+      const fpCamY = posRef.current.y + 0.12;
+      const fpCamZ = posRef.current.z + fwdZ * 0.12;
 
-      const lookTargetX = posRef.current.x + Math.sin(yawRef.current) * 2.3;
-      const lookTargetY = posRef.current.y + 0.35 + Math.sin(pitchRef.current) * 2.0;
-      const lookTargetZ = posRef.current.z + Math.cos(yawRef.current) * 2.3;
+      // First-person look: slight natural downward tilt (-8 deg) so trolley handle & basket front sit at bottom edge
+      const fpPitch = pitchRef.current - 0.14;
+      const fpLookDist = 5.0;
+      const fpLookX = fpCamX + fwdX * Math.cos(fpPitch) * fpLookDist;
+      const fpLookY = fpCamY + Math.sin(fpPitch) * fpLookDist;
+      const fpLookZ = fpCamZ + fwdZ * Math.cos(fpPitch) * fpLookDist;
 
-      // Ultra-smooth high-frequency camera and look-target interpolation (fast 90 damping for zero camera lag behind trolley)
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 90, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 90, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 90, delta);
+      // --- 2. Third-Person Camera Coordinates (Sitting just behind trolley at ~1.45m high, matching reference) ---
+      const rayDirX = -fwdX;
+      const rayDirZ = -fwdZ;
+      const isCloseInspect = typeof window !== 'undefined' && Boolean((window as any).__martverseInspectTrolleyActive);
+      const baseDist = isCloseInspect ? 0.35 : 0.55; // 1.70m total distance behind trolley
+      const currentObstacles = activeFloor === 2 ? STATIC_OBSTACLES_FLOOR2 : STATIC_OBSTACLES_FLOOR1;
+      const safeObstacleDist = isCloseInspect ? 0.35 : checkCameraObstacleDistance(posRef.current.x, posRef.current.z, rayDirX, rayDirZ, baseDist, currentObstacles);
 
-      currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, lookTargetX, 90, delta);
-      currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, lookTargetY, 90, delta);
-      currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, lookTargetZ, 90, delta);
+      camDistRef.current = THREE.MathUtils.damp(camDistRef.current, safeObstacleDist, 22, delta);
+
+      const tpCamX = posRef.current.x + rayDirX * camDistRef.current;
+      const tpCamY = posRef.current.y - 0.05; // 1.45m high (matches reference photo)
+      const tpCamZ = posRef.current.z + rayDirZ * camDistRef.current;
+
+      const tpLookX = posRef.current.x + fwdX * (isCloseInspect ? 1.5 : 5.0);
+      const tpLookY = posRef.current.y - (isCloseInspect ? 0.55 : 0.45) + Math.sin(pitchRef.current) * 2.8;
+      const tpLookZ = posRef.current.z + fwdZ * (isCloseInspect ? 1.5 : 5.0);
+
+      // --- 3. Eased Interpolation for Seamless 0.4s Toggle ---
+      const targetCamX = THREE.MathUtils.lerp(fpCamX, tpCamX, easeT);
+      const targetCamY = THREE.MathUtils.lerp(fpCamY, tpCamY, easeT);
+      const targetCamZ = THREE.MathUtils.lerp(fpCamZ, tpCamZ, easeT);
+
+      const targetLookX = THREE.MathUtils.lerp(fpLookX, tpLookX, easeT);
+      const targetLookY = THREE.MathUtils.lerp(fpLookY, tpLookY, easeT);
+      const targetLookZ = THREE.MathUtils.lerp(fpLookZ, tpLookZ, easeT);
+
+      // Smooth camera damping to prevent any camera jerk
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCamX, 45, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 45, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCamZ, 45, delta);
+
+      currentLookTarget.current.x = THREE.MathUtils.damp(currentLookTarget.current.x, targetLookX, 45, delta);
+      currentLookTarget.current.y = THREE.MathUtils.damp(currentLookTarget.current.y, targetLookY, 45, delta);
+      currentLookTarget.current.z = THREE.MathUtils.damp(currentLookTarget.current.z, targetLookZ, 45, delta);
 
       camera.lookAt(currentLookTarget.current);
     }
