@@ -29,9 +29,7 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: -37.0, maxX: -35.2, minZ: -37.0, maxZ: 37.0 },  // Left Wall
   { minX: 35.2, maxX: 37.0, minZ: -37.0, maxZ: 37.0 },   // Right Wall
   { minX: -37.0, maxX: 37.0, minZ: 35.2, maxZ: 37.0 },   // Back Wall
-  { minX: -37.0, maxX: -6.0, minZ: -37.0, maxZ: -35.2 }, // Front Entrance Wall (Left of grand portal)
-  { minX: 6.0, maxX: 37.0, minZ: -37.0, maxZ: -35.2 },  // Front Entrance Wall (Right of grand portal)
-  { minX: -6.0, maxX: 6.0, minZ: -37.5, maxZ: -36.2 },  // Front Doorway Backstop
+  { minX: -37.0, maxX: 37.0, minZ: -37.0, maxZ: -35.2 }, // Front Wall
 
   // Left Wall Retail Shelving Section (Household & Personal Care, X = -34.8, Z = [-18, 18])
   { minX: -35.4, maxX: -33.9, minZ: -18.5, maxZ: 18.5 },
@@ -66,13 +64,6 @@ const STATIC_OBSTACLES_FLOOR1: ObstacleBox[] = [
   { minX: 7.85, maxX: 10.15, minZ: 20.8, maxZ: 23.2 },
   { minX: 13.85, maxX: 16.15, minZ: 20.8, maxZ: 23.2 },
 ];
-
-const UNPAID_EXIT_BARRIER: ObstacleBox = {
-  minX: -1.75,
-  maxX: 1.75,
-  minZ: -31.15,
-  maxZ: -30.85,
-};
 
 interface DepenetrationResult {
   overlap: boolean;
@@ -626,8 +617,8 @@ export const PlayerController: React.FC = () => {
       return;
     }
 
-    // Check Exit Gate (around z = -31, x between -3 and 3)
-    if (Math.abs(pz - (-31.0)) < 3.5 && Math.abs(px) < 3.5) {
+    // Check Exit at Front Concourse (pz <= -32.5, px between -8 and 8)
+    if (pz <= -32.5 && Math.abs(px) < 8.0) {
       if (currentCart.length === 0 || currentPaid) {
         sounds.playGateOpen();
         setCameraMode('exit');
@@ -914,20 +905,6 @@ export const PlayerController: React.FC = () => {
           }
         }
 
-        // Unpaid exit barrier check
-        const activeCart = useCartStore.getState().items;
-        const activePaid = useCartStore.getState().isPaid;
-        if (activeCart.length > 0 && !activePaid) {
-          const frontSp = STATIC_SPHERES[1]; // Front Bumper
-          const fx = nextX + sinYaw * frontSp.fwdDist;
-          const fz = nextZ + cosYaw * frontSp.fwdDist;
-          const resExit = getCircleBoxDepenetration(fx, fz, frontSp.radius, UNPAID_EXIT_BARRIER);
-          if (resExit.overlap) {
-            nextZ += resExit.pZ;
-            velocityRef.current.z = 0;
-          }
-        }
-
         posRef.current.x = nextX;
         posRef.current.z = nextZ;
 
@@ -995,7 +972,7 @@ export const PlayerController: React.FC = () => {
     const pz = posRef.current.z;
 
     const nearBilling = Math.abs(pz - 22.0) < 4.0 && Math.abs(px) < 18.0;
-    const nearExit = Math.abs(pz - (-31.0)) < 3.5 && Math.abs(px) < 3.5;
+    const nearExit = pz <= -32.5 && Math.abs(px) < 8.0;
 
     let prompt: string | null = null;
     let targetPos: [number, number, number] | null = null;

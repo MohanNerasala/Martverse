@@ -7,7 +7,6 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { StoreArchitecture } from './StoreArchitecture';
 import { ShelfUnit } from './ShelfUnit';
 import { BillingCounter3D } from './BillingCounter3D';
-import { ExitGate3D } from './ExitGate3D';
 import { TrolleyModel } from './TrolleyModel';
 import { FlyingProductArc } from './FlyingProductArc';
 import { PlayerController } from './PlayerController';
@@ -204,9 +203,6 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
 
           {/* Billing Counters Zone on Ground Floor near z = 22 */}
           <BillingCounter3D position={[0, 0, 22]} />
-
-          {/* Exit Gate on Ground Floor near z = -31 */}
-          <ExitGate3D position={[0, 0, -31]} />
 
           {/* Player Navigation & Camera Controller (Must execute first in useFrame loop to update positions) */}
           <PlayerController />

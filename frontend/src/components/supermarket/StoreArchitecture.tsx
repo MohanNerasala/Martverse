@@ -329,25 +329,6 @@ const SupermarketPillar: React.FC<{
 });
 SupermarketPillar.displayName = 'SupermarketPillar';
 
-// Chrome rolling hand basket stack station
-const BasketStackStation: React.FC<{ position: [number, number, number]; color: 'red' | 'blue' }> = React.memo(({ position, color }) => {
-  const basketMat = color === 'red' ? sharedMaterials.basketRed : sharedMaterials.basketBlue;
-  return (
-    <group position={position}>
-      {/* Chrome Base Frame on Wheels */}
-      <mesh position={[0, 0.08, 0]} geometry={sharedGeos.box} scale={[0.48, 0.04, 0.38]} material={sharedMaterials.basketChrome} />
-      {/* Chrome Wire Guides */}
-      <mesh position={[-0.22, 0.55, 0]} geometry={sharedGeos.cyl} scale={[0.008, 0.9, 0.008]} material={sharedMaterials.basketChrome} />
-      <mesh position={[0.22, 0.55, 0]} geometry={sharedGeos.cyl} scale={[0.008, 0.9, 0.008]} material={sharedMaterials.basketChrome} />
-      {/* High-Fidelity Stack of Hand Baskets */}
-      <mesh position={[0, 0.50, 0]} geometry={sharedGeos.box} scale={[0.42, 0.76, 0.32]} material={basketMat} />
-      {/* Chrome Top Handle */}
-      <mesh position={[0, 0.92, 0]} geometry={sharedGeos.box} scale={[0.38, 0.04, 0.04]} material={sharedMaterials.basketChrome} />
-    </group>
-  );
-});
-BasketStackStation.displayName = 'BasketStackStation';
-
 // Modern Commercial Clip-In Modular Ceiling Network (Clean White/Off-White Finishes, Flush LED Troffers, Thin High Services)
 const CommercialCeilingServices: React.FC = React.memo(() => {
   // Thin high electrical raceway conduits (slim painted off-white rails flush at y = 5.14)
@@ -469,88 +450,6 @@ const SecurityDomeCameras: React.FC = React.memo(() => {
 });
 SecurityDomeCameras.displayName = 'SecurityDomeCameras';
 
-// Entrance Shopping Trolley Parking Bays with Chrome Corrals
-const EntranceTrolleyParkingBays: React.FC<{ position: [number, number, number] }> = React.memo(({ position }) => {
-  return (
-    <group position={position} raycast={() => null}>
-      {/* Floor Guide Marking Decal */}
-      <mesh position={[0, 0.008, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[4.2, 5.6]} />
-        <meshBasicMaterial color="#1e3a8a" transparent opacity={0.15} />
-      </mesh>
-      {/* Perimeter Rail Frame (Guide corral) */}
-      <mesh position={[-2.1, 0.45, 0]}>
-        <boxGeometry args={[0.06, 0.9, 5.4]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
-      </mesh>
-      <mesh position={[2.1, 0.45, 0]}>
-        <boxGeometry args={[0.06, 0.9, 5.4]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.92} roughness={0.15} />
-      </mesh>
-      {/* Front Overhead Guidance Signboard */}
-      <group position={[0, 1.8, 2.7]}>
-        <mesh>
-          <boxGeometry args={[3.8, 0.5, 0.04]} />
-          <meshStandardMaterial color="#1d4ed8" />
-        </mesh>
-        <Text position={[0, 0.08, 0.025]} fontSize={0.14} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          {'TROLLEY DISINFECTION & RETURN BAY'}
-        </Text>
-        <Text position={[0, -0.12, 0.025]} fontSize={0.08} color="#facc15" anchorX="center" anchorY="middle" fontWeight="bold">
-          {'★ FULLY SANITIZED STAINLESS TROLLEYS READY FOR USE ★'}
-        </Text>
-      </group>
-      {/* Stainless Steel Floor Guide Rails (Clean Corral, Exactly 1 Live Trolley in Store) */}
-      <mesh position={[-1.6, 0.02, 0]} geometry={sharedGeos.box} scale={[0.06, 0.04, 4.2]} material={sharedMaterials.ceilingBeam} />
-      <mesh position={[0, 0.02, 0]} geometry={sharedGeos.box} scale={[0.06, 0.04, 4.2]} material={sharedMaterials.ceilingBeam} />
-      <mesh position={[1.6, 0.02, 0]} geometry={sharedGeos.box} scale={[0.06, 0.04, 4.2]} material={sharedMaterials.ceilingBeam} />
-    </group>
-  );
-});
-EntranceTrolleyParkingBays.displayName = 'EntranceTrolleyParkingBays';
-
-// Automatic Sliding Glass Entrance Portal
-const GrandStoreEntranceDoors: React.FC = React.memo(() => {
-  return (
-    <group position={[0, 0, -35.6]} raycast={() => null}>
-      {/* Outer Door Frame Posts */}
-      <mesh position={[-6.0, 2.2, 0]}>
-        <boxGeometry args={[0.2, 4.4, 0.25]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh position={[6.0, 2.2, 0]}>
-        <boxGeometry args={[0.2, 4.4, 0.25]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
-      </mesh>
-      {/* Overhead Automatic Sensor Track */}
-      <mesh position={[0, 4.25, 0]}>
-        <boxGeometry args={[12.2, 0.3, 0.3]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.85} roughness={0.25} />
-      </mesh>
-      {/* Glass Sliding Door Panels (Fixed & Open Leaves) */}
-      {[-4.2, -1.6, 1.6, 4.2].map((xP, pIdx) => (
-        <group key={`glass-panel-${pIdx}`} position={[xP, 2.1, 0]}>
-          <mesh>
-            <boxGeometry args={[2.5, 4.0, 0.04]} />
-            <meshStandardMaterial color="#38bdf8" transparent opacity={0.3} roughness={0.08} metalness={0.15} />
-          </mesh>
-          {/* Aluminum Frame Border */}
-          <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[2.56, 4.06, 0.035]} />
-            <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.2} wireframe />
-          </mesh>
-          {/* High-Visibility Yellow Safety Decal Bar across Glass */}
-          <mesh position={[0, -0.6, 0]}>
-            <boxGeometry args={[2.48, 0.12, 0.045]} />
-            <meshBasicMaterial color="#facc15" />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
-});
-GrandStoreEntranceDoors.displayName = 'GrandStoreEntranceDoors';
-
 // Recessed Circular LED Downlights on Regular Grid (Matches Reference Ceiling & Drives Floor Reflections)
 const InstancedCircularDownlights: React.FC = React.memo(() => {
   const bezelsRef = useRef<THREE.InstancedMesh>(null);
@@ -631,20 +530,8 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       {/* Ground Floor Architectural Pristine White Perimeter Walls (100% Fully Enclosed Hypermarket Shell) */}
       {/* Back Wall (z = 36) */}
       <mesh position={[0, 2.6, 36]} geometry={sharedGeos.box} scale={[72, 5.2, 0.4]} material={sharedMaterials.wall} />
-      {/* Front Entrance Wall (z = -36) with 12m grand portal opening */}
-      <mesh position={[-21, 2.6, -36]} geometry={sharedGeos.box} scale={[30, 5.2, 0.4]} material={sharedMaterials.wall} />
-      <mesh position={[21, 2.6, -36]} geometry={sharedGeos.box} scale={[30, 5.2, 0.4]} material={sharedMaterials.wall} />
-      {/* Lintel over entrance portal */}
-      <mesh position={[0, 4.4, -36]} geometry={sharedGeos.box} scale={[12, 1.6, 0.4]} material={sharedMaterials.wall} />
-
-      {/* Enclosed Front Concourse Vestibule Wall (z = -36.4, 100% Enclosed: No black void or outside view) */}
-      <mesh position={[0, 2.6, -36.4]} geometry={sharedGeos.box} scale={[72, 5.2, 0.4]} material={sharedMaterials.wall} />
-      {/* Illuminated Customer Service & Welcome Concourse Backdrop */}
-      <mesh position={[0, 2.4, -36.18]} geometry={sharedGeos.box} scale={[14, 4.4, 0.05]} material={sharedMaterials.slab} />
-      <mesh position={[0, 3.8, -36.14]} geometry={sharedGeos.box} scale={[13.6, 0.35, 0.02]} material={sharedMaterials.basketBlue} />
-      <Text position={[0, 3.8, -36.12]} fontSize={0.16} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
-        {'CUSTOMER SERVICE • RECEPTION & MEMBERSHIP DESK'}
-      </Text>
+      {/* Front Perimeter Wall (z = -36) */}
+      <mesh position={[0, 2.6, -36]} geometry={sharedGeos.box} scale={[72, 5.2, 0.4]} material={sharedMaterials.wall} />
 
       {/* --- Grand Entrance Welcome Lightbox Portal: 'WELCOME TO D-MART HYPERMARKET' --- */}
       <group position={[0, 4.35, -35.75]}>
@@ -664,9 +551,6 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
           ★ UNBEATABLE DAILY SAVINGS • 100% GENUINE QUALITY GUARANTEED ★
         </Text>
       </group>
-
-      {/* Automatic Sliding Glass Entrance Portal */}
-      <GrandStoreEntranceDoors />
 
       {/* Left Wall (x = -36) */}
       <mesh position={[-36, 2.6, 0]} geometry={sharedGeos.box} scale={[0.4, 5.2, 72]} material={sharedMaterials.wall} />
@@ -726,13 +610,6 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
         badgeText="INSTANT CHILL"
         badgeColor="#0284c7"
       />
-
-      {/* ==============================================================
-          ENTRANCE TROLLEY PARKING BAYS & HAND BASKET STATIONS
-          ============================================================== */}
-      <EntranceTrolleyParkingBays position={[-10, 0, -31]} />
-      <BasketStackStation position={[9, 0, -31]} color="blue" />
-      <BasketStackStation position={[11, 0, -31]} color="red" />
 
       {/* Clean Commercial Overhead Services (Slim Painted White Conduits & Concealed Sprinklers) */}
       <CommercialCeilingServices />
