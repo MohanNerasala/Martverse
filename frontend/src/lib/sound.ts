@@ -17,6 +17,57 @@ class SoundEffects {
     return this.ctx;
   }
 
+  private murmurNode: AudioBufferSourceNode | null = null;
+  private murmurGain: GainNode | null = null;
+
+  startStoreMurmur() {
+    const ctx = this.getContext();
+    if (!ctx || this.murmurNode) return;
+    try {
+      const bufferSize = ctx.sampleRate * 2;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      let lastOut = 0.0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        data[i] = (lastOut + 0.02 * white) / 1.02;
+        lastOut = data[i];
+        data[i] *= 3.5;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      noise.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(450, ctx.currentTime);
+      filter.Q.setValueAtTime(1.2, ctx.currentTime);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.045, ctx.currentTime);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start();
+
+      this.murmurNode = noise;
+      this.murmurGain = gain;
+    } catch {}
+  }
+
+  stopStoreMurmur() {
+    if (this.murmurNode) {
+      try {
+        this.murmurNode.stop();
+        this.murmurNode.disconnect();
+      } catch {}
+      this.murmurNode = null;
+      this.murmurGain = null;
+    }
+  }
+
   // POS Barcode Scanner "BEEP!"
   playScanBeep() {
     const ctx = this.getContext();

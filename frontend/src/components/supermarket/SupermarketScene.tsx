@@ -13,6 +13,8 @@ import { PlayerController } from './PlayerController';
 import { RefrigeratorSection3D } from './RefrigeratorSection3D';
 import { WallShelves } from './WallShelves';
 import { PromotionalIslands } from './PromotionalIslands';
+import { WetFloorSign } from './WetFloorSign';
+import { AmbientStoreLife } from './AmbientStoreLife';
 import { useMartStore } from '@/store/useMartStore';
 import { prewarmAllProductTextures } from '@/lib/productTextureAtlas';
 import { api } from '@/lib/api';
@@ -166,21 +168,27 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
         <color attach="background" args={['#fafafa']} />
         <fog attach="fog" args={['#fafafa', 70, 150]} />
 
-        {/* --- Maximum 3 Dynamic Lights: Neutral White (4500K), High Contrast & Crisp Packaging --- */}
+        {/* --- Maximum Balanced Commercial Lighting: Warm-Neutral White (4000-4500K), High Contrast & Specular Pop --- */}
         {/* 1. Balanced Hemisphere Light (Pure sky white, soft neutral floor bounce) */}
-        <hemisphereLight args={['#ffffff', '#f1f5f9', 0.85]} />
+        <hemisphereLight args={['#ffffff', '#f1f5f9', 0.95]} />
 
-        {/* 2. Primary High-Luminance Directional Key Light */}
-        <directionalLight position={[10, 25, 10]} intensity={1.25} />
+        {/* 2. Primary High-Luminance Directional Key Light (North Entrance & Central Promenade) */}
+        <directionalLight position={[12, 24, -12]} intensity={1.15} color="#fffdf5" />
 
-        {/* 3. Soft Opposite Aisle Fill Light */}
-        <directionalLight position={[-10, 20, -10]} intensity={0.45} />
+        {/* 3. Balanced South Concourse & POS Billing Area Key Light */}
+        <directionalLight position={[-12, 24, 22]} intensity={0.95} color="#fffdf5" />
 
         <Suspense fallback={null}>
           <SceneEnvironmentController />
           <ScenePerformanceMonitor />
           {/* Store Shell */}
           <StoreArchitecture />
+
+          {/* Ambient Dust Motes & Realistic Atmospheric Tube Light Life */}
+          <AmbientStoreLife />
+
+          {/* Commercial Yellow A-Frame 'CAUTION: WET FLOOR' Sign in Aisle Walkway */}
+          <WetFloorSign position={[-12.5, 0, -2.5]} rotationY={0.35} />
 
           {/* Commercial Refrigerated Reach-in Display Sections on Ground Floor Right Wall */}
           {activeFloor === 1 && <RefrigeratorSection3D />}

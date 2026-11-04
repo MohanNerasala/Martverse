@@ -214,8 +214,14 @@ export const useMartStore = create<MartStore>((set, get) => ({
   toggleNavigator: (open) => set((state) => ({ isNavigatorOpen: open !== undefined ? open : !state.isNavigatorOpen })),
   
   toggleSound: () => {
-    sounds.enabled = !sounds.enabled;
-    set((state) => ({ isSoundMuted: !state.isSoundMuted }));
+    const newMuted = !get().isSoundMuted;
+    sounds.enabled = !newMuted;
+    if (!newMuted) {
+      sounds.startStoreMurmur();
+    } else {
+      sounds.stopStoreMurmur();
+    }
+    set({ isSoundMuted: newMuted });
   },
 
   setCameraMode: (cameraMode) => set({ cameraMode }),

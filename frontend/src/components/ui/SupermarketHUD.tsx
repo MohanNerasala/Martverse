@@ -107,6 +107,19 @@ export const ContextualPromptBanner: React.FC = React.memo(() => {
 
 export const IntroBrandBanner: React.FC = () => null;
 
+const STORE_DEPARTMENTS = [
+  { id: 'snacks-namkeen', name: 'Snacks & Namkeen', aisleNumber: 1, icon: '🥨', color: '#f59e0b', desc: 'Chips, Kurkure & Bhujia' },
+  { id: 'bakery-biscuits', name: 'Bakery & Biscuits', aisleNumber: 2, icon: '🍪', color: '#d97706', desc: 'Parle-G, Good Day & Oreo' },
+  { id: 'beverages-tea-coffee', name: 'Beverages & Tea/Coffee', aisleNumber: 3, icon: '☕', color: '#0284c7', desc: 'Tata Tea, Nescafe & Horlicks' },
+  { id: 'dairy-breakfast', name: 'Dairy & Breakfast', aisleNumber: 4, icon: '🧀', color: '#06b6d4', desc: 'Amul Butter, Paneer & Cereals' },
+  { id: 'rice-flours-pulses', name: 'Rice, Atta & Pulses', aisleNumber: 5, icon: '🌾', color: '#10b981', desc: 'Aashirvaad Chakki Atta & Basmati' },
+  { id: 'spices-cooking-essentials', name: 'Spices & Cooking Oils', aisleNumber: 6, icon: '🌶️', color: '#ef4444', desc: 'Fortune Oil, Ghee & Spices' },
+  { id: 'instant-packaged-foods', name: 'Instant & Packaged Foods', aisleNumber: 7, icon: '🍜', color: '#8b5cf6', desc: 'Maggi, Yippee & Pasta' },
+  { id: 'personal-care', name: 'Personal Care & Hygiene', aisleNumber: 8, icon: '🧴', color: '#ec4899', desc: 'Dove, Dettol & Colgate' },
+  { id: 'household-cleaning', name: 'Household & Cleaning', aisleNumber: 9, icon: '🧼', color: '#3b82f6', desc: 'Surf Excel, Vim & Harpic' },
+  { id: 'fresh-produce-fruits-veggies', name: 'Fresh Produce & Fruits', aisleNumber: 10, icon: '🍎', color: '#22c55e', desc: 'Farm Fresh Apples & Veggies' },
+];
+
 export const SupermarketHUD: React.FC = () => {
   const router = useRouter();
   const activeFloor = useMartStore((state) => state.activeFloor);
@@ -147,14 +160,30 @@ export const SupermarketHUD: React.FC = () => {
 
   const startCheckout = useBillingStore((state) => state.startCheckout);
 
-  // Search state
+  // Search & Category Dropdown state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const hydrateProductsFromCache = useMartStore((state) => state.hydrateProductsFromCache);
+
+  const handleSelectDepartment = (dept: typeof STORE_DEPARTMENTS[0]) => {
+    setIsCategoryDropdownOpen(false);
+    const targetProduct = products.find(
+      (p) =>
+        p.aisleNumber === dept.aisleNumber ||
+        p.categoryId === dept.id ||
+        p.placement?.aisleNumber === dept.aisleNumber
+    ) || products[0];
+
+    if (targetProduct) {
+      startAutoNavToProduct(targetProduct, false);
+    }
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -215,6 +244,9 @@ export const SupermarketHUD: React.FC = () => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setIsSearchOpen(false);
       }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setIsCategoryDropdownOpen(false);
+      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -273,10 +305,56 @@ export const SupermarketHUD: React.FC = () => {
             </div>
           </div>
 
-          {/* Active Store Section Indicator — Clean Capsule */}
-          <div className="h-10 hidden sm:flex items-center px-3 rounded-xl bg-slate-100/90 border border-slate-200/80 shadow-xs text-xs font-bold text-slate-700 gap-1.5 select-none">
-            <Layers className="w-3.5 h-3.5 text-sky-600" />
-            <span>Groceries & Supermarket</span>
+          {/* Active Store Section Indicator — Interactive Category Dropdown Pill */}
+          <div ref={categoryDropdownRef} className="relative hidden sm:block">
+            <button
+              onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
+              className="h-10 flex items-center px-3.5 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 active:bg-slate-200 border border-slate-200/90 text-xs font-bold text-slate-800 gap-2 select-none cursor-pointer transition-all shadow-xs group"
+              title="Browse 10 Hypermarket Departments"
+            >
+              <Layers className="w-3.5 h-3.5 text-sky-600 group-hover:rotate-12 transition-transform" />
+              <span>Groceries & Supermarket</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-sky-600' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu of 10 Departments */}
+            {isCategoryDropdownOpen && (
+              <div className="absolute top-12 left-0 w-80 max-h-[70vh] overflow-y-auto bg-white/98 backdrop-blur-2xl border border-slate-200/90 rounded-2xl shadow-[0_20px_50px_rgba(15,23,42,0.18)] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-3 py-2 border-b border-slate-100">
+                  <div className="text-[11px] font-black text-slate-400 tracking-wider uppercase">Hypermarket Departments</div>
+                  <p className="text-[10px] text-slate-500 font-medium">Select a department to fly the camera down that aisle</p>
+                </div>
+                <div className="mt-1 space-y-1">
+                  {STORE_DEPARTMENTS.map((dept) => (
+                    <button
+                      key={dept.id}
+                      onClick={() => handleSelectDepartment(dept)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 active:bg-slate-100 text-left transition-all group/item cursor-pointer border border-transparent hover:border-slate-200/60"
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shadow-xs transition-transform group-hover/item:scale-110"
+                        style={{ backgroundColor: `${dept.color}15`, border: `1px solid ${dept.color}40` }}
+                      >
+                        {dept.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black text-slate-800 group-hover/item:text-sky-600 transition-colors">
+                            {dept.name}
+                          </span>
+                          <span className="text-[9.5px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                            {dept.aisleNumber === 10 ? 'Dept 10' : `Aisle ${dept.aisleNumber}`}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 truncate mt-0.5 font-medium">
+                          {dept.desc}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Search Bar - Standardized h-10 height, Clean Pearl Glass */}

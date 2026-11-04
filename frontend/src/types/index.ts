@@ -23,31 +23,31 @@ export interface ProductVariant {
 }
 
 export interface ProductPlacement {
-  id: string;
-  productId: string;
-  productName: string;
-  productSlug: string;
-  productPrice: number;
-  productMrp: number;
+  id?: string;
+  productId?: string;
+  productName?: string;
+  productSlug?: string;
+  productPrice?: number;
+  productMrp?: number;
   productImage?: string;
   categoryName?: string;
   floorNumber: number;
-  aisleId: string;
+  aisleId?: string;
   aisleNumber: number;
   aisleName: string;
-  aisleCategory: string;
+  aisleCategory?: string;
   shelfSide: 'LEFT' | 'RIGHT';
   shelfTier: number; // 1 = bottom, 2 = middle, 3 = top
   shelfPosition: number;
   worldX: number;
   worldY: number;
   worldZ: number;
-  rotationY: number;
+  rotationY?: number;
   standX?: number;
   standZ?: number;
   standYaw?: number;
   color?: string;
-  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger' | 'chocolate' | 'bar';
+  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger' | 'chocolate' | 'bar' | 'pouch' | 'jar' | string;
 }
 
 export interface Product {
@@ -61,21 +61,29 @@ export interface Product {
   mrp: number;
   effectivePrice?: number;
   discountPrice?: number;
-  discountPercentage: number;
+  discountPercentage?: number;
   weightGrams?: number;
+  weight?: string;
   unit: string;
   packageType?: string;
+  packagingType?: string;
   imageUrl: string;
+  image?: string;
   category: Category;
   categoryId?: string;
   categoryName?: string;
   isVeg?: boolean;
-  inStock: boolean;
-  stockQuantity: number;
-  featured: boolean;
+  inStock?: boolean;
+  stockQuantity?: number;
+  stock?: number;
+  rating?: number;
+  featured?: boolean;
+  aisleNumber?: number;
+  shelfNumber?: number;
   hasVariants?: boolean;
   variants?: ProductVariant[];
   placement?: ProductPlacement;
+  color?: string;
 }
 
 export interface SupermarketAisle {
@@ -119,7 +127,7 @@ export interface CartItem {
   variantName?: string;
   size?: string;
   color?: string;
-  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger' | 'chocolate' | 'bar';
+  modelType?: 'box' | 'can' | 'bottle' | 'bag' | 'shirt' | 'hanger' | 'chocolate' | 'bar' | 'pouch' | 'jar' | string;
   price: number;
   mrp: number;
   quantity: number;

@@ -332,7 +332,7 @@ export default function WishlistPage() {
                         }}
                         className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-300 ease-out"
                       />
-                      {product.discountPercentage > 0 && (
+                      {Boolean(product.discountPercentage && product.discountPercentage > 0) && (
                         <span className="absolute bottom-2.5 left-2.5 bg-amber-400 text-slate-950 text-[10.5px] font-black px-2.5 py-0.5 rounded-md shadow-xs border border-amber-300/60">
                           {product.discountPercentage}% OFF
                         </span>

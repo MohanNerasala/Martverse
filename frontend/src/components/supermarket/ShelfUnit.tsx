@@ -206,6 +206,8 @@ export function getEslMaterial(price: number, brand: string): THREE.MeshBasicMat
   return mat;
 }
 
+import { get2048ShelfStripMaterial } from '@/lib/shelfStripAtlas';
+
 export function getShelfMaterial(tex: THREE.Texture, key: string, materialType: 'basic' | 'standard' = 'basic'): THREE.Material {
   const cacheKey = `${key}-${materialType}`;
   const existing = shelfMaterialCache.get(cacheKey);
@@ -214,24 +216,17 @@ export function getShelfMaterial(tex: THREE.Texture, key: string, materialType: 
   const mat = materialType === 'standard'
     ? new THREE.MeshStandardMaterial({
         map: tex,
-        transparent: true,
-        alphaTest: 0.01,
-        roughness: 0.25,
-        metalness: 0.12,
-        side: THREE.FrontSide,
-        polygonOffset: true,
-        polygonOffsetFactor: -4,
-        polygonOffsetUnits: -4,
+        emissive: new THREE.Color('#ffffff'),
+        emissiveMap: tex,
+        emissiveIntensity: 0.32, // Self-illuminating under-shelf LED simulation (never pitch black)
+        roughness: 0.28,
+        metalness: 0.05,
+        side: THREE.DoubleSide,
       })
     : new THREE.MeshBasicMaterial({
         map: tex,
-        transparent: true,
-        alphaTest: 0.01,
         toneMapped: false,
-        side: THREE.FrontSide,
-        polygonOffset: true,
-        polygonOffsetFactor: -4,
-        polygonOffsetUnits: -4,
+        side: THREE.DoubleSide,
       });
 
   shelfMaterialCache.set(cacheKey, mat);
@@ -453,12 +448,15 @@ const _batchLabelMat4 = new THREE.Matrix4();
 const ProductBatch: React.FC<{
   product: Product;
   slots: ShelfSlotItemProps['slot'][];
-}> = React.memo(({ product, slots }) => {
+  categoryColor?: string;
+}> = React.memo(({ product, slots, categoryColor = '#1d4ed8' }) => {
   const openProductModal = useMartStore((state) => state.openProductModal);
   const setHoveredProduct = useMartStore((state) => state.setHoveredProduct);
 
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const labelRef = useRef<THREE.InstancedMesh>(null);
+  const stripRef = useRef<THREE.InstancedMesh>(null);
+  const stripMat = useMemo(() => get2048ShelfStripMaterial(product, categoryColor), [product, categoryColor]);
 
   // Hover Tween State (200ms easeOutCubic in, 160ms out, zero GC per frame)
   const hoveredIndexRef = useRef<number | null>(null);
@@ -502,9 +500,10 @@ const ProductBatch: React.FC<{
 
   // Initial Matrix Population
   useEffect(() => {
-    if (!bodyRef.current || !labelRef.current || slots.length === 0) return;
+    if (!bodyRef.current || !labelRef.current || !stripRef.current || slots.length === 0) return;
     const dummy = new THREE.Object3D();
     const labelDummy = new THREE.Object3D();
+    const stripDummy = new THREE.Object3D();
 
     slots.forEach((slot, idx) => {
       const isLeft = slot.side === 'LEFT';
@@ -523,15 +522,26 @@ const ProductBatch: React.FC<{
       labelDummy.scale.set(dims.lw, dims.lh, 1);
       labelDummy.updateMatrix();
       labelRef.current!.setMatrixAt(idx, labelDummy.matrix);
+
+      // 2048px High-Resolution Shelf-Edge Price Rail Strip on Shelf Rail Lip
+      const stripX = isLeft ? -0.880 : 0.880;
+      stripDummy.position.set(stripX, slot.relY, slot.relZ);
+      stripDummy.rotation.set(0, slot.rotationY, 0);
+      stripDummy.scale.set(0.40, 0.046, 1);
+      stripDummy.updateMatrix();
+      stripRef.current!.setMatrixAt(idx, stripDummy.matrix);
     });
 
     bodyRef.current.instanceMatrix.needsUpdate = true;
     labelRef.current.instanceMatrix.needsUpdate = true;
+    stripRef.current.instanceMatrix.needsUpdate = true;
     try {
       bodyRef.current.computeBoundingBox();
       bodyRef.current.computeBoundingSphere();
       labelRef.current.computeBoundingBox();
       labelRef.current.computeBoundingSphere();
+      stripRef.current.computeBoundingBox();
+      stripRef.current.computeBoundingSphere();
     } catch {}
   }, [slots, dims]);
 
@@ -648,6 +658,13 @@ const ProductBatch: React.FC<{
         args={[sharedGeometries.plane, labelMat, slots.length]}
         raycast={() => null}
       />
+      {/* 2048px High-Resolution Shelf-Edge Price Rails on Shelf Rail Lip */}
+      <instancedMesh
+        ref={stripRef}
+        frustumCulled={false}
+        args={[sharedGeometries.plane, stripMat, slots.length]}
+        raycast={() => null}
+      />
       {activeBadge && (
         <HoverProductHighlightBadge
           product={product}
@@ -748,11 +765,31 @@ const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; h
 
   const signTex = useMemo(() => getAisleSignTexture(aisleNumber, title, subtitle), [aisleNumber, title, subtitle]);
   const signMat = useMemo(() => new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.25 }), [signTex]);
+  const signRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (signRef.current) {
+      const t = clock.getElapsedTime() + aisleNumber * 0.95;
+      signRef.current.rotation.z = Math.sin(t * 0.72) * 0.022; // ~1.2 deg gentle sway
+    }
+  });
 
   return (
     <group position={[0, height / 2 + 1.45, 0]} raycast={() => null}>
-      {/* Unified Commercial Suspended Aisle Signboard (1 draw call per aisle) */}
-      <mesh geometry={sharedGeometries.box} scale={[2.60, 0.82, 0.04]} material={signMat} />
+      {/* Hanging Suspension Cables extending to ceiling slab at y = 5.2 */}
+      <mesh position={[-0.95, 0.65, 0]}>
+        <cylinderGeometry args={[0.004, 0.004, 1.3, 8]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.2} />
+      </mesh>
+      <mesh position={[0.95, 0.65, 0]}>
+        <cylinderGeometry args={[0.004, 0.004, 1.3, 8]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.2} />
+      </mesh>
+
+      {/* Gentle Swaying Suspended Aisle Department Board */}
+      <group ref={signRef}>
+        <mesh geometry={sharedGeometries.box} scale={[2.60, 0.82, 0.04]} material={signMat} />
+      </group>
     </group>
   );
 });
@@ -1473,6 +1510,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
               key={batch.product.id}
               product={batch.product}
               slots={batch.slots}
+              categoryColor={aisle.colorCode || '#1d4ed8'}
             />
           ))}
         </group>

@@ -97,7 +97,7 @@ export const ProductModal: React.FC = () => {
 
         {/* Product Image Section (Clean White Studio Framing) */}
         <div className="md:w-5/12 bg-gradient-to-b from-slate-50 via-slate-50 to-blue-50/30 p-6 sm:p-7 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-slate-100">
-          {selectedProduct.discountPercentage > 0 && (
+          {Boolean(selectedProduct.discountPercentage && selectedProduct.discountPercentage > 0) && (
             <div className="absolute top-4 left-4 bg-amber-400 text-slate-950 font-black text-xs px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 z-10">
               <Tag className="w-3.5 h-3.5 fill-slate-950" />
               <span>{selectedProduct.discountPercentage}% OFF</span>
