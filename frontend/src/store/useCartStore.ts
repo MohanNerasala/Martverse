@@ -6,7 +6,12 @@ import { api } from '@/lib/api';
 
 export interface FlyAnimation {
   id: string;
+  product?: Product;
+  productId?: string;
   productName: string;
+  productImage?: string;
+  brand?: string;
+  price?: number;
   startPos: [number, number, number];
   color: string;
   modelType: string;
@@ -168,7 +173,12 @@ export const useCartStore = create<CartStore>((set, get) => ({
           ...state.flyAnimations,
           {
             id: animId,
+            product,
+            productId: product.id,
             productName: product.name,
+            productImage: product.imageUrl,
+            brand: product.brand,
+            price: variant ? variant.price : product.price,
             startPos,
             color,
             modelType,

@@ -785,7 +785,7 @@ SweetsDryFruitsIsland.displayName = 'SweetsDryFruitsIsland';
 // Batched Instanced Product for Island Displays
 const IslandProductBatch: React.FC<{
   product: Product;
-  slots: Array<{ x: number; y: number; z: number; rotY: number; key: string }>;
+  slots: Array<{ x: number; y: number; z: number; rotY: number; key: string; product?: Product }>;
   openModal: (p: Product) => void;
   setHover: (p: Product | null) => void;
   isChoc?: boolean;
@@ -941,7 +941,8 @@ const IslandProductBatch: React.FC<{
           if (instanceId !== undefined && instanceId < slots.length) {
             hoveredIndexRef.current = instanceId;
           }
-          setHover(product);
+          const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
+          setHover(targetProd);
         }}
         onPointerDown={(e) => {
           e.stopPropagation();
@@ -949,7 +950,8 @@ const IslandProductBatch: React.FC<{
           if (instanceId !== undefined && instanceId < slots.length) {
             hoveredIndexRef.current = instanceId;
           }
-          setHover(product);
+          const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
+          setHover(targetProd);
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
@@ -959,7 +961,9 @@ const IslandProductBatch: React.FC<{
         }}
         onClick={(e) => {
           e.stopPropagation();
-          openModal(product);
+          const instanceId = e.instanceId;
+          const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
+          openModal(targetProd);
         }}
       />
       <instancedMesh
@@ -970,7 +974,7 @@ const IslandProductBatch: React.FC<{
       />
       {activeBadge && (
         <HoverProductHighlightBadge
-          product={product}
+          product={hoveredIndexRef.current !== null && slots[hoveredIndexRef.current]?.product ? slots[hoveredIndexRef.current].product! : product}
           position={activeBadge.pos}
           rotY={activeBadge.rotY}
           bw={activeBadge.bw}

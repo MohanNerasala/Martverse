@@ -312,7 +312,7 @@ LeftWallRetailShelving.displayName = 'LeftWallRetailShelving';
 // Batched Instanced Product Facings for Wall Shelving
 const WallProductBatch: React.FC<{
   product: Product;
-  slots: Array<{ relX: number; relY: number; relZ: number; key: string }>;
+  slots: Array<{ relX: number; relY: number; relZ: number; key: string; product?: Product }>;
   openModal: (p: Product) => void;
   setHover: (p: Product | null) => void;
 }> = React.memo(({ product, slots, openModal, setHover }) => {
@@ -371,7 +371,9 @@ const WallProductBatch: React.FC<{
         onPointerOver={(e) => {
           e.stopPropagation();
           if (typeof document !== 'undefined') document.body.style.cursor = 'pointer';
-          setHover(product);
+          const instanceId = e.instanceId;
+          const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
+          setHover(targetProd);
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
@@ -380,7 +382,9 @@ const WallProductBatch: React.FC<{
         }}
         onClick={(e) => {
           e.stopPropagation();
-          openModal(product);
+          const instanceId = e.instanceId;
+          const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
+          openModal(targetProd);
         }}
       />
       <instancedMesh
@@ -626,7 +630,7 @@ BackWallWarehouseRacks.displayName = 'BackWallWarehouseRacks';
 // Batched Instanced Bulk Products on Pallets
 const BulkPalletBatch: React.FC<{
   product: Product;
-  slots: Array<{ x: number; y: number; z: number; key: string }>;
+  slots: Array<{ x: number; y: number; z: number; key: string; product?: Product }>;
   openModal: (p: Product) => void;
   setHover: (p: Product | null) => void;
 }> = React.memo(({ product, slots, openModal, setHover }) => {
@@ -685,7 +689,9 @@ const BulkPalletBatch: React.FC<{
         onPointerOver={(e) => {
           e.stopPropagation();
           if (typeof document !== 'undefined') document.body.style.cursor = 'pointer';
-          setHover(product);
+          const instanceId = e.instanceId;
+          const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
+          setHover(targetProd);
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
@@ -694,7 +700,9 @@ const BulkPalletBatch: React.FC<{
         }}
         onClick={(e) => {
           e.stopPropagation();
-          openModal(product);
+          const instanceId = e.instanceId;
+          const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
+          openModal(targetProd);
         }}
       />
       <instancedMesh

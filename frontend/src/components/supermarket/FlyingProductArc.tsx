@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { FlyAnimation, useCartStore } from '@/store/useCartStore';
 import { martRuntime } from '@/store/useMartStore';
+import { getProductPackagingTexture } from '@/lib/productTextureAtlas';
 
 interface FlyingArcsProps {
   trolleyPos?: [number, number, number];
@@ -52,6 +53,28 @@ const SingleFlyArc: React.FC<{
   const groupRef = useRef<THREE.Group>(null);
   const duration = anim.duration || 600;
   const productColor = anim.color || '#3b82f6';
+
+  // Authentic product packaging texture of the exact item the customer selected
+  const packTex = useMemo(() => {
+    return getProductPackagingTexture(
+      anim.product || {
+        id: anim.productId || anim.id,
+        name: anim.productName,
+        price: anim.price || 99,
+        imageUrl: anim.productImage,
+        brand: anim.brand,
+        placement: { color: anim.color || '#3b82f6' } as any,
+      } as any
+    );
+  }, [anim]);
+
+  const packagingMat = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      map: packTex,
+      roughness: 0.32,
+      metalness: 0.08,
+    });
+  }, [packTex]);
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -103,7 +126,7 @@ const SingleFlyArc: React.FC<{
 
   return (
     <group ref={groupRef}>
-      {/* Real 3D Product Mesh in Genuine Product Color */}
+      {/* Real 3D Product Mesh in Genuine Product Color & Selected Packaging Artwork */}
       {anim.modelType === 'bottle' ? (
         <group position={[0, -0.06, 0]}>
           {/* Main Bottle Body */}
@@ -112,8 +135,8 @@ const SingleFlyArc: React.FC<{
           <mesh position={[0, 0.21, 0]} geometry={sharedFlyGeometries.bottleShoulder} material={getFlyMaterial(productColor, 0.2, 0.1)} />
           {/* Neck & Cap */}
           <mesh position={[0, 0.25, 0]} geometry={sharedFlyGeometries.bottleCap} material={whiteCapMat} />
-          {/* Printed Label Band */}
-          <mesh position={[0, 0.09, 0]} geometry={sharedFlyGeometries.bottleLabel} material={whiteCapMat} />
+          {/* Printed Label Band with Genuine Product Artwork */}
+          <mesh position={[0, 0.09, 0]} geometry={sharedFlyGeometries.bottleLabel} material={packagingMat} />
         </group>
       ) : anim.modelType === 'shirt' || anim.modelType === 'hanger' ? (
         <group>
@@ -124,17 +147,17 @@ const SingleFlyArc: React.FC<{
         </group>
       ) : anim.modelType === 'chocolate' || anim.modelType === 'bar' ? (
         <group>
-          {/* Chocolate Bar Packet */}
-          <mesh geometry={sharedFlyGeometries.chocolate} material={getFlyMaterial(productColor, 0.25, 0.15)} />
+          {/* Chocolate Bar Packet with Genuine Packaging */}
+          <mesh geometry={sharedFlyGeometries.chocolate} material={packagingMat} />
           <mesh position={[-0.125, 0, 0]} geometry={sharedFlyGeometries.chocolateEdge} material={getFlyMaterial(productColor, 0.4, 0.2)} />
           <mesh position={[0.125, 0, 0]} geometry={sharedFlyGeometries.chocolateEdge} material={getFlyMaterial(productColor, 0.4, 0.2)} />
         </group>
       ) : (
         /* Box / Package (Atta, Cereals, Biscuits, Chocolates, Staples) */
         <group>
-          <mesh geometry={sharedFlyGeometries.box} material={getFlyMaterial(productColor, 0.3, 0.05)} />
-          {/* Front Clean Product Label Badge */}
-          <mesh position={[0, 0, 0.078]} geometry={sharedFlyGeometries.boxLabel} material={whiteLabelMat} />
+          <mesh geometry={sharedFlyGeometries.box} material={packagingMat} />
+          {/* Front Clean Product Label Badge with Authentic Selected Package Texture */}
+          <mesh position={[0, 0, 0.078]} geometry={sharedFlyGeometries.boxLabel} material={packagingMat} />
         </group>
       )}
     </group>

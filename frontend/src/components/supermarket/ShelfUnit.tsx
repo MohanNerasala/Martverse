@@ -631,7 +631,8 @@ const ProductBatch: React.FC<{
           if (instanceId !== undefined && instanceId < slots.length) {
             hoveredIndexRef.current = instanceId;
           }
-          setHoveredProduct(product);
+          const targetProd = (instanceId !== undefined && slots[instanceId]) ? slots[instanceId].product : product;
+          setHoveredProduct(targetProd);
         }}
         onPointerDown={(e) => {
           e.stopPropagation();
@@ -639,7 +640,8 @@ const ProductBatch: React.FC<{
           if (instanceId !== undefined && instanceId < slots.length) {
             hoveredIndexRef.current = instanceId;
           }
-          setHoveredProduct(product);
+          const targetProd = (instanceId !== undefined && slots[instanceId]) ? slots[instanceId].product : product;
+          setHoveredProduct(targetProd);
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
@@ -649,7 +651,9 @@ const ProductBatch: React.FC<{
         }}
         onClick={(e) => {
           e.stopPropagation();
-          openProductModal(product);
+          const instanceId = e.instanceId;
+          const targetProd = (instanceId !== undefined && slots[instanceId]) ? slots[instanceId].product : product;
+          openProductModal(targetProd);
         }}
       />
       <instancedMesh
@@ -667,7 +671,7 @@ const ProductBatch: React.FC<{
       />
       {activeBadge && (
         <HoverProductHighlightBadge
-          product={product}
+          product={hoveredIndexRef.current !== null && slots[hoveredIndexRef.current] ? slots[hoveredIndexRef.current].product : product}
           position={activeBadge.pos}
           rotY={activeBadge.rotY}
           bw={activeBadge.bw}
