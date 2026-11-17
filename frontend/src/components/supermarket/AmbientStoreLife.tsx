@@ -106,3 +106,4 @@ export const AmbientStoreLife: React.FC = React.memo(() => {
   );
 });
 AmbientStoreLife.displayName = 'AmbientStoreLife';
+

@@ -277,3 +277,4 @@ export function get2048ShelfStripMaterial(product: Product, categoryColor = '#1d
   shelfStripMaterialCache.set(key, mat);
   return mat;
 }
+
