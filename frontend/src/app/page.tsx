@@ -52,6 +52,15 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [isTabHidden, setIsTabHidden] = useState(false);
+
+  React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabHidden(document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // 1. Cinematic Intro Completed -> Show Welcome Popup Box before entering store
   const handleIntroComplete = React.useCallback(() => {
@@ -71,7 +80,7 @@ export default function Home() {
     sessionStorage.setItem('martverse_intro_completed', 'true');
     localStorage.setItem('martverse_intro_completed', 'true');
     setHasEnteredStore(true);
-    useMartStore.getState().setCameraMode('third_person');
+    useMartStore.getState().setCameraMode('first_person');
     const isAuth = useAuthStore.getState().isAuthenticated;
     const hasSkipped = sessionStorage.getItem('martverse_login_skipped');
     if (!isAuth && !hasSkipped) {
@@ -138,7 +147,7 @@ export default function Home() {
     localStorage.setItem('martverse_intro_completed', 'true');
     sessionStorage.removeItem('martverse_skip_intro');
     setHasEnteredStore(true);
-    useMartStore.getState().setCameraMode('third_person');
+    useMartStore.getState().setCameraMode('first_person');
     setShowIntro(false);
     setShowWelcomeModal(false);
 
@@ -146,23 +155,32 @@ export default function Home() {
     useBillingStore.getState().resetBilling();
     martRuntime.billingCooldownUntil = Date.now() + 2500;
 
-    if (returnTarget === 'billing') {
+    if (params.get('aisle') === '3' || returnTarget === 'aisle3') {
+      // Placed directly looking down Aisle 3 (Beverages & Tea/Coffee)
+      martRuntime.playerPos[0] = -11.0;
+      martRuntime.playerPos[1] = 1.6;
+      martRuntime.playerPos[2] = -8.0;
+      martRuntime.playerYaw = 0;
+      store.setPlayerPos([-11.0, 1.6, -8.0], 0);
+      store.setCameraMode('first_person');
+      useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
+    } else if (returnTarget === 'billing') {
       // Placed cleanly at Billing Section in front of Lane 02 ([0, 1.5, 14.6])
       martRuntime.playerPos[0] = 0;
-      martRuntime.playerPos[1] = 1.5;
+      martRuntime.playerPos[1] = 1.6;
       martRuntime.playerPos[2] = 14.6;
       martRuntime.playerYaw = 0;
-      store.setPlayerPos([0, 1.5, 14.6], 0);
-      store.setCameraMode('third_person');
+      store.setPlayerPos([0, 1.6, 14.6], 0);
+      store.setCameraMode('first_person');
       useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
     } else {
-      // Default: Trolley Reset Place in mart ([0, 1.5, -20])
+      // Default: Trolley Reset Place in mart ([0, 1.6, -28]) at Entrance
       martRuntime.playerPos[0] = 0;
-      martRuntime.playerPos[1] = 1.5;
-      martRuntime.playerPos[2] = -20;
+      martRuntime.playerPos[1] = 1.6;
+      martRuntime.playerPos[2] = -28;
       martRuntime.playerYaw = 0;
-      store.setPlayerPos([0, 1.5, -20], 0);
-      store.setCameraMode('third_person');
+      store.setPlayerPos([0, 1.6, -28], 0);
+      store.setCameraMode('first_person');
       useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
     }
 
@@ -230,7 +248,7 @@ export default function Home() {
       >
         {/* 3D Supermarket Canvas */}
         <div className="w-full h-full absolute inset-0" style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-          <SupermarketScene isPaused={showIntro} />
+          <SupermarketScene isPaused={showIntro || isTabHidden} />
         </div>
 
         {/* 2D Interactive HUD & Overlays */}

@@ -16,6 +16,8 @@ interface MartStore {
   hoveredProduct: Product | null;
   isProductModalOpen: boolean;
   isMinimapOpen: boolean;
+  language: 'EN' | 'HI' | 'TE';
+  highlightedAisle: number | null;
   isSoundMuted: boolean;
   cameraMode: 'first_person' | 'third_person' | 'billing' | 'exit';
   nearBillingCounter: boolean;
@@ -47,6 +49,8 @@ interface MartStore {
   openProductModal: (product: Product) => void;
   closeProductModal: () => void;
   toggleMinimap: (open?: boolean) => void;
+  setLanguage: (lang: 'EN' | 'HI' | 'TE') => void;
+  setHighlightedAisle: (aisle: number | null) => void;
   toggleSound: () => void;
   setCameraMode: (mode: 'first_person' | 'third_person' | 'billing' | 'exit') => void;
   setProximity: (nearBilling: boolean, nearExit: boolean, prompt: string | null, targetPos?: [number, number, number] | null) => void;
@@ -115,10 +119,12 @@ export const useMartStore = create<MartStore>((set, get) => ({
   selectedProduct: null,
   hoveredProduct: null,
   isProductModalOpen: false,
-  isMinimapOpen: false,
+  isMinimapOpen: true,
+  language: 'EN',
+  highlightedAisle: null,
   isNavigatorOpen: false, // Hidden by default - only shows when user taps 'Arrows'
   isSoundMuted: false,
-  cameraMode: 'third_person',
+  cameraMode: 'first_person',
   nearBillingCounter: false,
   nearExitGate: false,
   promptText: null,
@@ -204,6 +210,8 @@ export const useMartStore = create<MartStore>((set, get) => ({
   closeProductModal: () => set({ isProductModalOpen: false, selectedProduct: null }),
 
   toggleMinimap: (open) => set((state) => ({ isMinimapOpen: open !== undefined ? open : !state.isMinimapOpen })),
+  setLanguage: (language) => set({ language }),
+  setHighlightedAisle: (highlightedAisle) => set({ highlightedAisle }),
   toggleNavigator: (open) => set((state) => ({ isNavigatorOpen: open !== undefined ? open : !state.isNavigatorOpen })),
   
   toggleSound: () => {

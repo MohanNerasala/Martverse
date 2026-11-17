@@ -41,22 +41,22 @@ function getVitrifiedTileTextures(): VitrifiedTileSet {
   bCanvas.height = S;
   const bCtx = bCanvas.getContext('2d')!;
 
-  // Default clean grout background (subtle light slate #cbd5e1)
-  ctx.fillStyle = '#cbd5e1';
+  // Default clean grout background (subtle light warm slate #94938e)
+  ctx.fillStyle = '#94938e';
   ctx.fillRect(0, 0, S, S);
 
-  rCtx.fillStyle = '#64748b'; // Matte grout (roughness ~0.7)
+  rCtx.fillStyle = '#8e8d88'; // Matte grout (roughness ~0.65)
   rCtx.fillRect(0, 0, S, S);
 
   bCtx.fillStyle = '#505050'; // Recessed grout depth
   bCtx.fillRect(0, 0, S, S);
 
-  // 2x2 Large-Format Commercial Vitrified Porcelain Tiles with Subtle Warm Tones (800x800mm D-Mart/Smart Bazaar style)
+  // 2x2 Large-Format Commercial Polished Concrete Grey Tiles (#A9A8A3, roughness 0.45-0.6 with faint sheen)
   const tileBounds = [
-    { x: 0, y: 0, tone: '#fdfdfd' },       // Warm Pearl-Ivory porcelain
-    { x: HALF, y: 0, tone: '#f8fafc' },   // Pristine Light-Grey porcelain
-    { x: 0, y: HALF, tone: '#f8fafc' },   // Pristine Light-Grey porcelain
-    { x: HALF, y: HALF, tone: '#fdfdfd' }, // Warm Pearl-Ivory porcelain
+    { x: 0, y: 0, tone: '#A9A8A3' },
+    { x: HALF, y: 0, tone: '#A3A29D' },
+    { x: 0, y: HALF, tone: '#A3A29D' },
+    { x: HALF, y: HALF, tone: '#A9A8A3' },
   ];
 
   tileBounds.forEach(({ x, y, tone }) => {
@@ -68,8 +68,8 @@ function getVitrifiedTileTextures(): VitrifiedTileSet {
     bCtx.fillStyle = '#c8c8c8';
     bCtx.fillRect(x + 3, y + 3, HALF - 6, HALF - 6);
 
-    // Roughness map: high gloss for tile
-    rCtx.fillStyle = '#1e1e1e'; // 0.12 roughness
+    // Roughness map: 0.50 roughness with a faint sheen
+    rCtx.fillStyle = '#808080';
     rCtx.fillRect(x + 3, y + 3, HALF - 6, HALF - 6);
 
     // Natural subtle porcelain cloud veining (ultra low-contrast realistic stone look)
@@ -178,24 +178,21 @@ function getVitrifiedTileTextures(): VitrifiedTileSet {
 
 // Pre-allocated static materials and geometries to eliminate GPU pipeline re-compilations
 const sharedMaterials = {
-  wall: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.5 }),
+  wall: new THREE.MeshStandardMaterial({ color: '#D8D6D1', roughness: 0.65, metalness: 0.02 }),
   slab: new THREE.MeshStandardMaterial({
-    color: '#f8fafc',
-    emissive: new THREE.Color('#f1f5f9'),
-    emissiveIntensity: 0.52,
-    roughness: 0.6,
+    color: '#D8D6D1',
+    roughness: 0.75,
   }),
   ceilingBeam: new THREE.MeshStandardMaterial({
-    color: '#ffffff',
-    emissive: new THREE.Color('#f8fafc'),
-    emissiveIntensity: 0.35,
-    roughness: 0.25,
+    color: '#C8C6C1',
+    roughness: 0.45,
     metalness: 0.1,
   }),
   ceilingLight: new THREE.MeshStandardMaterial({
-    color: '#ffffff',
-    emissive: new THREE.Color('#ffffff'),
-    emissiveIntensity: 1.5,
+    color: '#fef8ee',
+    emissive: new THREE.Color('#fef5e7'),
+    emissiveIntensity: 0.45,
+    roughness: 0.35,
   }),
   glassRail: new THREE.MeshStandardMaterial({ color: '#38bdf8', transparent: true, opacity: 0.4, roughness: 0.1 }),
   yellowLine: new THREE.MeshBasicMaterial({ color: '#facc15' }),
@@ -514,35 +511,36 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       {/* ==============================================================
           GROUND FLOOR (y = 0) - MASSIVE 72m x 72m HYPERMARKET FOOTPRINT
           ============================================================== */}
-      {/* Ground Floor High-Quality Polished Vitrified Tile Supermarket Flooring */}
+      {/* Ground Floor High-Quality Polished Concrete Grey Flooring (#A9A8A3) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[72, 72, 1, 1]} />
         <meshStandardMaterial
           map={tileTextures.map}
           roughnessMap={tileTextures.roughnessMap}
           bumpMap={tileTextures.bumpMap}
-          bumpScale={0.0008}
-          roughness={0.28}
-          metalness={0.06}
+          bumpScale={0.0004}
+          roughness={0.52}
+          metalness={0.04}
+          color="#A9A8A3"
         />
       </mesh>
 
-      {/* Ground Floor Architectural Pristine White Perimeter Walls (100% Fully Enclosed Hypermarket Shell) */}
+      {/* Ground Floor Architectural Warm Grey Perimeter Walls (#D8D6D1) */}
       {/* Back Wall (z = 36) */}
       <mesh position={[0, 2.6, 36]} geometry={sharedGeos.box} scale={[72, 5.2, 0.4]} material={sharedMaterials.wall} />
       {/* Front Perimeter Wall (z = -36) */}
       <mesh position={[0, 2.6, -36]} geometry={sharedGeos.box} scale={[72, 5.2, 0.4]} material={sharedMaterials.wall} />
 
-      {/* --- Grand Entrance Welcome Lightbox Portal: 'WELCOME TO D-MART HYPERMARKET' --- */}
+      {/* --- Grand Entrance Welcome Lightbox Portal: 'WELCOME TO MARTVERSE' --- */}
       <group position={[0, 4.35, -35.75]}>
         {/* Sleek Aluminum Framing Rim */}
         <mesh position={[0, 0, -0.015]} geometry={sharedGeos.box} scale={[10.5, 1.1, 0.08]} material={sharedMaterials.slab} />
-        {/* Pure White Acrylic Board */}
+        {/* Warm Acrylic Board */}
         <mesh position={[0, 0, 0.015]} geometry={sharedGeos.box} scale={[10.4, 1.0, 0.09]} material={sharedMaterials.wall} />
         {/* Sapphire Accent Header Pill */}
         <mesh position={[0, 0.28, 0.04]} geometry={sharedGeos.box} scale={[5.4, 0.22, 0.01]} material={sharedMaterials.basketBlue} />
         <Text position={[0, 0.28, 0.05]} fontSize={0.15} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="extrabold">
-          D-MART HYPERMARKET
+          MARTVERSE HYPERMARKET
         </Text>
         <Text position={[0, -0.02, 0.045]} fontSize={0.28} color="#0f172a" anchorX="center" anchorY="middle" fontWeight="extrabold">
           WELCOME TO MARTVERSE
@@ -566,7 +564,7 @@ const StoreArchitectureComponent: React.FC<StoreArchitectureProps> = () => {
       {/* Entrance Concourse Columns (z = -22) */}
       <SupermarketPillar
         position={[-16.2, 0, -22]}
-        titleText={'D-MART BACHAT BAZAAR\nMAXIMUM SAVINGS'}
+        titleText={'MARTVERSE BACHAT BAZAAR\nMAXIMUM SAVINGS'}
         subText="Unbeatable Everyday Low Prices on Groceries & Staples"
         badgeText="EVERYDAY LOW PRICE"
         badgeColor="#dc2626"

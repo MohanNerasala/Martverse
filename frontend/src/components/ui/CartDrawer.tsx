@@ -18,6 +18,10 @@ import {
   CheckCircle2,
   ShoppingBag,
   Sparkles,
+  MapPin,
+  Tag,
+  Clock,
+  Check,
 } from 'lucide-react';
 
 export const CartDrawer: React.FC = () => {
@@ -34,13 +38,54 @@ export const CartDrawer: React.FC = () => {
 
   const setPlayerPos = useMartStore((state) => state.setPlayerPos);
   const setCameraMode = useMartStore((state) => state.setCameraMode);
+  const language = useMartStore((state) => state.language);
   const startCheckout = useBillingStore((state) => state.startCheckout);
+
+  // Pincode validation state
+  const [pincode, setPincode] = React.useState('400001');
+  const [pincodeStatus, setPincodeStatus] = React.useState<'valid' | 'invalid' | 'checking'>('valid');
+  const [pincodeMsg, setPincodeMsg] = React.useState('Deliverable in Mumbai (Express 2 hrs)');
+
+  // Coupon code state
+  const [couponInput, setCouponInput] = React.useState('');
+  const [appliedCoupon, setAppliedCoupon] = React.useState<string | null>(null);
+  const [couponError, setCouponError] = React.useState<string | null>(null);
+
+  // Delivery slot state
+  const [selectedSlot, setSelectedSlot] = React.useState('Today, 5 PM - 7 PM');
+
+  const handleCheckPincode = (code: string) => {
+    setPincode(code);
+    if (code.length === 6) {
+      if (code.startsWith('999') || code === '000000') {
+        setPincodeStatus('invalid');
+        setPincodeMsg('Service not available for this PIN code');
+      } else {
+        setPincodeStatus('valid');
+        setPincodeMsg('Deliverable in your area (Express 2 hrs)');
+      }
+    } else {
+      setPincodeStatus('checking');
+      setPincodeMsg('Enter 6-digit PIN code');
+    }
+  };
+
+  const handleApplyCoupon = () => {
+    const code = couponInput.trim().toUpperCase();
+    if (code === 'MART10') {
+      setAppliedCoupon('MART10');
+      setCouponError(null);
+    } else {
+      setCouponError('Invalid coupon. Try "MART10" for 10% off');
+    }
+  };
 
   if (!isCartOpen) return null;
 
-  // Exact calculations aligned with backend
+  // Exact calculations aligned with backend + coupon
+  const couponDiscount = appliedCoupon === 'MART10' ? Math.round(subtotal * 0.1) : 0;
   const deliveryFee = subtotal >= 499 || subtotal === 0 ? 0 : 40;
-  const grandTotal = subtotal + deliveryFee;
+  const grandTotal = Math.max(0, subtotal - couponDiscount + deliveryFee);
   const progressPercent = Math.min(100, Math.round((subtotal / 499) * 100));
 
   const handleProceedToBilling = () => {
@@ -105,14 +150,14 @@ export const CartDrawer: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight tracking-tight">
-                  Shopping Trolley
+                  {language === 'TE' ? 'షాపింగ్ ట్రాలీ' : language === 'HI' ? 'शॉपिंग ट्रॉली' : 'Shopping Trolley'}
                 </h2>
                 <span className="text-[10px] bg-blue-50 text-blue-700 font-extrabold px-2 py-0.5 rounded-full border border-blue-200">
                   {totalItems} {totalItems === 1 ? 'item' : 'items'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                3D Supermarket Live Trolley Cart
+                {language === 'TE' ? '3D సూపర్ మార్కెట్ లైవ్ ట్రాలీ' : language === 'HI' ? '3D सुपरमार्केट लाइव ट्रॉली' : '3D Supermarket Live Trolley Cart'}
               </p>
             </div>
           </div>
@@ -327,7 +372,84 @@ export const CartDrawer: React.FC = () => {
 
         {/* --- Bill Breakdown Footer (Crisp, High-Contrast Luxury Checkout Dock) --- */}
         {items.length > 0 && (
-          <div className="flex-shrink-0 px-4 sm:px-6 py-4 bg-white border-t border-slate-200/80 space-y-3.5 shadow-[0_-10px_30px_rgba(0,0,0,0.07)] z-20">
+          <div className="flex-shrink-0 px-4 sm:px-6 py-3.5 bg-white border-t border-slate-200/80 space-y-3 shadow-[0_-10px_30px_rgba(0,0,0,0.07)] z-20 overflow-y-auto max-h-[50vh]">
+            {/* Delivery Pincode & Slot */}
+            <div className="space-y-2 pb-2 border-b border-slate-100">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                  <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Delivery Pincode</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={pincode}
+                    onChange={(e) => handleCheckPincode(e.target.value.replace(/\D/g, ''))}
+                    className={`w-20 px-2 py-0.5 text-xs text-center font-mono font-bold rounded-lg border outline-none ${
+                      pincodeStatus === 'valid'
+                        ? 'border-emerald-400 bg-emerald-50 text-emerald-800'
+                        : pincodeStatus === 'invalid'
+                        ? 'border-rose-400 bg-rose-50 text-rose-800'
+                        : 'border-slate-300 bg-slate-50 text-slate-800'
+                    }`}
+                  />
+                  {pincodeStatus === 'valid' && <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />}
+                </div>
+              </div>
+              <p className={`text-[10px] ${pincodeStatus === 'invalid' ? 'text-rose-600' : 'text-slate-500'}`}>
+                {pincodeMsg}
+              </p>
+
+              {/* Delivery Slot Selector */}
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+                  <Clock className="w-3 h-3 text-slate-400" />
+                  <span>Slot:</span>
+                </div>
+                <select
+                  value={selectedSlot}
+                  onChange={(e) => setSelectedSlot(e.target.value)}
+                  className="text-[11px] font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none cursor-pointer"
+                >
+                  <option value="Today, 5 PM - 7 PM">Today, 5 PM - 7 PM</option>
+                  <option value="Today, 7 PM - 10 PM">Today, 7 PM - 10 PM</option>
+                  <option value="Tomorrow Morning, 7 AM - 10 AM">Tomorrow Morning, 7 AM - 10 AM</option>
+                  <option value="Tomorrow Afternoon, 2 PM - 5 PM">Tomorrow Afternoon, 2 PM - 5 PM</option>
+                </select>
+              </div>
+
+              {/* Coupon Code Input */}
+              <div className="pt-1.5 flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    placeholder="Coupon code (e.g. MART10)"
+                    className="w-full text-xs pl-8 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl outline-none uppercase font-mono font-bold"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors cursor-pointer"
+                >
+                  Apply
+                </button>
+              </div>
+              {appliedCoupon && (
+                <div className="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1 flex items-center justify-between">
+                  <span>Code {appliedCoupon} applied: 10% discount!</span>
+                  <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 hover:text-slate-700 text-xs">×</button>
+                </div>
+              )}
+              {couponError && (
+                <p className="text-[10px] text-rose-600 font-medium">{couponError}</p>
+              )}
+            </div>
+
             {/* Itemized Calculation Summary */}
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between text-slate-500 font-medium">
@@ -344,6 +466,13 @@ export const CartDrawer: React.FC = () => {
                     <span>Savings on MRP:</span>
                   </span>
                   <span className="font-mono font-bold">- ₹{discountTotal.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
+              {couponDiscount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-bold">
+                  <span>Coupon Discount ({appliedCoupon}):</span>
+                  <span className="font-mono font-bold">- ₹{couponDiscount.toLocaleString('en-IN')}</span>
                 </div>
               )}
 
@@ -368,7 +497,7 @@ export const CartDrawer: React.FC = () => {
               <div className="flex justify-between items-baseline pt-2.5 border-t border-slate-100">
                 <div>
                   <span className="text-sm font-black text-slate-900 block leading-tight">
-                    Total Payable
+                    {language === 'TE' ? 'మొత్తం చెల్లించవలసినది' : language === 'HI' ? 'कुल देय राशि' : 'Total Payable'}
                   </span>
                   <span className="text-[10px] text-slate-400 font-medium">
                     Matches POS billing counter
@@ -392,7 +521,9 @@ export const CartDrawer: React.FC = () => {
                   <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
                     <ShoppingBag className="w-3.5 h-3.5" />
                   </div>
-                  <span className="tracking-wide">View Full Cart Page</span>
+                  <span className="tracking-wide">
+                    {language === 'TE' ? 'పూర్తి కార్ట్ పేజీ' : language === 'HI' ? 'पूरा कार्ट देखें' : 'View Full Cart Page'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] bg-blue-600 text-white font-extrabold px-2 py-0.5 rounded-full">
@@ -410,7 +541,9 @@ export const CartDrawer: React.FC = () => {
                 title="Go directly to POS Billing Counter (Lane 02)"
               >
                 <CreditCard className="w-4.5 h-4.5 text-sky-200 group-hover:scale-110 transition-transform" />
-                <span>Go to Billing Section</span>
+                <span>
+                  {language === 'TE' ? 'కౌంటర్ వద్ద చెల్లించండి' : language === 'HI' ? 'काउंटर पर भुगतान करें' : 'Pay at Counter'}
+                </span>
                 <ArrowRight className="w-4.5 h-4.5 text-sky-200 group-hover:translate-x-1.5 transition-transform" />
               </button>
             </div>

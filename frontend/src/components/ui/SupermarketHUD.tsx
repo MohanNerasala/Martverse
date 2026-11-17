@@ -40,10 +40,48 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { ProductHoverCard } from '@/components/ui/ProductHoverCard';
+import { AisleMinimap } from '@/components/ui/AisleMinimap';
+import { TouchJoystick } from '@/components/ui/TouchJoystick';
+
+export const WalkingHintTooltip: React.FC = () => {
+  const language = useMartStore((state) => state.language);
+  const hasMovedTrolley = useMartStore((state) => state.hasMovedTrolley);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(false), 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!visible || hasMovedTrolley) return null;
+
+  return (
+    <div className="fixed bottom-24 sm:bottom-26 left-1/2 -translate-x-1/2 z-40 pointer-events-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="bg-[#FFFFFF] border border-[#E5E7EB] text-slate-800 px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.08)] flex items-center gap-2.5 text-xs font-bold select-none">
+        <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
+        <span>
+          {language === 'TE'
+            ? 'నడవడానికి WASD నొక్కండి. జోడించడానికి వస్తువుపై క్లిక్ చేయండి.'
+            : language === 'HI'
+            ? 'चलने के लिए WASD दबाएं। जोड़ने के लिए आइटम पर क्लिक करें।'
+            : 'WASD to walk. Click an item to add it.'}
+        </span>
+        <button
+          onClick={() => setVisible(false)}
+          className="text-slate-400 hover:text-slate-700 p-0.5 rounded-full"
+          aria-label="Dismiss"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export const OnboardingHintBanner: React.FC = React.memo(() => {
   const [visible, setVisible] = useState(true);
   const totalItems = useCartStore((state) => state.totalItems);
+  const language = useMartStore((state) => state.language);
 
   useEffect(() => {
     try {
@@ -69,7 +107,11 @@ export const OnboardingHintBanner: React.FC = React.memo(() => {
       <div className="bg-slate-900/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-blue-500/40 flex items-center gap-3">
         <span className="text-base">🛒</span>
         <span className="text-xs sm:text-sm font-bold tracking-tight text-slate-100">
-          Tap an item, then Add to trolley
+          {language === 'TE'
+            ? 'వస్తువుపై క్లిక్ చేసి, ట్రాలీకి జోడించండి'
+            : language === 'HI'
+            ? 'सामान पर टैप करें, फिर ट्रॉली में जोड़ें'
+            : 'Tap an item, then Add to trolley'}
         </span>
         <button
           onClick={() => {
@@ -108,16 +150,16 @@ export const ContextualPromptBanner: React.FC = React.memo(() => {
 export const IntroBrandBanner: React.FC = () => null;
 
 const STORE_DEPARTMENTS = [
-  { id: 'snacks-namkeen', name: 'Snacks & Namkeen', aisleNumber: 1, icon: '🥨', color: '#f59e0b', desc: 'Chips, Kurkure & Bhujia' },
-  { id: 'bakery-biscuits', name: 'Bakery & Biscuits', aisleNumber: 2, icon: '🍪', color: '#d97706', desc: 'Parle-G, Good Day & Oreo' },
-  { id: 'beverages-tea-coffee', name: 'Beverages & Tea/Coffee', aisleNumber: 3, icon: '☕', color: '#0284c7', desc: 'Tata Tea, Nescafe & Horlicks' },
-  { id: 'dairy-breakfast', name: 'Dairy & Breakfast', aisleNumber: 4, icon: '🧀', color: '#06b6d4', desc: 'Amul Butter, Paneer & Cereals' },
-  { id: 'rice-flours-pulses', name: 'Rice, Atta & Pulses', aisleNumber: 5, icon: '🌾', color: '#10b981', desc: 'Aashirvaad Chakki Atta & Basmati' },
-  { id: 'spices-cooking-essentials', name: 'Spices & Cooking Oils', aisleNumber: 6, icon: '🌶️', color: '#ef4444', desc: 'Fortune Oil, Ghee & Spices' },
-  { id: 'instant-packaged-foods', name: 'Instant & Packaged Foods', aisleNumber: 7, icon: '🍜', color: '#8b5cf6', desc: 'Maggi, Yippee & Pasta' },
-  { id: 'personal-care', name: 'Personal Care & Hygiene', aisleNumber: 8, icon: '🧴', color: '#ec4899', desc: 'Dove, Dettol & Colgate' },
-  { id: 'household-cleaning', name: 'Household & Cleaning', aisleNumber: 9, icon: '🧼', color: '#3b82f6', desc: 'Surf Excel, Vim & Harpic' },
-  { id: 'fresh-produce-fruits-veggies', name: 'Fresh Produce & Fruits', aisleNumber: 10, icon: '🍎', color: '#22c55e', desc: 'Farm Fresh Apples & Veggies' },
+  { id: 'snacks-namkeen', name: 'Snacks & Namkeen', hindiName: 'स्नैक्स', teluguName: 'స్నాక్స్', aisleNumber: 1, icon: '🥨', color: '#f59e0b', desc: 'Chips, Kurkure & Bhujia' },
+  { id: 'bakery-biscuits', name: 'Bakery & Biscuits', hindiName: 'बेकरी', teluguName: 'బేకరీ', aisleNumber: 2, icon: '🍪', color: '#d97706', desc: 'Parle-G, Good Day & Oreo' },
+  { id: 'beverages-tea-coffee', name: 'Beverages & Tea/Coffee', hindiName: 'पेय और चाय', teluguName: 'టీ & కాఫీ', aisleNumber: 3, icon: '☕', color: '#0284c7', desc: 'Tata Tea, Nescafe & Horlicks' },
+  { id: 'dairy-breakfast', name: 'Dairy & Breakfast', hindiName: 'डेयरी', teluguName: 'డైరీ', aisleNumber: 4, icon: '🧀', color: '#06b6d4', desc: 'Amul Butter, Paneer & Cereals' },
+  { id: 'rice-flours-pulses', name: 'Staples (Atta & Rice)', hindiName: 'अनाज व आटा', teluguName: 'బియ్యం & పిండి', aisleNumber: 5, icon: '🌾', color: '#10b981', desc: 'Aashirvaad Chakki Atta & Basmati' },
+  { id: 'spices-cooking-essentials', name: 'Cooking Oils & Spices', hindiName: 'मसाले और तेल', teluguName: 'మసాలాలు & నూనె', aisleNumber: 6, icon: '🌶️', color: '#ef4444', desc: 'Fortune Oil, Ghee & Spices' },
+  { id: 'instant-packaged-foods', name: 'Instant Foods', hindiName: 'इंस्टेंट फूड्स', teluguName: 'ఇన్‌స్టంట్ ఫుడ్స్', aisleNumber: 7, icon: '🍜', color: '#8b5cf6', desc: 'Maggi, Yippee & Pasta' },
+  { id: 'personal-care', name: 'Personal Care', hindiName: 'पर्सनल केयर', teluguName: 'పర్సనల్ కేర్', aisleNumber: 8, icon: '🧴', color: '#ec4899', desc: 'Dove, Dettol & Colgate' },
+  { id: 'household-cleaning', name: 'Home Care', hindiName: 'घरेलू सफाई', teluguName: 'హోమ్ కేర్', aisleNumber: 9, icon: '🧼', color: '#3b82f6', desc: 'Surf Excel, Vim & Harpic' },
+  { id: 'fresh-produce-fruits-veggies', name: 'Fruits & Veg', hindiName: 'फल व सब्जियां', teluguName: 'పండ్లు & కూరగాయలు', aisleNumber: 10, icon: '🍎', color: '#22c55e', desc: 'Farm Fresh Apples & Veggies' },
 ];
 
 export const SupermarketHUD: React.FC = () => {
@@ -141,6 +183,10 @@ export const SupermarketHUD: React.FC = () => {
   const toggleMinimap = useMartStore((state) => state.toggleMinimap);
   const isNavigatorOpen = useMartStore((state) => state.isNavigatorOpen);
   const toggleNavigator = useMartStore((state) => state.toggleNavigator);
+  const language = useMartStore((state) => state.language);
+  const setLanguage = useMartStore((state) => state.setLanguage);
+  const highlightedAisle = useMartStore((state) => state.highlightedAisle);
+  const setHighlightedAisle = useMartStore((state) => state.setHighlightedAisle);
 
   const toast = useMartStore((state) => state.toast);
   const hideToast = useMartStore((state) => state.hideToast);
@@ -238,6 +284,45 @@ export const SupermarketHUD: React.FC = () => {
       });
   }, [products, searchQuery]);
 
+  // 250ms debounced search effect: highlights matching aisle on mini-map and prompts auto-navigation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const q = searchQuery.trim().toLowerCase();
+      if (!q) {
+        setHighlightedAisle(null);
+        return;
+      }
+      if (['atta', 'wheat', 'flour', 'rice', 'dal', 'chana', 'besan'].some((k) => q.includes(k))) {
+        setHighlightedAisle(5);
+      } else if (['chip', 'snack', 'namkeen', 'kurkure', 'bhujia'].some((k) => q.includes(k))) {
+        setHighlightedAisle(1);
+      } else if (['biscuit', 'cookie', 'bread', 'cake', 'bakery'].some((k) => k.startsWith(q) || q.includes(k))) {
+        setHighlightedAisle(2);
+      } else if (['tea', 'coffee', 'chai', 'horlicks', 'boost'].some((k) => q.includes(k))) {
+        setHighlightedAisle(3);
+      } else if (['milk', 'butter', 'cheese', 'paneer', 'dairy', 'curd'].some((k) => q.includes(k))) {
+        setHighlightedAisle(4);
+      } else if (['oil', 'ghee', 'masala', 'spice', 'chilli', 'turmeric'].some((k) => q.includes(k))) {
+        setHighlightedAisle(6);
+      } else if (['maggi', 'noodle', 'pasta', 'soup', 'sauce'].some((k) => q.includes(k))) {
+        setHighlightedAisle(7);
+      } else if (['soap', 'shampoo', 'paste', 'brush', 'cream', 'face'].some((k) => q.includes(k))) {
+        setHighlightedAisle(8);
+      } else if (['surf', 'detergent', 'cleaner', 'wash', 'harpic', 'vim'].some((k) => q.includes(k))) {
+        setHighlightedAisle(9);
+      } else {
+        const firstMatch = products.find((p) => p.name.toLowerCase().includes(q));
+        if (firstMatch && firstMatch.placement) {
+          setHighlightedAisle(firstMatch.placement.aisleNumber);
+        } else {
+          setHighlightedAisle(null);
+        }
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, products, setHighlightedAisle]);
+
   // Handle click outside to close search dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -273,7 +358,7 @@ export const SupermarketHUD: React.FC = () => {
       {/* --- Top Unified Floating Executive Command Navbar --- */}
       {/* ============================================================== */}
       <header className="w-full max-w-7xl mx-auto pointer-events-auto">
-        <div className="relative rounded-2xl px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 bg-white/95 backdrop-blur-3xl backdrop-saturate-150 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.03)] select-none">
+        <div className="relative rounded-2xl px-3 sm:px-4 py-2 flex items-center justify-between gap-2 bg-[#FFFFFF] border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.06)] select-none">
 
           {/* Brand Identity: Clean Storefront Logo with Light Blue to Passing White Text */}
           <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
@@ -300,7 +385,7 @@ export const SupermarketHUD: React.FC = () => {
                 )}
               </div>
               <p className="text-[9px] sm:text-[10px] text-sky-600/80 font-bold hidden xs:block leading-tight mt-0.5 tracking-wide">
-                Virtual Hypermarket
+                {language === 'TE' ? 'కిరాణా & సూపర్ మార్కెట్' : language === 'HI' ? 'किराना और सुपरमार्केट' : 'Virtual Hypermarket'}
               </p>
             </div>
           </div>
@@ -313,7 +398,9 @@ export const SupermarketHUD: React.FC = () => {
               title="Browse 10 Hypermarket Departments"
             >
               <Layers className="w-3.5 h-3.5 text-sky-600 group-hover:rotate-12 transition-transform" />
-              <span>Groceries & Supermarket</span>
+              <span>
+                {language === 'TE' ? 'కిరాణా & సూపర్ మార్కెట్' : language === 'HI' ? 'किराना और सुपरमार्केट' : 'Groceries & Supermarket'}
+              </span>
               <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-sky-600' : ''}`} />
             </button>
 
@@ -321,8 +408,12 @@ export const SupermarketHUD: React.FC = () => {
             {isCategoryDropdownOpen && (
               <div className="absolute top-12 left-0 w-80 max-h-[70vh] overflow-y-auto bg-white/98 backdrop-blur-2xl border border-slate-200/90 rounded-2xl shadow-[0_20px_50px_rgba(15,23,42,0.18)] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="px-3 py-2 border-b border-slate-100">
-                  <div className="text-[11px] font-black text-slate-400 tracking-wider uppercase">Hypermarket Departments</div>
-                  <p className="text-[10px] text-slate-500 font-medium">Select a department to fly the camera down that aisle</p>
+                  <div className="text-[11px] font-black text-slate-400 tracking-wider uppercase">
+                    {language === 'TE' ? 'స్టోర్ విభాగాలు' : language === 'HI' ? 'हाइपरमार्केट विभाग' : 'Hypermarket Departments'}
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    {language === 'TE' ? 'విభాగానికి వెళ్ళడానికి ఎంచుకోండి' : language === 'HI' ? 'आइसल पर जाने के लिए विभाग चुनें' : 'Select a department to fly the camera down that aisle'}
+                  </p>
                 </div>
                 <div className="mt-1 space-y-1">
                   {STORE_DEPARTMENTS.map((dept) => (
@@ -340,7 +431,7 @@ export const SupermarketHUD: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-black text-slate-800 group-hover/item:text-sky-600 transition-colors">
-                            {dept.name}
+                            {language === 'TE' ? dept.teluguName : language === 'HI' ? dept.hindiName : dept.name}
                           </span>
                           <span className="text-[9.5px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
                             {dept.aisleNumber === 10 ? 'Dept 10' : `Aisle ${dept.aisleNumber}`}
@@ -374,8 +465,8 @@ export const SupermarketHUD: React.FC = () => {
                     setIsSearchOpen(true);
                   }
                 }}
-                placeholder="Search items..."
-                className="w-full h-10 bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder-slate-400 text-xs rounded-xl pl-9 pr-8 border border-slate-200/90 hover:border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200 outline-none shadow-inner"
+                placeholder={language === 'TE' ? 'వస్తువులు లేదా విభాగాలను వెతకండి...' : language === 'HI' ? 'दुकान में खोजें...' : 'Search items or aisles...'}
+                className="w-full h-10 bg-slate-50 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder-slate-400 text-xs rounded-xl pl-9 pr-8 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 outline-none shadow-xs"
               />
               {searchQuery && (
                 <button
@@ -396,12 +487,16 @@ export const SupermarketHUD: React.FC = () => {
               <div className="absolute top-[calc(100%+8px)] left-0 sm:left-auto sm:right-0 w-72 sm:w-80 md:w-96 bg-white/98 backdrop-blur-3xl rounded-2xl border border-slate-200 shadow-[0_24px_60px_rgba(15,23,42,0.18),0_4px_16px_rgba(15,23,42,0.06)] z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-slate-800">Matching Items</span>
+                    <span className="text-[11px] font-bold text-slate-800">
+                      {language === 'TE' ? 'సరిపోలిన వస్తువులు' : language === 'HI' ? 'मिलते-जुलते सामान' : 'Matching Items'}
+                    </span>
                     <span className="text-[10px] bg-sky-100 text-sky-700 font-bold px-1.5 py-0.5 rounded-full border border-sky-200">
                       {filteredProducts.length}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400">Click to locate</span>
+                  <span className="text-[10px] text-slate-400">
+                    {language === 'TE' ? 'వెళ్ళడానికి క్లిక్ చేయండి' : language === 'HI' ? 'खोजने के लिए क्लिक करें' : 'Click to locate'}
+                  </span>
                 </div>
 
                 <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5 divide-y divide-slate-100">
@@ -475,8 +570,53 @@ export const SupermarketHUD: React.FC = () => {
             )}
           </div>
 
-          {/* Action Utilities & User Area - Tactile Frosted Pearl Glass Controls */}
+          {/* Action Utilities & User Area */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* 3-Language Selector: English [Default] | Hindi | Telugu */}
+            <div
+              className="h-10 px-1.5 sm:px-2 rounded-xl bg-slate-100 hover:bg-slate-200/60 border border-slate-200/90 font-bold text-xs flex items-center gap-0.5 sm:gap-1 shadow-xs select-none transition-all"
+              title="Choose Language: English (Default) / हिन्दी / తెలుగు"
+            >
+              <button
+                type="button"
+                onClick={() => setLanguage('EN')}
+                className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                  language === 'EN'
+                    ? 'bg-white text-blue-600 shadow-xs font-black'
+                    : 'text-slate-400 hover:text-slate-700'
+                }`}
+                title="English (Default)"
+              >
+                EN
+              </button>
+              <span className="text-slate-300">|</span>
+              <button
+                type="button"
+                onClick={() => setLanguage('HI')}
+                className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                  language === 'HI'
+                    ? 'bg-white text-blue-600 shadow-xs font-black'
+                    : 'text-slate-400 hover:text-slate-700'
+                }`}
+                title="हिन्दी (Hindi)"
+              >
+                HI
+              </button>
+              <span className="text-slate-300">|</span>
+              <button
+                type="button"
+                onClick={() => setLanguage('TE')}
+                className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                  language === 'TE'
+                    ? 'bg-white text-blue-600 shadow-xs font-black'
+                    : 'text-slate-400 hover:text-slate-700'
+                }`}
+                title="తెలుగు (Telugu)"
+              >
+                TE
+              </button>
+            </div>
+
             {/* Camera Perspective Mode (1st / 3rd Person) */}
             <button
               onClick={() =>
@@ -491,7 +631,17 @@ export const SupermarketHUD: React.FC = () => {
                 <Camera className="w-4 h-4 text-slate-600 group-hover:text-sky-600 group-hover:scale-110 transition-all" />
               )}
               <span className="hidden sm:inline font-semibold">
-                {cameraMode === 'first_person' ? '1st Person' : '3rd Person'}
+                {cameraMode === 'first_person'
+                  ? language === 'TE'
+                    ? '1వ వ్యక్తి'
+                    : language === 'HI'
+                    ? '1स्ट पर्सन'
+                    : '1st Person'
+                  : language === 'TE'
+                  ? '3వ వ్యక్తి'
+                  : language === 'HI'
+                  ? '3ర్డ్ పర్సన్'
+                  : '3rd Person'}
               </span>
             </button>
 
@@ -508,7 +658,9 @@ export const SupermarketHUD: React.FC = () => {
               title={isNavigatorOpen ? 'Hide On-Screen 4-Arrow Navigator' : 'Show On-Screen 4-Arrow Navigator'}
             >
               <Move className={`w-4 h-4 ${isNavigatorOpen ? 'text-white' : 'text-slate-600'} group-hover:scale-110 transition-transform`} />
-              <span className="inline font-semibold">Arrows</span>
+              <span className="inline font-semibold">
+                {language === 'TE' ? 'బాణాలు' : language === 'HI' ? 'तीर' : 'Arrows'}
+              </span>
             </button>
 
             {/* Sound Toggle */}
@@ -533,7 +685,9 @@ export const SupermarketHUD: React.FC = () => {
               title="Reset to Original State & Starting Position (Entrance)"
             >
               <RotateCcw className="w-4 h-4 text-slate-600 group-hover:-rotate-90 group-hover:text-sky-600 transition-all duration-300" />
-              <span className="hidden xl:inline font-semibold text-slate-700 group-hover:text-slate-900">Reset</span>
+              <span className="hidden xl:inline font-semibold text-slate-700 group-hover:text-slate-900">
+                {language === 'TE' ? 'రీసెట్' : language === 'HI' ? 'रीसेट' : 'Reset'}
+              </span>
             </button>
 
             {/* Wishlist Icon Only — Routes directly to dedicated /wishlist page */}
@@ -950,6 +1104,15 @@ export const SupermarketHUD: React.FC = () => {
 
       {/* Real-time Product Hover Information Card */}
       <ProductHoverCard />
+
+      {/* 2D Real-time Supermarket Aisle Mini-map */}
+      <AisleMinimap />
+
+      {/* Mobile/Touch Screen Virtual Joystick */}
+      <TouchJoystick />
+
+      {/* First-visit Walking Hint Tooltip at bottom */}
+      <WalkingHintTooltip />
 
     </div>
   );

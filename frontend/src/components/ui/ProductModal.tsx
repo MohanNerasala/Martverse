@@ -27,6 +27,7 @@ export const ProductModal: React.FC = () => {
   const closeProductModal = useMartStore((state) => state.closeProductModal);
   const showToast = useMartStore((state) => state.showToast);
 
+  const language = useMartStore((state) => state.language);
   const addItem = useCartStore((state) => state.addItem);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const openLoginModal = useAuthStore((state) => state.openLoginModal);
@@ -48,17 +49,6 @@ export const ProductModal: React.FC = () => {
   const savings = activeMrp - activePrice;
 
   const handleAddToCart = async () => {
-    // Auth Gate: Only logged in users can add items to cart
-    if (!isAuthenticated) {
-      showToast(
-        'Login Required',
-        'Please sign in with your mobile number to add items to your shopping trolley.',
-        'warning'
-      );
-      openLoginModal('Please sign in to add items to your shopping trolley.');
-      return;
-    }
-
     if (quantity <= 0) {
       setValidationError('Please select at least 1 item.');
       return;
@@ -267,13 +257,9 @@ export const ProductModal: React.FC = () => {
 
               {/* Action Title on Left */}
               <div className="relative z-10 flex items-center gap-2 min-w-0">
-                {!isAuthenticated ? (
-                  <Lock className="w-4 h-4 text-white drop-shadow flex-shrink-0" />
-                ) : (
-                  <ShoppingCart className="w-4 h-4 text-white drop-shadow flex-shrink-0" />
-                )}
+                <ShoppingCart className="w-4 h-4 text-white drop-shadow flex-shrink-0" />
                 <span className="font-extrabold text-white text-xs sm:text-sm tracking-tight whitespace-nowrap">
-                  {!isAuthenticated ? 'Sign In & Add' : 'Add to Trolley'}
+                  {language === 'TE' ? 'ట్రాలీకి జోడించండి' : language === 'HI' ? 'सामान जोड़ें' : 'Add to Trolley'}
                 </span>
               </div>
               

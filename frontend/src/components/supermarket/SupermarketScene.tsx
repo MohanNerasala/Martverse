@@ -85,11 +85,13 @@ const SceneEnvironmentController: React.FC = () => {
   const { gl, scene } = useThree();
 
   useEffect(() => {
+    gl.outputColorSpace = THREE.SRGBColorSpace;
     const pmremGenerator = new THREE.PMREMGenerator(gl);
     pmremGenerator.compileEquirectangularShader();
     const roomEnv = new RoomEnvironment();
     const envTexture = pmremGenerator.fromScene(roomEnv, 0.04).texture;
     scene.environment = envTexture;
+    scene.environmentIntensity = 0.45; // Low-intensity HDRI for subtle reflections
 
     return () => {
       scene.environment = null;
@@ -148,8 +150,8 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
     <div className="w-full h-full relative select-none touch-none" style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
         frameloop={isPaused ? 'never' : 'always'}
-        dpr={typeof window !== 'undefined' && window.innerWidth < 768 ? [1, 1.5] : [1, 2]}
-        camera={{ position: [0, 1.45, -28], fov: 60, near: 0.1, far: 200 }}
+        dpr={[1, 1.5]}
+        camera={{ position: [0, 1.60, -28], fov: 62, near: 0.1, far: 200 }}
         raycaster={{ near: 0.2, far: 25 }}
         style={{ touchAction: 'none' }}
         gl={{
@@ -159,22 +161,30 @@ export const SupermarketScene: React.FC<{ isPaused?: boolean }> = ({ isPaused = 
           stencil: false,
           depth: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.18,
+          toneMappingExposure: 0.82,
         }}
       >
-        {/* High-Key Bright Atmosphere (Matches Commercial Reference) */}
-        <color attach="background" args={['#fafafa']} />
-        <fog attach="fog" args={['#fafafa', 70, 150]} />
+        {/* Natural Warm-Grey Atmosphere (#D8D6D1, No Blown-Out Clamping) */}
+        <color attach="background" args={['#D8D6D1']} />
+        <fog attach="fog" args={['#D8D6D1', 50, 130]} />
 
-        {/* --- Maximum Balanced Commercial Lighting: Warm-Neutral White (4000-4500K), High Contrast & Specular Pop --- */}
-        {/* 1. Balanced Hemisphere Light (Pure sky white, soft neutral floor bounce) */}
-        <hemisphereLight args={['#ffffff', '#f1f5f9', 0.95]} />
+        {/* --- Natural Hypermarket Lighting: Neutral 4000-4500K, Soft Shadows, Controlled Floor Specular --- */}
+        {/* 1. Balanced Soft Ambient & Floor Bounce Light */}
+        <hemisphereLight args={['#ffffff', '#D8D6D1', 0.60]} />
 
-        {/* 2. Primary High-Luminance Directional Key Light (North Entrance & Central Promenade) */}
-        <directionalLight position={[12, 24, -12]} intensity={1.15} color="#fffdf5" />
+        {/* 2. Soft Overhead Ceiling Key Light with Diffused Shadows (Eliminates Floor Hotspots) */}
+        <directionalLight
+          position={[8, 22, -8]}
+          intensity={0.80}
+          color="#fefbf3"
+          castShadow
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
+          shadow-bias={-0.0001}
+        />
 
-        {/* 3. Balanced South Concourse & POS Billing Area Key Light */}
-        <directionalLight position={[-12, 24, 22]} intensity={0.95} color="#fffdf5" />
+        {/* 3. Balanced South Concourse Fill Light */}
+        <directionalLight position={[-8, 20, 18]} intensity={0.48} color="#fefbf3" />
 
         <Suspense fallback={null}>
           <SceneEnvironmentController />

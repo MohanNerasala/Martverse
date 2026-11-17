@@ -299,23 +299,23 @@ const ChocolatesPromotionalIsland: React.FC = React.memo(() => {
         <mesh position={[-1.2, -0.25, 0]} geometry={sharedGeometries.box} scale={[0.05, 0.50, 0.05]} material={islandMaterials.bluePodium} />
         <mesh position={[1.2, -0.25, 0]} geometry={sharedGeometries.box} scale={[0.05, 0.50, 0.05]} material={islandMaterials.bluePodium} />
 
-        {/* Double-Sided Royal Blue Signboard */}
-        <mesh geometry={sharedGeometries.box} scale={[2.60, 0.48, 0.08]} material={islandMaterials.bluePodium} />
-        <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[2.54, 0.42, 0.09]} material={islandMaterials.blueHeader} />
+        {/* Double-Sided Royal Blue Signboard (Scaled to 2.92m to prevent text clipping) */}
+        <mesh geometry={sharedGeometries.box} scale={[2.92, 0.48, 0.08]} material={islandMaterials.bluePodium} />
+        <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[2.86, 0.42, 0.09]} material={islandMaterials.blueHeader} />
 
         {/* North Face Sign Text */}
-        <Text position={[0, 0.08, 0.048]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
+        <Text position={[0, 0.08, 0.048]} fontSize={0.092} maxWidth={2.80} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.03}>
           {'01 PROMOTIONS • SPECIAL OFFERS'}
         </Text>
-        <Text position={[0, -0.08, 0.048]} fontSize={0.075} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
+        <Text position={[0, -0.08, 0.048]} fontSize={0.068} maxWidth={2.80} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.02}>
           {'★ CADBURY SILK • KITKAT • LUXURY CHOCOLATES ★'}
         </Text>
 
         {/* South Face Sign Text */}
-        <Text position={[0, 0.08, -0.048]} rotation={[0, Math.PI, 0]} fontSize={0.11} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.06}>
+        <Text position={[0, 0.08, -0.048]} rotation={[0, Math.PI, 0]} fontSize={0.092} maxWidth={2.80} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="black" letterSpacing={0.03}>
           {'01 PROMOTIONS • SPECIAL OFFERS'}
         </Text>
-        <Text position={[0, -0.08, -0.048]} rotation={[0, Math.PI, 0]} fontSize={0.075} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
+        <Text position={[0, -0.08, -0.048]} rotation={[0, Math.PI, 0]} fontSize={0.068} maxWidth={2.80} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold" letterSpacing={0.02}>
           {'★ CADBURY SILK • KITKAT • LUXURY CHOCOLATES ★'}
         </Text>
       </group>
@@ -532,16 +532,16 @@ const TeaCoffeePromotionalIsland: React.FC = React.memo(() => {
         <mesh position={[0.9, -0.3, 0]} geometry={sharedGeometries.cyl8} scale={[0.02, 0.60, 0.02]} material={islandMaterials.brassTrim} />
         <mesh geometry={sharedGeometries.box} scale={[2.0, 0.44, 0.06]} material={islandMaterials.brassTrim} />
         <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[1.94, 0.38, 0.07]} material={islandMaterials.coffeeHeader} />
-        <Text position={[0, 0.07, 0.038]} fontSize={0.09} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
+        <Text position={[0, 0.07, 0.038]} fontSize={0.085} maxWidth={1.88} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
           {'PREMIUM TEA & COFFEE PAVILION'}
         </Text>
-        <Text position={[0, -0.07, 0.038]} fontSize={0.062} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
+        <Text position={[0, -0.07, 0.038]} fontSize={0.060} maxWidth={1.88} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
           {'★ TATA TEA GOLD • NESCAFE • BRU ROAST ★'}
         </Text>
-        <Text position={[0, 0.07, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.09} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
+        <Text position={[0, 0.07, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.085} maxWidth={1.88} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
           {'PREMIUM TEA & COFFEE PAVILION'}
         </Text>
-        <Text position={[0, -0.07, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.062} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
+        <Text position={[0, -0.07, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.060} maxWidth={1.88} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
           {'★ TATA TEA GOLD • NESCAFE • BRU ROAST ★'}
         </Text>
       </group>
@@ -757,16 +757,16 @@ const SweetsDryFruitsIsland: React.FC = React.memo(() => {
         <mesh position={[0.8, -0.3, 0]} geometry={sharedGeometries.cyl8} scale={[0.02, 0.60, 0.02]} material={islandMaterials.goldTrim} />
         <mesh geometry={sharedGeometries.box} scale={[1.8, 0.44, 0.06]} material={islandMaterials.rubyTrim} />
         <mesh position={[0, 0, 0]} geometry={sharedGeometries.box} scale={[1.74, 0.38, 0.07]} material={islandMaterials.sweetHeader} />
-        <Text position={[0, 0.07, 0.038]} fontSize={0.09} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
+        <Text position={[0, 0.07, 0.038]} fontSize={0.082} maxWidth={1.70} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
           {'FESTIVE SWEETS & DRY FRUITS'}
         </Text>
-        <Text position={[0, -0.07, 0.038]} fontSize={0.06} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
+        <Text position={[0, -0.07, 0.038]} fontSize={0.056} maxWidth={1.70} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
           {'★ HALDIRAM GULAB JAMUN • ROYAL NUTS ★'}
         </Text>
-        <Text position={[0, 0.07, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.09} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
+        <Text position={[0, 0.07, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.082} maxWidth={1.70} color="#facc15" anchorX="center" anchorY="middle" fontWeight="extrabold">
           {'FESTIVE SWEETS & DRY FRUITS'}
         </Text>
-        <Text position={[0, -0.07, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.06} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
+        <Text position={[0, -0.07, -0.038]} rotation={[0, Math.PI, 0]} fontSize={0.056} maxWidth={1.70} color="#ffffff" anchorX="center" anchorY="middle" fontWeight="bold">
           {'★ HALDIRAM GULAB JAMUN • ROYAL NUTS ★'}
         </Text>
       </group>

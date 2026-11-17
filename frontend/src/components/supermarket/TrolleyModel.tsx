@@ -586,10 +586,9 @@ const TrolleyModelComponent: React.FC<TrolleyProps> = ({ targetPos, targetYaw })
       </group>
 
       {/* ==============================================================
-          CHILD SEAT: TWO BRIGHT RED PLASTIC PANELS (MATCHES REFERENCE PHOTO)
-          Centered side-by-side on handle side of basket
+          CHILD SEAT PANELS (Hidden to keep basket view clear and natural)
           ============================================================== */}
-      <group position={[0, 0.73, 0.355]}>
+      <group position={[0, 0.73, 0.355]} visible={false}>
         {/* Chrome hinge support rod */}
         <mesh rotation={[0, 0, Math.PI / 2]} geometry={trolleyGeos.childSeatRod} material={trolleyMaterials.chromeMetal} />
         {/* Left red plastic flap */}

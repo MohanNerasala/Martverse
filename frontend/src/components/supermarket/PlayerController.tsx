@@ -730,28 +730,56 @@ export const PlayerController: React.FC = () => {
       // 2. Approach deceleration (distToFinal < 2.2m: "slow down to arrive")
       const decelFactor = Math.min(1.0, Math.max(0.22, distToFinal / 2.2));
 
-      // Cruise speed: 5.4 m/s ("little fast")
-      const cruiseSpeed = 5.4;
+      // Cruise speed: 7.5 m/s (fast & snappy navigation)
+      const cruiseSpeed = 7.5;
       const navSpeed = cruiseSpeed * accelFactor * decelFactor;
 
-      // Switch to next waypoint once close enough to intermediate waypoint
-      if (!isFinalWaypoint && distToWp < 0.9) {
+      // Switch to next waypoint smoothly before hitting the corner
+      if (!isFinalWaypoint && distToWp < 1.1) {
         activeAutoNav.currentWaypointIndex++;
       }
 
-      if (distToFinal > 0.16) {
-        // Continuous steering towards next waypoint
+      if (distToFinal > 0.18) {
+        // Continuous smooth steering towards next waypoint
         const desiredYaw = Math.atan2(toWpX, toWpZ);
         let yawDiff = desiredYaw - yawRef.current;
         while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
         while (yawDiff > Math.PI) yawDiff -= Math.PI * 2;
-        yawRef.current += yawDiff * Math.min(1.0, delta * 6.5);
+        yawRef.current += yawDiff * Math.min(1.0, delta * 7.0);
         targetYawRef.current = yawRef.current;
 
         const dirX = toWpX / (distToWp || 1);
         const dirZ = toWpZ / (distToWp || 1);
-        posRef.current.x += dirX * navSpeed * delta;
-        posRef.current.z += dirZ * navSpeed * delta;
+        const nextX = posRef.current.x + dirX * navSpeed * delta;
+        const nextZ = posRef.current.z + dirZ * navSpeed * delta;
+
+        // Collision safety boundary: strictly prevent trolley from penetrating any shelf
+        let safeX = nextX;
+        let safeZ = nextZ;
+        const trolleyBuffer = 0.38;
+
+        for (let i = 0; i < STATIC_OBSTACLES_FLOOR1.length; i++) {
+          const b = STATIC_OBSTACLES_FLOOR1[i];
+          if (
+            safeX + trolleyBuffer > b.minX &&
+            safeX - trolleyBuffer < b.maxX &&
+            posRef.current.z + trolleyBuffer > b.minZ &&
+            posRef.current.z - trolleyBuffer < b.maxZ
+          ) {
+            safeX = posRef.current.x;
+          }
+          if (
+            safeX + trolleyBuffer > b.minX &&
+            safeX - trolleyBuffer < b.maxX &&
+            safeZ + trolleyBuffer > b.minZ &&
+            safeZ - trolleyBuffer < b.maxZ
+          ) {
+            safeZ = posRef.current.z;
+          }
+        }
+
+        posRef.current.x = safeX;
+        posRef.current.z = safeZ;
         velocityRef.current.x = dirX * navSpeed;
         velocityRef.current.z = dirZ * navSpeed;
       } else {
@@ -808,8 +836,8 @@ export const PlayerController: React.FC = () => {
         pitchRef.current = THREE.MathUtils.damp(pitchRef.current, targetPitchRef.current, 90, delta);
       }
 
-      // Fast, ultra-smooth movement speed (22.0 base, 32.0 on Shift turbo push)
-      const speed = keys.current.sprint ? 32.0 : 22.0;
+      // Fast, responsive hypermarket walking speed (8.5 m/s base, 14.0 m/s sprint)
+      const speed = keys.current.sprint ? 14.0 : 8.5;
       staticMoveVector.set(0, 0, 0);
 
       const isLeft = keys.current.left || martRuntime.virtualKeys.left;
@@ -957,8 +985,8 @@ export const PlayerController: React.FC = () => {
       }
     }
 
-    // Fixed ground floor height (1.45m eye level)
-    posRef.current.y = THREE.MathUtils.damp(posRef.current.y, 1.45, 8, delta);
+    // Natural first-person eye height (~1.60m)
+    posRef.current.y = THREE.MathUtils.damp(posRef.current.y, 1.60, 8, delta);
 
     // High-frequency zero-rerender runtime update (0ms lockstep synchronization with all 3D systems)
     martRuntime.playerPos[0] = posRef.current.x;
