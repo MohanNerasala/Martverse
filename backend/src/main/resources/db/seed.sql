@@ -30,31 +30,31 @@ ON CONFLICT (floor_number) DO UPDATE SET
 
 -- ── CATEGORIES ───────────────────────────────────────────────
 INSERT INTO categories (id, name, description, floor_number, display_order) VALUES
-('c0000000-0000-0000-0000-000000000001', 'Household & Cleaning Products', 'Detergents, dishwash gels, fabric softeners, and surface cleaners', 1, 1),
-('c0000000-0000-0000-0000-000000000002', 'Personal Care & Beauty', 'Oral care, soaps, shampoos, conditioners, and skincare face washes', 1, 2),
-('c0000000-0000-0000-0000-000000000003', 'Biscuits & Snacks', 'Crunchy namkeens, chips, crackers, and biscuits', 1, 3),
-('c0000000-0000-0000-0000-000000000004', 'Tea & Coffee Essentials', 'Premium teas, instant coffees, green teas, and morning essentials', 1, 4),
-('c0000000-0000-0000-0000-000000000005', 'Chocolates & Sweets', 'Premium chocolate bars, pralines, confectionery, and gifting sweets', 1, 5),
-('c0000000-0000-0000-0000-000000000006', 'Flours, Rice, Dals & Pulses', 'Chakki wheat atta, aged basmati rice, organic dals, sugar, and iodized salt', 1, 6),
-('c0000000-0000-0000-0000-000000000007', 'Cooking Oils, Spices & Instant Foods', 'Refined sunflower oil, mustard oil, blended spices, noodles, and pasta', 1, 7),
-('c0000000-0000-0000-0000-000000000008', 'Soft Drinks, Juices & Packaged Water', 'Chilled carbonated sodas, natural fruit juices, energy drinks, and packaged water', 1, 8),
-('c0000000-0000-0000-0000-000000000009', 'Snack Packs, Namkeen & Ready Bites', 'Traditional Indian namkeen, crispy potato wafers, tortilla chips, and bites', 1, 9),
-('c0000000-0000-0000-0000-000000000010', 'Festive Gifting, Sweets & Dry Fruits', 'Traditional tin sweets, festive gift boxes, premium almonds, cashews, and raisins', 1, 10)
+('c0000000-0000-0000-0000-000000000001', 'Snacks & Namkeen', 'Crunchy namkeens, chips, crackers, bhujia, and savory snacks', 1, 1),
+('c0000000-0000-0000-0000-000000000002', 'Bakery & Biscuits', 'Parle-G, Good Day, Marie Gold, Oreo, and cookies', 1, 2),
+('c0000000-0000-0000-0000-000000000003', 'Beverages & Tea/Coffee', 'Premium teas, instant coffees, green teas, and morning essentials', 1, 3),
+('c0000000-0000-0000-0000-000000000004', 'Dairy & Breakfast', 'Fresh milk, butter, cheese slices, paneer, and breakfast cereals', 1, 4),
+('c0000000-0000-0000-0000-000000000005', 'Rice, Atta & Pulses', 'Royal Basmati rice, Aashirvaad chakki atta, and organic pulses', 1, 5),
+('c0000000-0000-0000-0000-000000000006', 'Spices & Cooking Oils', 'Refined sunflower oil, pure ghee, mustard oil, and Everest spices', 1, 6),
+('c0000000-0000-0000-0000-000000000007', 'Instant & Packaged Foods', 'Maggi 2-Min noodles, Yippee noodles, soups, and ready pasta', 1, 7),
+('c0000000-0000-0000-0000-000000000008', 'Personal Care & Hygiene', 'Dettol soaps, Dove beauty bars, Colgate toothpaste, and skincare', 1, 8),
+('c0000000-0000-0000-0000-000000000009', 'Household & Cleaning', 'Surf Excel Matic, Ariel powder, Vim dishwash gel, and Harpic cleaner', 1, 9),
+('c0000000-0000-0000-0000-000000000010', 'Fresh Produce & Fruits', 'Farm fresh Shimla apples, bananas, and fresh fruits & veggies', 1, 10)
 ON CONFLICT DO NOTHING;
 
 -- ── AISLES ───────────────────────────────────────────────────
 -- Floor 1: 10 Aisles across 72m footprint at X = [-24.3, -18.9, -13.5, -8.1, -2.7, 2.7, 8.1, 13.5, 18.9, 24.3], Length = 32m
 INSERT INTO supermarket_aisles (id, floor_id, aisle_number, name, category_id, position_x, position_z, start_x, start_z, end_x, end_z, shelf_height, shelf_tiers, color_code, banner_text) VALUES
-('a0000000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', 1, 'Household & Cleaning', 'c0000000-0000-0000-0000-000000000001', -24.30, 0, -24.30, -16.00, -24.30, 16.00, 2.80, 4, '#8b5cf6', 'AISLE 1 • HOUSEHOLD & CLEANING • DETERGENTS, SURFACE CLEANERS & DISHWASH'),
-('a0000000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000001', 2, 'Personal Care & Beauty', 'c0000000-0000-0000-0000-000000000002', -18.90, 0, -18.90, -16.00, -18.90, 16.00, 2.80, 4, '#06b6d4', 'AISLE 2 • PERSONAL CARE & BEAUTY • SOAPS, SHAMPOO, ORAL CARE & FACE WASH'),
-('a0000000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', 3, 'Biscuits & Snacks', 'c0000000-0000-0000-0000-000000000003', -13.50, 0, -13.50, -16.00, -13.50, 16.00, 2.80, 4, '#f59e0b', 'AISLE 3 • BISCUITS & SNACKS • COOKIES, CHIPS & CRACKERS'),
-('a0000000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', 4, 'Tea & Coffee Essentials', 'c0000000-0000-0000-0000-000000000004', -8.10, 0, -8.10, -16.00, -8.10, 16.00, 2.80, 4, '#059669', 'AISLE 4 • TEA & COFFEE ESSENTIALS • PREMIUM TEA & INSTANT COFFEES'),
-('a0000000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', 5, 'Chocolates & Sweets', 'c0000000-0000-0000-0000-000000000005', -2.70, 0, -2.70, -16.00, -2.70, 16.00, 2.80, 4, '#7c3aed', 'AISLE 5 • CHOCOLATES & SWEETS • DAIRY MILK, CANDIES & DELIGHTS'),
-('a0000000-0000-0000-0000-000000000006', 'f0000000-0000-0000-0000-000000000001', 6, 'Flours, Rice, Dals & Pulses', 'c0000000-0000-0000-0000-000000000006', 2.70, 0, 2.70, -16.00, 2.70, 16.00, 2.80, 4, '#10b981', 'AISLE 6 • FLOURS, RICE & DALS • ATTA, BASMATI, PULSES, SUGAR & SALT'),
-('a0000000-0000-0000-0000-000000000007', 'f0000000-0000-0000-0000-000000000001', 7, 'Cooking Oils, Spices & Instant Foods', 'c0000000-0000-0000-0000-000000000007', 8.10, 0, 8.10, -16.00, 8.10, 16.00, 2.80, 4, '#f97316', 'AISLE 7 • COOKING OILS & SPICES • SUNFLOWER, MUSTARD OIL & MASALAS'),
-('a0000000-0000-0000-0000-000000000008', 'f0000000-0000-0000-0000-000000000001', 8, 'Soft Drinks, Juices & Packaged Water', 'c0000000-0000-0000-0000-000000000008', 13.50, 0, 13.50, -16.00, 13.50, 16.00, 2.80, 4, '#0284c7', 'AISLE 8 • BEVERAGES & COLD DRINKS • CHILLED SODAS, JUICES & WATER'),
-('a0000000-0000-0000-0000-000000000009', 'f0000000-0000-0000-0000-000000000001', 9, 'Snack Packs, Namkeen & Ready Bites', 'c0000000-0000-0000-0000-000000000009', 18.90, 0, 18.90, -16.00, 18.90, 16.00, 2.80, 4, '#eab308', 'AISLE 9 • SNACK PACKS & NAMKEEN • BHUJIA, WAFER & CRISPY BITES'),
-('a0000000-0000-0000-0000-000000000010', 'f0000000-0000-0000-0000-000000000001', 10, 'Festive Gifting, Sweets & Dry Fruits', 'c0000000-0000-0000-0000-000000000010', 24.30, 0, 24.30, -16.00, 24.30, 16.00, 2.80, 4, '#ec4899', 'AISLE 10 • FESTIVE GIFTS & DRY FRUITS • SWEETS & DRY FRUIT HAMPERS')
+('a0000000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', 1, 'Snacks & Namkeen', 'c0000000-0000-0000-0000-000000000001', -24.00, 0, -24.00, -14.00, -24.00, 14.00, 2.80, 4, '#f59e0b', 'AISLE 1 • CRISPY CHIPS, BHUJIA, WAFER & CRUNCHY BITES'),
+('a0000000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000001', 2, 'Bakery & Biscuits', 'c0000000-0000-0000-0000-000000000002', -17.50, 0, -17.50, -14.00, -17.50, 14.00, 2.80, 4, '#d97706', 'AISLE 2 • PARLE-G, GOOD DAY, MARIE GOLD & COOKIES'),
+('a0000000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000003', 3, 'Beverages & Tea/Coffee', 'c0000000-0000-0000-0000-000000000003', -11.00, -5.00, -15.50, -5.00, -6.50, -5.00, 2.60, 4, '#0284c7', 'AISLE 3 • TATA TEA GOLD, RED LABEL, NESCAFE & HOT DRINKS'),
+('a0000000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000004', 4, 'Dairy & Breakfast', 'c0000000-0000-0000-0000-000000000004', -11.00, 5.00, -15.50, 5.00, -6.50, 5.00, 2.60, 4, '#06b6d4', 'AISLE 4 • AMUL BUTTER, CHEESE, FRESH MILK & CEREALS'),
+('a0000000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000005', 5, 'Rice, Atta & Pulses', 'c0000000-0000-0000-0000-000000000005', 17.50, 0, 17.50, -14.00, 17.50, 14.00, 2.80, 4, '#10b981', 'AISLE 5 • ROYAL BASMATI RICE, AASHIRVAAD ATTA & TOOR DAL'),
+('a0000000-0000-0000-0000-000000000006', 'f0000000-0000-0000-0000-000000000006', 6, 'Spices & Cooking Oils', 'c0000000-0000-0000-0000-000000000006', 24.00, 0, 24.00, -14.00, 24.00, 14.00, 2.80, 4, '#ef4444', 'AISLE 6 • FORTUNE SUNFLOWER OIL, SAFFOLA, GHEE & EVEREST SPICES'),
+('a0000000-0000-0000-0000-000000000007', 'f0000000-0000-0000-0000-000000000007', 7, 'Instant & Packaged Foods', 'c0000000-0000-0000-0000-000000000007', 11.00, -5.00, 6.50, -5.00, 15.50, -5.00, 2.60, 4, '#8b5cf6', 'AISLE 7 • MAGGI 2-MIN, YIPPEE, PASTA & INSTANT FOODS'),
+('a0000000-0000-0000-0000-000000000008', 'f0000000-0000-0000-0000-000000000008', 8, 'Personal Care & Hygiene', 'c0000000-0000-0000-0000-000000000008', 11.00, 5.00, 6.50, 5.00, 15.50, 5.00, 2.80, 4, '#ec4899', 'AISLE 8 • DETTOL, DOVE, COLGATE & PERSONAL HYGIENE'),
+('a0000000-0000-0000-0000-000000000009', 'f0000000-0000-0000-0000-000000000001', 9, 'Household & Cleaning', 'c0000000-0000-0000-0000-000000000001', 29.50, 0, 29.50, -11.00, 29.50, 11.00, 2.40, 3, '#3b82f6', 'AISLE 9 • SURF EXCEL, VIM GEL, HARPIC & HOME HYGIENE'),
+('a0000000-0000-0000-0000-000000000010', 'f0000000-0000-0000-0000-000000000001', 10, 'Fresh Produce & Fruits', 'c0000000-0000-0000-0000-000000000001', -34.20, 0, -34.20, -13.50, -34.20, 13.50, 2.80, 4, '#22c55e', 'AISLE 10 • FRESH PRODUCE & FRUITS • APPLES, BANANAS & VEGGIES')
 ON CONFLICT (floor_id, aisle_number) DO UPDATE SET
   name = EXCLUDED.name,
   position_x = EXCLUDED.position_x,

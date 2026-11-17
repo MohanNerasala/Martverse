@@ -814,15 +814,51 @@ function getAisleSignTexture(
 // Commercial Photorealistic Aisle Department Illuminated Lightbox Board
 const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; height: number }> = React.memo(({ aisleNumber, categoryName, height }) => {
   const aisleData: Record<number, { title: string; subtitle: string; color: string }> = {
-    1: { title: 'BISCUITS & COOKIES', subtitle: 'Parle-G • Good Day • Oreo • Marie Gold • Crackers', color: '#b45309' },
-    2: { title: 'SNACKS & NAMKEEN', subtitle: 'Potato Chips • Kurkure • Haldiram Bhujia • Murukku', color: '#d97706' },
-    3: { title: 'TEA & INFUSIONS', subtitle: 'Tata Tea Gold • Red Label • Wagh Bakri • Green Tea', color: '#15803d' },
-    4: { title: 'COFFEE & HOT DRINKS', subtitle: 'Nescafe Classic • Bru Roast • Bournvita • Horlicks', color: '#854d0e' },
-    5: { title: 'FLOURS & CHAKKI ATTA', subtitle: 'Aashirvaad Shudh Chakki Atta • Maida • Sooji • Besan', color: '#047857' },
-    6: { title: 'RICE, DALS & PULSES', subtitle: 'India Gate Basmati • Toor Dal • Moong Dal • Urad Dal', color: '#0284c7' },
-    7: { title: 'COOKING OILS & SPICES', subtitle: 'Fortune Sunflower Oil • Dhara Mustard • Everest Masala', color: '#c2410c' },
-    8: { title: 'INSTANT FOODS & PASTA', subtitle: 'Maggi 2-Min • Yippee Noodles • Pasta • Knorr Soups', color: '#dc2626' },
-    9: { title: 'BEVERAGES & SODAS', subtitle: 'Thums Up • Coca-Cola • Sprite • Tropicana Juices', color: '#1d4ed8' },
+    1: {
+      title: 'SNACKS & NAMKEEN',
+      subtitle: 'Lay\'s Classic • Kurkure • Haldiram\'s Bhujia • Bingo • Namkeen',
+      color: '#f59e0b',
+    },
+    2: {
+      title: 'BAKERY & BISCUITS',
+      subtitle: 'Parle-G • Britannia Good Day • Marie Gold • Oreo • Bourbon',
+      color: '#d97706',
+    },
+    3: {
+      title: 'BEVERAGES & TEA/COFFEE',
+      subtitle: 'Chai Gold • Tata Tea Premium • Nescafe Classic • Taj Mahal',
+      color: '#0284c7',
+    },
+    4: {
+      title: 'DAIRY & BREAKFAST',
+      subtitle: 'Amul Fresh Milk • Butter • Cheese Slices • Paneer • Kellogg\'s Oats',
+      color: '#06b6d4',
+    },
+    5: {
+      title: 'RICE, ATTA & PULSES',
+      subtitle: 'Aashirvaad Shudh Chakki Atta • India Gate Basmati • Toor Dal',
+      color: '#10b981',
+    },
+    6: {
+      title: 'SPICES & COOKING OILS',
+      subtitle: 'Fortune Sunflower Oil • Saffola Gold • Mustard Oil • Everest Masala',
+      color: '#ef4444',
+    },
+    7: {
+      title: 'INSTANT & PACKAGED FOODS',
+      subtitle: 'Maggi 2-Min • Yippee Noodles • Ching\'s Secret • Knorr Soups',
+      color: '#8b5cf6',
+    },
+    8: {
+      title: 'PERSONAL CARE & HYGIENE',
+      subtitle: 'Dettol Original • Dove Beauty Bar • Lifebuoy • Colgate Toothpaste',
+      color: '#ec4899',
+    },
+    9: {
+      title: 'HOUSEHOLD & CLEANING',
+      subtitle: 'Surf Excel Matic • Ariel Powder • Vim Gel • Harpic Cleaner',
+      color: '#3b82f6',
+    },
   };
 
   const item = aisleData[aisleNumber] || {
