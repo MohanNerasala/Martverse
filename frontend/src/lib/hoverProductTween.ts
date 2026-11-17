@@ -59,13 +59,16 @@ export function computeHoverMatrix(
   const fwdX = Math.sin(rotY);
   const fwdZ = Math.cos(rotY);
 
-  // 1. Pull-out forward translation toward aisle: 18mm * progress
-  const pullDist = 0.018 * progress;
+  // 1. Upward Lift translation ("item will move top little animation"): 22mm * progress
+  const liftY = 0.022 * progress;
 
-  // 2. Tilt angle around bottom front edge: 3.5 deg (0.061 rad) * progress
-  const tiltRad = (3.5 * (Math.PI / 180)) * progress;
+  // 2. Pull-out forward translation toward aisle: 16mm * progress
+  const pullDist = 0.016 * progress;
 
-  // 3. Shift from bottom front edge pivot:
+  // 3. Gentle tilt angle around bottom front edge: 2.5 deg (0.044 rad) * progress
+  const tiltRad = (2.5 * (Math.PI / 180)) * progress;
+
+  // 4. Shift from bottom front edge pivot:
   // Center is bh/2 above bottom and bd/2 behind front face.
   // Tilting forward rotates the pack center around the pivot.
   const deltaY = (bh / 2) * (Math.cos(tiltRad) - 1);
@@ -75,7 +78,7 @@ export function computeHoverMatrix(
 
   _pos.set(
     restX + fwdX * totalForward,
-    restY + deltaY,
+    restY + liftY + deltaY,
     restZ + fwdZ * totalForward
   );
 

@@ -53,104 +53,104 @@ export function getProductPackagingTexture(product: Product): THREE.CanvasTextur
   }
 
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 640;
+  canvas.width = 1024;
+  canvas.height = 1280;
   const ctx = canvas.getContext('2d')!;
 
   const palette = getBrandPalette(product);
 
   const drawBaseCard = () => {
     // 1. Rich high-end gradient background
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, 640);
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, 1280);
     bgGrad.addColorStop(0, palette.bg);
     bgGrad.addColorStop(0.7, palette.bg);
     bgGrad.addColorStop(1, '#0f172a');
     ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, 512, 640);
+    ctx.fillRect(0, 0, 1024, 1280);
 
     // Subtle cardboard/packaging outer border
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(4, 4, 504, 632);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(8, 8, 1008, 1264);
 
     // 2. Top Brand Header Bar
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
-    ctx.fillRect(12, 12, 488, 54);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+    ctx.fillRect(24, 24, 976, 108);
 
     ctx.fillStyle = palette.accent;
-    ctx.font = '900 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '900 56px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText((product.brand || 'MARTVERSE').toUpperCase(), 24, 39);
+    ctx.fillText((product.brand || 'MARTVERSE').toUpperCase(), 48, 78);
 
     // Green Veg Icon (Authentic Indian FMCG packaging requirement)
-    const vegX = 460;
-    const vegY = 27;
+    const vegX = 920;
+    const vegY = 54;
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(vegX, vegY, 24, 24);
+    ctx.fillRect(vegX, vegY, 48, 48);
     ctx.strokeStyle = '#16a34a';
-    ctx.lineWidth = 2.5;
-    ctx.strokeRect(vegX, vegY, 24, 24);
+    ctx.lineWidth = 5;
+    ctx.strokeRect(vegX, vegY, 48, 48);
     ctx.fillStyle = '#16a34a';
     ctx.beginPath();
-    ctx.arc(vegX + 12, vegY + 12, 6, 0, Math.PI * 2);
+    ctx.arc(vegX + 24, vegY + 24, 12, 0, Math.PI * 2);
     ctx.fill();
 
     // 3. Central Artwork Showcase Region
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-    ctx.fillRect(20, 78, 472, 340);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.10)';
+    ctx.fillRect(40, 156, 944, 680);
 
-    // 4. Product Name Text
+    // 4. Product Name Text — Ultra Sharp & High Contrast
     ctx.fillStyle = '#ffffff';
-    ctx.font = '800 26px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '900 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
     const cleanName = product.name || 'Grocery Item';
     const firstLine = cleanName.length > 28 ? cleanName.substring(0, 26) + '...' : cleanName;
-    ctx.fillText(firstLine, 256, 448);
+    ctx.fillText(firstLine, 512, 896);
 
     // Unit / Weight Text
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '600 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText(product.unit || 'Pack', 256, 480);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '700 40px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(product.unit || 'Pack', 512, 960);
 
     // 5. Commercial Price Tag Pill
     ctx.fillStyle = '#dc2626'; // Vibrant commercial red
     ctx.beginPath();
-    ctx.roundRect ? ctx.roundRect(40, 508, 160, 48, 8) : ctx.rect(40, 508, 160, 48);
+    ctx.roundRect ? ctx.roundRect(80, 1016, 320, 96, 16) : ctx.rect(80, 1016, 320, 96);
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 30px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '900 60px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`₹${product.price}`, 120, 542);
+    ctx.fillText(`₹${product.price}`, 240, 1064);
 
     if (product.mrp && product.mrp > product.price) {
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '700 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.font = '700 40px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(`MRP ₹${product.mrp}`, 215, 540);
+      ctx.fillText(`MRP ₹${product.mrp}`, 430, 1060);
       // Strikethrough
       ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 5;
       ctx.beginPath();
-      ctx.moveTo(212, 538);
-      ctx.lineTo(315, 538);
+      ctx.moveTo(424, 1056);
+      ctx.lineTo(630, 1056);
       ctx.stroke();
     }
 
     // 6. Retail Barcode Graphic
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(40, 572, 432, 52);
+    ctx.fillRect(80, 1144, 864, 104);
     ctx.fillStyle = '#0f172a';
-    const barWidths = [3, 2, 4, 1, 3, 5, 2, 4, 2, 1, 3, 2, 5, 1, 4, 3, 2, 4, 2, 3, 5, 2, 4, 1, 3];
-    let curX = 60;
+    const barWidths = [6, 4, 8, 2, 6, 10, 4, 8, 4, 2, 6, 4, 10, 2, 8, 6, 4, 8, 4, 6, 10, 4, 8, 2, 6];
+    let curX = 120;
     for (let i = 0; i < 48; i++) {
       const bw = barWidths[i % barWidths.length];
       if (i % 2 === 0) {
-        ctx.fillRect(curX, 578, bw, 40);
+        ctx.fillRect(curX, 1156, bw, 80);
       }
-      curX += bw + 3;
-      if (curX > 450) break;
+      curX += bw + 6;
+      if (curX > 900) break;
     }
   };
 
@@ -172,8 +172,8 @@ export function getProductPackagingTexture(product: Product): THREE.CanvasTextur
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-      ctx.clearRect(0, 0, 512, 640);
-      ctx.drawImage(img, 0, 0, 512, 640);
+      ctx.clearRect(0, 0, 1024, 1280);
+      ctx.drawImage(img, 0, 0, 1024, 1280);
       texture.needsUpdate = true;
     };
     img.src = product.imageUrl;
