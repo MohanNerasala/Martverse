@@ -2,7 +2,7 @@ import { SupermarketFloor, Product, Cart, AuthState, User, Order } from '@/types
 import { MOCK_FLOORS, MOCK_PRODUCTS } from './mockData';
 import { CANONICAL_BACKEND_PRODUCTS } from './productsCatalog';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 function getSessionId(): string {
   if (typeof window === 'undefined') return 'guest-session-1';
@@ -762,8 +762,7 @@ export const api = {
   async sendOtp(phone: string): Promise<{ success: boolean; message: string; testOtp?: string }> {
     const cleanPhone = phone.replace(/[^0-9]/g, '').slice(-10);
     const endpoints = [
-      'http://localhost:8080/api/auth/send-otp',
-      'http://127.0.0.1:8080/api/auth/send-otp',
+      `${API_BASE}/auth/send-otp`,
       '/api/auth/send-otp',
     ];
 
@@ -811,8 +810,7 @@ export const api = {
   ): Promise<{ success: boolean; token?: string; user?: any; message?: string }> {
     const cleanPhone = phone.replace(/[^0-9]/g, '').slice(-10);
     const endpoints = [
-      'http://localhost:8080/api/auth/verify-otp',
-      'http://127.0.0.1:8080/api/auth/verify-otp',
+      `${API_BASE}/auth/verify-otp`,
       '/api/auth/verify-otp',
     ];
 

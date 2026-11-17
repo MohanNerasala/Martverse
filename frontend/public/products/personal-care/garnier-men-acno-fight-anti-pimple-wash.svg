@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#500724"/>
+      <stop offset="60%" stop-color="#9d174d"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Canvas Background -->
+  <rect width="400" height="520" rx="28" fill="url(#bgGrad)"/>
+  <rect x="8" y="8" width="384" height="504" rx="22" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+
+  <!-- Top Decorative Header Strip -->
+  <path d="M 8 28 Q 8 8 28 8 L 372 8 Q 392 8 392 28 L 392 56 L 8 56 Z" fill="url(#accentGrad)"/>
+  <text x="200" y="36" fill="#ffffff" font-family="system-ui, sans-serif" font-size="12" font-weight="900" letter-spacing="2" text-anchor="middle">PERSONAL HYGIENE</text>
+
+  <!-- Central Product Packaging Presentation Plinth -->
+  <g filter="url(#cardShadow)">
+    <rect x="28" y="74" width="344" height="340" rx="18" fill="url(#cardGrad)"/>
+    <rect x="28" y="74" width="344" height="340" rx="18" fill="none" stroke="#ec4899" stroke-width="2.5" stroke-opacity="0.4"/>
+  </g>
+
+  <!-- Brand Name Banner -->
+  <rect x="48" y="94" width="304" height="36" rx="8" fill="#f1f5f9"/>
+  <text x="200" y="118" fill="#0f172a" font-family="system-ui, sans-serif" font-size="18" font-weight="900" letter-spacing="1" text-anchor="middle">GARNIER</text>
+
+  <!-- Veg / Quality Hallmark Icon -->
+  <g transform="translate(322, 142)">
+    <rect width="26" height="26" rx="4" fill="#ffffff" stroke="#16a34a" stroke-width="2.2"/>
+    <circle cx="13" cy="13" r="6" fill="#16a34a"/>
+  </g>
+
+  <!-- Product Title -->
+  <text x="200" y="175" fill="#0f172a" font-family="system-ui, sans-serif" font-size="20" font-weight="800" text-anchor="middle">
+    Garnier Men Acno
+  </text>
+  <text x="200" y="202" fill="#0f172a" font-family="system-ui, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Fight Anti-Pimple Wash</text>
+
+  <!-- Net Quantity / Weight Pill -->
+  <g transform="translate(140, 226)">
+    <rect width="120" height="28" rx="14" fill="#e2e8f0"/>
+    <text x="60" y="19" fill="#334155" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">NET: 150 g</text>
+  </g>
+
+  <!-- Price & Discount Tag Block -->
+  <g transform="translate(68, 272)">
+    <rect width="264" height="66" rx="14" fill="url(#accentGrad)"/>
+    <!-- Offer Price -->
+    <text x="75" y="44" fill="#ffffff" font-family="system-ui, sans-serif" font-size="34" font-weight="900" text-anchor="middle">₹240</text>
+    <!-- MRP Strikethrough -->
+    <text x="180" y="32" fill="rgba(255,255,255,0.75)" font-family="system-ui, sans-serif" font-size="14" font-weight="600" text-anchor="middle">MRP: ₹275</text>
+    <line x1="140" y1="27" x2="220" y2="27" stroke="rgba(255,255,255,0.85)" stroke-width="2"/>
+    <!-- Savings Badge -->
+    <text x="180" y="52" fill="#fef08a" font-family="system-ui, sans-serif" font-size="13" font-weight="800" text-anchor="middle">SAVE ₹35</text>
+  </g>
+
+  <!-- Quality Guarantee Seal -->
+  <text x="200" y="375" fill="#64748b" font-family="system-ui, sans-serif" font-size="12" font-weight="800" letter-spacing="1.5" text-anchor="middle">★ DERMA TESTED ★</text>
+
+  <!-- Commercial Retail Barcode Strip -->
+  <g transform="translate(70, 432)">
+    <rect width="260" height="52" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <g fill="#0f172a">
+      <rect x="20" y="8" width="3" height="36"/>
+      <rect x="26" y="8" width="6" height="36"/>
+      <rect x="36" y="8" width="2" height="36"/>
+      <rect x="42" y="8" width="5" height="36"/>
+      <rect x="52" y="8" width="3" height="36"/>
+      <rect x="60" y="8" width="7" height="36"/>
+      <rect x="74" y="8" width="2" height="36"/>
+      <rect x="80" y="8" width="6" height="36"/>
+      <rect x="92" y="8" width="4" height="36"/>
+      <rect x="100" y="8" width="8" height="36"/>
+      <rect x="114" y="8" width="3" height="36"/>
+      <rect x="122" y="8" width="5" height="36"/>
+      <rect x="132" y="8" width="2" height="36"/>
+      <rect x="140" y="8" width="7" height="36"/>
+      <rect x="152" y="8" width="4" height="36"/>
+      <rect x="162" y="8" width="8" height="36"/>
+      <rect x="176" y="8" width="3" height="36"/>
+      <rect x="184" y="8" width="6" height="36"/>
+      <rect x="196" y="8" width="4" height="36"/>
+      <rect x="206" y="8" width="8" height="36"/>
+      <rect x="220" y="8" width="3" height="36"/>
+      <rect x="228" y="8" width="6" height="36"/>
+      <rect x="238" y="8" width="3" height="36"/>
+    </g>
+  </g>
+</svg>
