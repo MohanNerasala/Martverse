@@ -681,90 +681,172 @@ const ProductBatch: React.FC<{
 });
 ProductBatch.displayName = 'ProductBatch';
 
-// Cache for baked high-resolution aisle category signboard textures
+// Cache for baked high-resolution aisle category signboard textures (2048x680, illuminated)
 const aisleSignTextureCache = new Map<number, THREE.CanvasTexture>();
 
-function getAisleSignTexture(aisleNumber: number, title: string, subtitle: string): THREE.CanvasTexture {
+// Pre-allocated frame and suspension cable materials for aisle category signs
+const aisleSignFrameMat = new THREE.MeshStandardMaterial({
+  color: '#0f172a',
+  metalness: 0.85,
+  roughness: 0.25,
+});
+
+const aisleCableMat = new THREE.MeshStandardMaterial({
+  color: '#cbd5e1',
+  metalness: 0.8,
+  roughness: 0.15,
+});
+
+function getAisleSignTexture(
+  aisleNumber: number,
+  title: string,
+  subtitle: string,
+  categoryColor = '#1d4ed8'
+): THREE.CanvasTexture {
   let tex = aisleSignTextureCache.get(aisleNumber);
   if (tex) return tex;
   if (typeof document === 'undefined') return new THREE.CanvasTexture({} as any);
 
   const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 340;
+  canvas.width = 2048;
+  canvas.height = 680;
   const ctx = canvas.getContext('2d')!;
 
-  // Background - Pure White Signboard
+  // 1. Brilliant Luminous White Acrylic Lightbox Face
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, 1024, 340);
+  ctx.fillRect(0, 0, 2048, 680);
 
-  // Outer Sapphire Border
-  ctx.strokeStyle = '#1d4ed8';
-  ctx.lineWidth = 12;
-  ctx.strokeRect(6, 6, 1012, 328);
+  // 2. Rich Saturated Category Header Banner (y: 0 to 180)
+  ctx.fillStyle = categoryColor;
+  ctx.fillRect(0, 0, 2048, 175);
 
-  // Top Red Aisle Pill
-  ctx.fillStyle = '#dc2626';
+  // Subtle gloss gradient highlight on the header
+  const headerGrad = ctx.createLinearGradient(0, 0, 0, 175);
+  headerGrad.addColorStop(0, 'rgba(255, 255, 255, 0.28)');
+  headerGrad.addColorStop(1, 'rgba(0, 0, 0, 0.15)');
+  ctx.fillStyle = headerGrad;
+  ctx.fillRect(0, 0, 2048, 175);
+
+  // Left Tag: MARTVERSE
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
   ctx.beginPath();
-  ctx.roundRect(362, 18, 300, 64, 12);
+  ctx.roundRect(48, 35, 360, 105, 18);
   ctx.fill();
-
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 36px sans-serif';
+  ctx.font = '900 46px system-ui, -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(`AISLE ${aisleNumber}`, 512, 50);
+  ctx.fillText('MARTVERSE', 228, 88);
 
-  // Main Category Headline
-  ctx.fillStyle = '#0f172a';
-  ctx.font = '900 68px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(title, 512, 165);
+  // Center Badge: AISLE 0X (Very bold and large)
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.roundRect(724, 22, 600, 130, 24);
+  ctx.fill();
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 4;
+  ctx.stroke();
 
-  // Green Subtitle Brands Bar
-  ctx.fillStyle = '#047857';
-  ctx.font = 'bold 32px sans-serif';
+  ctx.fillStyle = categoryColor;
+  ctx.font = '900 72px system-ui, -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(`★ ${subtitle} ★`, 512, 275);
+  ctx.fillText(`★ AISLE 0${aisleNumber} ★`, 1024, 88);
+
+  // Right Tag: HYPERMARKET
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.beginPath();
+  ctx.roundRect(1640, 35, 360, 105, 18);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 46px system-ui, -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('HYPERMARKET', 1820, 88);
+
+  // 3. Golden Chrome Divider Line
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(0, 175, 2048, 12);
+
+  // 4. Main Category Title — MASSIVE, JET-BLACK (#050811), HIGHEST CONTRAST & MAXIMUM CLARITY
+  ctx.fillStyle = '#050811';
+  ctx.font = '900 114px system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(title, 1024, 335);
+
+  // 5. Brand Subtitle — VIBRANT, BOLD, LARGE
+  ctx.fillStyle = categoryColor;
+  ctx.font = 'bold 50px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`★ ${subtitle} ★`, 1024, 475);
+
+  // 6. Bottom Quality & Freshness Guarantee Band
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 560, 2048, 120);
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(0, 560, 2048, 120);
+
+  ctx.fillStyle = '#475569';
+  ctx.font = '800 32px system-ui, -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('DAILY LOW PRICES  •  100% QUALITY GUARANTEED  •  FRESH STOCKS', 1024, 620);
+
+  // 7. Outer Protective Border
+  ctx.strokeStyle = categoryColor;
+  ctx.lineWidth = 18;
+  ctx.strokeRect(9, 9, 2030, 662);
 
   tex = new THREE.CanvasTexture(canvas);
-  tex.anisotropy = 8;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 16;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = true;
+  tex.needsUpdate = true;
   aisleSignTextureCache.set(aisleNumber, tex);
   return tex;
 }
 
-// Sleek Commercial D-Mart Aisle Category Hanging Sign (Compact, Non-Intrusive, Realistic, 0 extra text passes)
+// Commercial Photorealistic Aisle Department Illuminated Lightbox Board
 const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; height: number }> = React.memo(({ aisleNumber, categoryName, height }) => {
-  const subtitleMap: Record<number, string> = {
-    1: 'Parle-G • Good Day • Oreo • Crackers',
-    2: 'Potato Chips • Kurkure • Bhujia • Bites',
-    3: 'Tata Tea Gold • Red Label • Green Tea',
-    4: 'Nescafe Classic • Bru Roast • Hot Drinks',
-    5: 'Aashirvaad Atta • Maida • Sooji',
-    6: 'India Gate Basmati • Toor Dal • Pulses',
-    7: 'Sunflower Oil • Mustard Oil • Spices',
-    8: 'Maggi Noodles • Pasta • Oats • Cereals',
-    9: 'Chilled Sodas • Tropicana • Water Bottles',
+  const aisleData: Record<number, { title: string; subtitle: string; color: string }> = {
+    1: { title: 'BISCUITS & COOKIES', subtitle: 'Parle-G • Good Day • Oreo • Marie Gold • Crackers', color: '#b45309' },
+    2: { title: 'SNACKS & NAMKEEN', subtitle: 'Potato Chips • Kurkure • Haldiram Bhujia • Murukku', color: '#d97706' },
+    3: { title: 'TEA & INFUSIONS', subtitle: 'Tata Tea Gold • Red Label • Wagh Bakri • Green Tea', color: '#15803d' },
+    4: { title: 'COFFEE & HOT DRINKS', subtitle: 'Nescafe Classic • Bru Roast • Bournvita • Horlicks', color: '#854d0e' },
+    5: { title: 'FLOURS & CHAKKI ATTA', subtitle: 'Aashirvaad Shudh Chakki Atta • Maida • Sooji • Besan', color: '#047857' },
+    6: { title: 'RICE, DALS & PULSES', subtitle: 'India Gate Basmati • Toor Dal • Moong Dal • Urad Dal', color: '#0284c7' },
+    7: { title: 'COOKING OILS & SPICES', subtitle: 'Fortune Sunflower Oil • Dhara Mustard • Everest Masala', color: '#c2410c' },
+    8: { title: 'INSTANT FOODS & PASTA', subtitle: 'Maggi 2-Min • Yippee Noodles • Pasta • Knorr Soups', color: '#dc2626' },
+    9: { title: 'BEVERAGES & SODAS', subtitle: 'Thums Up • Coca-Cola • Sprite • Tropicana Juices', color: '#1d4ed8' },
   };
-  const subtitle = subtitleMap[aisleNumber] || 'Daily Groceries & Essentials';
 
-  const titleMap: Record<number, string> = {
-    1: 'BISCUITS & COOKIES',
-    2: 'SNACKS & NAMKEEN',
-    3: 'TEA & INFUSIONS',
-    4: 'COFFEE & HOT DRINKS',
-    5: 'FLOURS & CHAKKI ATTA',
-    6: 'RICE, DALS & PULSES',
-    7: 'COOKING OILS & SPICES',
-    8: 'INSTANT FOODS & PASTA',
-    9: 'BEVERAGES & SODAS',
+  const item = aisleData[aisleNumber] || {
+    title: categoryName.toUpperCase(),
+    subtitle: 'Daily Fresh Groceries & Household Essentials',
+    color: '#1d4ed8',
   };
-  const title = titleMap[aisleNumber] || categoryName.toUpperCase();
 
-  const signTex = useMemo(() => getAisleSignTexture(aisleNumber, title, subtitle), [aisleNumber, title, subtitle]);
-  const signMat = useMemo(() => new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.25 }), [signTex]);
+  const signTex = useMemo(() => getAisleSignTexture(aisleNumber, item.title, item.subtitle, item.color), [aisleNumber, item.title, item.subtitle, item.color]);
+
+  // Backlit LED Lightbox Material: radiant self-illuminating commercial glow
+  const signMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        map: signTex,
+        emissiveMap: signTex,
+        emissive: new THREE.Color('#ffffff'),
+        emissiveIntensity: 0.72,
+        roughness: 0.15,
+        metalness: 0.05,
+      }),
+    [signTex]
+  );
+
   const signRef = useRef<THREE.Group>(null);
 
   useFrame(({ clock }) => {
@@ -777,18 +859,32 @@ const AisleCategorySign: React.FC<{ aisleNumber: number; categoryName: string; h
   return (
     <group position={[0, height / 2 + 1.45, 0]} raycast={() => null}>
       {/* Hanging Suspension Cables extending to ceiling slab at y = 5.2 */}
-      <mesh position={[-0.95, 0.65, 0]}>
-        <cylinderGeometry args={[0.004, 0.004, 1.3, 8]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.2} />
+      <mesh position={[-1.05, 0.85, 0]}>
+        <cylinderGeometry args={[0.004, 0.004, 1.7, 8]} />
+        <primitive object={aisleCableMat} attach="material" />
       </mesh>
-      <mesh position={[0.95, 0.65, 0]}>
-        <cylinderGeometry args={[0.004, 0.004, 1.3, 8]} />
-        <meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.2} />
+      <mesh position={[1.05, 0.85, 0]}>
+        <cylinderGeometry args={[0.004, 0.004, 1.7, 8]} />
+        <primitive object={aisleCableMat} attach="material" />
       </mesh>
 
-      {/* Gentle Swaying Suspended Aisle Department Board */}
+      {/* Swaying Commercial Illuminated Lightbox Fixture */}
       <group ref={signRef}>
-        <mesh geometry={sharedGeometries.box} scale={[2.60, 0.82, 0.04]} material={signMat} />
+        {/* Outer Dark Aluminum Protective Bezel Frame */}
+        <mesh geometry={sharedGeometries.box} scale={[2.84, 0.94, 0.042]} material={aisleSignFrameMat} />
+
+        {/* Top Suspension Cable Anchor Brackets */}
+        <mesh position={[-1.05, 0.49, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.06, 0.05]} material={aisleSignFrameMat} />
+        <mesh position={[1.05, 0.49, 0]} geometry={sharedGeometries.box} scale={[0.06, 0.06, 0.05]} material={aisleSignFrameMat} />
+
+        {/* Front Luminous Face (+Z, Facing South towards Shoppers entering from Promenade) */}
+        <mesh position={[0, 0, 0.022]} geometry={sharedGeometries.plane} scale={[2.80, 0.90, 1]} material={signMat} />
+
+        {/* Back Luminous Face (-Z, Rotated 180° around Y so Text Reads Forwards from Both Sides!) */}
+        <mesh position={[0, 0, -0.022]} rotation={[0, Math.PI, 0]} geometry={sharedGeometries.plane} scale={[2.80, 0.90, 1]} material={signMat} />
+
+        {/* Soft Downward Area Illuminator Underneath Lightbox */}
+        <pointLight position={[0, -0.5, 0]} intensity={0.45} distance={3.5} color="#ffffff" decay={2} />
       </group>
     </group>
   );
