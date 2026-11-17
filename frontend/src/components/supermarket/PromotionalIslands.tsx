@@ -944,6 +944,14 @@ const IslandProductBatch: React.FC<{
           const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
           setHover(targetProd);
         }}
+        onPointerMove={(e) => {
+          const instanceId = e.instanceId;
+          if (instanceId !== undefined && instanceId < slots.length && instanceId !== hoveredIndexRef.current) {
+            hoveredIndexRef.current = instanceId;
+            const targetProd = slots[instanceId]?.product || product;
+            setHover(targetProd);
+          }
+        }}
         onPointerDown={(e) => {
           e.stopPropagation();
           const instanceId = e.instanceId;

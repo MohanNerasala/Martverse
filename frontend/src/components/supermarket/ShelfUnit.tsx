@@ -634,6 +634,14 @@ const ProductBatch: React.FC<{
           const targetProd = (instanceId !== undefined && slots[instanceId]) ? slots[instanceId].product : product;
           setHoveredProduct(targetProd);
         }}
+        onPointerMove={(e) => {
+          const instanceId = e.instanceId;
+          if (instanceId !== undefined && instanceId < slots.length && instanceId !== hoveredIndexRef.current) {
+            hoveredIndexRef.current = instanceId;
+            const targetProd = slots[instanceId] ? slots[instanceId].product : product;
+            setHoveredProduct(targetProd);
+          }
+        }}
         onPointerDown={(e) => {
           e.stopPropagation();
           const instanceId = e.instanceId;
@@ -1518,9 +1526,11 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
           const prodIdx = (Math.floor(c / FACING_WIDTH) + tierOffset + (s.side === 'RIGHT' ? Math.floor(poolLength / 2) : 0)) % poolLength;
           const product = pool[prodIdx];
 
-          const slotWorldX = centerX + s.relX;
-          const slotWorldY = centerY + shelfTierY;
-          const slotWorldZ = centerZ + zRel;
+          const cosR = Math.cos(rotationY);
+          const sinR = Math.sin(rotationY);
+          const slotWorldX = centerX + (s.relX * cosR + zRel * sinR);
+          const slotWorldY = floorYOffset + tierInfo.height + 0.18;
+          const slotWorldZ = centerZ + (-s.relX * sinR + zRel * cosR);
 
           const slotPlacement: ProductPlacement = product.placement
             ? {
@@ -1552,7 +1562,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
                 worldX: slotWorldX,
                 worldY: slotWorldY,
                 worldZ: slotWorldZ,
-                rotationY: s.rotationY,
+                rotationY: s.rotationY + rotationY,
                 color: '#3b82f6',
                 modelType: 'box',
               };
@@ -1575,7 +1585,7 @@ const ShelfUnitComponent: React.FC<ShelfUnitProps> = ({ aisle, products, floorYO
             worldX: slotWorldX,
             worldY: slotWorldY,
             worldZ: slotWorldZ,
-            rotationY: s.rotationY,
+            rotationY: s.rotationY + rotationY,
           });
         }
       });

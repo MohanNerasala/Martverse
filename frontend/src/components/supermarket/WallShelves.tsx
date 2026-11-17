@@ -375,6 +375,13 @@ const WallProductBatch: React.FC<{
           const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
           setHover(targetProd);
         }}
+        onPointerMove={(e) => {
+          const instanceId = e.instanceId;
+          if (instanceId !== undefined && instanceId < slots.length) {
+            const targetProd = slots[instanceId]?.product || product;
+            setHover(targetProd);
+          }
+        }}
         onPointerOut={(e) => {
           e.stopPropagation();
           if (typeof document !== 'undefined') document.body.style.cursor = 'default';
@@ -692,6 +699,13 @@ const BulkPalletBatch: React.FC<{
           const instanceId = e.instanceId;
           const targetProd = (instanceId !== undefined && slots[instanceId]?.product) ? slots[instanceId].product! : product;
           setHover(targetProd);
+        }}
+        onPointerMove={(e) => {
+          const instanceId = e.instanceId;
+          if (instanceId !== undefined && instanceId < slots.length) {
+            const targetProd = slots[instanceId]?.product || product;
+            setHover(targetProd);
+          }
         }}
         onPointerOut={(e) => {
           e.stopPropagation();
