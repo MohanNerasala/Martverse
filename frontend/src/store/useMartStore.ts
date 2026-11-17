@@ -131,14 +131,7 @@ export const useMartStore = create<MartStore>((set, get) => ({
   unpaidExitAlertOpen: false,
   toast: null,
 
-  hasEnteredStore:
-    typeof window !== 'undefined'
-      ? Boolean(
-          sessionStorage.getItem('martverse_entered') ||
-            localStorage.getItem('martverse_entered') ||
-            localStorage.getItem('martverse_intro_completed')
-        )
-      : false,
+  hasEnteredStore: true,
   setHasEnteredStore: (hasEnteredStore) => set({ hasEnteredStore }),
 
   setHasMovedTrolley: (hasMovedTrolley) => set({ hasMovedTrolley }),

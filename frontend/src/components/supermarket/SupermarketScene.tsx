@@ -32,8 +32,6 @@ const ScenePerformanceMonitor: React.FC = () => {
     if (typeof window !== 'undefined') {
       (window as any).__threeScene = scene;
       (window as any).__threeRenderer = gl;
-      // Phase 3: Pre-warm all product textures and pre-compile all scene shaders
-      prewarmAllProductTextures(gl);
       if ('compileAsync' in gl) {
         (gl as any).compileAsync(scene, camera).catch(() => {});
       }

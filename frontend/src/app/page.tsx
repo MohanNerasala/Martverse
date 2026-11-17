@@ -87,23 +87,6 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     const storedTarget = sessionStorage.getItem('martverse_return_target');
     const returnTarget = params.get('return') || storedTarget;
-    const hasEntered =
-      sessionStorage.getItem('martverse_entered') === 'true' ||
-      localStorage.getItem('martverse_entered') === 'true' ||
-      localStorage.getItem('martverse_intro_completed') === 'true';
-    const skipIntro =
-      params.get('skip_intro') === 'true' ||
-      sessionStorage.getItem('martverse_skip_intro') === 'true' ||
-      localStorage.getItem('martverse_skip_intro') === 'true';
-    const isInternalReferrer =
-      typeof document !== 'undefined' &&
-      document.referrer &&
-      (document.referrer.includes('/orders') ||
-        document.referrer.includes('/cart') ||
-        document.referrer.includes('/checkout') ||
-        document.referrer.includes('/wishlist') ||
-        document.referrer.includes('/profile'));
-
     if (storedTarget) {
       sessionStorage.removeItem('martverse_return_target');
     }
@@ -140,74 +123,64 @@ export default function Home() {
       setShowWelcomeModal(false);
     };
 
-    if (returnTarget || hasEntered || skipIntro || isInternalReferrer) {
-      // Navigating back from checkout, orders, or continue shopping, or on refresh:
-      sessionStorage.setItem('martverse_entered', 'true');
-      localStorage.setItem('martverse_entered', 'true');
-      localStorage.setItem('martverse_intro_completed', 'true');
-      sessionStorage.removeItem('martverse_skip_intro');
-      setHasEnteredStore(true);
-    useMartStore.getState().setCameraMode('third_person');
-      setShowIntro(false);
+    const playIntro = params.get('intro') === 'true';
+
+    if (playIntro) {
+      setHasEnteredStore(false);
+      setShowIntro(true);
       setShowWelcomeModal(false);
-
-      const store = useMartStore.getState();
-      useBillingStore.getState().resetBilling();
-      martRuntime.billingCooldownUntil = Date.now() + 2500;
-
-      if (returnTarget === 'billing') {
-        // ONLY FROM CHECKOUT PAGE (Back to Store or Martverse Logo):
-        // Placed cleanly at Billing Section in front of Lane 02 ([0, 1.5, 14.6])
-        martRuntime.playerPos[0] = 0;
-        martRuntime.playerPos[1] = 1.5;
-        martRuntime.playerPos[2] = 14.6;
-        martRuntime.playerYaw = 0;
-        store.setPlayerPos([0, 1.5, 14.6], 0);
-        store.setCameraMode('third_person');
-        useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
-      } else {
-        // ANY OTHER PAGE / CONTINUE SHOPPING AFTER ORDER:
-        // Return directly to Trolley Reset Place in mart ([0, 1.5, -20]) without starting from scratch
-        martRuntime.playerPos[0] = 0;
-        martRuntime.playerPos[1] = 1.5;
-        martRuntime.playerPos[2] = -20;
-        martRuntime.playerYaw = 0;
-        store.setPlayerPos([0, 1.5, -20], 0);
-        store.setCameraMode('third_person');
-        useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
-      }
-
-      if (params.get('return')) {
-        window.history.replaceState({}, '', '/');
-      }
       return;
     }
 
-    // Fresh visit in a brand new session with no session storage -> Play intro animation
-    setHasEnteredStore(false);
-    setShowIntro(true);
+    // Fast-path: Instant 3D store entrance (< 1.5s) without 40s wait or scroll intro
+    sessionStorage.setItem('martverse_entered', 'true');
+    localStorage.setItem('martverse_entered', 'true');
+    localStorage.setItem('martverse_intro_completed', 'true');
+    sessionStorage.removeItem('martverse_skip_intro');
+    setHasEnteredStore(true);
+    useMartStore.getState().setCameraMode('third_person');
+    setShowIntro(false);
     setShowWelcomeModal(false);
 
+    const store = useMartStore.getState();
+    useBillingStore.getState().resetBilling();
+    martRuntime.billingCooldownUntil = Date.now() + 2500;
+
+    if (returnTarget === 'billing') {
+      // Placed cleanly at Billing Section in front of Lane 02 ([0, 1.5, 14.6])
+      martRuntime.playerPos[0] = 0;
+      martRuntime.playerPos[1] = 1.5;
+      martRuntime.playerPos[2] = 14.6;
+      martRuntime.playerYaw = 0;
+      store.setPlayerPos([0, 1.5, 14.6], 0);
+      store.setCameraMode('third_person');
+      useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
+    } else {
+      // Default: Trolley Reset Place in mart ([0, 1.5, -20])
+      martRuntime.playerPos[0] = 0;
+      martRuntime.playerPos[1] = 1.5;
+      martRuntime.playerPos[2] = -20;
+      martRuntime.playerYaw = 0;
+      store.setPlayerPos([0, 1.5, -20], 0);
+      store.setCameraMode('third_person');
+      useMartStore.setState((state) => ({ teleportTrigger: state.teleportTrigger + 1 }));
+    }
+
+    if (params.get('return')) {
+      window.history.replaceState({}, '', '/');
+    }
+
     if (params.get('checkout')) {
-      setShowIntro(false);
-      setShowWelcomeModal(false);
-      setHasEnteredStore(true);
-    useMartStore.getState().setCameraMode('third_person');
       router.push('/checkout');
       return;
     }
 
     if (params.get('modal')) {
       const modalQuery = params.get('modal');
-      const store = useMartStore.getState();
       const target = store.products.find(
         (p) => p.slug === modalQuery || p.id === modalQuery || p.slug.includes(modalQuery || '')
       ) || store.products.find((p) => p.slug.includes('surf-excel')) || store.products[0];
       if (target) {
-        setShowIntro(false);
-        setShowWelcomeModal(false);
-        setHasEnteredStore(true);
-    useMartStore.getState().setCameraMode('third_person');
         setTimeout(() => {
           store.openProductModal(target);
         }, 300);

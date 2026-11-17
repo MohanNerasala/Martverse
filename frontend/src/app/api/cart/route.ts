@@ -40,3 +40,4 @@ export async function GET(req: NextRequest) {
   const cart = getOrCreateCart(sid);
   return NextResponse.json(cart, { status: 200 });
 }
+

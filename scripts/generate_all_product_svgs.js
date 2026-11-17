@@ -242,3 +242,4 @@ catalog.forEach((prod) => {
 });
 
 console.log(`Successfully generated ${count} product SVGs in ${outBase}`);
+

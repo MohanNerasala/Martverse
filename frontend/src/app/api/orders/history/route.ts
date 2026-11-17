@@ -22,3 +22,4 @@ export async function GET(req: NextRequest) {
   // If Spring Boot is offline, return empty list or client storage will hydrate
   return NextResponse.json({ success: true, data: [] }, { status: 200 });
 }
+
