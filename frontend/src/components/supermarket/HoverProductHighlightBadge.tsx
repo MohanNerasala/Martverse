@@ -10,9 +10,9 @@ const highlightMaterials = {
   rimLight: new THREE.MeshStandardMaterial({
     color: '#38bdf8',
     emissive: new THREE.Color('#38bdf8'),
-    emissiveIntensity: 0.95,
+    emissiveIntensity: 0.8,
     transparent: true,
-    opacity: 0.65,
+    opacity: 0.5,
     wireframe: true,
   }),
 };
@@ -31,74 +31,50 @@ interface HoverProductHighlightBadgeProps {
 
 export const HoverProductHighlightBadge: React.FC<HoverProductHighlightBadgeProps> = React.memo(
   ({ product, position, rotY, bw, bh, bd, progress }) => {
-    if (progress <= 0.05) return null;
+    if (progress <= 0.01) return null;
 
     const [x, y, z] = position;
     const cleanName = product.name || 'Commercial Product';
-    const mrp = product.mrp && product.mrp > product.price ? product.mrp : Math.round(product.price * 1.25);
-    const stock = product.stock || product.stockQuantity || 24;
-    const rating = product.rating || 4.5;
 
     return (
       <group position={[x, y, z]} rotation={[0, rotY, 0]}>
         {/* 1. Soft White-Blue Rim Light Framing the Hovered Pack */}
         <mesh
           geometry={rimBoxGeo}
-          scale={[bw * 1.05, bh * 1.05, bd * 1.05]}
+          scale={[bw * 1.04, bh * 1.04, bd * 1.04]}
           material={highlightMaterials.rimLight}
           raycast={() => null}
         />
 
-        {/* 2. Pin-Sharp HTML Overlay Tooltip Card via Drei Html (Sharp at any distance) */}
+        {/* 2. Small, Clean Pop-up Badge right above the pack (No dark lightbox overlay) */}
         <Html
-          position={[0, bh / 2 + 0.16, 0]}
+          position={[0, bh / 2 + 0.05, 0]}
           center
-          distanceFactor={6}
           zIndexRange={[100, 0]}
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
             transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
-            opacity: Math.min(1, progress * 1.5),
-            transform: `scale(${0.85 + progress * 0.15})`,
+            opacity: 1,
+            transform: 'scale(1)',
           }}
         >
-          <div className="w-56 bg-slate-900/95 backdrop-blur-xl border border-sky-400/60 rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.5),0_0_20px_rgba(56,189,248,0.25)] text-left select-none pointer-events-none">
-            {/* Header: Brand & Rating */}
-            <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="text-[10px] font-black uppercase tracking-wider text-sky-400 bg-sky-950/80 px-2 py-0.5 rounded-md border border-sky-500/30">
-                {product.brand || 'MARTVERSE'}
-              </span>
-              <span className="text-[10px] font-bold text-amber-400 flex items-center gap-0.5">
-                ★ {rating}
-              </span>
+          <div className="bg-white/95 border border-slate-200/90 shadow-[0_4px_16px_rgba(15,23,42,0.14)] rounded-lg px-2.5 py-1 text-left select-none pointer-events-none min-w-[105px] max-w-[145px] whitespace-nowrap">
+            {/* Product Name */}
+            <div className="text-[11px] font-black text-slate-900 leading-tight truncate max-w-[135px]">
+              {cleanName}
             </div>
 
-            {/* Product Name */}
-            <h4 className="text-xs font-black text-white leading-snug line-clamp-2">
-              {cleanName}
-            </h4>
-
-            {/* Weight / Pack Size */}
-            <p className="text-[10px] font-medium text-slate-300 mt-0.5">
-              {product.weight || product.unit || 'Standard Pack'}
-            </p>
-
-            {/* Price & Stock Row */}
-            <div className="flex items-baseline justify-between mt-2 pt-1.5 border-t border-slate-700/80">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-base font-black text-rose-400 leading-none">
-                  ₹{product.price}
-                </span>
-                {mrp > product.price && (
-                  <span className="text-[10px] font-semibold text-slate-400 line-through">
-                    ₹{mrp}
-                  </span>
-                )}
-              </div>
-              <span className="text-[9.5px] font-bold text-emerald-400">
-                In Stock ({stock})
+            {/* Price & Pack Size */}
+            <div className="flex items-center justify-between gap-2 mt-0.5">
+              <span className="text-xs font-black text-blue-600 leading-none">
+                ₹{product.price}
               </span>
+              {(product.weight || product.unit) && (
+                <span className="text-[9.5px] font-bold text-slate-500 truncate">
+                  {product.weight || product.unit}
+                </span>
+              )}
             </div>
           </div>
         </Html>
