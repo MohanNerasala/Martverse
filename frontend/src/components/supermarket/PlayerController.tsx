@@ -612,7 +612,7 @@ export const PlayerController: React.FC = () => {
 
     if (pz >= 19.0 && pz <= 24.5 && px >= -17.5 && px <= 17.5) {
       if (currentCart.length > 0 && useBillingStore.getState().phase === 'idle') {
-        startCheckout(currentCart);
+        startCheckout(currentCart, px);
       }
       return;
     }
@@ -969,7 +969,7 @@ export const PlayerController: React.FC = () => {
         Date.now() > martRuntime.billingCooldownUntil
       ) {
         martRuntime.billingCooldownUntil = Date.now() + 2500;
-        startCheckout(activeCartItems);
+        startCheckout(activeCartItems, currX);
       }
 
       // 2. RETREATING BACKWARD: User pulls trolley far back out of the dock (currZ < 13.8)

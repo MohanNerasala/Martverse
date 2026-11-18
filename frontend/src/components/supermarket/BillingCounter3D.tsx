@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
-import { useBillingStore } from '@/store/useBillingStore';
+import { useBillingStore, computeCheckoutDeskIndex } from '@/store/useBillingStore';
 import { useCartStore } from '@/store/useCartStore';
 import { martRuntime } from '@/store/useMartStore';
 import { sounds } from '@/lib/sound';
@@ -418,7 +418,11 @@ const ConveyorAnimation3D: React.FC<{
         totalUnits: u.totalUnits,
         flatIndex: u.flatIndex,
         startTime: u.flatIndex * stagger,
-        pos: [typeof martRuntime.playerPos[0] === 'number' ? martRuntime.playerPos[0] : activeDeskX - 1.9, 0.72, (martRuntime.playerPos[2] || 17.0) - 18.0],
+        pos: [
+          typeof martRuntime.playerPos[0] === 'number' ? martRuntime.playerPos[0] : activeDeskX - 1.9,
+          0.72,
+          (typeof martRuntime.playerPos[2] === 'number' && martRuntime.playerPos[2] > 12 && martRuntime.playerPos[2] < 25 ? martRuntime.playerPos[2] + 1.15 : 20.0) - 22.0,
+        ],
         rot: [0, 0, 0],
         stage: 'fly',
         landSoundPlayed: false,
@@ -439,7 +443,7 @@ const ConveyorAnimation3D: React.FC<{
     const playerX = martRuntime.playerPos[0];
     const playerZ = martRuntime.playerPos[2];
     const trolleyX = typeof playerX === 'number' ? playerX : activeDeskX - 1.9;
-    const trolleyZ = (playerZ > 14 && playerZ < 21 ? playerZ : 17.0) - 18.0;
+    const trolleyZ = (typeof playerZ === 'number' && playerZ > 12 && playerZ < 25 ? playerZ + 1.15 : 20.0) - 22.0;
 
     const beltX = activeDeskX - 0.15;
     const beltDropZ = -0.9;
@@ -935,10 +939,9 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
 
   const isConveyorMoving = useBillingStore((state) => state.isConveyorMoving);
   const phase = useBillingStore((state) => state.phase);
-
-  const [activeDeskIndex, setActiveDeskIndex] = useState(2);
+  const activeDeskIndex = useBillingStore((state) => state.activeDeskIndex);
+  const setActiveDeskIndex = useBillingStore((state) => state.setActiveDeskIndex);
   const bagScaleRef = useRef(1.0);
-  const lastDeskCheckRef = useRef(0);
 
   // 6 Commercial Checkout Lanes across X = [-15, 15]
   const counterXPositions = useMemo(() => [-15, -9, -3, 3, 9, 15], []);
@@ -957,23 +960,13 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
   }, []);
 
   useFrame((_, delta) => {
-    const now = performance.now();
     const playerZ = martRuntime.playerPos[2];
     const playerX = martRuntime.playerPos[0];
 
-    // Only evaluate desk switching if NOT currently scanning, and player is within the billing section
-    // Throttle to 350ms with 2.8m hysteresis to eliminate unnecessary re-renders
-    if (phase !== 'scanning' && playerZ >= 13.0 && playerZ <= 26.0 && now - lastDeskCheckRef.current > 350) {
-      lastDeskCheckRef.current = now;
-      let bestIdx = activeDeskIndex;
-      let minDiff = Math.abs(playerX - counterXPositions[activeDeskIndex]);
-      for (let i = 0; i < counterXPositions.length; i++) {
-        const dist = Math.abs(playerX - counterXPositions[i]);
-        if (dist < minDiff - 2.8) { // 2.8m hysteresis
-          bestIdx = i;
-          minDiff = dist;
-        }
-      }
+    // Responsive real-time desk tracking while approaching or standing at checkout
+    // Selects the left counter when on the left, and the right counter when on the right
+    if (phase !== 'scanning' && playerZ >= 13.0 && playerZ <= 26.0) {
+      const bestIdx = computeCheckoutDeskIndex(playerX);
       if (bestIdx !== activeDeskIndex) {
         setActiveDeskIndex(bestIdx);
       }
@@ -1098,14 +1091,21 @@ export const BillingCounter3D: React.FC<BillingCounterProps> = ({ position }) =>
       />
 
       {/* --- Checkout Floor Queue Docks across all 6 lanes --- */}
-      {counterXPositions.map((xPos, idx) => (
-        <RealisticFloorDockDecal
-          key={`dock-${idx}`}
-          laneIndex={idx}
-          position={[xPos - 1.9, 0.012, -0.6]}
-          isActive={activeDeskIndex === idx}
-        />
-      ))}
+      {counterXPositions.map((xPos, idx) => {
+        const dockX = xPos - 1.9;
+        const isCurrentDock =
+          activeDeskIndex === idx ||
+          (Math.abs((martRuntime.playerPos[0] || 0) - dockX) < 2.0 &&
+            Math.abs((martRuntime.playerPos[2] || 0) - 21.4) < 3.5);
+        return (
+          <RealisticFloorDockDecal
+            key={`dock-${idx}`}
+            laneIndex={idx}
+            position={[dockX, 0.012, -0.6]}
+            isActive={isCurrentDock}
+          />
+        );
+      })}
 
       {/* --- Industrial Safety Hazard Sensor Line Across All 6 Lanes --- */}
       <group position={[0, 0.016, -2.4]} raycast={() => null}>

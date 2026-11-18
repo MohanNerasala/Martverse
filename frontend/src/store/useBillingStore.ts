@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { CartItem, BillingScannedItem } from '@/types';
 import { sounds } from '@/lib/sound';
 import { useCartStore } from './useCartStore';
+import { martRuntime } from './useMartStore';
 import { api } from '@/lib/api';
 import confetti from 'canvas-confetti';
 
@@ -59,7 +60,18 @@ export type BillingPhase =
 
 export type ScanStage = 'drop' | 'laser' | 'bagged' | 'idle';
 
+export function computeCheckoutDeskIndex(playerX: number): number {
+  if (playerX < -12.0) return 0; // Desk 0 (-15)
+  if (playerX < -6.0) return 1;  // Desk 1 (-9)
+  if (playerX <= 1.8) return 2;  // Desk 2 (-3) [LEFT CENTER DESK - Selected for left-side / center bay]
+  if (playerX <= 6.0) return 3;  // Desk 3 (+3) [RIGHT CENTER DESK - Selected for right-side]
+  if (playerX <= 12.0) return 4; // Desk 4 (+9)
+  return 5;                      // Desk 5 (+15)
+}
+
 interface BillingStore {
+  activeDeskIndex: number;
+  setActiveDeskIndex: (idx: number) => void;
   phase: BillingPhase;
   scannedItems: BillingScannedItem[];
   currentScanningItem: CartItem | null;
@@ -75,7 +87,7 @@ interface BillingStore {
   backendQuote: BackendQuote | null;
   isValidatingBackend: boolean;
 
-  startCheckout: (items: CartItem[]) => void;
+  startCheckout: (items: CartItem[], playerX?: number) => void;
   setTransferredToBenchCount: (count: number) => void;
   recordUnitScanned: (flatIndex: number, item: CartItem, unitNumber: number, totalUnits: number) => void;
   finishScanning: () => void;
@@ -99,6 +111,8 @@ let scanStepTimeout: NodeJS.Timeout | null = null;
 let currentItemsToScan: CartItem[] = [];
 
 export const useBillingStore = create<BillingStore>((set, get) => ({
+  activeDeskIndex: 2,
+  setActiveDeskIndex: (idx: number) => set({ activeDeskIndex: idx }),
   phase: 'idle',
   scannedItems: [],
   currentScanningItem: null,
@@ -116,7 +130,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
   setTransferredToBenchCount: (count: number) => set({ transferredToBenchCount: count }),
 
-  startCheckout: (items) => {
+  startCheckout: (items, playerX) => {
     if (items.length === 0) return;
     if (scanStepTimeout) {
       clearTimeout(scanStepTimeout);
@@ -129,7 +143,11 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     const totalPhysicalUnits = items.reduce((sum, it) => sum + it.quantity, 0);
     const firstItem = items[0] || null;
 
+    const px = typeof playerX === 'number' ? playerX : (martRuntime.playerPos[0] ?? 0);
+    const chosenDesk = computeCheckoutDeskIndex(px);
+
     set({
+      activeDeskIndex: chosenDesk,
       phase: 'scanning',
       scannedItems: items.map((it) => ({
         ...it,
