@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { martRuntime, useMartStore } from '@/store/useMartStore';
-import { Compass, Minimize2, Navigation, MapPin, ArrowRight, Sparkles } from 'lucide-react';
+import { Compass, Minimize2, MapPin, ArrowRight } from 'lucide-react';
 
 interface AisleDef {
   number: number;
@@ -11,8 +11,6 @@ interface AisleDef {
   teluguName: string;
   icon: string;
   shortLabel: string;
-  hindiShort: string;
-  teluguShort: string;
   itemsPreview: string;
   x: number;
   z: number;
@@ -32,9 +30,7 @@ const AISLES: AisleDef[] = [
     teluguName: 'స్నాక్స్ & నమ్కీన్',
     icon: '🥨',
     shortLabel: 'SNACKS',
-    hindiShort: 'स्नैक्स',
-    teluguShort: 'స్నాక్స్',
-    itemsPreview: 'Kurkure, Lays, Haldiram Bhujia',
+    itemsPreview: 'Kurkure, Lays, Haldiram',
     x: -24.0,
     z: 0,
     w: 2.2,
@@ -49,9 +45,7 @@ const AISLES: AisleDef[] = [
     teluguName: 'బేకరీ & బిస్కెట్లు',
     icon: '🍪',
     shortLabel: 'BAKERY',
-    hindiShort: 'बेकरी',
-    teluguShort: 'బేకరీ',
-    itemsPreview: 'Parle-G, Good Day, Oreo Cookies',
+    itemsPreview: 'Parle-G, Good Day, Oreo',
     x: -17.5,
     z: 0,
     w: 2.2,
@@ -65,9 +59,7 @@ const AISLES: AisleDef[] = [
     hindiName: 'पेय और चाय/कॉफी',
     teluguName: 'టీ & కాఫీ పానీయాలు',
     icon: '☕',
-    shortLabel: 'TEA/COFFEE',
-    hindiShort: 'चाय/कॉफी',
-    teluguShort: 'టీ/కాఫీ',
+    shortLabel: 'TEA',
     itemsPreview: 'Tata Tea, Nescafe, Horlicks',
     x: -11.0,
     z: -5.0,
@@ -83,8 +75,6 @@ const AISLES: AisleDef[] = [
     teluguName: 'డైరీ & అల్పాహారం',
     icon: '🧀',
     shortLabel: 'DAIRY',
-    hindiShort: 'डेयरी',
-    teluguShort: 'డైరీ',
     itemsPreview: 'Amul Butter, Paneer, Cheese',
     x: -11.0,
     z: 5.0,
@@ -99,10 +89,8 @@ const AISLES: AisleDef[] = [
     hindiName: 'अनाज, आटा और दालें',
     teluguName: 'బియ్యం, పిండి & పప్పులు',
     icon: '🌾',
-    shortLabel: 'ATTA/RICE',
-    hindiShort: 'आटा/चावल',
-    teluguShort: 'పిండి/బియ్యం',
-    itemsPreview: 'Aashirvaad Atta, Daawat Basmati',
+    shortLabel: 'ATTA',
+    itemsPreview: 'Aashirvaad Atta, Basmati',
     x: 17.5,
     z: 0,
     w: 2.2,
@@ -116,10 +104,8 @@ const AISLES: AisleDef[] = [
     hindiName: 'कुकिंग ऑयल और घी',
     teluguName: 'వంట నూనెలు & నెయ్యి',
     icon: '🌶️',
-    shortLabel: 'OILS/GHEE',
-    hindiShort: 'तेल/घी',
-    teluguShort: 'నూనె/నెయ్యి',
-    itemsPreview: 'Fortune Sunflower Oil, Amul Ghee',
+    shortLabel: 'OILS',
+    itemsPreview: 'Fortune Oil, Amul Ghee',
     x: 24.0,
     z: 0,
     w: 2.2,
@@ -134,9 +120,7 @@ const AISLES: AisleDef[] = [
     teluguName: 'మసాలాలు & వంట సరుకులు',
     icon: '🧂',
     shortLabel: 'SPICES',
-    hindiShort: 'मसाले',
-    teluguShort: 'మసాలాలు',
-    itemsPreview: 'MDH Masalas, Tata Salt, Sugar',
+    itemsPreview: 'MDH Masala, Salt, Sugar',
     x: 11.0,
     z: -5.0,
     w: 10,
@@ -151,9 +135,7 @@ const AISLES: AisleDef[] = [
     teluguName: 'ఇన్‌స్టంట్ ఫుడ్స్ & నూడుల్స్',
     icon: '🍜',
     shortLabel: 'NOODLES',
-    hindiShort: 'नूडल्स',
-    teluguShort: 'నూడుల్స్',
-    itemsPreview: 'Maggi, Yippee, Knorr Soups',
+    itemsPreview: 'Maggi, Yippee, Pasta',
     x: 11.0,
     z: 5.0,
     w: 10,
@@ -167,10 +149,8 @@ const AISLES: AisleDef[] = [
     hindiName: 'पर्सनल केयर और पेय',
     teluguName: 'వ్యక్తిగత సంరక్షణ & కూల్ డ్రింక్స్',
     icon: '🧴',
-    shortLabel: 'CARE/DRINKS',
-    hindiShort: 'केयर',
-    teluguShort: 'కేర్',
-    itemsPreview: 'Dettol, Dove Soap, Shampoos',
+    shortLabel: 'CARE',
+    itemsPreview: 'Dove, Dettol, Shampoos',
     x: 29.5,
     z: 0,
     w: 2.2,
@@ -180,13 +160,12 @@ const AISLES: AisleDef[] = [
   },
 ];
 
-// Promotional Promenade stations in the center aisle
+// 3 Central promotional stations
 const PROMO_ISLANDS = [
   {
     id: 'promo-1',
-    label: '01 PROMO',
-    icon: '⭐',
-    name: '01 Promotions • Cadbury Chocolates',
+    label: '⭐ 01',
+    name: '01 Promo • Cadbury Chocolates',
     hindiName: '01 स्पेशल ऑफर्स (चॉकलेट्स)',
     teluguName: '01 ప్రత్యేక ఆఫర్లు (చాక్లెట్లు)',
     color: '#f43f5e',
@@ -196,8 +175,7 @@ const PROMO_ISLANDS = [
   },
   {
     id: 'promo-2',
-    label: 'FESTIVE',
-    icon: '🎁',
+    label: '🎁',
     name: 'Festive Offers & Beverages',
     hindiName: 'त्योहारी ऑफर्स व पेय',
     teluguName: 'పండుగ ఆఫర్లు & పానీయాలు',
@@ -208,9 +186,8 @@ const PROMO_ISLANDS = [
   },
   {
     id: 'promo-3',
-    label: 'DEALS',
-    icon: '🏷️',
-    name: 'Super Saver Deals & Value Packs',
+    label: '🏷️',
+    name: 'Super Saver Deals',
     hindiName: 'सुपर सेवर डील्स',
     teluguName: 'సూపర్ సేవర్ డీల్స్',
     color: '#f59e0b',
@@ -231,7 +208,7 @@ export const AisleMinimap: React.FC = () => {
   const [hoveredAisle, setHoveredAisle] = useState<AisleDef | null>(null);
   const [hoveredPromo, setHoveredPromo] = useState<typeof PROMO_ISLANDS[0] | null>(null);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
-  const [playerProximityLabel, setPlayerProximityLabel] = useState<string>('Store Entrance');
+  const [playerProximityLabel, setPlayerProximityLabel] = useState<string>('Entrance & Trolley Bay');
 
   // Convert store 3D world meters (-36 to +36) to SVG canvas coordinates (0 to 200)
   const toSvgX = (worldX: number) => ((worldX + 36) / 72) * 200;
@@ -257,48 +234,47 @@ export const AisleMinimap: React.FC = () => {
         );
       }
 
-      // Update proximity label periodically (every ~30 frames)
       tick++;
       if (tick % 25 === 0) {
         if (pz < -22) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'ప్రవేశం & ట్రాలీలు' : language === 'HI' ? 'प्रवेश व ट्रॉली बे' : 'Entrance & Trolley Bay'
+            language === 'TE' ? 'ప్రవేశం & ట్రాలీలు' : language === 'HI' ? 'प्रवेश व ट्रॉली' : 'Entrance & Trolleys'
           );
         } else if (pz > 15) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'బిల్లింగ్ కౌంటర్లు & నిష్క్రమణ' : language === 'HI' ? 'बिलिंग काउंटर व निकास' : 'Billing Counters & Exit'
+            language === 'TE' ? 'బిల్లింగ్ కౌంటర్లు' : language === 'HI' ? 'बिलिंग काउंटर' : 'Billing Counters'
           );
         } else if (px < -20) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'విభాగం 01: స్నాక్స్' : language === 'HI' ? 'आइसल 01: स्नैक्स' : 'Aisle 01: Snacks & Namkeen'
+            language === 'TE' ? 'విభాగం 01: స్నాక్స్' : language === 'HI' ? 'आइसल 01: स्नैक्स' : 'Aisle 01: Snacks'
           );
         } else if (px < -14) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'విభాగం 02: బేకరీ' : language === 'HI' ? 'आइसल 02: बेकरी' : 'Aisle 02: Bakery & Biscuits'
+            language === 'TE' ? 'విభాగం 02: బేకరీ' : language === 'HI' ? 'आइसल 02: बेकरी' : 'Aisle 02: Bakery'
           );
         } else if (px < 0 && pz < 0) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'విభాగం 03: టీ & కాఫీ' : language === 'HI' ? 'आइसल 03: चाय/कॉफी' : 'Aisle 03: Beverages & Tea'
+            language === 'TE' ? 'విభాగం 03: టీ & కాఫీ' : language === 'HI' ? 'आइसल 03: चाय/कॉफी' : 'Aisle 03: Beverages'
           );
         } else if (px < 0 && pz >= 0) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'విభాగం 04: డైరీ' : language === 'HI' ? 'आइसल 04: डेयरी' : 'Aisle 04: Dairy & Breakfast'
+            language === 'TE' ? 'విభాగం 04: డైరీ' : language === 'HI' ? 'आइसल 04: डेयरी' : 'Aisle 04: Dairy'
           );
         } else if (px > 0 && px <= 14 && pz < 0) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'విభాగం 07: మసాలాలు' : language === 'HI' ? 'आइसल 07: मसाले' : 'Aisle 07: Cooking Essentials'
+            language === 'TE' ? 'విభాగం 07: మసాలాలు' : language === 'HI' ? 'आइसल 07: मसाले' : 'Aisle 07: Spices'
           );
         } else if (px > 0 && px <= 14 && pz >= 0) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'విభాగం 08: ఇన్‌స్టంట్ ఫుడ్స్' : language === 'HI' ? 'आइसल 08: नूडल्स' : 'Aisle 08: Instant Foods'
+            language === 'TE' ? 'విభాగం 08: ఇన్‌స్టంట్' : language === 'HI' ? 'आइसल 08: नूडल्स' : 'Aisle 08: Instant'
           );
         } else if (px > 14 && px <= 20) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'విభాగం 05: పిండి & బియ్యం' : language === 'HI' ? 'आइसल 05: आटा व चावल' : 'Aisle 05: Staples (Atta/Rice)'
+            language === 'TE' ? 'విభాగం 05: పిండి/బియ్యం' : language === 'HI' ? 'आइसल 05: आटा/चावल' : 'Aisle 05: Atta & Rice'
           );
         } else if (px > 20 && px <= 26) {
           setPlayerProximityLabel(
-            language === 'TE' ? 'విభాగం 06: వంట నూనెలు' : language === 'HI' ? 'आइसल 06: कुकिंग ऑयल' : 'Aisle 06: Cooking Oils'
+            language === 'TE' ? 'విభాగం 06: వంట నూనెలు' : language === 'HI' ? 'आइसल 06: तेल/घी' : 'Aisle 06: Cooking Oils'
           );
         } else if (px > 26) {
           setPlayerProximityLabel(
@@ -367,14 +343,14 @@ export const AisleMinimap: React.FC = () => {
     return (
       <button
         onClick={() => toggleMinimap(true)}
-        className="pointer-events-auto fixed bottom-20 left-4 sm:left-6 z-40 bg-white/95 backdrop-blur-md border border-slate-200/90 hover:border-blue-400 text-slate-800 p-2.5 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:shadow-xl transition-all flex items-center gap-2 text-xs font-bold cursor-pointer group active:scale-95"
-        title="Open Supermarket Mini-map"
+        className="pointer-events-auto fixed bottom-20 left-4 sm:left-6 z-40 bg-white/95 backdrop-blur-md border border-slate-200 hover:border-blue-400 text-slate-800 p-2.5 rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-xs font-bold cursor-pointer group active:scale-95"
+        title="Open Store Map"
       >
         <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
           <Compass className="w-3.5 h-3.5 group-hover:rotate-45 transition-transform" />
         </div>
         <span className="text-[11px] font-black tracking-tight text-slate-800">
-          {language === 'TE' ? 'మ్యాప్' : language === 'HI' ? 'नక్शा' : 'Store Map'}
+          {language === 'TE' ? 'మ్యాప్' : language === 'HI' ? 'नक्शा' : 'Store Map'}
         </span>
       </button>
     );
@@ -383,159 +359,91 @@ export const AisleMinimap: React.FC = () => {
   return (
     <aside
       aria-label="Supermarket Mini-map"
-      className="pointer-events-auto fixed bottom-20 left-4 sm:left-6 z-40 w-64 sm:w-72 bg-white/98 backdrop-blur-2xl border border-slate-200/90 rounded-3xl shadow-[0_16px_40px_rgba(15,23,42,0.16)] overflow-hidden select-none animate-in fade-in slide-in-from-bottom-2 duration-200"
+      className="pointer-events-auto fixed bottom-20 left-4 sm:left-6 z-40 w-52 sm:w-56 bg-white/98 backdrop-blur-xl border border-slate-200/90 rounded-2xl shadow-[0_12px_32px_rgba(15,23,42,0.14)] overflow-hidden select-none animate-in fade-in slide-in-from-bottom-2 duration-200"
     >
-      {/* 1. Header: Clean Luxury Mall Directory Header */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-slate-50 via-white to-blue-50/40 border-b border-slate-200/80">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
-            <Compass className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-black text-slate-900 tracking-tight">
-                {language === 'TE' ? 'స్టోర్ మ్యాప్' : language === 'HI' ? 'स्टोर मैप' : 'STORE DIRECTORY'}
-              </span>
-              <span className="text-[9px] bg-blue-50 text-blue-700 font-extrabold px-1.5 py-0.2 rounded border border-blue-200">
-                72m²
-              </span>
-            </div>
-            <p className="text-[9.5px] text-slate-400 font-medium -mt-0.5">
-              {language === 'TE' ? 'ప్రత్యక్ష విభాగాల స్థానం' : language === 'HI' ? 'लाइव विभाग नक्शा' : 'Interactive Hypermarket Map'}
-            </p>
-          </div>
+      {/* 1. Header: Slim 1-line clean bar */}
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-50/90 border-b border-slate-200/80">
+        <div className="flex items-center gap-1.5">
+          <Compass className="w-3.5 h-3.5 text-blue-600" />
+          <span className="text-[11px] font-black text-slate-900 tracking-tight">
+            {language === 'TE' ? 'స్టోర్ మ్యాప్' : language === 'HI' ? 'स्टोर मैप' : 'STORE MAP'}
+          </span>
+          <span className="text-[8.5px] bg-blue-50 text-blue-700 font-bold px-1 rounded border border-blue-200/70 ml-0.5">
+            72m²
+          </span>
         </div>
         <button
           onClick={() => toggleMinimap(false)}
-          className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors flex items-center justify-center cursor-pointer"
+          className="w-5 h-5 rounded-md hover:bg-slate-200/80 text-slate-400 hover:text-slate-800 transition-colors flex items-center justify-center cursor-pointer"
           title="Minimize map"
         >
-          <Minimize2 className="w-3.5 h-3.5" />
+          <Minimize2 className="w-3 h-3" />
         </button>
       </div>
 
-      {/* 2. Quick Category Department Pills (Single-Click Teleport) */}
-      <div className="px-2.5 py-1.5 bg-slate-50/70 border-b border-slate-100 flex items-center gap-1 overflow-x-auto no-scrollbar">
-        {AISLES.slice(0, 6).map((aisle) => (
-          <button
-            key={aisle.number}
-            onClick={() => handleWalkToAisle(aisle)}
-            className={`flex-shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-              highlightedAisle === aisle.number
-                ? 'bg-blue-600 text-white border-blue-600 shadow-xs scale-105'
-                : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-            }`}
-            title={`Walk to Aisle 0${aisle.number}: ${aisle.name}`}
-          >
-            <span>{aisle.icon}</span>
-            <span>0{aisle.number}</span>
-          </button>
-        ))}
-        <button
-          onClick={handleWalkToBilling}
-          className="flex-shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 cursor-pointer flex items-center gap-1"
-          title="Walk directly to Billing Counter Lane 02"
-        >
-          <span>💳</span>
-          <span>Pay</span>
-        </button>
-      </div>
-
-      {/* 3. SVG Floor Plan Blueprint (200x200 viewBox) */}
-      <div className="relative p-2 bg-[#F8F9FA]">
+      {/* 2. SVG Clean Blueprint Map (200x200 viewBox) */}
+      <div className="p-1.5 bg-[#FAFBFD]">
         <svg
           viewBox="0 0 200 200"
-          className="w-full h-auto aspect-square rounded-2xl bg-white border border-slate-200 shadow-inner"
+          className="w-full h-auto aspect-square rounded-xl bg-white border border-slate-200/90"
         >
           <defs>
-            {/* Architectural floor tile grid pattern */}
-            <pattern id="hypermarketGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#f1f5f9" strokeWidth="0.6" />
+            {/* Subtle floor grid */}
+            <pattern id="cleanGrid" width="12" height="12" patternUnits="userSpaceOnUse">
+              <path d="M 12 0 L 0 0 0 12" fill="none" stroke="#f1f5f9" strokeWidth="0.5" />
             </pattern>
-
-            {/* Drop shadow for racks to make them look real and elevated */}
-            <filter id="shelfElevatedShadow" x="-15%" y="-15%" width="130%" height="130%">
-              <feDropShadow dx="0" dy="1" stdDeviation="0.8" floodColor="#0f172a" floodOpacity="0.18" />
-            </filter>
-
-            {/* Luminous glow for highlighted aisle */}
-            <filter id="highlightPulse" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#ef4444" floodOpacity="0.8" />
-            </filter>
           </defs>
 
-          {/* Floor Tile Grid Background */}
-          <rect x="2" y="2" width="196" height="196" fill="url(#hypermarketGrid)" rx="8" />
-          <rect x="2" y="2" width="196" height="196" fill="none" stroke="#e2e8f0" strokeWidth="1.2" rx="8" />
+          {/* Floor grid */}
+          <rect x="2" y="2" width="196" height="196" fill="url(#cleanGrid)" rx="6" />
+          <rect x="2" y="2" width="196" height="196" fill="none" stroke="#e2e8f0" strokeWidth="1" rx="6" />
 
-          {/* ---------------------------------------------------- */}
-          {/* ENTRANCE PORTAL & LOBBY (Y = 6 to 16, X = 65 to 135) */}
-          {/* Clean clearance so player marker at Y = 22 does NOT overlap! */}
-          {/* ---------------------------------------------------- */}
+          {/* ---------------- ENTRANCE (Y = 8 to 17, X = 65 to 135) ---------------- */}
           <g
             className="cursor-pointer group"
             onClick={handleWalkToEntrance}
             onMouseEnter={() => setHoveredZone('entrance')}
             onMouseLeave={() => setHoveredZone(null)}
           >
-            {/* Entrance Wall / Lobby Portal */}
             <rect
-              x="65"
-              y="6"
-              width="70"
+              x="62"
+              y="7"
+              width="76"
               height="11"
               fill="#e0f2fe"
               stroke="#0284c7"
-              strokeWidth="1"
-              rx="3"
+              strokeWidth="0.8"
+              rx="2.5"
               className="group-hover:fill-sky-100 transition-colors"
             />
-            {/* Sliding Glass Doors Graphic */}
-            <line x1="93" y1="6" x2="93" y2="17" stroke="#0284c7" strokeWidth="0.8" strokeDasharray="1.5,1" />
-            <line x1="107" y1="6" x2="107" y2="17" stroke="#0284c7" strokeWidth="0.8" strokeDasharray="1.5,1" />
             <text
               x="100"
-              y="14"
+              y="15"
               textAnchor="middle"
               fontSize="5.2"
               fontWeight="900"
               fill="#0369a1"
-              letterSpacing="0.4"
+              letterSpacing="0.3"
             >
-              {language === 'TE' ? '🚪 ప్రవేశం (ENTER)' : language === 'HI' ? '🚪 प्रवेश (ENTER)' : '🚪 ENTRANCE'}
+              {language === 'TE' ? '🚪 ప్రవేశం' : language === 'HI' ? '🚪 प्रवेश' : '🚪 ENTRANCE'}
             </text>
-            {/* Green entry flow indicator arrow */}
-            <polygon points="100,19 97,16 103,16" fill="#16a34a" />
+            <polygon points="100,20 97.5,18 102.5,18" fill="#16a34a" />
           </g>
 
-          {/* Trolley Pick-up Bay (Left of entrance) */}
+          {/* Trolley Bay mark at left */}
           <g
             className="cursor-pointer"
             onClick={handleWalkToEntrance}
             onMouseEnter={() => setHoveredZone('trolley')}
             onMouseLeave={() => setHoveredZone(null)}
           >
-            <rect x="8" y="7" width="48" height="11" fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.8" rx="2" strokeDasharray="2,1" />
-            <text x="32" y="14.5" textAnchor="middle" fontSize="4.5" fontWeight="800" fill="#475569">
-              {language === 'TE' ? '🛒 ట్రాలీలు' : language === 'HI' ? '🛒 ट्रॉली बे' : '🛒 Trolley Bay'}
+            <rect x="8" y="7" width="46" height="11" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.7" rx="2" strokeDasharray="2,1" />
+            <text x="31" y="14.8" textAnchor="middle" fontSize="4.6" fontWeight="800" fill="#64748b">
+              {language === 'TE' ? '🛒 ట్రాలీలు' : language === 'HI' ? '🛒 ट्रॉली' : '🛒 Carts'}
             </text>
           </g>
 
-          {/* Customer Service / Help Desk (Right of entrance) */}
-          <g
-            className="cursor-pointer"
-            onMouseEnter={() => setHoveredZone('info')}
-            onMouseLeave={() => setHoveredZone(null)}
-          >
-            <rect x="144" y="7" width="48" height="11" fill="#f0fdf4" stroke="#86efac" strokeWidth="0.8" rx="2" />
-            <text x="168" y="14.5" textAnchor="middle" fontSize="4.5" fontWeight="800" fill="#166534">
-              {language === 'TE' ? 'ℹ️ హెల్ప్ డెస్క్' : language === 'HI' ? 'ℹ️ हेल्प डेस्क' : 'ℹ️ Help Desk'}
-            </text>
-          </g>
-
-          {/* ---------------------------------------------------- */}
-          {/* CENTRAL PROMENADE: 3 PROMOTIONAL ISLAND DISPLAY STATIONS */}
-          {/* ---------------------------------------------------- */}
+          {/* ---------------- 3 PROMO PODIUMS IN CENTER ---------------- */}
           {PROMO_ISLANDS.map((promo) => (
             <g
               key={promo.id}
@@ -544,53 +452,15 @@ export const AisleMinimap: React.FC = () => {
               onMouseEnter={() => setHoveredPromo(promo)}
               onMouseLeave={() => setHoveredPromo(null)}
             >
-              {/* Pulsing Outer Glow Ring */}
-              <circle
-                cx={promo.cx}
-                cy={promo.cy}
-                r="7"
-                fill={promo.color}
-                opacity="0.18"
-                className="group-hover:scale-125 transition-transform origin-center"
-              />
-              {/* Podium Base */}
-              <circle
-                cx={promo.cx}
-                cy={promo.cy}
-                r="5"
-                fill={promo.color}
-                stroke="#ffffff"
-                strokeWidth="1.2"
-                filter="url(#shelfElevatedShadow)"
-              />
-              {/* Label Tag beside island */}
-              <rect
-                x={promo.cx + 7}
-                y={promo.cy - 3.5}
-                width="28"
-                height="7"
-                fill="#ffffff"
-                stroke={promo.color}
-                strokeWidth="0.6"
-                rx="1.5"
-                opacity="0.95"
-              />
-              <text
-                x={promo.cx + 21}
-                y={promo.cy + 1.2}
-                textAnchor="middle"
-                fontSize="3.8"
-                fontWeight="900"
-                fill={promo.color}
-              >
+              <circle cx={promo.cx} cy={promo.cy} r="6.5" fill={promo.color} opacity="0.2" className="group-hover:scale-125 transition-transform origin-center" />
+              <circle cx={promo.cx} cy={promo.cy} r="4.6" fill={promo.color} stroke="#ffffff" strokeWidth="1" />
+              <text x={promo.cx} y={promo.cy + 1.4} textAnchor="middle" fontSize="3.5" fontWeight="900" fill="#ffffff" pointerEvents="none">
                 {promo.label}
               </text>
             </g>
           ))}
 
-          {/* ---------------------------------------------------- */}
-          {/* GONDOLA AISLES 1 TO 9 WITH LABELS & CATEGORY BADGES */}
-          {/* ---------------------------------------------------- */}
+          {/* ---------------- GONDOLA AISLES 1 TO 9 (CLEAN, NO OVERLAPPING) ---------------- */}
           {AISLES.map((aisle) => {
             const rx = toSvgX(aisle.x - aisle.w / 2);
             const ry = toSvgY(aisle.z - aisle.h / 2);
@@ -607,102 +477,65 @@ export const AisleMinimap: React.FC = () => {
                 onMouseEnter={() => setHoveredAisle(aisle)}
                 onMouseLeave={() => setHoveredAisle(null)}
               >
-                {/* 1. Category Header Badge above Vertical Aisles (Aisles 1, 2, 5, 6, 9) */}
-                {!isHorizontal && (
-                  <g transform={`translate(${rx + rw / 2}, ${ry - 5.5})`}>
-                    <rect
-                      x="-14"
-                      y="-4.5"
-                      width="28"
-                      height="8"
-                      fill="#ffffff"
-                      stroke={isHighlighted ? '#ef4444' : aisle.color}
-                      strokeWidth={isHighlighted ? '1.2' : '0.7'}
-                      rx="2"
-                      filter="url(#shelfElevatedShadow)"
-                      className="group-hover:scale-105 transition-transform"
-                    />
-                    <text
-                      x="0"
-                      y="1"
-                      textAnchor="middle"
-                      fontSize="3.6"
-                      fontWeight="900"
-                      fill="#0f172a"
-                    >
-                      {aisle.icon} 0{aisle.number} {language === 'TE' ? aisle.teluguShort : language === 'HI' ? aisle.hindiShort : aisle.shortLabel}
-                    </text>
-                  </g>
-                )}
-
-                {/* 2. Gondola Shelf Rack Body */}
+                {/* Gondola Shelf Body */}
                 <rect
                   x={rx}
                   y={ry}
                   width={rw}
                   height={rh}
                   fill={isHighlighted ? '#ef4444' : aisle.color}
-                  stroke={isHighlighted ? '#b91c1c' : '#334155'}
-                  strokeWidth={isHighlighted ? 1.5 : 0.7}
-                  rx="1.8"
-                  filter={isHighlighted ? 'url(#highlightPulse)' : 'url(#shelfElevatedShadow)'}
+                  stroke={isHighlighted ? '#b91c1c' : '#1e293b'}
+                  strokeWidth={isHighlighted ? 1.4 : 0.6}
+                  rx="1.5"
                   className="transition-all group-hover:brightness-110"
                 />
 
-                {/* 3. Internal Shelf divisions / textures */}
                 {isHorizontal ? (
-                  // Horizontal Aisle text & badge right inside the rack
+                  // Horizontal Aisles (3, 4, 7, 8): Neat text centered entirely inside the bar
                   <g pointerEvents="none">
-                    <line x1={rx + 2} y1={ry + rh / 2} x2={rx + rw - 2} y2={ry + rh / 2} stroke="#ffffff" strokeWidth="0.5" opacity="0.4" />
+                    {/* Circle badge at left/right endcap */}
+                    <circle cx={aisle.number === 3 || aisle.number === 4 ? rx + 3.2 : rx + rw - 3.2} cy={ry + rh / 2} r="2.4" fill="#ffffff" />
                     <text
-                      x={rx + rw / 2}
-                      y={ry + rh / 2 + 1.6}
+                      x={aisle.number === 3 || aisle.number === 4 ? rx + 3.2 : rx + rw - 3.2}
+                      y={ry + rh / 2 + 1.1}
                       textAnchor="middle"
-                      fontSize="4.0"
-                      fontWeight="900"
-                      fill="#ffffff"
-                      letterSpacing="0.2"
-                      style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}
-                    >
-                      {aisle.icon} 0{aisle.number} {language === 'TE' ? aisle.teluguShort : language === 'HI' ? aisle.hindiShort : aisle.shortLabel}
-                    </text>
-                  </g>
-                ) : (
-                  // Vertical Aisle numbers & icons along the shelf
-                  <g pointerEvents="none">
-                    {/* Top Number Pin */}
-                    <circle cx={rx + rw / 2} cy={ry + 5} r="2.8" fill="#ffffff" />
-                    <text
-                      x={rx + rw / 2}
-                      y={ry + 6.3}
-                      textAnchor="middle"
-                      fontSize="3.8"
+                      fontSize="3.2"
                       fontWeight="900"
                       fill="#0f172a"
                     >
                       {aisle.number}
                     </text>
-
-                    {/* Middle Icon */}
+                    {/* Centered label inside bar */}
                     <text
                       x={rx + rw / 2}
-                      y={ry + rh / 2 + 1.5}
-                      textAnchor="middle"
-                      fontSize="4.8"
-                    >
-                      {aisle.icon}
-                    </text>
-
-                    {/* Bottom Number Pin */}
-                    <circle cx={rx + rw / 2} cy={ry + rh - 5} r="2.8" fill="#ffffff" />
-                    <text
-                      x={rx + rw / 2}
-                      y={ry + rh - 3.7}
+                      y={ry + rh / 2 + 1.3}
                       textAnchor="middle"
                       fontSize="3.8"
                       fontWeight="900"
-                      fill="#0f172a"
+                      fill="#ffffff"
+                      letterSpacing="0.2"
+                      style={{ textShadow: '0 1px 2px rgba(0,0,0,0.7)' }}
                     >
+                      {aisle.icon} {aisle.shortLabel}
+                    </text>
+                  </g>
+                ) : (
+                  // Vertical Aisles (1, 2, 5, 6, 9): Clean endcap number discs and center icon, strictly inside rack
+                  <g pointerEvents="none">
+                    {/* Top Endcap Marker */}
+                    <circle cx={rx + rw / 2} cy={ry + 3.5} r="2.5" fill="#ffffff" />
+                    <text x={rx + rw / 2} y={ry + 4.6} textAnchor="middle" fontSize="3.2" fontWeight="900" fill="#0f172a">
+                      {aisle.number}
+                    </text>
+
+                    {/* Middle Category Emoji */}
+                    <text x={rx + rw / 2} y={ry + rh / 2 + 1.5} textAnchor="middle" fontSize="4.6">
+                      {aisle.icon}
+                    </text>
+
+                    {/* Bottom Endcap Marker */}
+                    <circle cx={rx + rw / 2} cy={ry + rh - 3.5} r="2.5" fill="#ffffff" />
+                    <text x={rx + rw / 2} y={ry + rh - 2.4} textAnchor="middle" fontSize="3.2" fontWeight="900" fill="#0f172a">
                       {aisle.number}
                     </text>
                   </g>
@@ -711,208 +544,144 @@ export const AisleMinimap: React.FC = () => {
             );
           })}
 
-          {/* ---------------------------------------------------- */}
-          {/* BILLING COUNTER LANES & EXIT ZONE (Y = 158 to 176) */}
-          {/* ---------------------------------------------------- */}
+          {/* ---------------- BILLING COUNTER & EXIT (Y = 160 to 174) ---------------- */}
           <g
             className="cursor-pointer group"
             onClick={handleWalkToBilling}
             onMouseEnter={() => setHoveredZone('billing')}
             onMouseLeave={() => setHoveredZone(null)}
           >
-            {/* Cash Counters Base */}
             <rect
-              x="25"
-              y="158"
-              width="142"
-              height="18"
+              x="22"
+              y="160"
+              width="144"
+              height="14"
               fill="#fef3c7"
               stroke="#f59e0b"
-              strokeWidth="1"
-              rx="3"
-              filter="url(#shelfElevatedShadow)"
+              strokeWidth="0.8"
+              rx="2.5"
               className="group-hover:fill-amber-100 transition-colors"
             />
-            {/* Title Bar */}
             <text
-              x="96"
-              y="165"
+              x="94"
+              y="169"
               textAnchor="middle"
-              fontSize="5.0"
+              fontSize="4.8"
               fontWeight="900"
               fill="#b45309"
-              letterSpacing="0.4"
+              letterSpacing="0.3"
             >
               {language === 'TE'
-                ? '💳 బిల్లింగ్ కౌంటర్లు (లేన్స్ 01 - 06)'
+                ? '💳 బిల్లింగ్ కౌంటర్లు (1 - 6)'
                 : language === 'HI'
-                ? '💳 बिलिंग काउंटर (लेन 01 - 06)'
-                : '💳 BILLING & CHECKOUT (LANES 01 - 06)'}
+                ? '💳 बिलिंग काउंटर (1 - 6)'
+                : '💳 BILLING & CHECKOUT (LANES 1-6)'}
             </text>
-
-            {/* 6 Individual POS Cash Counters */}
-            {[0, 1, 2, 3, 4, 5].map((lane) => {
-              const lx = 32 + lane * 22;
-              return (
-                <g key={lane}>
-                  <rect x={lx} y="167" width="18" height="7" fill="#ffffff" stroke="#d97706" strokeWidth="0.6" rx="1.5" />
-                  <circle cx={lx + 3.5} cy="170.5" r="1.5" fill="#22c55e" />
-                  <text x={lx + 11} y="172.2" textAnchor="middle" fontSize="3.5" fontWeight="900" fill="#92400e">
-                    L0{lane + 1}
-                  </text>
-                </g>
-              );
-            })}
           </g>
 
-          {/* Store Exit Portal */}
+          {/* Store Exit */}
           <g
             className="cursor-pointer"
             onClick={handleWalkToBilling}
             onMouseEnter={() => setHoveredZone('exit')}
             onMouseLeave={() => setHoveredZone(null)}
           >
-            <rect x="172" y="158" width="22" height="18" fill="#dcfce7" stroke="#22c55e" strokeWidth="1" rx="3" />
-            <text x="183" y="166" textAnchor="middle" fontSize="4.2" fontWeight="900" fill="#15803d">
+            <rect x="170" y="160" width="22" height="14" fill="#dcfce7" stroke="#22c55e" strokeWidth="0.8" rx="2.5" />
+            <text x="181" y="169" textAnchor="middle" fontSize="4.2" fontWeight="900" fill="#15803d">
               {language === 'TE' ? '🚪నిష్క్రమణ' : language === 'HI' ? '🚪निकास' : '🚪EXIT'}
             </text>
-            <polygon points="183,173 186,169 180,169" fill="#16a34a" />
           </g>
 
-          {/* ---------------------------------------------------- */}
-          {/* SHOPPER RADAR BEACON (GPU-Driven Live transform) */}
-          {/* ---------------------------------------------------- */}
+          {/* ---------------- SHOPPER RADAR BEACON ---------------- */}
           <g ref={markerRef} transform="translate(100, 22.2)">
-            {/* Vision Field Cone (60° FOV) */}
-            <path d="M 0 0 L -12 24 L 12 24 Z" fill="#3b82f6" opacity="0.32" />
-            {/* Animated Radar Pulse Wave */}
-            <circle cx="0" cy="0" r="7.5" fill="#3b82f6" opacity="0.3" className="animate-ping" />
-            {/* Crisp High-Contrast Core Marker */}
-            <circle cx="0" cy="0" r="4.2" fill="#2563eb" stroke="#ffffff" strokeWidth="1.4" />
-            {/* Forward Direction Needle */}
-            <line x1="0" y1="0" x2="0" y2="8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="0" cy="0" r="1.5" fill="#ffffff" />
+            <path d="M 0 0 L -10 20 L 10 20 Z" fill="#3b82f6" opacity="0.3" />
+            <circle cx="0" cy="0" r="6" fill="#3b82f6" opacity="0.35" className="animate-ping" />
+            <circle cx="0" cy="0" r="3.6" fill="#2563eb" stroke="#ffffff" strokeWidth="1.2" />
+            <line x1="0" y1="0" x2="0" y2="6.5" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
           </g>
         </svg>
 
-        {/* 4. Interactive Live Aisle Inspector Card / Proximity Prompt */}
-        <div className="mt-2 p-2 rounded-2xl bg-white border border-slate-200 shadow-xs transition-all">
+        {/* 3. Sleek 1-Line Live Inspector / Proximity Pill */}
+        <div className="mt-1.5 px-2 py-1.5 rounded-xl bg-slate-50 border border-slate-200/90 text-left">
           {hoveredAisle ? (
             <div
-              className="flex items-center justify-between gap-2 cursor-pointer"
+              className="flex items-center justify-between gap-1.5 cursor-pointer"
               onClick={() => handleWalkToAisle(hoveredAisle)}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className="w-7 h-7 rounded-xl flex items-center justify-center text-sm shadow-xs flex-shrink-0"
-                  style={{ backgroundColor: `${hoveredAisle.color}20`, border: `1px solid ${hoveredAisle.color}60` }}
-                >
-                  {hoveredAisle.icon}
-                </div>
+              <div className="min-w-0 flex items-center gap-1.5">
+                <span className="text-xs">{hoveredAisle.icon}</span>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-black text-slate-900 truncate">
+                  <div className="text-[10px] font-black text-slate-900 truncate">
                     Aisle 0{hoveredAisle.number}: {language === 'TE' ? hoveredAisle.teluguName : language === 'HI' ? hoveredAisle.hindiName : hoveredAisle.name}
                   </div>
-                  <p className="text-[9.5px] text-slate-500 font-medium truncate">
+                  <p className="text-[8.5px] text-slate-500 font-medium truncate">
                     {hoveredAisle.itemsPreview}
                   </p>
                 </div>
               </div>
-              <button className="px-2 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-black flex items-center gap-1 flex-shrink-0 shadow-xs">
-                <span>Walk</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
+              <span className="px-1.5 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black flex items-center gap-0.5 flex-shrink-0">
+                Walk <ArrowRight className="w-2.5 h-2.5" />
+              </span>
             </div>
           ) : hoveredPromo ? (
             <div
-              className="flex items-center justify-between gap-2 cursor-pointer"
+              className="flex items-center justify-between gap-1.5 cursor-pointer"
               onClick={() => handleWalkToPromo(hoveredPromo)}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center text-sm flex-shrink-0">
-                  {hoveredPromo.icon}
-                </div>
+              <div className="min-w-0 flex items-center gap-1.5">
+                <span className="text-xs">{hoveredPromo.label.slice(0, 2)}</span>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-black text-slate-900 truncate">
+                  <div className="text-[10px] font-black text-slate-900 truncate">
                     {language === 'TE' ? hoveredPromo.teluguName : language === 'HI' ? hoveredPromo.hindiName : hoveredPromo.name}
                   </div>
-                  <p className="text-[9.5px] text-slate-500 font-medium truncate">
-                    Special promotional podium • Click to visit
+                  <p className="text-[8.5px] text-slate-500 font-medium truncate">
+                    Promotional island • Tap to visit
                   </p>
                 </div>
               </div>
-              <button className="px-2 py-1 rounded-lg bg-rose-600 text-white text-[10px] font-black flex items-center gap-1 flex-shrink-0 shadow-xs">
-                <span>Walk</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
+              <span className="px-1.5 py-0.5 rounded-md bg-rose-600 text-white text-[9px] font-black flex items-center gap-0.5 flex-shrink-0">
+                Walk <ArrowRight className="w-2.5 h-2.5" />
+              </span>
             </div>
           ) : hoveredZone === 'billing' || hoveredZone === 'exit' ? (
             <div
-              className="flex items-center justify-between gap-2 cursor-pointer"
+              className="flex items-center justify-between gap-1.5 cursor-pointer"
               onClick={handleWalkToBilling}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center text-sm flex-shrink-0">
-                  💳
-                </div>
+              <div className="min-w-0 flex items-center gap-1.5">
+                <span className="text-xs">💳</span>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-black text-slate-900 truncate">
-                    {language === 'TE' ? 'బిల్లింగ్ కౌంటర్లు (లేన్స్ 1-6)' : language === 'HI' ? 'बिलिंग काउंटर (लेन 1-6)' : 'Billing Counters (Lanes 1-6)'}
+                  <div className="text-[10px] font-black text-slate-900 truncate">
+                    {language === 'TE' ? 'బిల్లింగ్ కౌంటర్లు (1-6)' : language === 'HI' ? 'बिलिंग काउंटर (1-6)' : 'Billing Counters (Lanes 1-6)'}
                   </div>
-                  <p className="text-[9.5px] text-slate-500 font-medium truncate">
-                    Automated barcode scanning & payment desk
+                  <p className="text-[8.5px] text-slate-500 font-medium truncate">
+                    Checkout & payment desks
                   </p>
                 </div>
               </div>
-              <button className="px-2 py-1 rounded-lg bg-amber-600 text-white text-[10px] font-black flex items-center gap-1 flex-shrink-0 shadow-xs">
-                <span>Pay</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-          ) : hoveredZone === 'entrance' || hoveredZone === 'trolley' ? (
-            <div
-              className="flex items-center justify-between gap-2 cursor-pointer"
-              onClick={handleWalkToEntrance}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 flex items-center justify-center text-sm flex-shrink-0">
-                  🛒
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-black text-slate-900 truncate">
-                    {language === 'TE' ? 'ప్రవేశ లాబీ & ట్రాలీ బే' : language === 'HI' ? 'प्रवेश द्वार व ट्रॉली बे' : 'Main Entrance & Trolley Bay'}
-                  </div>
-                  <p className="text-[9.5px] text-slate-500 font-medium truncate">
-                    Store entrance concourse & cart pick-up
-                  </p>
-                </div>
-              </div>
-              <button className="px-2 py-1 rounded-lg bg-sky-600 text-white text-[10px] font-black flex items-center gap-1 flex-shrink-0 shadow-xs">
-                <span>Walk</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
+              <span className="px-1.5 py-0.5 rounded-md bg-amber-600 text-white text-[9px] font-black flex items-center gap-0.5 flex-shrink-0">
+                Pay <ArrowRight className="w-2.5 h-2.5" />
+              </span>
             </div>
           ) : (
-            <div className="flex items-center justify-between text-left">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-3.5 h-3.5" />
-                </div>
+            <div className="flex items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <MapPin className="w-3 h-3 text-blue-600 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[10.5px] font-black text-slate-800 truncate">
+                  <p className="text-[9.5px] font-black text-slate-800 truncate">
                     {playerProximityLabel}
                   </p>
-                  <p className="text-[9.5px] text-slate-400 font-medium truncate">
+                  <p className="text-[8.5px] text-slate-400 font-medium truncate">
                     {language === 'TE'
                       ? 'నడవడానికి ఏదైనా విభాగంపై క్లిక్ చేయండి'
                       : language === 'HI'
-                      ? 'जाने के लिए किसी भी आइसल पर क्लिक करें'
-                      : 'Click any aisle on the map to walk there'}
+                      ? 'जाने के लिए आइसल पर टैप करें'
+                      : 'Tap any aisle to walk there'}
                   </p>
                 </div>
               </div>
-              <span className="text-[10px] font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 flex-shrink-0">
-                Live GPS
+              <span className="text-[8.5px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 flex-shrink-0">
+                GPS
               </span>
             </div>
           )}
